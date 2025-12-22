@@ -1,0 +1,17 @@
+{
+  "name": "antigravity-nix-scripts",
+  "version": "1.0.0",
+  "description": "Browser automation scripts for antigravity-nix version detection",
+  "private": true,
+  "scripts": {
+    "scrape": "node scripts/scrape-version.js",
+    "check": "bash scripts/check-version.sh",
+    "update": "bash scripts/update-version.sh"
+  },
+  "dependencies": {
+    "playwright-chromium": "^1.49.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
