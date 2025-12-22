@@ -18,6 +18,7 @@ in {
     environment.systemPackages = with pkgs; [
       # IDEs & Editors
       vscodium
+      google-antigravity
       
       # Environment Tools
       direnv

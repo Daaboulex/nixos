@@ -64,6 +64,12 @@
       url = "github:daaboulex/eden-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # Google Antigravity - Agentic IDE (upstream maintained by jacopone)
+    antigravity = {
+      url = "github:jacopone/antigravity-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   # ============================================================================
@@ -84,9 +90,7 @@
         (import ./overlays { inherit inputs; })
         inputs.chaotic.overlays.default
         inputs.tidalcycles.overlays.default
-        (final: prev: {
-          google-antigravity = final.callPackage ./modules/antigravity/package.nix { };
-        })
+        inputs.antigravity.overlays.default
       ];
     };
 

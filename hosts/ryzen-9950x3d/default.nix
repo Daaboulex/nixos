@@ -147,10 +147,6 @@
         enable = true;
         helperScripts = true;
       };
-      antigravity = {
-        enable = true;
-        browser = "ungoogled-chromium";
-      };
     };
 
     programs = {
@@ -315,11 +311,6 @@
       smoothness = 0.2;
     };
   };
-
-  # ============================================================================
-  # VPN Configuration
-  # ============================================================================
-  programs.hotspotshield.enable = true;
 
   # ============================================================================
   # Filesystems

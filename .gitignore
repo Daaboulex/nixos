@@ -34,5 +34,4 @@ pkgs/
 
 # Exclude stray files
 Todo.txt
-README.md
 *.txt

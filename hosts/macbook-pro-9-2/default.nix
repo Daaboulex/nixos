@@ -109,10 +109,6 @@
         enable = true;
         helperScripts = true;
       };
-      antigravity = {
-        enable = true;
-        browser = "ungoogled-chromium";
-      };
     };
 
     # Chaotic-Nyx Package Optimizations

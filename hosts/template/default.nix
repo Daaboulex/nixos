@@ -145,11 +145,6 @@
       tools = {
         # Enable specific toolsets if defined in tools.nix
       };
-      
-      antigravity = {
-        enable = false;           # Google Antigravity IDE
-        # browser.enable = true;
-      };
     };
     
     # --------------------------------------------------------------------------

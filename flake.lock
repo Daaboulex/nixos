@@ -1,5 +1,26 @@
 {
   "nodes": {
+    "antigravity": {
+      "inputs": {
+        "flake-utils": "flake-utils",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1766394679,
+        "narHash": "sha256-huyKMNTvsqawI1mHocntSV4UcthHNfg21J9PQ3fByHg=",
+        "owner": "jacopone",
+        "repo": "antigravity-nix",
+        "rev": "89f5f9da4a42f7af91cd941ed8d1b81e99c5007d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "jacopone",
+        "repo": "antigravity-nix",
+        "type": "github"
+      }
+    },
     "cachyos-settings": {
       "flake": false,
       "locked": {
@@ -70,7 +91,7 @@
     },
     "eden": {
       "inputs": {
-        "flake-utils": "flake-utils",
+        "flake-utils": "flake-utils_2",
         "nixpkgs": [
           "nixpkgs"
         ]
@@ -217,23 +238,6 @@
         "repo": "home-manager",
         "type": "github"
       }
-    },
-    "hotspotshield": {
-      "inputs": {
-        "flake-utils": "flake-utils_2",
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "path": "./pkgs/hotspotshield-nix",
-        "type": "path"
-      },
-      "original": {
-        "path": "./pkgs/hotspotshield-nix",
-        "type": "path"
-      },
-      "parent": []
     },
     "jovian": {
       "inputs": {
@@ -415,11 +419,11 @@
     },
     "root": {
       "inputs": {
+        "antigravity": "antigravity",
         "cachyos-settings": "cachyos-settings",
         "chaotic": "chaotic",
         "eden": "eden",
         "home-manager": "home-manager_2",
-        "hotspotshield": "hotspotshield",
         "lanzaboote": "lanzaboote",
         "nix-flatpak": "nix-flatpak",
         "nixpkgs": "nixpkgs_2",
