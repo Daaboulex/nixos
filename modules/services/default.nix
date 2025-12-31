@@ -39,9 +39,6 @@
 
       # iOS device support (iPhone, iPad)
       usbmuxd.enable = true;
-
-      # Gaming mouse configuration daemon (Logitech, Razer, etc.)
-      ratbagd.enable = true;
     };
   };
 }

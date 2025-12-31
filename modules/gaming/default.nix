@@ -37,6 +37,9 @@ in {
     azahar = {
       enable = lib.mkOption { type = lib.types.bool; default = false; description = "Enable Azahar (3DS emulator, Citra fork)"; };
     };
+    nxSaveSync = {
+      enable = lib.mkOption { type = lib.types.bool; default = false; description = "Enable NX-Save-Sync (Switch save sync tool)"; };
+    };
     packages = {
       performance = lib.mkOption { type = lib.types.bool; default = true; description = "Include performance packages"; };
       cachyos = lib.mkOption { type = lib.types.bool; default = true; description = "Use CachyOS optimized packages"; };
@@ -69,7 +72,8 @@ in {
     ++ lib.optionals cfg.heroic.enable [ heroicWithExtras ]
     ++ lib.optionals cfg.ryubing.enable [ ryubing ]
     ++ lib.optionals cfg.eden.enable [ inputs.eden.packages.${system}.eden ]
-    ++ lib.optionals cfg.azahar.enable [ azahar ];
+    ++ lib.optionals cfg.azahar.enable [ azahar ]
+    ++ lib.optionals cfg.nxSaveSync.enable [ inputs.nx-save-sync.packages.${system}.default ];
 
     # Add user to the gamemode group
     users.users.${config.myModules.primaryUser}.extraGroups = [ "gamemode" ];

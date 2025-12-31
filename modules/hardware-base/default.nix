@@ -29,16 +29,18 @@ in
     # ==========================================================================
     hardware.bluetooth = {
       enable = true;
-      powerOnBoot = true;  # Automatically power on Bluetooth on boot
+      powerOnBoot = false;  # Automatically power on Bluetooth on boot
 
       # Bluetooth settings
       settings.General = {
         # Enable all Bluetooth profiles (deprecated in BlueZ 5, profiles are auto-enabled)
-        # Enable = "Source,Sink,Media,Socket";
+        Enable = "Source,Sink,Media,Socket";
         # Enable experimental features (better compatibility)
         Experimental = true;
       };
     };
+
+    #services.blueman.enable = true;
 
     # ==========================================================================
     # Firmware Update Service

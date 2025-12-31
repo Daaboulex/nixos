@@ -65,6 +65,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # NX-Save-Sync - Switch save sync tool
+    nx-save-sync = {
+      url = "github:daaboulex/nx-save-sync-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Google Antigravity - Agentic IDE (upstream maintained by jacopone)
     antigravity = {
       url = "github:jacopone/antigravity-nix";
@@ -91,6 +97,7 @@
         inputs.chaotic.overlays.default
         inputs.tidalcycles.overlays.default
         inputs.antigravity.overlays.default
+        inputs.nx-save-sync.overlays.default
       ];
     };
 

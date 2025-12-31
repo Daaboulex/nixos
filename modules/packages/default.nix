@@ -55,7 +55,7 @@ in
         gawk
         coreutils
         testdisk
-
+        gparted # TODO Partition manager kde is not working
         
       ];
 

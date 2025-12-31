@@ -81,8 +81,12 @@
         devices.g502 = {
           enable = true;
           settings = {
+            # sensitivity = 0.3125; # Match Raw Accel Windows (500/1600)
+            # rotation = 0.0;
+            # acceleration = 1.5;
+            # midpoint = 7.0;
             sensitivity = 0.5; # Match Raw Accel Windows setting
-            rotation = -0.01745; # -1 degree
+            rotation = 0.0; # -1 degree
             acceleration = 2.0;
             midpoint = 7.8;
             useSmoothing = false;
@@ -94,6 +98,7 @@
           };
         };
       };
+      piper.enable = true;
       streamcontroller = {
         enable = true;
       };
@@ -212,6 +217,7 @@
     ryubing.enable = true; # Nintendo Switch emulator (Ryujinx fork)
     eden.enable = true; # Nintendo Switch emulator (community fork)
     azahar.enable = true; # 3DS emulator (Citra fork)
+    nxSaveSync.enable = true; # Switch save sync tool
   };
 
   # ============================================================================
@@ -301,10 +307,13 @@
   # potentially overriding device-specific configs if not matched globally.
   hardware.yeetmouse = {
     sensitivity = 0.5; # Match Raw Accel Windows (0.5)
+    # sensitivity = 0.3125; # Match Raw Accel Windows (500/1600)
     rotation = {
-      angle = -1.0; # -1 degree
+      angle = 0.0;
     };
     mode.jump = {
+      # acceleration = 1.5;
+      # midpoint = 7.0
       acceleration = 2.0;
       midpoint = 7.8;
       useSmoothing = false;
