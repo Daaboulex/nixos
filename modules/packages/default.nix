@@ -34,6 +34,7 @@ in
         unzip
         zip
         p7zip
+        unrar  # RAR extraction for KDE Ark
         jq
         which
         man-pages
