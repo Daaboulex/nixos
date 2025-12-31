@@ -22,6 +22,9 @@
     networking.firewall = {
       enable = true;
 
+      # NX-Save-Sync port (for Switch save file sync)
+      allowedTCPPorts = [ 8080 ];
+
       # KDE Connect port ranges (for file sharing, notifications, etc.)
       allowedTCPPortRanges = [ { from = 1714; to = 1764; } ];
       allowedUDPPortRanges = [ { from = 1714; to = 1764; } ];
