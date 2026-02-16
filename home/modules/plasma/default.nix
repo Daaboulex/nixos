@@ -375,7 +375,8 @@ in {
         location = "bottom";
         screen = 0;
         height = 44;
-        floating = false;
+        floating = false; # Disable floating dock (User Request)
+        lengthMode = "fill";
         widgets = [
           # Application Launcher (Kickoff)
           {

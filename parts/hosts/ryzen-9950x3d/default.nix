@@ -164,7 +164,7 @@
 
     chaotic.optimizations = {
       enable = true;
-      enableMesaGit = false; # Fix build failure - mesa-git conflicting with pinned nixpkgs
+      enableMesaGit = true; # Fix build failure - mesa-git conflicting with pinned nixpkgs
       enableSchedExt = true;
       schedExtScheduler = "scx_rusty"; # Best for gaming - minimizes latency/stuttering
     };

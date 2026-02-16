@@ -85,7 +85,7 @@
 
     # Portmaster - Privacy Application (Local Flake)
     portmaster = {
-      url = "path:./pkgs/portmaster";
+      url = "github:daaboulex/portmaster-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };

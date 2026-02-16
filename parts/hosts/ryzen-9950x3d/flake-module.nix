@@ -80,6 +80,7 @@
           inputs.tidalcycles.overlays.default
           inputs.antigravity.overlays.default
           inputs.nx-save-sync.overlays.default
+          inputs.portmaster.overlays.default
         ];
       }
     ];
