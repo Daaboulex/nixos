@@ -57,7 +57,7 @@
     };
 
     hardware = {
-      base.enable = true;
+      core.enable = true;
       networking.enable = true;
       audio = {
         enable = true;
@@ -104,7 +104,7 @@
       };
     };
 
-    boot = {
+    system.boot = {
       enable = true;
       loader = "systemd-boot";
       secureBoot = {

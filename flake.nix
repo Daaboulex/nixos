@@ -8,8 +8,14 @@
     # Core NixOS packages - using unstable channel for latest packages
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
+    # Flake Parts - Modular flake framework
+    flake-parts.url = "github:hercules-ci/flake-parts";
+
     # Chaotic-Nyx - CachyOS kernels and optimized packages
-    chaotic.url = "https://flakehub.com/f/chaotic-cx/nyx/*.tar.gz";
+    chaotic = {
+      url = "https://flakehub.com/f/chaotic-cx/nyx/*.tar.gz";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     # TidalCycles - Live coding music environment
     tidalcycles.url = "github:mitchmindtree/tidalcycles.nix";
@@ -76,67 +82,30 @@
       url = "github:jacopone/antigravity-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # Portmaster - Privacy Application (Local Flake)
+    portmaster = {
+      url = "path:./pkgs/portmaster";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   # ============================================================================
   # Outputs - System configurations and overlays
   # ============================================================================
-  outputs = { self, ... }@inputs:
-  let
-    # System architecture
-    system = "x86_64-linux";
-
-    # Package set with overlays applied
-    pkgs = import inputs.nixpkgs {
-      inherit system;
-      config = {
-        allowUnfree = true;  # Enable proprietary packages (NVIDIA, etc.)
+  outputs = inputs@{ flake-parts, ... }:
+    flake-parts.lib.mkFlake { inherit inputs; } {
+      systems = [ "x86_64-linux" ];
+      imports = [ ./parts/flake-module.nix ];
+      
+      perSystem = { config, self', inputs', pkgs, system, ... }: {
+        _module.args.pkgs = import inputs.nixpkgs {
+          inherit system;
+          overlays = [
+            inputs.portmaster.overlays.default
+          ];
+          config.allowUnfree = true;
+        };
       };
-      overlays = [
-        (import ./overlays { inherit inputs; })
-        inputs.chaotic.overlays.default
-        inputs.tidalcycles.overlays.default
-        inputs.antigravity.overlays.default
-        inputs.nx-save-sync.overlays.default
-      ];
     };
-
-    # Helper function to create NixOS system configurations
-    mkHost = { hostname }:
-      inputs.nixpkgs.lib.nixosSystem {
-        inherit pkgs system;
-        specialArgs = { inherit inputs; };
-        modules = [
-          # External modules
-          inputs.chaotic.nixosModules.default
-          inputs.nix-flatpak.nixosModules.nix-flatpak
-          inputs.home-manager.nixosModules.home-manager
-          inputs.lanzaboote.nixosModules.lanzaboote
-          inputs.sops-nix.nixosModules.sops
-
-          # Pass inputs to Home Manager for plasma-manager access
-          {
-            home-manager.useGlobalPkgs = true;   # Use system nixpkgs (saves eval, adds consistency)
-            home-manager.useUserPackages = true; # Install to /etc/profiles (required for build-vm)
-            home-manager.extraSpecialArgs = { inherit inputs; };
-          }
-
-          # Host-specific configuration
-          ./hosts/${hostname}/default.nix
-
-          # Shared modules
-          ./modules/default.nix
-          ./home/home.nix
-        ];
-      };
-  in {
-    # NixOS system configurations
-    nixosConfigurations = {
-      macbook-pro-9-2 = mkHost { hostname = "macbook-pro-9-2"; };
-      ryzen-9950x3d = mkHost { hostname = "ryzen-9950x3d"; };
-    };
-
-    # Export overlays for reuse
-    overlays.default = import ./overlays { inherit inputs; };
-  };
 }
