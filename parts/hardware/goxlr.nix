@@ -37,7 +37,7 @@
             node.description = "EQ ${name}"
             media.name = "EQ ${name}"
             filter.graph = {
-              nodes = [ { type = builtin; name = eq; label = param_eq; config = { ${eqFilters} } } ]
+              nodes = [ { type = builtin name = eq label = param_eq config = { ${eqFilters} } } ]
               links = []
             }
             audio.channels = 2

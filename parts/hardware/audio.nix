@@ -43,7 +43,7 @@
           easyeffects
         ];
 
-        users.users.user.extraGroups = [ "audio" ];
+        users.users.${config.myModules.primaryUser}.extraGroups = [ "audio" "video" ];
       };
     };
 }
