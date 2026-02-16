@@ -30,6 +30,7 @@
           gamescope = lib.mkOption { type = lib.types.bool; default = true; description = "Enable Gamescope session for Steam"; };
         };
         protonup = { enable = lib.mkEnableOption "ProtonUp-Qt for managing Proton versions"; };
+        vibrantlinux = { enable = lib.mkEnableOption "VibrantLinux for color saturation control"; };
         heroic = { enable = lib.mkOption { type = lib.types.bool; default = true; description = "Enable Heroic Games Launcher"; }; };
         gamescope = { enable = lib.mkOption { type = lib.types.bool; default = true; description = "Enable Gamescope"; }; };
         mangohud = { enable = lib.mkOption { type = lib.types.bool; default = true; description = "Enable MangoHud"; }; };
@@ -78,6 +79,7 @@
             gamemode
           ]
           ++ lib.optionals cfg.protonup.enable [ protonup-qt ]
+          ++ lib.optionals cfg.vibrantlinux.enable [ vibrantlinux ]
           ++ lib.optionals cfg.mangohud.enable [ mangohud ]
           ++ lib.optionals cfg.heroic.enable [ heroicWithExtras ]
           ++ lib.optionals cfg.ryubing.enable [ ryubing ]

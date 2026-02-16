@@ -580,9 +580,6 @@ in {
         ActiveMouseScreen = true;
       };
 
-      "kwinrc"."Plugins" = {
-      };
-
       "kwinrc"."ElectricBorders" = {
         TopLeft = 0;
         TopRight = 0;

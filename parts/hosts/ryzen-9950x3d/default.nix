@@ -209,6 +209,7 @@
       gamescope = true;
     };
     protonup.enable = true;
+    vibrantlinux.enable = true;
     heroic.enable = true;
     gamescope.enable = false;
     mangohud.enable = false;

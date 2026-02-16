@@ -44,12 +44,13 @@
           corectrl
         ]);
         
-        systemd.services.lact = lib.mkIf cfg.lact.enable {
+        systemd.services.lactd = lib.mkIf cfg.lact.enable {
           description = "AMDGPU Control Daemon";
           after = [ "multi-user.target" ];
           wantedBy = [ "multi-user.target" ];
           serviceConfig = {
             ExecStart = "${pkgs.lact}/bin/lact daemon";
+            Restart = "always";
           };
         };
         
