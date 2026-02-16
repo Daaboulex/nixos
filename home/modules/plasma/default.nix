@@ -5,7 +5,7 @@
 
 let
   # Helper for cleaner flatpak app references
-  flatpakApp = id: "file:///var/lib/flatpak/exports/share/applications/${id}.desktop";
+  flatpakApp = id: "file:///home/user/.local/share/flatpak/exports/share/applications/${id}.desktop";
 in {
   imports = [ inputs.plasma-manager.homeModules.plasma-manager ];
 
