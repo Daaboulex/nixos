@@ -29,6 +29,7 @@
           enable = lib.mkOption { type = lib.types.bool; default = true; description = "Enable Steam"; };
           gamescope = lib.mkOption { type = lib.types.bool; default = true; description = "Enable Gamescope session for Steam"; };
         };
+        protonup = { enable = lib.mkEnableOption "ProtonUp-Qt for managing Proton versions"; };
         heroic = { enable = lib.mkOption { type = lib.types.bool; default = true; description = "Enable Heroic Games Launcher"; }; };
         gamescope = { enable = lib.mkOption { type = lib.types.bool; default = true; description = "Enable Gamescope"; }; };
         mangohud = { enable = lib.mkOption { type = lib.types.bool; default = true; description = "Enable MangoHud"; }; };
@@ -76,6 +77,7 @@
             steam-devices-udev-rules
             gamemode
           ]
+          ++ lib.optionals cfg.protonup.enable [ protonup-qt ]
           ++ lib.optionals cfg.mangohud.enable [ mangohud ]
           ++ lib.optionals cfg.heroic.enable [ heroicWithExtras ]
           ++ lib.optionals cfg.ryubing.enable [ ryubing ]
