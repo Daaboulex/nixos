@@ -583,6 +583,13 @@ in {
       "kwinrc"."Plugins" = {
       };
 
+      "kwinrc"."ElectricBorders" = {
+        TopLeft = "None";
+        TopRight = "None";
+        BottomLeft = "None";
+        BottomRight = "None";
+      };
+
       "kwinrc"."TabBox" = {
         LayoutName = "compact";
       };
