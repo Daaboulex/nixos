@@ -584,10 +584,14 @@ in {
       };
 
       "kwinrc"."ElectricBorders" = {
-        TopLeft = "None";
-        TopRight = "None";
-        BottomLeft = "None";
-        BottomRight = "None";
+        TopLeft = 0;
+        TopRight = 0;
+        BottomLeft = 0;
+        BottomRight = 0;
+      };
+
+      "plasmaparc"."General" = {
+        showVirtualDevices = true;
       };
 
       "kwinrc"."TabBox" = {
