@@ -69,7 +69,7 @@
       fsType = "ntfs3";
       options = [ 
         "uid=1000" "gid=100" "dmask=022" "fmask=133" 
-        "nofail" "x-systemd.automount" 
+        "nofail" "x-systemd.automount" "force"
       ];
     };
 
@@ -79,7 +79,7 @@
       fsType = "ntfs3";
       options = [ 
         "uid=1000" "gid=100" "dmask=022" "fmask=133" 
-        "nofail" "x-systemd.automount" 
+        "nofail" "x-systemd.automount" "force"
       ];
     };
 
