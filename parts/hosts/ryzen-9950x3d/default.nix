@@ -209,7 +209,6 @@
       gamescope = true;
     };
     protonup.enable = true;
-    vibrantlinux.enable = true;
     heroic.enable = true;
     gamescope.enable = false;
     mangohud.enable = false;
@@ -237,19 +236,14 @@
   # ============================================================================
   myModules.cachyos.settings = {
     enable = true;
-    allowUnsafe = true;
-    applyAllConfigs = true;
-    debug = true;
-    categories = {
-      desktop = true;
-      networking = true;
-      storage = true;
-      gaming = true;
-      server = true;
-    };
-    applyUdevIOSchedulers = true;
-    applySATAALPM = true;
-    applyTmpfilesTHP = true;
+    ioSchedulers = true;      # bfq=HDD, mq-deadline=SSD, none=NVMe
+    pciLatency = true;        # Audio PCI latency optimization
+    audioPowerSave = true;    # Disable snd-hda-intel power saving on AC
+    hdparmTuning = true;      # HDD hdparm tuning (user has HDD)
+    sataALPM = true;          # SATA max_performance (user has SATA)
+    ntsync = true;            # Wine/Proton NT sync primitives
+    amdgpuGcnCompat = false;  # Not needed for RX 9070 XT (RDNA 4)
+    thp = true;               # THP defrag + khugepaged shrinker
   };
 
   # ============================================================================

@@ -70,7 +70,6 @@
       performance = {
         enable = true;
         governor = "powersave"; # Efficient for Intel Ivy Bridge laptop
-        zramPercent = 100;       # Balanced ZRAM use
       };
       power.enable = true;
       macbook.patches.enable = true;
@@ -127,23 +126,14 @@
   # ============================================================================
   myModules.cachyos.settings = {
     enable = true;
-    allowUnsafe = true;      # TESTING: Apply all CachyOS settings without filters
-    applyAllConfigs = true;  # EXPERIMENTAL: Auto-discover ALL config files
-    debug = true;            # Required for unsafe/experimental modes
-    categories = {
-      desktop = true;
-      networking = true;
-      storage = true;
-      gaming = true;
-      server = true;
-    };
-    
-    # Previous granular settings (commented out while testing dynamic mode)
-    # capJournald = true;
-    # applyTmpfilesTHP = true;
-    # x11TapToClick = true;
-    # applyUdevIOSchedulers = false;
-    # applySATAALPM = true;
+    ioSchedulers = true;
+    pciLatency = true;
+    audioPowerSave = true;
+    hdparmTuning = false;     # No HDD on this laptop
+    sataALPM = false;         # Laptop — keep default power management
+    ntsync = true;
+    amdgpuGcnCompat = false;
+    thp = true;
   };
 
   # ============================================================================
