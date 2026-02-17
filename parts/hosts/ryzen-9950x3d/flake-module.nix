@@ -43,6 +43,7 @@
           inputs.self.nixosModules.system-services
           
           inputs.self.nixosModules.apps-arkenfox
+          inputs.portmaster.nixosModules.default
           inputs.self.nixosModules.apps-portmaster
           inputs.self.nixosModules.apps-tidalcycles
           inputs.self.nixosModules.apps-wine
