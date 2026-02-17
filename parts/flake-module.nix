@@ -38,7 +38,6 @@
     ./system/ssh.nix
     ./system/sops.nix
     ./system/services.nix
-    ./system/diagnostics.nix
     
     ./apps/gaming.nix
 

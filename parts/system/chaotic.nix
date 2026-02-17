@@ -1,5 +1,9 @@
 { inputs, ... }: {
-  flake.nixosModules.system-chaotic = { config, lib, pkgs, ... }: {
+  flake.nixosModules.system-chaotic = { config, lib, pkgs, ... }:
+    let
+      cfg = config.myModules.chaotic.optimizations;
+      amdGpuEnabled = config.myModules.hardware.graphics.amd.enable or false;
+    in {
     options.myModules.chaotic.optimizations = {
       enable = lib.mkEnableOption "Chaotic-Nyx package optimizations";
       
@@ -27,43 +31,75 @@
       };
     };
 
-    config = lib.mkIf config.myModules.chaotic.optimizations.enable {
+    config = lib.mkIf cfg.enable {
+      # ================================================================
+      # Mesa Git — Bleeding-edge GPU drivers
+      # ================================================================
+      # chaotic.mesa-git does mkForce on hardware.graphics.extraPackages,
+      # so we must pass our packages through its own extraPackages option.
       chaotic.mesa-git = {
-        enable = config.myModules.chaotic.optimizations.enableMesaGit;
+        enable = cfg.enableMesaGit;
         fallbackSpecialisation = false;
+        extraPackages = with pkgs; [
+          libvdpau-va-gl libdrm_git
+          vulkanPackages_latest.vulkan-loader
+          vulkanPackages_latest.vulkan-tools
+          vulkanPackages_latest.vulkan-validation-layers
+          vulkanPackages_latest.vulkan-extension-layer
+          vulkanPackages_latest.vulkan-utility-libraries
+          vulkanPackages_latest.spirv-tools
+          vulkanPackages_latest.spirv-headers
+          vulkanPackages_latest.spirv-cross
+        ] ++ lib.optionals (config.myModules.hardware.graphics.intel.enable or false) [
+          intel-media-driver intel-vaapi-driver
+        ];
       };
 
-      hardware.graphics.extraPackages = lib.mkOverride 40 (with pkgs; [
-        libvdpau-va-gl libdrm_git
-        vulkanPackages_latest.vulkan-loader
-        vulkanPackages_latest.vulkan-tools
-        vulkanPackages_latest.vulkan-validation-layers
-        vulkanPackages_latest.vulkan-extension-layer
-        vulkanPackages_latest.vulkan-utility-libraries
-        vulkanPackages_latest.spirv-tools
-        vulkanPackages_latest.spirv-headers
-        vulkanPackages_latest.spirv-cross
-      ] ++ lib.optionals (config.myModules.hardware.graphics.intel.enable or false) [
-        intel-media-driver intel-vaapi-driver
-      ]);
+      # When mesa-git is disabled, set extraPackages directly
+      hardware.graphics.extraPackages = lib.mkIf (!cfg.enableMesaGit) (
+        lib.mkOverride 40 (with pkgs; [
+          libvdpau-va-gl
+          vulkanPackages_latest.vulkan-loader
+          vulkanPackages_latest.vulkan-tools
+          vulkanPackages_latest.vulkan-validation-layers
+          vulkanPackages_latest.vulkan-extension-layer
+          vulkanPackages_latest.vulkan-utility-libraries
+          vulkanPackages_latest.spirv-tools
+          vulkanPackages_latest.spirv-headers
+          vulkanPackages_latest.spirv-cross
+        ] ++ lib.optionals (config.myModules.hardware.graphics.intel.enable or false) [
+          intel-media-driver intel-vaapi-driver
+        ])
+      );
 
+      # ================================================================
+      # Wayland Git packages — Latest protocol support
+      # ================================================================
       environment.systemPackages = with pkgs; [
         wayland_git wayland-protocols_git wayland-scanner_git wlroots_git
         nss_git
       ];
 
-      services.scx = lib.mkIf config.myModules.chaotic.optimizations.enableSchedExt {
+      # ================================================================
+      # sched_ext — Pluggable kernel CPU schedulers
+      # ================================================================
+      services.scx = lib.mkIf cfg.enableSchedExt {
         enable = true;
-        scheduler = config.myModules.chaotic.optimizations.schedExtScheduler;
+        scheduler = cfg.schedExtScheduler;
         package = pkgs.scx.full;
       };
 
-      boot.kernelParams = lib.mkIf config.myModules.chaotic.optimizations.enableSchedExt [ "sched_ext" ];
+      boot.kernelParams = lib.mkIf cfg.enableSchedExt [ "sched_ext" ];
 
+      # ================================================================
+      # Wayland/Vulkan session variables
+      # ================================================================
       environment.sessionVariables = {
         NIXOS_OZONE_WL = "1";
         SDL_VIDEODRIVER = "wayland";
-        VK_DRIVER_FILES = lib.mkDefault "/run/opengl-driver/share/vulkan/icd.d/radeon_icd.x86_64.json";
+        # RADV ICD path — only for AMD GPUs to avoid NVIDIA/Intel breakage
+        VK_DRIVER_FILES = lib.mkIf amdGpuEnabled
+          (lib.mkDefault "/run/opengl-driver/share/vulkan/icd.d/radeon_icd.x86_64.json");
       };
     };
   };

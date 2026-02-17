@@ -1,9 +1,8 @@
 { inputs, ... }: {
   flake.nixosModules.hardware-gpu-intel = { config, lib, pkgs, ... }: {
-    options.myModules.hardware.graphics.intel.enable =
-      lib.mkEnableOption "Intel Graphics (i915) configuration";
-
     options.myModules.hardware.graphics.intel = {
+      enable = lib.mkEnableOption "Intel Graphics (i915) configuration";
+
       kernelParams = {
         enablePsr = lib.mkOption {
           type = lib.types.bool;

@@ -23,9 +23,9 @@
         networkmanager.enable = true;
         firewall = {
           enable = true;
-          allowedTCPPorts = cfg.openPorts ++ [ 8080 ];
-          allowedTCPPortRanges = cfg.openPortRanges ++ [ { from = 1714; to = 1764; } ]; # KDE Connect default
-          allowedUDPPortRanges = cfg.openPortRanges ++ [ { from = 1714; to = 1764; } ]; # KDE Connect default
+          allowedTCPPorts = cfg.openPorts;
+          allowedTCPPortRanges = cfg.openPortRanges;
+          allowedUDPPortRanges = cfg.openPortRanges;
         };
         nameservers = [
           "176.9.93.198" "176.9.1.117" "2a01:4f8:151:34aa::198" "2a01:4f8:141:316d::117"

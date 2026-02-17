@@ -92,8 +92,7 @@
             TimeoutStopSec = "30s";
           };
         };
-        xdg.portal.enable = lib.mkIf cfg.ui.enable true;
-        xdg.portal.extraPortals = lib.mkIf cfg.ui.enable ((lib.optional (portalKDE != null) portalKDE) ++ [ pkgs.xdg-desktop-portal-gtk ]);
+        # NOTE: xdg.portal is already configured by kde.nix — no need to duplicate here
         
         systemd.user.services.portmaster-app = lib.mkIf cfg.ui.enable {
           description = "Portmaster App";

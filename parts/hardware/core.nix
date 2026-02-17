@@ -13,7 +13,8 @@
       hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 
       # Common Hardware Sensors and Monitoring
-      services.thermald.enable = lib.mkDefault true; # Good for most modern CPUs
+      # thermald is Intel-only — it conflicts with AMD P-State/Prefcore
+      services.thermald.enable = lib.mkDefault (config.myModules.hardware.cpu.intel.enable or false);
       boot.kernelModules = [ "coretemp" "drivetemp" ];
     };
   };

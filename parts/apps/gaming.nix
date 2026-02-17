@@ -95,32 +95,25 @@
         })
 
         # ------------------------------------------------------------------------
-        # Chaotic Optimizations
+        # Chaotic Gaming Optimizations
         # ------------------------------------------------------------------------
         (lib.mkIf chaoticCfg.enable {
-          # Overlays for Git versions
-          nixpkgs.overlays = [
-            (final: prev: {
-              gamescope = if chaoticCfg.enableGamescope then prev.gamescope else prev.gamescope;
-              mangohud = if chaoticCfg.enableMangohud then prev.mangohud else prev.mangohud;
-            })
-          ];
-
+          # Proton-CachyOS + Proton-GE — optimized compatibility layers
           programs.steam.extraCompatPackages = lib.mkIf chaoticCfg.enableProtonCachyOS [
             pkgs.proton-ge-custom
             protonPackage
           ];
 
-          environment.systemPackages = with pkgs; [
-            (lib.mkIf chaoticCfg.enableGamescope gamescope)
-            (lib.mkIf chaoticCfg.enableMangohud mangohud)
-            latencyflex-vulkan
-            luxtorpeda
-            ananicy-rules-cachyos_git
-            beautyline-icons
-            applet-window-title
-          ];
+          # Gaming-specific packages (optimizations only, no cosmetics)
+          environment.systemPackages = with pkgs;
+            lib.optionals chaoticCfg.enableGamescope [ gamescope ]
+            ++ lib.optionals chaoticCfg.enableMangohud [ mangohud ]
+            ++ [
+              latencyflex-vulkan  # Frame pacing / latency reduction for Vulkan games
+              luxtorpeda          # Native Linux game engine replacements
+            ];
 
+          # Gamemode GPU optimization settings
           programs.gamemode = {
             enable = true;
             settings = {
@@ -133,6 +126,9 @@
             };
           };
 
+          # Gaming environment variables
+          # Note: VK_DRIVER_FILES is set in chaotic.nix (AMD-conditional)
+          # Note: ananicy-rules-cachyos_git is provided by performance.nix rulesProvider
           environment.sessionVariables = {
             MANGOHUD = lib.mkDefault "0";
             GAMESCOPE_LIMITER_FILE = "/tmp/gamescope-limiter";
@@ -140,18 +136,6 @@
             RADV_PERFTEST = "gpl,nggc";
             VK_LAYER_PATH = "/run/opengl-driver/share/vulkan/explicit_layer.d";
           };
-
-          security.pam.loginLimits = [
-            { domain = "*"; type = "soft"; item = "nofile"; value = "524288"; }
-            { domain = "*"; type = "hard"; item = "nofile"; value = "1048576"; }
-          ];
-
-          systemd.settings.Manager.DefaultLimitNOFILE = "1048576";
-
-          services.udev.extraRules = ''
-            ACTION=="add|change", KERNEL=="nvme[0-9]n[0-9]", ATTR{queue/scheduler}="none"
-            ACTION=="add|change", KERNEL=="sd[a-z]", ATTR{queue/rotational}=="0", ATTR{queue/scheduler}="mq-deadline"
-          '';
         })
       ];
     };

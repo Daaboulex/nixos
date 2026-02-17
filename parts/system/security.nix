@@ -11,8 +11,7 @@
         security.rtkit.enable = true;
         
         security.pam.loginLimits = [
-          { domain = "@audio"; type = "soft"; item = "rtprio"; value = 95; }
-          { domain = "@audio"; type = "hard"; item = "rtprio"; value = 99; }
+          # @audio rtprio is handled by myModules.cachyos.settings (CachyOS upstream)
           { domain = "@audio"; type = "soft"; item = "memlock"; value = -1; }
           { domain = "@audio"; type = "hard"; item = "memlock"; value = -1; }
           { domain = "@wheel"; type = "-"; item = "rtprio"; value = 99; }

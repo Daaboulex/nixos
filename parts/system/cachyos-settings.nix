@@ -108,10 +108,31 @@
           # Network
           # Increase network device backlog queue
           "net.core.netdev_max_backlog" = 4096;
+          # Use CAKE qdisc for better latency and fairness
+          "net.core.default_qdisc" = "cake";
 
           # Filesystem
           # Increase maximum open file handles
           "fs.file-max" = 2097152;
+
+          # Gaming / Proton
+          # Required by many Steam/Proton games — some crash without this
+          "vm.max_map_count" = 2147483642;
+
+          # Desktop/Gaming Performance
+          # Disable proactive memory compaction — reduces latency spikes on large RAM (64GB+)
+          "vm.compaction_proactiveness" = 0;
+          # Disable CFS autogroups — let sched_ext handle scheduling
+          "kernel.sched_autogroup_enabled" = 0;
+
+          # TCP Performance (gaming + downloads)
+          # BBR congestion control — better throughput and lower latency than cubic
+          "net.ipv4.tcp_congestion_control" = "bbr";
+          # Enable TCP Fast Open for client + server
+          "net.ipv4.tcp_fastopen" = 3;
+          # Increase TCP buffer sizes for high-bandwidth connections
+          "net.core.rmem_max" = 16777216;
+          "net.core.wmem_max" = 16777216;
         };
 
         # ====================================================================
@@ -230,14 +251,15 @@
         '';
 
         # Source: usr/lib/systemd/system.conf.d/00-timeout.conf + 10-limits.conf
-        systemd.extraConfig = ''
-          DefaultTimeoutStartSec=15s
-          DefaultTimeoutStopSec=10s
-          DefaultLimitNOFILE=2048:2097152
-        '';
+        systemd.settings.Manager = {
+          DefaultTimeoutStartSec = "15s";
+          DefaultTimeoutStopSec = "10s";
+          DefaultLimitNOFILE = "2048:2097152";
+        };
 
         # Source: usr/lib/systemd/user.conf.d/10-limits.conf
-        systemd.user.extraConfig = ''
+        environment.etc."systemd/user.conf.d/10-cachyos-limits.conf".text = ''
+          [Manager]
           DefaultLimitNOFILE=1024:1048576
         '';
 

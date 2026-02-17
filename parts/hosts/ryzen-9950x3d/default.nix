@@ -18,7 +18,6 @@
       nix.enable = true;
       users.enable = true;
       services.enable = true;
-      diagnostics.enable = true;
       filesystems = {
         enable = true;
         enableAll = true;
@@ -33,7 +32,7 @@
         hardware = true;
         diagnostics = true;
         monitoring = true;
-        benchmarking = true; # Skip stress tests on old hardware
+        benchmarking = true;
       };
     };
 
@@ -190,6 +189,7 @@
         "acpi_enforce_resources=lax"
         "pci=realloc"
         "usbcore.autosuspend=-1" # Disable USB autosuspend (fixes xhci_hcd suspend timeout)
+        "split_lock_detect=off"  # Prevents perf drops in games using split-lock instructions
         
         # # AMD GPU Stabilization (Fix for ring timeout/crashes)
         # "amdgpu.ppfeaturemask=0xf7fff" # Disable GFXOFF
@@ -226,9 +226,9 @@
   # Tools Configuration
   # ============================================================================
   myModules.tools = {
-    listGpuDrivers.enable = true; # list-gpu-drivers tool
-    listIommuGroups.enable = true; # list-iommu-groups tool
-    llmPrep.enable = true; # llm-prep context tool
+    sysdiag.enable = true;        # System diagnostics (replaces list-gpu-drivers)
+    listIommuGroups.enable = true; # IOMMU group listing
+    llmPrep.enable = true;        # LLM context builder
   };
 
   # ============================================================================
@@ -273,12 +273,9 @@
   # Boot Configuration
   # ============================================================================
   boot = {
-    supportedFilesystems = [ "btrfs" ];
-    # Note: AMD kernel modules (amdgpu, kvm-amd, k10temp) now in amd.nix
-
-    loader = {
-      timeout = lib.mkForce 10;
-    };
+    # Note: btrfs already handled by filesystems.nix (enableAll)
+    # Note: AMD kernel modules (amdgpu, kvm-amd, k10temp) in cpu-amd.nix / gpu-amd.nix
+    loader.timeout = lib.mkForce 10;
   };
 
   # ============================================================================
@@ -290,11 +287,6 @@
   # ============================================================================
   services = {
     power-profiles-daemon.enable = false;
-
-    fstrim = {
-      enable = true;
-      interval = "weekly";
-    };
   };
 
   # ============================================================================

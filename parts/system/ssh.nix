@@ -34,7 +34,7 @@
           };
         };
 
-        users.users.user.openssh.authorizedKeys.keys = cfg.trustedKeys;
+        users.users.${config.myModules.primaryUser}.openssh.authorizedKeys.keys = cfg.trustedKeys;
         networking.firewall.allowedTCPPorts = [ 22 ];
 
         services.fail2ban = {

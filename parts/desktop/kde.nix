@@ -65,6 +65,11 @@
             pkgs.kdePackages.xdg-desktop-portal-kde 
           ];
         };
+        # KDE Connect firewall rules
+        networking.firewall = {
+          allowedTCPPortRanges = [ { from = 1714; to = 1764; } ];
+          allowedUDPPortRanges = [ { from = 1714; to = 1764; } ];
+        };
 
         i18n.defaultLocale = lib.mkDefault "en_US.UTF-8";
         environment.variables.LC_ALL = lib.mkDefault "en_US.UTF-8";

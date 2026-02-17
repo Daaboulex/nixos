@@ -6,14 +6,13 @@
     };
     options.myModules.programs.bottles.enable = lib.mkEnableOption "Enable Bottles installation";
 
-    config = let
-      wineEnabled = config.myModules.programs.wine.enable;
-      variant = config.myModules.programs.wine.variant;
-      winePkg = pkgs.wineWow64Packages.${variant};
-      bottlesEnabled = config.myModules.programs.bottles.enable;
-      pkgList = (if wineEnabled then [ winePkg ] else []) ++ (if bottlesEnabled then [ pkgs.bottles ] else []);
-    in {
-      environment.systemPackages = pkgList;
-    };
+    config = lib.mkMerge [
+      (lib.mkIf config.myModules.programs.wine.enable {
+        environment.systemPackages = [ pkgs.wineWow64Packages.${config.myModules.programs.wine.variant} ];
+      })
+      (lib.mkIf config.myModules.programs.bottles.enable {
+        environment.systemPackages = [ pkgs.bottles ];
+      })
+    ];
   };
 }

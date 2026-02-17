@@ -41,7 +41,6 @@
           inputs.self.nixosModules.system-ssh
           inputs.self.nixosModules.system-sops
           inputs.self.nixosModules.system-services
-          inputs.self.nixosModules.system-diagnostics
           
           inputs.self.nixosModules.apps-arkenfox
           inputs.self.nixosModules.apps-portmaster

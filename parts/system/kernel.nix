@@ -10,13 +10,10 @@
     };
 
     config = lib.mkIf config.myModules.kernel.enable {
-      boot.kernelPackages = 
-        let
-          pkgsKernel = if config.myModules.chaotic.optimizations.enable then pkgs else pkgs; # Chaotic overlay applies to pkgs
-        in
-          if config.myModules.kernel.variant == "cachyos" then pkgsKernel.linuxPackages_cachyos
-          else if config.myModules.kernel.variant == "cachyos-lto" then pkgsKernel.linuxPackages_cachyos-lto
-          else if config.myModules.kernel.variant == "cachyos-sched-ext" then pkgsKernel.linuxPackages_cachyos-sched-ext
+      boot.kernelPackages =
+          if config.myModules.kernel.variant == "cachyos" then pkgs.linuxPackages_cachyos
+          else if config.myModules.kernel.variant == "cachyos-lto" then pkgs.linuxPackages_cachyos-lto
+          else if config.myModules.kernel.variant == "cachyos-sched-ext" then pkgs.linuxPackages_cachyos-sched-ext
           else if config.myModules.kernel.variant == "zen" then pkgs.linuxPackages_zen
           else if config.myModules.kernel.variant == "xanmod" then pkgs.linuxPackages_xanmod
           else pkgs.linuxPackages;
