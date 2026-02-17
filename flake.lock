@@ -478,11 +478,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1771257170,
-        "narHash": "sha256-Kc+7mRu8MkW4GIsksRzH8Gksjx1lknjsRdqLvJaMFIg=",
+        "lastModified": 1771336050,
+        "narHash": "sha256-aHCP3XQtzQvaRXOgdArWRAKCMFLuHocwH/wDQOk3AWI=",
         "owner": "daaboulex",
         "repo": "portmaster-nix",
-        "rev": "aff04e36c76ae23dd7efeef7230bff4f4bfddf2b",
+        "rev": "40109513e07c33966a51fa1576ca3f94f5dc727f",
         "type": "github"
       },
       "original": {
