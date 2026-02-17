@@ -242,7 +242,7 @@
     hdparmTuning = true;      # HDD hdparm tuning (user has HDD)
     sataALPM = true;          # SATA max_performance (user has SATA)
     ntsync = true;            # Wine/Proton NT sync primitives
-    amdgpuGcnCompat = false;  # Not needed for RX 9070 XT (RDNA 4)
+    amdgpuGcnCompat = true;  # Not needed for RX 9070 XT (RDNA 4)
     thp = true;               # THP defrag + khugepaged shrinker
   };
 

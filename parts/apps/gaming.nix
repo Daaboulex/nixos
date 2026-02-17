@@ -64,7 +64,7 @@
         # ------------------------------------------------------------------------
         (lib.mkIf cfg.enable {
           programs.steam = lib.mkIf cfg.steam.enable {
-            package = pkgs.steam.override { extraBwrapArgs = [ "--unsetenv" "TZ" ]; };
+            # package = pkgs.steam.override { extraBwrapArgs = [ "--unsetenv" "TZ" ]; };
             enable = true;
             gamescopeSession.enable = cfg.steam.gamescope && cfg.gamescope.enable;
           };
