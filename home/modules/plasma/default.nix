@@ -550,7 +550,7 @@ in {
       # ========================================================================
       "org.kde.dolphin.desktop"."_launch" = "Meta+Shift+Q";
       "org.kde.konsole.desktop"."_launch" = "Ctrl+Alt+T";
-      "org.kde.krunner.desktop"."_launch" = ["Meta" "Search"];
+      "org.kde.krunner.desktop"."_launch" = "Alt+Space";
       "org.kde.plasma-systemmonitor.desktop"."_launch" = "Meta+Esc";
       "org.kde.plasma.emojier.desktop"."_launch" = "Meta+.";
       "org.kde.spectacle.desktop"."ActiveWindowScreenShot" = "Meta+Print";
