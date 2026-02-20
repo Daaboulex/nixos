@@ -73,6 +73,10 @@
 
         i18n.defaultLocale = lib.mkDefault "en_US.UTF-8";
         environment.variables.LC_ALL = lib.mkDefault "en_US.UTF-8";
+        environment.sessionVariables = {
+          NIXOS_OZONE_WL = "1";
+          SDL_VIDEODRIVER = "wayland";
+        };
       };
     };
 }

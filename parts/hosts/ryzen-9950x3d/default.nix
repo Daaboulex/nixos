@@ -15,7 +15,9 @@
   # ============================================================================
   myModules = {
     system = {
-      nix.enable = true;
+      nix = {
+        enable = true;
+      };
       users.enable = true;
       services.enable = true;
       filesystems = {
@@ -73,6 +75,10 @@
         enable = true;
         governor = "powersave"; # Use powersave with EPP for Ryzen 9950X3D
         ananicy = true; # Use Ananicy CachyOS rules for process priority
+        scx = {
+          enable = true;
+          scheduler = "scx_rusty";
+        };
       };
       power.enable = true;
       yeetmouse = {
@@ -99,7 +105,7 @@
       };
       piper.enable = true;
       streamcontroller = {
-        enable = false;
+        enable = true;
       };
     };
 
@@ -161,20 +167,6 @@
       bottles.enable = true;
     };
 
-    chaotic.optimizations = {
-      enable = true;
-      enableMesaGit = false; # Fix build failure - mesa-git conflicting with pinned nixpkgs
-      enableSchedExt = true;
-      schedExtScheduler = "scx_rusty"; # Best for gaming - minimizes latency/stuttering
-    };
-
-    
-
-    chaotic.gaming = {
-      enable = true;
-      cpuMicroarch = "v4"; # 9950X3D is Zen 5, use v4 (x86-64-v4)
-    };
-
     kernel = {
       enable = true;
       variant = "cachyos-lto";
@@ -190,12 +182,18 @@
         "pci=realloc"
         "usbcore.autosuspend=-1" # Disable USB autosuspend (fixes xhci_hcd suspend timeout)
         "split_lock_detect=off"  # Prevents perf drops in games using split-lock instructions
-        
-        # # AMD GPU Stabilization (Fix for ring timeout/crashes)
-        # "amdgpu.ppfeaturemask=0xf7fff" # Disable GFXOFF
-        # "amdgpu.runpm=0" # Disable Runtime Power Management
-        # "amdgpu.aspm=0" # Disable Active State Power Management
       ];
+      cachyos = {
+        cpusched = null; # Let SCX Rusty handle scheduling completely
+        bbr3 = true;
+        hzTicks = "1000";
+        kcfi = false;
+        performanceGovernor = true;
+        tickrate = "full";
+        preemptType = "full";
+        ccHarder = true;
+        hugepage = "always";
+      };
     };
   };
 
@@ -208,7 +206,7 @@
       enable = true;
       gamescope = true;
     };
-    protonup.enable = true;
+    protonplus.enable = true;
     heroic.enable = true;
     gamescope.enable = false;
     mangohud.enable = false;
@@ -219,7 +217,7 @@
     ryubing.enable = true; # Nintendo Switch emulator (Ryujinx fork)
     eden.enable = true; # Nintendo Switch emulator (community fork)
     azahar.enable = true; # 3DS emulator (Citra fork)
-    nxSaveSync.enable = true; # Switch save sync tool
+    nxSaveSync.enable = false; # Switch save sync tool
   };
 
   # ============================================================================

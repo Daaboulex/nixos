@@ -11,10 +11,10 @@
     # Flake Parts - Modular flake framework
     flake-parts.url = "github:hercules-ci/flake-parts";
 
-    # Chaotic-Nyx - CachyOS kernels and optimized packages
-    chaotic = {
-      url = "https://flakehub.com/f/chaotic-cx/nyx/*.tar.gz";
-      inputs.nixpkgs.follows = "nixpkgs";
+    # nix-cachyos-kernel - CachyOS kernel provider
+    nix-cachyos-kernel = {
+      url = "github:xddxdd/nix-cachyos-kernel/release";
+      # Do not override its nixpkgs input, otherwise there can be mismatch between patches and kernel version
     };
 
     # TidalCycles - Live coding music environment

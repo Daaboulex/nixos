@@ -15,8 +15,6 @@
           inputs.self.nixosModules.system-nix
           inputs.self.nixosModules.system-users
           inputs.self.nixosModules.system-security
-          inputs.self.nixosModules.system-chaotic
-          
           # Hardware
           inputs.self.nixosModules.hardware-core
           inputs.self.nixosModules.hardware-cpu-amd
@@ -58,7 +56,6 @@
       ../../../home/home.nix
       
       # External Modules
-      inputs.chaotic.nixosModules.default
       inputs.nix-flatpak.nixosModules.nix-flatpak
       inputs.home-manager.nixosModules.home-manager
       inputs.lanzaboote.nixosModules.lanzaboote
@@ -76,7 +73,7 @@
         nixpkgs.config.allowUnfree = true;
         nixpkgs.overlays = [
           inputs.self.overlays.default
-          inputs.chaotic.overlays.default
+          inputs.nix-cachyos-kernel.overlays.pinned
           inputs.tidalcycles.overlays.default
           inputs.antigravity.overlays.default
           inputs.nx-save-sync.overlays.default

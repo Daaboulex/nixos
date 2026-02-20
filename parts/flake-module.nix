@@ -31,7 +31,6 @@
     ./apps/wine.nix
     ./apps/tools.nix
     
-    ./system/chaotic.nix
     ./system/cachyos-settings.nix
     ./system/filesystems.nix
     ./system/packages.nix

@@ -128,10 +128,10 @@ in {
       position = "center";        # Migrated from krunnerrc.General.FreeFloating
       historyBehavior = null;     # null = default ("enableSuggestions")
       activateWhenTypingOnDesktop = null;  # null = default
-      # shortcuts = {
-      #   launch = "Meta";
-      #   runCommandOnClipboard = null;
-      # };
+      shortcuts = {
+        launch = "Meta";
+        runCommandOnClipboard = null;
+      };
     };
 
     # ==========================================================================
@@ -597,6 +597,11 @@ in {
 
       "kwinrc"."Xwayland" = {
         Scale = 1;
+      };
+
+      # ---- Fix Meta key opening Launcher (Intercepts caps:super and normal Meta) ----
+      "kwinrc"."ModifierOnlyShortcuts" = {
+        Meta = "org.kde.plasmashell,/PlasmaShell,org.kde.PlasmaShell,activateLauncherMenu";
       };
 
       # ---- KDE Globals ----
