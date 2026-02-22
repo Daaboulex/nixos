@@ -525,7 +525,7 @@ in {
       # ========================================================================
       # Plasma Shell
       # ========================================================================
-      plasmashell."activate application launcher" = "Alt+F1";
+      plasmashell."activate application launcher" = ["Meta" "Alt+F1"];
       plasmashell.clipboard_action = "Meta+Ctrl+X";
       plasmashell.cycle-panels = "Meta+Alt+P";
       plasmashell."manage activities" = "Meta+E";
