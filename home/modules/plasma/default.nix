@@ -129,7 +129,7 @@ in {
       historyBehavior = null;     # null = default ("enableSuggestions")
       activateWhenTypingOnDesktop = null;  # null = default
       shortcuts = {
-        launch = "Meta";
+        launch = "Alt+Space";
         runCommandOnClipboard = null;
       };
     };
