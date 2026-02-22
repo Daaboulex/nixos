@@ -452,10 +452,10 @@ in {
       kwin."Switch to Desktop 4" = "Ctrl+F4";
       
       # ---- Window Movement ----
-      kwin."Switch Window Down" = "Meta+Alt+Down";
-      kwin."Switch Window Left" = "Meta+Alt+Left";
-      kwin."Switch Window Right" = "Meta+Alt+Right";
-      kwin."Switch Window Up" = "Meta+Alt+Up";
+      kwin."Switch Window Down" = "Ctrl+Shift+;";
+      kwin."Switch Window Left" = "Ctrl+Shift+L";
+      kwin."Switch Window Right" = "Ctrl+Shift+'";
+      kwin."Switch Window Up" = "Ctrl+Shift+P";
       
       # ---- Window Switching ----
       kwin."Walk Through Windows" = ["Meta+Tab" "Alt+Tab"];
