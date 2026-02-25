@@ -108,11 +108,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1771257514,
-        "narHash": "sha256-XlSVTKw4sV/rgq8RdWuYfrlM/fY+DTCaAxfwMQZ4Zao=",
+        "lastModified": 1772043058,
+        "narHash": "sha256-LbuDO5xGZAxe59/icb2FAqXKkKNe1PVOwB2kbOeo8EQ=",
         "owner": "daaboulex",
         "repo": "eden-nix",
-        "rev": "008b93dac8e3696e63496a76b1bb2def7e56e6f5",
+        "rev": "a5da5acb0d0864b1059f6b2952946944de27e0e0",
         "type": "github"
       },
       "original": {
