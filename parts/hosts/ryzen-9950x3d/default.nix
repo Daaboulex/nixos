@@ -304,7 +304,7 @@
       acceleration = 2.0;
       midpoint = 7.8;
       useSmoothing = false;
-      smoothness = 0.2;
+      smoothness = 0.01;
     };
   };
 

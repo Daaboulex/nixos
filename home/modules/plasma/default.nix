@@ -1,12 +1,19 @@
 # Plasma Manager Configuration
 # Declarative KDE Plasma settings via Home Manager
 # Migrated to native options where available, with all modules as templates
-{ config, pkgs, lib, inputs, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  inputs,
+  ...
+}:
 
 let
   # Helper for cleaner flatpak app references
   flatpakApp = id: "file:///home/user/.local/share/flatpak/exports/share/applications/${id}.desktop";
-in {
+in
+{
   imports = [ inputs.plasma-manager.homeModules.plasma-manager ];
 
   # ============================================================================
@@ -14,25 +21,25 @@ in {
   # ============================================================================
   home.packages = with pkgs; [
     # Core KDE utilities
-    kdePackages.kcalc              # Calculator
-    kdePackages.kcharselect        # Special character selector
-    kdePackages.kclock             # Clock app
-    kdePackages.kcolorchooser      # Color picker
+    kdePackages.kcalc # Calculator
+    kdePackages.kcharselect # Special character selector
+    kdePackages.kclock # Clock app
+    kdePackages.kcolorchooser # Color picker
     # File management & disk tools
-    kdePackages.filelight          # Disk usage analyzer
-    kdePackages.isoimagewriter     # Write ISO to USB
-    kdePackages.partitionmanager   # Partition manager
-    kdePackages.plasma-disks       # Disk health monitoring
-    kdePackages.kio-extras         # Additional KIO protocols
+    kdePackages.filelight # Disk usage analyzer
+    kdePackages.isoimagewriter # Write ISO to USB
+    kdePackages.partitionmanager # Partition manager
+    kdePackages.plasma-disks # Disk health monitoring
+    kdePackages.kio-extras # Additional KIO protocols
 
     # System & Connectivity
-    kdePackages.kdeconnect-kde     # Phone integration
-    kdePackages.ksystemlog         # System log viewer
-    kdePackages.baloo              # File indexer
-    
+    kdePackages.kdeconnect-kde # Phone integration
+    kdePackages.ksystemlog # System log viewer
+    kdePackages.baloo # File indexer
+
     # Wayland utilities
     wayland-utils
-    wl-clipboard                   # Clipboard
+    wl-clipboard # Clipboard
   ];
 
   # ============================================================================
@@ -125,9 +132,9 @@ in {
     # KRunner
     # ==========================================================================
     krunner = {
-      position = "center";        # Migrated from krunnerrc.General.FreeFloating
-      historyBehavior = null;     # null = default ("enableSuggestions")
-      activateWhenTypingOnDesktop = null;  # null = default
+      position = "center"; # Migrated from krunnerrc.General.FreeFloating
+      historyBehavior = null; # null = default ("enableSuggestions")
+      activateWhenTypingOnDesktop = null; # null = default
       shortcuts = {
         launch = "Alt+Space";
         runCommandOnClipboard = null;
@@ -173,13 +180,13 @@ in {
       # ---- Night Light (migrated from kwinrc.NightColor) ----
       nightLight = {
         enable = true;
-        mode = "location";         # "constant", "location", or "times"
+        mode = "location"; # "constant", "location", or "times"
         # temperature = {
         #   day = 6500;
         #   night = 4500;
         # };
         location = {
-          latitude = "52.52";      # Berlin coordinates
+          latitude = "52.52"; # Berlin coordinates
           longitude = "13.405";
         };
         # For mode = "times":
@@ -196,101 +203,101 @@ in {
       # };
 
       # ---- Edge/Corner Barriers ----
-      cornerBarrier = null;        # null = default (true)
-      edgeBarrier = null;          # null = default (some value)
+      cornerBarrier = null; # null = default (true)
+      edgeBarrier = null; # null = default (some value)
       borderlessMaximizedWindows = null;
 
       # ---- Effects (null = KDE defaults) ----
       effects = {
         # Desktop switching animation
         desktopSwitching = {
-          animation = null;        # null = default ("slide")
+          animation = null; # null = default ("slide")
           navigationWrapping = null;
         };
 
         # Window open/close animation
         windowOpenClose = {
-          animation = null;        # null = default ("scale" or "glide")
+          animation = null; # null = default ("scale" or "glide")
         };
 
         # Minimization animation
         minimization = {
-          animation = null;        # null = default ("squash")
+          animation = null; # null = default ("squash")
           # duration = 200;        # Only for magiclamp
         };
 
         # Blur (null = use system default)
         blur = {
-          enable = null;           # null = default
+          enable = null; # null = default
           # strength = 10;
           # noiseStrength = 0;
         };
 
         # Dim inactive windows
         dimInactive = {
-          enable = null;           # null = default (false)
+          enable = null; # null = default (false)
         };
 
         # Dim when requesting admin privileges
         dimAdminMode = {
-          enable = null;           # null = default (true)
+          enable = null; # null = default (true)
         };
 
         # Wobbly windows
         wobblyWindows = {
-          enable = null;           # null = default (false)
+          enable = null; # null = default (false)
         };
 
         # Shake cursor to find it
         shakeCursor = {
-          enable = null;           # null = default (true on laptops)
+          enable = null; # null = default (true on laptops)
         };
 
         # Translucent windows
         translucency = {
-          enable = null;           # null = default (false)
+          enable = null; # null = default (false)
         };
 
         # Slide back windows
         slideBack = {
-          enable = null;           # null = default
+          enable = null; # null = default
         };
 
         # Snap helper (shows center guides)
         snapHelper = {
-          enable = null;           # null = default (false)
+          enable = null; # null = default (false)
         };
 
         # Fall apart on close
         fallApart = {
-          enable = null;           # null = default (false)
+          enable = null; # null = default (false)
         };
 
         # Cube effect
         cube = {
-          enable = null;           # null = default (false)
+          enable = null; # null = default (false)
         };
 
         # FPS counter
         fps = {
-          enable = null;           # null = default (false)
+          enable = null; # null = default (false)
         };
 
         # Invert colors toggle
         invert = {
-          enable = null;           # null = default (false)
+          enable = null; # null = default (false)
         };
 
         # Magnifier
         magnifier = {
-          enable = null;           # null = default (false)
+          enable = null; # null = default (false)
           # width = 200;
           # height = 200;
         };
 
         # Zoom accessibility
         zoom = {
-          enable = null;           # null = default
+          enable = null; # null = default
           # zoomFactor = 1.2;
           # mousePointer = "scale";
           # mouseTracking = "proportional";
@@ -430,7 +437,10 @@ in {
       kwin."Activate Window Demanding Attention" = "Meta+Ctrl+A";
       kwin."Edit Tiles" = "Meta+T";
       kwin.Expose = "Ctrl+F9";
-      kwin.ExposeAll = ["Ctrl+F10" "Launch (C)"];
+      kwin.ExposeAll = [
+        "Ctrl+F10"
+        "Launch (C)"
+      ];
       kwin.ExposeClass = "Ctrl+F7";
       kwin."Grid View" = "Meta+G";
       kwin."Kill Window" = "Meta+Ctrl+Esc";
@@ -440,7 +450,7 @@ in {
       kwin."Window Maximize" = "Meta+PgUp";
       kwin."Window Minimize" = "Meta+PgDown";
       kwin."Window Operations Menu" = "Alt+F3";
-      
+
       # ---- Desktop Switching ----
       kwin."Switch One Desktop Down" = "Meta+Ctrl+Down";
       kwin."Switch One Desktop Up" = "Meta+Ctrl+Up";
@@ -450,18 +460,30 @@ in {
       kwin."Switch to Desktop 2" = "Ctrl+F2";
       kwin."Switch to Desktop 3" = "Ctrl+F3";
       kwin."Switch to Desktop 4" = "Ctrl+F4";
-      
+
       # ---- Window Movement ----
-      kwin."Switch Window Down" = "Ctrl+Shift+;";
-      kwin."Switch Window Left" = "Ctrl+Shift+L";
-      kwin."Switch Window Right" = "Ctrl+Shift+'";
-      kwin."Switch Window Up" = "Ctrl+Shift+P";
-      
+      kwin."Switch Window Down" = "";
+      kwin."Switch Window Left" = "";
+      kwin."Switch Window Right" = "";
+      kwin."Switch Window Up" = "";
+
       # ---- Window Switching ----
-      kwin."Walk Through Windows" = ["Meta+Tab" "Alt+Tab"];
-      kwin."Walk Through Windows (Reverse)" = ["Meta+Shift+Tab" "Alt+Shift+Tab"];
-      kwin."Walk Through Windows of Current Application" = ["Meta+\`" "Alt+\`"];
-      kwin."Walk Through Windows of Current Application (Reverse)" = ["Meta+~" "Alt+~"];
+      kwin."Walk Through Windows" = [
+        "Meta+Tab"
+        "Alt+Tab"
+      ];
+      kwin."Walk Through Windows (Reverse)" = [
+        "Meta+Shift+Tab"
+        "Alt+Shift+Tab"
+      ];
+      kwin."Walk Through Windows of Current Application" = [
+        "Meta+\`"
+        "Alt+\`"
+      ];
+      kwin."Walk Through Windows of Current Application (Reverse)" = [
+        "Meta+~"
+        "Alt+~"
+      ];
 
       # ---- Quick Tile ----
       kwin."Window Quick Tile Bottom" = "Meta+Down";
@@ -481,7 +503,10 @@ in {
       kwin.MoveMouseToCenter = "Meta+F6";
       kwin.MoveMouseToFocus = "Meta+F5";
       kwin.view_actual_size = "Meta+0";
-      kwin.view_zoom_in = ["Meta++" "Meta+="];
+      kwin.view_zoom_in = [
+        "Meta++"
+        "Meta+="
+      ];
       kwin.view_zoom_out = "Meta+-";
       kwin.disableInputCapture = "Meta+Shift+Esc";
 
@@ -491,7 +516,7 @@ in {
       "KDE Keyboard Layout Switcher"."Switch to Last-Used Keyboard Layout" = "Meta+Alt+L";
       "KDE Keyboard Layout Switcher"."Switch to Next Keyboard Layout" = "Meta+Alt+K";
       ksmserver."Log Out" = "Ctrl+Alt+Del";
-      
+
       # ========================================================================
       # Volume & Media
       # ========================================================================
@@ -501,9 +526,12 @@ in {
       kmix.increase_microphone_volume = "Microphone Volume Up";
       kmix.increase_volume = "Volume Up";
       kmix.increase_volume_small = "Shift+Volume Up";
-      kmix.mic_mute = ["Microphone Mute" "Meta+Volume Mute"];
+      kmix.mic_mute = [
+        "Microphone Mute"
+        "Meta+Volume Mute"
+      ];
       kmix.mute = "Volume Mute";
-      
+
       mediacontrol.nextmedia = "Media Next";
       mediacontrol.pausemedia = "Media Pause";
       mediacontrol.playpausemedia = "Media Play";
@@ -520,12 +548,18 @@ in {
       org_kde_powerdevil.Hibernate = "Hibernate";
       org_kde_powerdevil.Sleep = "Sleep";
       org_kde_powerdevil."Toggle Keyboard Backlight" = "Keyboard Light On/Off";
-      org_kde_powerdevil.powerProfile = ["Battery" "Meta+B"];
+      org_kde_powerdevil.powerProfile = [
+        "Battery"
+        "Meta+B"
+      ];
 
       # ========================================================================
       # Plasma Shell
       # ========================================================================
-      plasmashell."activate application launcher" = ["Meta" "Alt+F1"];
+      plasmashell."activate application launcher" = [
+        "Meta"
+        "Alt+F1"
+      ];
       plasmashell.clipboard_action = "Meta+Ctrl+X";
       plasmashell.cycle-panels = "Meta+Alt+P";
       plasmashell."manage activities" = "Meta+E";
@@ -606,7 +640,7 @@ in {
 
       # ---- KDE Globals ----
       "kdeglobals"."KDE" = {
-        AnimationDurationFactor = "0.7071067811865475";  # 30% faster animations
+        AnimationDurationFactor = "0.7071067811865475"; # 30% faster animations
         LookAndFeelPackage = "org.kde.breezedark.desktop";
       };
 
@@ -647,7 +681,7 @@ in {
       "breezerc"."Common" = {
         BorderSize = 3;
       };
-      
+
       # ---- Baloo (File Indexing) ----
       "baloofilerc"."General" = {
         "first run" = false;
@@ -680,7 +714,7 @@ in {
         MenuBar = "Disabled";
         ToolBarsMovable = "Disabled";
       };
-      
+
       "konsolerc"."TabBar" = {
         NewTabBehavior = "PutNewTabAfterCurrentTab";
       };
@@ -696,16 +730,16 @@ in {
     enable = true;
     defaultProfile = "NixOS-Default";
     # ui.colorScheme = null;  # Use system theme
-    
+
     profiles."NixOS-Default" = {
       font = {
         name = "JetBrainsMono Nerd Font";
         size = 12;
       };
-      
+
       extraConfig = {
         "Scrolling" = {
-          HistoryMode = 2;  # Unlimited
+          HistoryMode = 2; # Unlimited
         };
         "Terminal Features" = {
           BlinkingCursorEnabled = true;
