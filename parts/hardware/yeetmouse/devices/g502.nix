@@ -1,4 +1,4 @@
-0# /modules/nixos/hardware/yeetmouse/devices/g502.nix
+# /modules/nixos/hardware/yeetmouse/devices/g502.nix
 # Applies specific YeetMouse settings for the Logitech G502
 # for both Lightspeed Receiver and Wired connections.
 { config, pkgs, lib, ... }:
