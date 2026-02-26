@@ -77,7 +77,7 @@
         ananicy = true; # Use Ananicy CachyOS rules for process priority
         scx = {
           enable = true;
-          scheduler = "scx_rusty";
+          scheduler = "scx_lavd";
         };
       };
       power.enable = true;
