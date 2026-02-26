@@ -1,4 +1,4 @@
-# /modules/nixos/hardware/yeetmouse/devices/g502.nix
+0# /modules/nixos/hardware/yeetmouse/devices/g502.nix
 # Applies specific YeetMouse settings for the Logitech G502
 # for both Lightspeed Receiver and Wired connections.
 { config, pkgs, lib, ... }:
@@ -115,10 +115,10 @@ in
     # --- Udev Rules ---
     services.udev.extraRules = ''
       # Rule 1: Match Lightspeed Receiver
-      ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="046d", ATTR{idProduct}=="${cfg.wirelessProductId}", TAG+="systemd", ENV{SYSTEMD_WANTS}+="yeetmouse-g502-config.service", RUN+="${pkgs.kmod}/bin/modprobe yeetmouse", ATTR{driver_override}="yeetmouse"
+      ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="046d", ATTR{idProduct}=="${cfg.wirelessProductId}", TAG+="systemd", ENV{SYSTEMD_WANTS}+="yeetmouse-g502-config.service", RUN+="${pkgs.kmod}/bin/modprobe yeetmouse"
 
       # Rule 2: Match Wired G502
-      ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="046d", ATTR{idProduct}=="${cfg.wiredProductId}", TAG+="systemd", ENV{SYSTEMD_WANTS}+="yeetmouse-g502-config.service", RUN+="${pkgs.kmod}/bin/modprobe yeetmouse", ATTR{driver_override}="yeetmouse"
+      ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="046d", ATTR{idProduct}=="${cfg.wiredProductId}", TAG+="systemd", ENV{SYSTEMD_WANTS}+="yeetmouse-g502-config.service", RUN+="${pkgs.kmod}/bin/modprobe yeetmouse"
     '';
 
     # --- Libinput Configuration: FLAT Profile (No Acceleration) ---

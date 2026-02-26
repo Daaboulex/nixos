@@ -379,8 +379,8 @@ let
             default = 0.15;
             description = "Jump acceleration mid-point";
           };
-          smoothness = mkOption {
-            type = floatRange 0.01 1.0;
+          exponent = mkOption {
+            type = floatRange 0.0 1.0;
             default = 0.2;
             description = "Jump curve smoothness (smoothness of the applied output curve)";
           };
@@ -406,7 +406,7 @@ let
           param = "Midpoint";
         }
         {
-          value = toString params.smoothness;
+          value = toString params.exponent;
           param = "Exponent";
         }
         {
