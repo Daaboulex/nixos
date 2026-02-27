@@ -40,12 +40,11 @@
           }).overrideAttrs (old: {
             src = inputs.yeetmouse-src;
             postPatch = ''
-              # Convert informational printk/pr_fmt to pr_info
-              sed -i 's/printk("Yeetmouse: found a possible mouse/pr_info("Yeetmouse: found a possible mouse/g' driver/driver.c
-              sed -i 's/printk(pr_fmt("Yeetmouse: connecting to device:/pr_info("Yeetmouse: connecting to device:/g' driver/driver.c
+              # Convert informational printk to KERN_INFO
+              sed -i 's/printk(/printk(KERN_INFO /g' driver/driver.c
               
-              # Convert Error printks to pr_err
-              sed -i 's/printk("YeetMouse: Error:/pr_err("YeetMouse: Error:/g' driver/accel_modes.c
+              # Convert Error printk to KERN_ERR
+              sed -i 's/printk(/printk(KERN_ERR /g' driver/accel_modes.c
             '';
             nativeBuildInputs = (old.nativeBuildInputs or []) ++ lib.optionals kernelUsesLLVM [ final.llvmPackages_latest.lld ];
             postBuild = if kernelUsesLLVM then ''
