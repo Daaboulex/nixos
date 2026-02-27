@@ -57,12 +57,17 @@ let
     write_param RotationAngle "${toString s.rotation}"
     write_param Acceleration "${toString s.acceleration}"
     write_param Midpoint "${toString s.midpoint}"
+    write_param Exponent "${toString s.exponent}"
+    write_param Motivity "${toString s.motivity}"
     write_param UseSmoothing "${if s.useSmoothing then "1" else "0"}"
     write_param AccelerationMode "${toString s.accelerationModeNum}"
     write_param PreScale "${toString s.preScale}"
     write_param Offset "${toString s.offset}"
     write_param InputCap "${toString s.inputCap}"
     write_param OutputCap "${toString s.outputCap}"
+    write_param RotationAngle "${toString s.rotation}"
+    write_param AngleSnap_Threshold "${toString s.angleSnap_Threshold}"
+    write_param AngleSnap_Angle "${toString s.angleSnap_Angle}"
 
     update_path="$SYSFS_BASE/update"
     if [ -w "$update_path" ]; then
@@ -98,15 +103,19 @@ in
       };
       
       # Driver parameters
-      rotation = mkOption { type = types.float; default = -0.05236; description = "Rotation angle in radians"; };
+      rotation = mkOption { type = types.float; default = 0.0; description = "Rotation angle in radians"; };
       acceleration = mkOption { type = types.float; default = 1.5; description = "Acceleration gain"; };
       midpoint = mkOption { type = types.float; default = 6.65; description = "Acceleration midpoint"; };
+      exponent = mkOption { type = types.float; default = 1.8; description = "Acceleration exponent (Smoothness)"; };
+      motivity = mkOption { type = types.float; default = 1.5; description = "Motivity parameter"; };
       useSmoothing = mkOption { type = types.bool; default = false; description = "Enable smoothing"; };
       accelerationModeNum = mkOption { type = types.int; default = 5; description = "Mode number (5 = Jump)"; };
       preScale = mkOption { type = types.float; default = 1.0; description = "Pre-scale factor"; };
       offset = mkOption { type = types.float; default = 0.0; description = "Offset value"; };
       inputCap = mkOption { type = types.float; default = 0.0; description = "Input cap"; };
       outputCap = mkOption { type = types.float; default = 0.0; description = "Output cap"; };
+      angleSnap_Threshold = mkOption { type = types.float; default = 0.0; description = "Angle snapping threshold in radians"; };
+      angleSnap_Angle = mkOption { type = types.float; default = 0.0; description = "Angle snapping angle in radians"; };
     };
   };
 

@@ -95,6 +95,7 @@
             acceleration = 2.0;
             midpoint = 7.8;
             useSmoothing = false;
+            exponent = 0.00;
             accelerationModeNum = 7; # Jump mode
             preScale = 1.0;
             offset = 0.0;

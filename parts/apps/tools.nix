@@ -249,17 +249,32 @@
 
         show_scheduler() {
           section "⚡ SCHEDULER (FULL)"
+          
+          subsection "Built-in Kernel Scheduler"
+          if [ -f /proc/sys/kernel/sched_bore ]; then
+            info "Primary" "Bore (Burst-Oriented Response Enhancer)"
+            info "Burstness" "$(cat /proc/sys/kernel/sched_bore 2>/dev/null)"
+          elif [ -f /proc/sys/kernel/sched_bmq_prio ]; then
+            info "Primary" "BMQ (BitMap Queue)"
+          elif [ -f /proc/sys/kernel/sched_pds_yield_type ]; then
+            info "Primary" "PDS (Priority Designo Scheduler)"
+          else
+            info "Primary" "EEVDF / Standard CFS"
+          fi
 
-          subsection "Kernel Scheduler"
+          subsection "Sched_ext (BPF)"
           if [ -d /sys/kernel/sched_ext ]; then
+            if [ -f /sys/kernel/sched_ext/root/ops ]; then
+                info "Status" "Enabled and Active"
+                info "Active Ops" "$(cat /sys/kernel/sched_ext/root/ops 2>/dev/null | xargs)"
+            else
+                info "Status" "Enabled (No BPF scheduler loaded)"
+            fi
             for f in /sys/kernel/sched_ext/*; do
               [ -f "$f" ] && info "$(basename $f)" "$(cat $f 2>/dev/null)"
             done
-            for f in /sys/kernel/sched_ext/root/*; do
-              [ -f "$f" ] && info "root/$(basename $f)" "$(cat $f 2>/dev/null)"
-            done
           else
-            info "sched_ext" "Not available"
+            info "Status" "Not available in kernel"
           fi
 
           subsection "Running scx Processes"
@@ -268,7 +283,7 @@
           subsection "scx Service Status"
           systemctl status scx.service 2>/dev/null || echo "  scx.service not found"
 
-          subsection "CPU Scheduler Info"
+          subsection "CPU Topology"
           for cpu in /sys/devices/system/cpu/cpu0; do
             for f in $cpu/topology/*; do
               [ -f "$f" ] && info "$(basename $f)" "$(cat $f 2>/dev/null)"
@@ -290,8 +305,18 @@
           section "🖥️  DISPLAY (FULL)"
 
           subsection "Session Info"
-          info "XDG_SESSION_TYPE" "''${XDG_SESSION_TYPE:-unknown}"
-          info "XDG_CURRENT_DESKTOP" "''${XDG_CURRENT_DESKTOP:-unknown}"
+          # Try to get session info, fallback to loginctl for sudo
+          SESSION_TYPE="''${XDG_SESSION_TYPE:-}"
+          SESSION_DESKTOP="''${XDG_CURRENT_DESKTOP:-}"
+          if [ -z "$SESSION_TYPE" ] && command -v loginctl &>/dev/null; then
+             SESSION_ID=$(loginctl session-status | head -n 1 | awk '{print $1}' 2>/dev/null)
+             if [ -n "$SESSION_ID" ]; then
+               SESSION_TYPE=$(loginctl show-session "$SESSION_ID" -p Type --value 2>/dev/null)
+               SESSION_DESKTOP=$(loginctl show-session "$SESSION_ID" -p Desktop --value 2>/dev/null)
+             fi
+          fi
+          info "XDG_SESSION_TYPE" "''${SESSION_TYPE:-unknown}"
+          info "XDG_CURRENT_DESKTOP" "''${SESSION_DESKTOP:-unknown}"
           info "WAYLAND_DISPLAY" "''${WAYLAND_DISPLAY:-not set}"
           info "DISPLAY" "''${DISPLAY:-not set}"
 
@@ -301,8 +326,8 @@
           done
 
           subsection "Monitor Info"
-          if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
-            ${pkgs.wlr-randr}/bin/wlr-randr 2>/dev/null || ${pkgs.kdePackages.libkscreen}/bin/kscreen-doctor --outputs 2>/dev/null || echo "  No Wayland monitor tool available"
+          if [ "$SESSION_TYPE" = "wayland" ]; then
+            ${pkgs.kdePackages.libkscreen}/bin/kscreen-doctor --outputs 2>/dev/null || ${pkgs.wlr-randr}/bin/wlr-randr 2>/dev/null || echo "  No Wayland monitor tool available"
           else
             xrandr --verbose 2>/dev/null || echo "  xrandr not available"
           fi
@@ -420,21 +445,40 @@
 
           # Scheduler summary
           section "⚡ SCHEDULER"
+          BUILTIN="Standard"
+          if [ -f /proc/sys/kernel/sched_bore ]; then BUILTIN="Bore";
+          elif [ -f /proc/sys/kernel/sched_bmq_prio ]; then BUILTIN="BMQ";
+          elif [ -f /proc/sys/kernel/sched_pds_yield_type ]; then BUILTIN="PDS";
+          fi
+
           if [ -f /sys/kernel/sched_ext/root/ops ]; then
             SCHED=$(cat /sys/kernel/sched_ext/root/ops 2>/dev/null | xargs)
             if [ -n "$SCHED" ]; then
-              echo -e "  ''${GREEN}●''${NC} sched_ext: ''${WHITE}$SCHED''${NC}"
+              echo -e "  ''${GREEN}●''${NC} Active: ''${WHITE}$SCHED''${NC} (via sched_ext)"
+              info "Built-in" "$BUILTIN (Standby)"
             else
-              info "sched_ext" "No scheduler loaded (using CFS)"
+              info "Active" "$BUILTIN (Native)"
+              info "sched_ext" "Available (None loaded)"
             fi
           else
+            info "Active" "$BUILTIN (Native)"
             info "sched_ext" "Not available"
           fi
 
           # Display summary
           section "🖥️  DISPLAY"
-          info "Session" "''${XDG_SESSION_TYPE:-unknown} / ''${XDG_CURRENT_DESKTOP:-unknown}"
-          if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
+          # Try to get session info, fallback to loginctl for sudo
+          SESSION_TYPE="''${XDG_SESSION_TYPE:-}"
+          SESSION_DESKTOP="''${XDG_CURRENT_DESKTOP:-}"
+          if [ -z "$SESSION_TYPE" ] && command -v loginctl &>/dev/null; then
+             SESSION_ID=$(loginctl session-status | head -n 1 | awk '{print $1}' 2>/dev/null)
+             if [ -n "$SESSION_ID" ]; then
+               SESSION_TYPE=$(loginctl show-session "$SESSION_ID" -p Type --value 2>/dev/null)
+               SESSION_DESKTOP=$(loginctl show-session "$SESSION_ID" -p Desktop --value 2>/dev/null)
+             fi
+          fi
+          info "Session" "''${SESSION_TYPE:-unknown} / ''${SESSION_DESKTOP:-unknown}"
+          if [ "$SESSION_TYPE" = "wayland" ]; then
             if command -v ${pkgs.kdePackages.libkscreen}/bin/kscreen-doctor &>/dev/null; then
               ${pkgs.kdePackages.libkscreen}/bin/kscreen-doctor --outputs 2>/dev/null | ${pkgs.gnused}/bin/sed 's/\x1b\[[0-9;]*m//g' | while read line; do
                 if echo "$line" | ${pkgs.gnugrep}/bin/grep -q "^Output:"; then
@@ -624,7 +668,27 @@
 
       config = lib.mkMerge [
         (lib.mkIf cfg.enable {
-           environment.systemPackages = with pkgs; [ vscodium google-antigravity gemini-cli direnv devenv nix-prefetch-git saleae-logic-2 gnumake cmake pkg-config gcc python3 nodejs ];
+           environment.systemPackages = with pkgs; [
+             vscodium
+             (pkgs.symlinkJoin {
+               name = "agy-wrapper";
+               paths = [ pkgs.google-antigravity ];
+               postBuild = ''
+                 ln -s $out/bin/antigravity $out/bin/agy
+               '';
+             })
+             gemini-cli
+             direnv
+             devenv
+             nix-prefetch-git
+             saleae-logic-2
+             gnumake
+             cmake
+             pkg-config
+             gcc
+             python3
+             nodejs
+           ];
            services.udev.packages = [ pkgs.saleae-logic-2 ];
            services.udev.extraRules = ''
              SUBSYSTEM=="usb", ATTR{idVendor}=="1fc9", MODE="0666", GROUP="users"
