@@ -12,9 +12,9 @@
     config = lib.mkIf (config.myModules.hardware.yeetmouse.enable || config.myModules.hardware.yeetmouse.devices.g502.enable) {
       hardware.yeetmouse.enable = true;
 
-      systemd.tmpfiles.rules = [
-        "f /sys/module/yeetmouse/parameters/* 0664 root users -"
-      ];
+      services.udev.extraRules = ''
+        SUBSYSTEM=="module", KERNEL=="yeetmouse", ACTION=="add", RUN+="${pkgs.runtimeShell} -c 'chmod 0664 /sys/module/yeetmouse/parameters/* && chgrp users /sys/module/yeetmouse/parameters/*'"
+      '';
 
       nixpkgs.overlays = [
         (final: prev: let
@@ -54,6 +54,11 @@
               # Allow Jump mode to show 0.00
               sed -i 's/DragFloat("##Exp_Param", \&params\[selected_mode\].exponent, 0.0, 0.01/DragFloat("##Exp_Param", \&params\[selected_mode\].exponent, 0.0, 0.0/g' gui/main.cpp
               sed -i 's/SliderFloat("##Exp_Param", \&params\[selected_mode\].exponent, 0.0, 1/SliderFloat("##Exp_Param", \&params\[selected_mode\].exponent, 0.0, 1/g' gui/main.cpp
+
+              # Hide "Running without root privileges" warning and force has_privilege = true
+              sed -i 's/if (getuid()) {/if (false) { \/\/ getuid check disabled/g' gui/main.cpp
+              sed -i 's/has_privilege = false;/has_privilege = true; \/\/ forced/g' gui/main.cpp
+              sed -i 's/ImGui::GetForegroundDrawList()->AddText(ImVec2(10, ImGui::GetWindowHeight() - 40),/if(false) ImGui::GetForegroundDrawList()->AddText(ImVec2(10, ImGui::GetWindowHeight() - 40),/g' gui/main.cpp
             '';
             nativeBuildInputs = (old.nativeBuildInputs or []) ++ lib.optionals kernelUsesLLVM [ final.llvmPackages_latest.lld ];
             postBuild = if kernelUsesLLVM then ''
