@@ -76,8 +76,8 @@
         governor = "powersave"; # Use powersave with EPP for Ryzen 9950X3D
         ananicy = true; # Use Ananicy CachyOS rules for process priority
         scx = {
-          enable = true;
-          scheduler = "scx_lavd";
+          enable = false;
+          scheduler = "scx_rusty";
         };
       };
       power.enable = true;
@@ -184,7 +184,7 @@
         "split_lock_detect=off"  # Prevents perf drops in games using split-lock instructions
       ];
       cachyos = {
-        cpusched = null; # Let SCX Rusty handle scheduling completely
+        cpusched = "bore"; # Use built-in Bore scheduler instead of SCX BPF
         bbr3 = true;
         hzTicks = "1000";
         kcfi = false;

@@ -253,16 +253,32 @@ let
     show_scheduler() {
       section "⚡ SCHEDULER (FULL)"
       
-      subsection "Kernel Scheduler"
+      subsection "Built-in Kernel Scheduler"
+      if [ -f /proc/sys/kernel/sched_bore ]; then
+        info "Primary" "Bore (Burst-Oriented Response Enhancer)"
+        info "Burstness" "$(cat /proc/sys/kernel/sched_bore 2>/dev/null)"
+      elif [ -f /proc/sys/kernel/sched_bmq_prio ]; then
+        info "Primary" "BMQ (BitMap Queue)"
+      elif [ -f /proc/sys/kernel/sched_pds_yield_type ]; then
+        info "Primary" "PDS (Priority Designo Scheduler)"
+      else
+        # EEVDF is the default for 6.6+
+        info "Primary" "EEVDF / Standard CFS"
+      fi
+
+      subsection "Sched_ext (BPF)"
       if [ -d /sys/kernel/sched_ext ]; then
+        if [ -f /sys/kernel/sched_ext/root/ops ]; then
+            info "Status" "Enabled and Active"
+            info "Active Ops" "$(cat /sys/kernel/sched_ext/root/ops 2>/dev/null | xargs)"
+        else
+            info "Status" "Enabled (No BPF scheduler loaded)"
+        fi
         for f in /sys/kernel/sched_ext/*; do
           [ -f "$f" ] && info "$(basename $f)" "$(cat $f 2>/dev/null)"
         done
-        for f in /sys/kernel/sched_ext/root/*; do
-          [ -f "$f" ] && info "root/$(basename $f)" "$(cat $f 2>/dev/null)"
-        done
       else
-        info "sched_ext" "Not available"
+        info "Status" "Not available in kernel"
       fi
       
       subsection "Running scx Processes"
@@ -271,7 +287,7 @@ let
       subsection "scx Service Status"
       systemctl status scx.service 2>/dev/null || echo "  scx.service not found"
       
-      subsection "CPU Scheduler Info"
+      subsection "CPU Topology"
       for cpu in /sys/devices/system/cpu/cpu0; do
         for f in $cpu/topology/*; do
           [ -f "$f" ] && info "$(basename $f)" "$(cat $f 2>/dev/null)"
@@ -444,14 +460,23 @@ let
       
       # Scheduler summary
       section "⚡ SCHEDULER"
+      BUILTIN="Standard"
+      if [ -f /proc/sys/kernel/sched_bore ]; then BUILTIN="Bore";
+      elif [ -f /proc/sys/kernel/sched_bmq_prio ]; then BUILTIN="BMQ";
+      elif [ -f /proc/sys/kernel/sched_pds_yield_type ]; then BUILTIN="PDS";
+      fi
+
       if [ -f /sys/kernel/sched_ext/root/ops ]; then
         SCHED=$(cat /sys/kernel/sched_ext/root/ops 2>/dev/null | xargs)
         if [ -n "$SCHED" ]; then
-          echo -e "  ''${GREEN}●''${NC} sched_ext: ''${WHITE}$SCHED''${NC}"
+          echo -e "  ''${GREEN}●''${NC} Active: ''${WHITE}$SCHED''${NC} (via sched_ext)"
+          info "Built-in" "$BUILTIN (Standby)"
         else
-          info "sched_ext" "No scheduler loaded (using CFS)"
+          info "Active" "$BUILTIN (Native)"
+          info "sched_ext" "Available (None loaded)"
         fi
       else
+        info "Active" "$BUILTIN (Native)"
         info "sched_ext" "Not available"
       fi
       
