@@ -464,6 +464,23 @@
         "type": "github"
       }
     },
+    "occt-nix": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1772208405,
+        "narHash": "sha256-4uzauu1j9YoGj6QNIyHEJIaex362aAeNPkZS35lWXsU=",
+        "path": "/home/user/Documents/nix/OCCT-nix",
+        "type": "path"
+      },
+      "original": {
+        "path": "/home/user/Documents/nix/OCCT-nix",
+        "type": "path"
+      }
+    },
     "plasma-manager": {
       "inputs": {
         "home-manager": [
@@ -543,6 +560,7 @@
         "nix-flatpak": "nix-flatpak",
         "nixpkgs": "nixpkgs_2",
         "nx-save-sync": "nx-save-sync",
+        "occt-nix": "occt-nix",
         "plasma-manager": "plasma-manager",
         "portmaster": "portmaster",
         "sops-nix": "sops-nix",
