@@ -74,14 +74,8 @@ stdenv.mkDerivation rec {
   desktopItems = [
     (makeDesktopItem {
       name = pname;
-      exec = let
-        xhost = "${coreutils}/bin/false"; # Placeholder if xhost missing
-      in writeShellScript "yeetmouse.sh" /*bash*/ ''
-        if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
-          pkexec env DISPLAY="$DISPLAY" XAUTHORITY="$XAUTHORITY" "${pname}"
-        else
-          pkexec env DISPLAY="$DISPLAY" XAUTHORITY="$XAUTHORITY" "${pname}"
-        fi
+      exec = writeShellScript "yeetmouse.sh" /*bash*/ ''
+        "${pname}"
       '';
       type = "Application";
       desktopName = "Yeetmouse GUI";
