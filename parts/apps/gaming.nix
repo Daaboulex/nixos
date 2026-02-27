@@ -70,7 +70,7 @@
         ++ lib.optionals cfg.eden.enable [ inputs.eden.packages.${system}.eden ]
         ++ lib.optionals cfg.azahar.enable [ azahar ]
         ++ lib.optionals cfg.nxSaveSync.enable [ inputs.nx-save-sync.packages.${system}.default ]
-        ++ lib.optionals cfg.occt.enable [ inputs.occt-nix.packages.${system}.occt ];
+        ++ lib.optionals cfg.occt.enable [ pkgs.occt ];
 
         users.users.${config.myModules.primaryUser}.extraGroups = [ "gamemode" ];
 
