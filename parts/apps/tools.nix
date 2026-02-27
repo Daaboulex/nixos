@@ -624,7 +624,7 @@
 
       config = lib.mkMerge [
         (lib.mkIf cfg.enable {
-           environment.systemPackages = with pkgs; [ vscodium google-antigravity direnv devenv nix-prefetch-git saleae-logic-2 gnumake cmake pkg-config gcc python3 nodejs ];
+           environment.systemPackages = with pkgs; [ vscodium google-antigravity gemini-cli direnv devenv nix-prefetch-git saleae-logic-2 gnumake cmake pkg-config gcc python3 nodejs ];
            services.udev.packages = [ pkgs.saleae-logic-2 ];
            services.udev.extraRules = ''
              SUBSYSTEM=="usb", ATTR{idVendor}=="1fc9", MODE="0666", GROUP="users"
