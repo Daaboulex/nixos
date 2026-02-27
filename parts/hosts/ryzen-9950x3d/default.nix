@@ -219,6 +219,7 @@
     eden.enable = true; # Nintendo Switch emulator (community fork)
     azahar.enable = true; # 3DS emulator (Citra fork)
     nxSaveSync.enable = false; # Switch save sync tool
+    occt.enable = true; # Stability Test & Benchmark
   };
 
   # ============================================================================

@@ -88,6 +88,12 @@
       url = "github:daaboulex/portmaster-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # OCCT - Stability Test & Benchmark (Local Flake)
+    occt-nix = {
+      url = "path:/home/user/Documents/nix/OCCT-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   # ============================================================================
