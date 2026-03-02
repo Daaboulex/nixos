@@ -39,3 +39,7 @@ OCCT-nix/
 # Exclude stray files
 Todo.txt
 *.txt
+
+# AI files
+CLAUDE.md
+GEMINI.md
