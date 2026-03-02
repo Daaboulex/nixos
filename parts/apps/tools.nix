@@ -664,6 +664,7 @@
         sysdiag.enable = lib.mkEnableOption "sysdiag system diagnostics";
         listIommuGroups.enable = lib.mkEnableOption "list-iommu-groups";
         llmPrep.enable = lib.mkEnableOption "llm-prep";
+        claudeCode.enable = lib.mkEnableOption "Claude Code AI Assistant";
       };
 
       config = lib.mkMerge [
@@ -678,6 +679,7 @@
                '';
              })
              gemini-cli
+             (lib.mkIf cfgTools.claudeCode.enable claude-code)
              direnv
              devenv
              nix-prefetch-git

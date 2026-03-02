@@ -79,6 +79,7 @@
           inputs.nx-save-sync.overlays.default
           inputs.portmaster.overlays.default
           inputs.occt-nix.overlays.default
+          inputs.claude-code.overlays.default
         ];
       }
     ];

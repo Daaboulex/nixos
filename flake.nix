@@ -91,7 +91,13 @@
 
     # OCCT - Stability Test & Benchmark (Local Flake)
     occt-nix = {
-      url = "path:/home/user/Documents/nix/OCCT-nix";
+      url = "github:daaboulex/OCCT-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # Claude Code - AI coding assistant (Always up-to-date)
+    claude-code = {
+      url = "github:sadjow/claude-code-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };

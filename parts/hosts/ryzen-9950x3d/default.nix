@@ -229,6 +229,7 @@
     sysdiag.enable = true;        # System diagnostics (replaces list-gpu-drivers)
     listIommuGroups.enable = true; # IOMMU group listing
     llmPrep.enable = true;        # LLM context builder
+    claudeCode.enable = true;     # Claude Code AI Assistant
   };
 
   # ============================================================================
