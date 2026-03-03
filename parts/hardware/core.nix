@@ -15,7 +15,8 @@
       # Common Hardware Sensors and Monitoring
       # thermald is Intel-only — it conflicts with AMD P-State/Prefcore
       services.thermald.enable = lib.mkDefault (config.myModules.hardware.cpu.intel.enable or false);
-      boot.kernelModules = [ "coretemp" "drivetemp" ];
+      # coretemp is Intel-only; AMD uses k10temp (loaded by cpu-amd.nix)
+      boot.kernelModules = [ "drivetemp" ];
     };
   };
 }
