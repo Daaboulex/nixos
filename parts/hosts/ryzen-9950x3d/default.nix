@@ -44,11 +44,7 @@
         enable = true;
       };
       sops.enable = true;
-      portmaster = {
-        enable = true;
-        ui.enable = true;
-        notifier.enable = true;
-      };
+      portmaster.enable = true;
       arkenfox = {
         enable = true;
         targetDir = "/home/user/.var/app/io.gitlab.librewolf-community/.librewolf/ulnbwvmb.default";
@@ -77,7 +73,7 @@
       cpu.amd = {
         enable = true; # AMD CPU optimizations (pstate, prefcore, kvm, microcode)
         x3dVcache = {
-          enable = true; # Dual-CCD 3D V-Cache optimizer
+          enable = true; # Dual-CCD 3D V-Cache optimizer (works at CPPC firmware level — scheduler-independent)
           mode = "cache"; # Prefer CCD0 (96MB 3D V-Cache) for gaming
         };
       };
@@ -90,6 +86,9 @@
           scheduler = "scx_lavd"; # Latency-aware virtual deadline — best for gaming (Valve/Steam Deck choice)
           extraArgs = [ "--performance" ]; # Gaming mode: prioritize latency over power saving
         };
+        # Scheduler stack: amd_3d_vcache (firmware CCD routing) → amd_pstate (CPPC preferred cores)
+        #                   → BORE (kernel fallback) → scx_lavd (BPF overlay, takes precedence when loaded)
+        # None of these conflict — CCD preference is set at hardware/firmware level.
       };
       power.enable = true;
       yeetmouse = {
@@ -198,7 +197,7 @@
         "tsc=reliable"                             # Pin TSC as clocksource — Zen 5 has invariant TSC
       ];
       cachyos = {
-        cpusched = "bore"; # Use built-in Bore scheduler instead of SCX BPF
+        cpusched = "bore"; # BORE compiled into kernel as fallback; scx_lavd overlays it via BPF when loaded
         bbr3 = true;
         hzTicks = "1000";
         kcfi = false;

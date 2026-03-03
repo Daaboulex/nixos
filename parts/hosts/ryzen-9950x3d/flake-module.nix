@@ -48,6 +48,7 @@
           inputs.self.nixosModules.apps-tools
           
           inputs.self.nixosModules.system-packages
+          inputs.cachyos-settings-nix.nixosModules.default
           inputs.self.nixosModules.cachyos-settings
         ];
       })

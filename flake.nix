@@ -46,10 +46,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # CachyOS Settings - System optimization configurations
-    cachyos-settings = {
-      url = "github:CachyOS/CachyOS-Settings";
-      flake = false;
+    # CachyOS Settings - System optimization configurations (NixOS module)
+    cachyos-settings-nix = {
+      url = "github:Daaboulex/cachyos-settings-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     # sops-nix - Secrets management with SOPS

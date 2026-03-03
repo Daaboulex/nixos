@@ -3,20 +3,26 @@
     let
       cfg = config.myModules.security.portmaster;
     in {
-      # Thin wrapper: map myModules namespace → services.portmaster
+      # Thin wrapper: map myModules namespace → services.portmaster (v2)
       options.myModules.security.portmaster = {
         enable = lib.mkEnableOption "Portmaster privacy firewall";
-        dataDir = lib.mkOption { type = lib.types.str; default = "/opt/safing/portmaster"; };
-        ui.enable = lib.mkOption { type = lib.types.bool; default = false; };
-        notifier.enable = lib.mkOption { type = lib.types.bool; default = false; };
+        settings = lib.mkOption {
+          type = lib.types.attrs;
+          default = { };
+          description = "Portmaster settings passed to portmaster-core";
+        };
+        extraArgs = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [ ];
+          description = "Extra command-line arguments for portmaster-core";
+        };
       };
 
       config = lib.mkIf cfg.enable {
         services.portmaster = {
           enable = true;
-          dataDir = cfg.dataDir;
-          ui.enable = cfg.ui.enable;
-          notifier.enable = cfg.notifier.enable;
+          settings = cfg.settings;
+          extraArgs = cfg.extraArgs;
         };
       };
     };
