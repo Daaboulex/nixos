@@ -100,6 +100,18 @@
       url = "github:sadjow/claude-code-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # Mesa-git - Bleeding-edge Mesa from main branch
+    mesa-git-nix = {
+      url = "github:daaboulex/mesa-git-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # LSFG-VK - Vulkan Frame Generation (Lossless Scaling)
+    lsfg-vk = {
+      url = "github:daaboulex/lsfg-vk-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   # ============================================================================

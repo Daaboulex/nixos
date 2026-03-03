@@ -69,15 +69,26 @@
         enable = true;
         amd.enable = true;
         enable32Bit = true;
+        mesaGit = {
+          enable = true; # Bleeding-edge Mesa from git main (RDNA 4 optimizations)
+          drivers = [ "amd" ]; # Only compile AMD drivers (radeonsi, RADV) + essentials
+        };
       };
-      cpu.amd.enable = true; # AMD CPU optimizations (pstate, prefcore, kvm, microcode)
+      cpu.amd = {
+        enable = true; # AMD CPU optimizations (pstate, prefcore, kvm, microcode)
+        x3dVcache = {
+          enable = true; # Dual-CCD 3D V-Cache optimizer
+          mode = "cache"; # Prefer CCD0 (96MB 3D V-Cache) for gaming
+        };
+      };
       performance = {
         enable = true;
         governor = "powersave"; # Use powersave with EPP for Ryzen 9950X3D
         ananicy = true; # Use Ananicy CachyOS rules for process priority
         scx = {
-          enable = false;
-          scheduler = "scx_rusty";
+          enable = true;
+          scheduler = "scx_lavd"; # Latency-aware virtual deadline — best for gaming (Valve/Steam Deck choice)
+          extraArgs = [ "--performance" ]; # Gaming mode: prioritize latency over power saving
         };
       };
       power.enable = true;
@@ -181,15 +192,17 @@
         "nowatchdog"
         "acpi_enforce_resources=lax"
         "pci=realloc"
-        "usbcore.autosuspend=-1" # Disable USB autosuspend (fixes xhci_hcd suspend timeout)
-        "split_lock_detect=off"  # Prevents perf drops in games using split-lock instructions
+        "usbcore.autosuspend=-1"                  # Disable USB autosuspend (fixes xhci_hcd suspend timeout)
+        "split_lock_detect=off"                    # Prevents perf drops in games using split-lock instructions
+        "nvme_core.default_ps_max_latency_us=0"    # Disable NVMe power state transitions (prevents micro-stutters)
+        "tsc=reliable"                             # Pin TSC as clocksource — Zen 5 has invariant TSC
       ];
       cachyos = {
         cpusched = "bore"; # Use built-in Bore scheduler instead of SCX BPF
         bbr3 = true;
         hzTicks = "1000";
         kcfi = false;
-        performanceGovernor = true;
+        performanceGovernor = false; # powersave governor via P-State active mode is correct for Zen 5
         tickrate = "full";
         preemptType = "full";
         ccHarder = true;
@@ -220,6 +233,7 @@
     azahar.enable = true; # 3DS emulator (Citra fork)
     nxSaveSync.enable = false; # Switch save sync tool
     occt.enable = true; # Stability Test & Benchmark
+    lsfgVk.enable = true; # Vulkan frame generation (Lossless Scaling)
   };
 
   # ============================================================================
@@ -237,14 +251,9 @@
   # ============================================================================
   myModules.cachyos.settings = {
     enable = true;
-    ioSchedulers = true;      # bfq=HDD, mq-deadline=SSD, none=NVMe
-    pciLatency = true;        # Audio PCI latency optimization
-    audioPowerSave = true;    # Disable snd-hda-intel power saving on AC
-    hdparmTuning = true;      # HDD hdparm tuning (user has HDD)
-    sataALPM = true;          # SATA max_performance (user has SATA)
-    ntsync = true;            # Wine/Proton NT sync primitives
-    amdgpuGcnCompat = true;  # Not needed for RX 9070 XT (RDNA 4)
-    thp = true;               # THP defrag + khugepaged shrinker
+    # All sub-options default to true except GPU-specific ones.
+    # Only override what differs from defaults:
+    amdgpuGcnCompat.enable = false; # Not needed for RX 9070 XT (RDNA 4)
   };
 
   # ============================================================================
@@ -283,12 +292,7 @@
   # CPU Governor - now handled by cpu/amd.nix (schedutil default)
   # ============================================================================
 
-  # ============================================================================
-  # Services
-  # ============================================================================
-  services = {
-    power-profiles-daemon.enable = false;
-  };
+  # power-profiles-daemon is disabled by myModules.hardware.power
 
   # ============================================================================
   # Global YeetMouse Settings

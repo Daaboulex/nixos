@@ -80,6 +80,8 @@
           inputs.portmaster.overlays.default
           inputs.occt-nix.overlays.default
           inputs.claude-code.overlays.default
+          inputs.lsfg-vk.overlays.default
+          inputs.mesa-git-nix.overlays.default
         ];
       }
     ];

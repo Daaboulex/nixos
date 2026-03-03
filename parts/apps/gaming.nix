@@ -30,6 +30,7 @@
         azahar = { enable = lib.mkOption { type = lib.types.bool; default = false; description = "Enable Azahar"; }; };
         nxSaveSync = { enable = lib.mkOption { type = lib.types.bool; default = false; description = "Enable NX-Save-Sync"; }; };
         occt = { enable = lib.mkOption { type = lib.types.bool; default = false; description = "Enable OCCT stability test"; }; };
+        lsfgVk = { enable = lib.mkOption { type = lib.types.bool; default = false; description = "Enable lsfg-vk Vulkan frame generation (requires Lossless Scaling)"; }; };
         packages = {
           performance = lib.mkOption { type = lib.types.bool; default = true; description = "Include performance packages"; };
           cachyos = lib.mkOption { type = lib.types.bool; default = true; description = "Use CachyOS optimized packages"; };
@@ -70,7 +71,8 @@
         ++ lib.optionals cfg.eden.enable [ inputs.eden.packages.${system}.eden ]
         ++ lib.optionals cfg.azahar.enable [ azahar ]
         ++ lib.optionals cfg.nxSaveSync.enable [ inputs.nx-save-sync.packages.${system}.default ]
-        ++ lib.optionals cfg.occt.enable [ pkgs.occt ];
+        ++ lib.optionals cfg.occt.enable [ pkgs.occt ]
+        ++ lib.optionals cfg.lsfgVk.enable [ pkgs.lsfg-vk ];
 
         users.users.${config.myModules.primaryUser}.extraGroups = [ "gamemode" ];
 
