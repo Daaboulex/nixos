@@ -2,13 +2,38 @@
 
 {
   # ============================================================================
-  # MacBook Pro 9,2 Configuration
+  # MacBook Pro 9,2 Host Configuration
   # ============================================================================
-  
+
+  # Git credentials
+  programs.git.settings.user = {
+    name = "stephandaaboul";
+    email = "s.daaboul@jacobs-university.de";
+  };
+
   # Enable standard tools
   programs.btop.enable = true;
-  programs.htop.enable = true;
+  programs.htop.enable = true;     # Lightweight alternative for old hardware
   programs.vscode.enable = true;
+
+  # Audio
+  services.easyeffects.enable = false;
+
+  # ============================================================================
+  # Host-Specific Hardware Settings
+  # ============================================================================
+
+  # Night light location (Berlin)
+  programs.plasma.kwin.nightLight.location = {
+    latitude = "52.52";
+    longitude = "13.405";
+  };
+
+  # btop layout — single Intel HD4000 GPU
+  programs.btop.settings = {
+    shown_boxes = lib.mkForce "cpu gpu0 mem proc";
+    presets = lib.mkForce "cpu:0:default,gpu0:0:default,mem:0:default,proc:0:default";
+  };
 
   # ============================================================================
   # Flatpak Packages (host-specific)
@@ -45,4 +70,11 @@
     "org.signal.Signal"
     "org.videolan.VLC"
   ];
+
+  # App-specific overrides
+  services.flatpak.overrides = {
+    "org.signal.Signal".Environment = {
+      SIGNAL_PASSWORD_STORE = "kwallet6";
+    };
+  };
 }

@@ -836,11 +836,11 @@
       },
       "locked": {
         "dir": "nix",
-        "lastModified": 1772488342,
-        "narHash": "sha256-dGeqNzSqM7BBzHpjxVxfprrjGYobC1EgMoDE84+fG5I=",
+        "lastModified": 1772727674,
+        "narHash": "sha256-+BntUXgWh5neMutS4hBPC1Ue/TLeG0AL+gp6RaLenTY=",
         "owner": "AndyFilter",
         "repo": "YeetMouse",
-        "rev": "489b08b47c0d24bea1d38af5a7c04f7207b15edf",
+        "rev": "5e3a9d7f3bdef06beb8308a6ab2e4397d659b331",
         "type": "github"
       },
       "original": {
@@ -853,11 +853,11 @@
     "yeetmouse-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1772488342,
-        "narHash": "sha256-dGeqNzSqM7BBzHpjxVxfprrjGYobC1EgMoDE84+fG5I=",
+        "lastModified": 1772727674,
+        "narHash": "sha256-+BntUXgWh5neMutS4hBPC1Ue/TLeG0AL+gp6RaLenTY=",
         "owner": "AndyFilter",
         "repo": "YeetMouse",
-        "rev": "489b08b47c0d24bea1d38af5a7c04f7207b15edf",
+        "rev": "5e3a9d7f3bdef06beb8308a6ab2e4397d659b331",
         "type": "github"
       },
       "original": {

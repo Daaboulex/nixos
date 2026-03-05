@@ -220,8 +220,6 @@
     kernel = {
       enable = true;
       variant = "cachyos-lto";
-      laptopSafe = false;
-      preferLocalBuild = true; # Use binary cache when available
       mArch = "ZEN5"; # Zen 5 (9950X3D) supports x86-64-v4, use ZEN4 for specific tuning
       extraParams = [
         # loglevel=0 removed — Plymouth/Lanzaboote appends loglevel=4 which overrides it
@@ -362,11 +360,18 @@
   };
 
   # ============================================================================
+  # Nix Daemon — 64GB RAM allows aggressive download buffering
+  # ============================================================================
+  nix.settings.download-buffer-size = 12 * 1024 * 1024 * 1024;  # 12 GiB
+
+  # ============================================================================
   # Filesystems
   # ============================================================================
+  # Force tmpfs over any @tmp BTRFS subvolume from hardware-configuration.nix
   fileSystems."/tmp" = {
-    fsType = "tmpfs";
-    options = [
+    device = lib.mkForce "tmpfs";
+    fsType = lib.mkForce "tmpfs";
+    options = lib.mkForce [
       "mode=1777"
       "noatime"
       "size=16G"

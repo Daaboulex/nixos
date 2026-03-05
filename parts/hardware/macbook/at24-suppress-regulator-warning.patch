@@ -1,0 +1,16 @@
+--- a/drivers/misc/eeprom/at24.c	2026-03-05 18:37:33.021501738 +0100
++++ b/drivers/misc/eeprom/at24.c	2026-03-05 18:37:33.022739285 +0100
+@@ -703,8 +703,11 @@
+ 	at24->offset_adj = at24_get_offset_adj(flags, byte_len);
+ 	at24->client_regmaps[0] = regmap;
+ 
+-	at24->vcc_reg = devm_regulator_get(dev, "vcc");
+-	if (IS_ERR(at24->vcc_reg))
++	/* Use _optional to gracefully handle missing VCC regulator (common on MacBooks) */
++	at24->vcc_reg = devm_regulator_get_optional(dev, "vcc");
++	if (IS_ERR(at24->vcc_reg) && PTR_ERR(at24->vcc_reg) == -ENODEV)
++		at24->vcc_reg = NULL;
++	else if (IS_ERR(at24->vcc_reg))
+ 		return PTR_ERR(at24->vcc_reg);
+ 
+ 	writable = !(flags & AT24_FLAG_READONLY);

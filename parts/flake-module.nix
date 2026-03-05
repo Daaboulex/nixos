@@ -45,12 +45,14 @@
     ./hardware/goxlr.nix
     ./hardware/piper.nix
     ./hardware/streamcontroller.nix
+    ./hardware/macbook/default.nix
     ./hardware/performance.nix
     ./hardware/power.nix
     ./hardware/yeetmouse/default.nix
     
     # Hosts
     ./hosts/ryzen-9950x3d/flake-module.nix
+    ./hosts/macbook-pro-9-2/flake-module.nix
   ];
 
   perSystem = { config, self', inputs', pkgs, system, ... }: {

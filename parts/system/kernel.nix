@@ -3,8 +3,6 @@
     options.myModules.kernel = {
       enable = lib.mkEnableOption "Custom kernel configuration";
       variant = lib.mkOption { type = lib.types.enum [ "cachyos" "cachyos-lto" "cachyos-sched-ext" "zen" "xanmod" "default" ]; default = "default"; description = "Kernel variant to use (cachyos, zen, xanmod, or NixOS default)"; };
-      laptopSafe = lib.mkEnableOption "Laptop-safe configuration (cachyos)";
-      preferLocalBuild = lib.mkEnableOption "Prefer local build (no cache)";
       mArch = lib.mkOption { type = lib.types.str; default = "x86-64-v3"; description = "Microarchitecture for CachyOS kernel (x86-64-v3, x86-64-v4, ZEN4, ZEN5, etc.)"; };
       extraParams = lib.mkOption { type = lib.types.listOf lib.types.str; default = []; description = "Extra kernel parameters"; };
       

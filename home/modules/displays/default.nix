@@ -5,6 +5,10 @@
 let
   cfg = osConfig.myModules.desktop.displays;
 
+  # Guard: all monitor-derived values are only evaluated when displays are enabled.
+  # The let bindings must not access cfg.monitors when enable = false.
+  hasMonitors = cfg.enable && cfg.monitors != {};
+
   # Convert millihertz to kscreen-doctor refresh rate (rounded integer, e.g. 239757 → "240")
   # kscreen-doctor only accepts integer Hz and does fuzzy matching
   mhzToRefresh = mhz: toString ((mhz + 500) / 1000);
@@ -17,8 +21,8 @@ let
     inverted = "inverted";
   }.${r};
 
-  # All monitors sorted by priority
-  sortedMonitors = lib.sort (a: b: a.priority < b.priority) (lib.attrValues cfg.monitors);
+  # All monitors sorted by priority (safe: only evaluated when hasMonitors is true via mkIf)
+  sortedMonitors = if hasMonitors then lib.sort (a: b: a.priority < b.priority) (lib.attrValues cfg.monitors) else [];
 
   # Enabled monitors (for display-arrange)
   enabledMonitors = builtins.filter (m: m.enabled) sortedMonitors;
@@ -171,7 +175,7 @@ let
     # Purge phantom UUIDs
     phantomPurge = lib.concatMapStrings (uuid: ''
       $SED -i '/${uuid}/,/^$/d' "$KWINRC" 2>/dev/null || true
-    '') cfg.phantomUuids;
+    '') (if cfg.enable then cfg.phantomUuids else []);
   in ''
     KWINRC="$HOME/.config/kwinrc"
     KWC="${kwc}"

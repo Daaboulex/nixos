@@ -1,0 +1,106 @@
+--- a/drivers/hwmon/applesmc.c	2026-03-05 18:43:20.290951850 +0100
++++ b/drivers/hwmon/applesmc.c	2026-03-05 18:57:25.723735746 +0100
+@@ -32,6 +32,7 @@
+ #include <linux/leds.h>
+ #include <linux/hwmon.h>
+ #include <linux/workqueue.h>
++#include <linux/spinlock.h>
+ #include <linux/err.h>
+ #include <linux/bits.h>
+ 
+@@ -164,6 +165,7 @@
+ 	s16 rest_y;
+ 
+ 	u8 backlight_state[2];
++	spinlock_t backlight_lock;
+ 
+ 	struct device *hwmon_dev;
+ 	struct input_dev *idev;
+@@ -590,10 +592,19 @@
+ static const struct applesmc_entry *applesmc_get_entry_by_index(
+ 	struct applesmc_device *smc, int index)
+ {
+-	struct applesmc_entry *cache = &smc->reg.cache[index];
++	struct applesmc_entry *cache;
+ 	char key[4];
+ 	int ret = 0;
+ 
++	/* Safety check: ensure cache is initialized and index is valid */
++	if (!smc->reg.cache)
++		return ERR_PTR(-ENODEV);
++
++	if (index < 0 || index >= smc->reg.key_count)
++		return ERR_PTR(-EINVAL);
++
++	cache = &smc->reg.cache[index];
++
+ 	if (cache->valid)
+ 		return cache;
+ 
+@@ -1105,10 +1116,13 @@
+ static int applesmc_pm_resume(struct device *dev)
+ {
+ 	struct applesmc_device *smc = dev_get_drvdata(dev);
++	int ret = 0;
+ 
+-	if (smc->reg.has_key_backlight)
+-		applesmc_write_key(smc, BACKLIGHT_KEY, smc->backlight_state, 2);
+-
++	if (smc->reg.has_key_backlight) {
++		ret = applesmc_write_key(smc, BACKLIGHT_KEY, smc->backlight_state, 2);
++		if (ret)
++			pr_warn("Failed to restore keyboard backlight: %d\n", ret);
++	}
+ 	return 0;
+ }
+ 
+@@ -1460,17 +1474,32 @@
+ static void applesmc_backlight_set(struct work_struct *work)
+ {
+ 	struct applesmc_device *smc = container_of(work, struct applesmc_device, backlight_work);
++	u8 state[2];
++	unsigned long flags;
++
++	/* Copy state under lock to avoid race conditions */
++	spin_lock_irqsave(&smc->backlight_lock, flags);
++	state[0] = smc->backlight_state[0];
++	state[1] = smc->backlight_state[1];
++	spin_unlock_irqrestore(&smc->backlight_lock, flags);
+ 
+-	applesmc_write_key(smc, BACKLIGHT_KEY, smc->backlight_state, 2);
++	applesmc_write_key(smc, BACKLIGHT_KEY, state, 2);
+ }
+ 
+ static void applesmc_brightness_set(struct led_classdev *led_cdev,
+ 						enum led_brightness value)
+ {
+ 	struct applesmc_device *smc = dev_get_drvdata(led_cdev->dev);
++	unsigned long flags;
+ 	int ret;
+ 
++	if (value > 255)
++		value = 255;
++
++	spin_lock_irqsave(&smc->backlight_lock, flags);
+ 	smc->backlight_state[0] = value;
++	spin_unlock_irqrestore(&smc->backlight_lock, flags);
++
+ 	ret = queue_work(smc->backlight_wq, &smc->backlight_work);
+ 
+ 	if (debug && (!ret))
+@@ -1793,6 +1822,7 @@
+ 		return -ENOMEM;
+ 
+ 	INIT_WORK(&smc->backlight_work, applesmc_backlight_set);
++	spin_lock_init(&smc->backlight_lock);
+ 	smc->backlight_dev.name = "smc::kbd_backlight";
+ 	smc->backlight_dev.default_trigger = "nand-disk";
+ 	smc->backlight_dev.brightness_set = applesmc_brightness_set;
+@@ -1808,6 +1838,7 @@
+ 	if (!smc->reg.has_key_backlight)
+ 		return;
+ 	led_classdev_unregister(&smc->backlight_dev);
++	flush_workqueue(smc->backlight_wq);
+ 	destroy_workqueue(smc->backlight_wq);
+ }
+ 

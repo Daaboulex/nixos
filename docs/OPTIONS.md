@@ -1,6 +1,6 @@
 # NixOS Custom Modules Documentation
 
-> Auto-generated from `myModules` option definitions. 204 options across 13 categories.
+> Auto-generated from `myModules` option definitions. 202 options across 13 categories.
 >
 > Regenerate: `bash scripts/update-docs.sh`
 
@@ -12,7 +12,7 @@
 - [DEVELOPMENT](#development-2-options) (2 options)
 - [GAMING](#gaming-19-options) (19 options)
 - [HARDWARE](#hardware-46-options) (46 options)
-- [KERNEL](#kernel-15-options) (15 options)
+- [KERNEL](#kernel-13-options) (13 options)
 - [MUSIC](#music-2-options) (2 options)
 - [PRIMARYUSER](#primaryuser-1-options) (1 options)
 - [PROGRAMS](#programs-3-options) (3 options)
@@ -923,7 +923,7 @@ An empty list (default) builds all drivers.
 
 
 
-## KERNEL (15 options)
+## KERNEL (13 options)
 
 #### `myModules.kernel.cachyos.bbr3`
 
@@ -1002,25 +1002,11 @@ An empty list (default) builds all drivers.
 - **Default**: `[]`
 
 
-#### `myModules.kernel.laptopSafe`
-
-**Description**: Whether to enable Laptop-safe configuration (cachyos).
-- **Type**: `boolean`
-- **Default**: `false`
-
-
 #### `myModules.kernel.mArch`
 
 **Description**: Microarchitecture for CachyOS kernel (x86-64-v3, x86-64-v4, ZEN4, ZEN5, etc.)
 - **Type**: `string`
 - **Default**: `"x86-64-v3"`
-
-
-#### `myModules.kernel.preferLocalBuild`
-
-**Description**: Whether to enable Prefer local build (no cache).
-- **Type**: `boolean`
-- **Default**: `false`
 
 
 #### `myModules.kernel.variant`

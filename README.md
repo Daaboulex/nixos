@@ -19,16 +19,26 @@ nrb --update           # Update flake inputs + build + switch
 nrb --dry              # Build + show diff, don't activate
 nrb --boot             # Build + activate on next reboot
 nrb --trace            # Build with --show-trace (debugging)
+nrb --check            # Evaluate ALL configs without building (fast sanity check)
+nrb --host <name>      # Build a specific nixosConfiguration
+nrb --list             # Show all configurations + specialisations
 nrb --update --dry     # Update inputs + build + diff only
 ```
 
-`nrb` features: build timing, kernel change detection (warns if reboot needed), `nvd` system diff, Home Manager generation diff, generation number display, rollback hint, auto-regenerates `docs/OPTIONS.md` on successful switch.
+`nrb` builds **only the current hostname** by default (detected via `hostname`). Hosts with specialisations (e.g., MacBook kernel variants) build all variants in a single `nrb` — they appear as separate boot entries in systemd-boot. After build, `nrb` shows all specialisations with their kernel versions.
+
+Features: build timing, kernel change detection, specialisation listing, `nvd` system diff, Home Manager generation diff, generation display, rollback hint, auto-regenerates `docs/OPTIONS.md` on successful switch.
+
+```bash
+nrb-check              # Evaluate ALL configs + specialisations (standalone, auto-discovers hosts)
+nrb-info               # System state, active specialisation, store size, generations
+```
 
 ### Shell Aliases & Tools
 
 | Alias/Tool | Description |
 |------------|-------------|
-| `gc` | `sudo nix-collect-garbage -d && sudo nix-store --optimize` |
+| `gc` | Collect garbage (system + user + HM generations) + optimize store |
 | `lc` | Clear system logs (dmesg, journald, /var/log) |
 | `cat` | `bat --paging=never` (syntax-highlighted) |
 | `z <dir>` | zoxide smart cd (learns frequent dirs) |
@@ -75,6 +85,10 @@ parts/
 │   ├── goxlr.nix                      # GoXLR audio interface (EQ, denoise, profiles)
 │   ├── piper.nix                      # Piper mouse configuration GUI
 │   ├── streamcontroller.nix           # Stream Deck integration
+│   ├── macbook/                       # MacBook-specific hardware
+│   │   ├── default.nix                # Fan control, touchpad, keyboard config
+│   │   ├── applesmc-comprehensive-fixes.patch  # AppleSMC race + null fixes
+│   │   └── at24-suppress-regulator-warning.patch  # EEPROM regulator fix
 │   └── yeetmouse/                     # Custom mouse acceleration driver
 │       ├── default.nix                # Build overlay (LLVM detection, patches)
 │       ├── driver.nix                 # Kernel module + sysfs parameter definitions
@@ -92,10 +106,14 @@ parts/
 │   ├── portmaster.nix                 # Portmaster network firewall
 │   └── tidalcycles.nix                # Live coding music environment
 └── hosts/
-    └── ryzen-9950x3d/                 # Host configuration
-        ├── flake-module.nix           # nixosConfiguration + module imports + overlays
-        ├── default.nix                # Host-specific myModules.* option values
-        └── hardware-configuration.nix # Auto-generated (BTRFS + LUKS layout)
+    ├── ryzen-9950x3d/                 # Desktop host (Zen 5, RDNA 4, CachyOS-LTO)
+    │   ├── flake-module.nix           # nixosConfiguration + module imports + overlays
+    │   ├── default.nix                # Host-specific myModules.* option values
+    │   └── hardware-configuration.nix # Auto-generated (BTRFS + LUKS layout)
+    └── macbook-pro-9-2/               # Laptop host (Ivy Bridge, Intel HD4000)
+        ├── flake-module.nix           # Single config + xanmod/cachyos specialisations
+        ├── default.nix                # MacBook-specific tuning + hardware fixes
+        └── hardware-configuration.nix # Auto-generated
 home/
 ├── home.nix                           # Home Manager entry point (auto-discovers modules)
 ├── modules/                           # Home Manager modules (auto-discovered)
@@ -111,12 +129,16 @@ home/
 │   ├── flatpak/default.nix            # Flatpak app declarations + theme overrides
 │   └── displays/default.nix           # Display arrangement + toggle + tiling scripts
 ├── hosts/
-│   └── ryzen-9950x3d/default.nix      # Host-specific HM overrides
+│   ├── ryzen-9950x3d/default.nix      # Host-specific HM overrides
+│   └── macbook-pro-9-2/default.nix    # MacBook HM overrides (single GPU, etc.)
 scripts/
+├── install-btrfs.sh                   # Automated BTRFS+LUKS install script
 ├── generate-docs.nix                  # Auto-generates docs/OPTIONS.md
+├── test-shell-functions.sh            # Validate all configs, flags, functions, and docs
 └── update-docs.sh                     # Wrapper to run doc generation
 docs/
 ├── OPTIONS.md                         # Auto-generated module option reference
+├── installation.md                    # Step-by-step installation tutorial
 └── secure-boot.md                     # Secure Boot setup & recovery guide
 secrets/
 └── secrets.yaml                       # Encrypted secrets (sops-nix)
@@ -146,11 +168,27 @@ Modules are exported as `flake.nixosModules.<scope>-<feature>` (e.g., `hardware-
 
 ### Host Composition
 
-Each host's `flake-module.nix` defines a `nixosConfiguration` that:
-1. Imports the needed `nixosModules` from the flake
-2. Imports external modules (Home Manager, Lanzaboote, sops-nix, etc.)
-3. Stacks overlays for external packages
+Each host's `flake-module.nix` defines one or more `nixosConfiguration` entries that:
+1. Import the needed `nixosModules` from the flake
+2. Import external modules (Home Manager, Lanzaboote, sops-nix, etc.)
+3. Stack overlays for external packages
 4. The host's `default.nix` then enables and configures `myModules.*` options
+
+Current hosts:
+- **ryzen-9950x3d** — Desktop (Zen 5, RDNA 4, 64GB, CachyOS-LTO kernel, multi-monitor)
+- **macbook-pro-9-2** — Laptop (Ivy Bridge i5, Intel HD4000, 16GB, default kernel + xanmod/cachyos specialisations)
+
+### Kernel Variant Specialisations
+
+The MacBook host uses NixOS **specialisations** to provide multiple kernel variants in a single build. Each specialisation creates a separate boot entry in systemd-boot:
+
+| Boot Entry | Kernel | MacBook Patches | Description |
+|-----------|--------|-----------------|-------------|
+| NixOS (default) | Standard NixOS | Enabled | Safe, stable baseline |
+| NixOS (xanmod) | Xanmod | Disabled | Better latency, newer patches |
+| NixOS (cachyos) | CachyOS (BORE, 1000Hz, full preempt) | Disabled | Full CachyOS optimizations |
+
+One `nrb` builds all 3 variants. If the active kernel breaks, select another from the boot menu — no need to rebuild. This is safer than separate `nixosConfigurations` because all variants are guaranteed to be built and available.
 
 ### Home Manager Integration
 
@@ -281,6 +319,7 @@ Systemd service + timer that downloads the latest Arkenfox `user.js` Firefox sec
 | `hardware-goxlr` | `myModules.audio.goxlr` | GoXLR audio (UCM patch, EQ, denoise, toggle) |
 | `hardware-piper` | `myModules.hardware.piper` | Gaming mouse configuration |
 | `hardware-streamcontroller` | `myModules.hardware.streamcontroller` | Stream Deck (patched for USB websockets) |
+| `hardware-macbook` | `myModules.hardware.macbook` | MacBook fan (mbpfan), touchpad, keyboard, kernel patches |
 | `hardware-yeetmouse` | `myModules.hardware.yeetmouse` | Mouse acceleration driver (8 modes, LLVM build) |
 
 ### Desktop Modules
@@ -318,21 +357,59 @@ Systemd service + timer that downloads the latest Arkenfox `user.js` Firefox sec
 | `flatpak` | Flatpak apps + Wayland/theme overrides |
 | `displays` | display-arrange, toggle scripts, tiling activation, wake service |
 
-For full option details with types and defaults, see [docs/OPTIONS.md](docs/OPTIONS.md) (auto-generated, 215+ options across 13 categories).
+For full option details with types and defaults, see [docs/OPTIONS.md](docs/OPTIONS.md) (auto-generated, 200+ options across 13 categories).
 
 ## Installing on a New System
 
 ### Prerequisites
 
-- NixOS minimal ISO (or any NixOS installer) booted on the target machine
+- [NixOS unstable graphical ISO](https://channels.nixos.org/nixos-unstable/latest-nixos-graphical-x86_64-linux.iso) booted on the target machine (UEFI mode)
 - Network connectivity
-- This repository cloned or accessible
+- This repository cloned or accessible on the live USB
 
-### Step 1: Partition & Format (BTRFS + LUKS)
+### Automated Install (Recommended)
 
-This flake uses BTRFS with LUKS encryption. Adapt device names to your hardware:
+The `scripts/install-btrfs.sh` script handles partitioning, encryption, BTRFS subvolumes, hardware config generation, and NixOS installation:
 
 ```bash
+# Clone the repo on the live USB
+git clone <repo-url> ~/nix && cd ~/nix
+
+# Run the installer (shows all disks, requires multiple confirmations)
+sudo bash scripts/install-btrfs.sh /dev/sdX <hostname>
+
+# With options:
+sudo bash scripts/install-btrfs.sh --swap 4G /dev/sdX <hostname>          # Add swap
+sudo bash scripts/install-btrfs.sh --no-encrypt /dev/sdX <hostname>       # No LUKS
+sudo bash scripts/install-btrfs.sh --no-install /dev/sdX <hostname>       # Partition only
+sudo bash scripts/install-btrfs.sh --swap 2048M /dev/nvme0n1 <hostname>   # NVMe + swap in MiB
+```
+
+Safety features:
+- Shows **all disks** with model, serial, size, and current contents
+- Requires typing the **full device path** to confirm
+- Requires typing `ERASE` if the disk has existing OS partitions
+- Warns if not booted in UEFI mode
+- Warns if disk is < 20 GB
+- Resolves `/dev/disk/by-id/*` symlinks automatically
+- Cleanup trap on failure (unmounts, closes LUKS)
+- Auto-enables Nix experimental features (flakes work on fresh live USB)
+
+Creates: GPT + 512M ESP + optional swap + BTRFS with subvolumes (@, @home, @nix, @log, @cache, @tmp, @snapshots). SSD auto-detection adds `ssd,discard=async` mount options.
+
+For a complete walkthrough including WiFi setup, post-install configuration, troubleshooting, and partition layout diagrams, see [docs/installation.md](docs/installation.md).
+
+### Manual Install
+
+<details>
+<summary>Step-by-step manual instructions (click to expand)</summary>
+
+#### Partition & Format (BTRFS + LUKS)
+
+```bash
+# Enable flakes on live USB
+export NIX_CONFIG="experimental-features = nix-command flakes"
+
 # Identify your disk
 lsblk
 
@@ -343,7 +420,7 @@ parted /dev/nvme0n1 -- set 1 esp on
 parted /dev/nvme0n1 -- mkpart primary 512MiB 100%
 
 # Encrypt root partition
-cryptsetup luksFormat /dev/nvme0n1p2
+cryptsetup luksFormat --type luks2 /dev/nvme0n1p2
 cryptsetup open /dev/nvme0n1p2 cryptroot
 
 # Format
@@ -351,12 +428,10 @@ mkfs.fat -F 32 -n BOOT /dev/nvme0n1p1
 mkfs.btrfs -L nixos /dev/mapper/cryptroot
 ```
 
-### Step 2: Create BTRFS Subvolumes
+#### Create BTRFS Subvolumes
 
 ```bash
 mount /dev/mapper/cryptroot /mnt
-
-# Create subvolume layout
 btrfs subvolume create /mnt/@
 btrfs subvolume create /mnt/@home
 btrfs subvolume create /mnt/@nix
@@ -364,38 +439,38 @@ btrfs subvolume create /mnt/@log
 btrfs subvolume create /mnt/@cache
 btrfs subvolume create /mnt/@tmp
 btrfs subvolume create /mnt/@snapshots
-
 umount /mnt
 
-# Mount subvolumes
+# Mount subvolumes (add ssd,discard=async for SSDs)
 mount -o subvol=@,compress=zstd,noatime /dev/mapper/cryptroot /mnt
-mkdir -p /mnt/{home,nix,var/log,var/cache,var/tmp,.snapshots,boot}
+mkdir -p /mnt/{home,nix,var/log,var/cache,tmp,boot,.snapshots}
 mount -o subvol=@home,compress=zstd,noatime /dev/mapper/cryptroot /mnt/home
 mount -o subvol=@nix,compress=zstd,noatime /dev/mapper/cryptroot /mnt/nix
 mount -o subvol=@log,compress=zstd,noatime /dev/mapper/cryptroot /mnt/var/log
 mount -o subvol=@cache,compress=zstd,noatime /dev/mapper/cryptroot /mnt/var/cache
-mount -o subvol=@tmp,compress=zstd,noatime /dev/mapper/cryptroot /mnt/var/tmp
+mount -o subvol=@tmp,compress=zstd,noatime /dev/mapper/cryptroot /mnt/tmp
 mount -o subvol=@snapshots,compress=zstd,noatime /dev/mapper/cryptroot /mnt/.snapshots
 mount /dev/nvme0n1p1 /mnt/boot
 ```
 
-### Step 3: Generate Hardware Configuration
+#### Generate Hardware Configuration
 
 ```bash
-nixos-generate-config --root /mnt --show-hardware-config > /tmp/hardware-configuration.nix
+nixos-generate-config --root /mnt
+cp /mnt/etc/nixos/hardware-configuration.nix parts/hosts/<hostname>/hardware-configuration.nix
 ```
 
-Review the output — it will contain your disk UUIDs, detected kernel modules, and filesystem mounts. Copy this to your host directory.
+</details>
 
-### Step 4: Clone & Configure
+### Clone & Configure
 
 ```bash
 # Clone the flake (into the new system or on another machine)
 git clone <repo-url> /mnt/home/<user>/Documents/nix
 cd /mnt/home/<user>/Documents/nix
 
-# Copy hardware config
-cp /tmp/hardware-configuration.nix parts/hosts/<hostname>/hardware-configuration.nix
+# Copy hardware config (skip if using install-btrfs.sh — it does this automatically)
+cp /mnt/etc/nixos/hardware-configuration.nix parts/hosts/<hostname>/hardware-configuration.nix
 ```
 
 ### Step 5: Create Host Configuration
@@ -648,16 +723,21 @@ sops secrets/secrets.yaml
 
 If the age key is lost, secrets cannot be decrypted. Keep a backup of `/var/lib/sops-nix/key.txt` in a secure location.
 
-For Secure Boot setup and recovery after BIOS updates, see [docs/secure-boot.md](docs/secure-boot.md).
+For Secure Boot setup and recovery after BIOS updates, see [docs/secure-boot.md](docs/secure-boot.md). For installation from a live USB, see [docs/installation.md](docs/installation.md).
 
 ## Documentation
 
 Module option documentation is auto-generated from `myModules` option definitions:
 
 ```bash
-bash scripts/update-docs.sh     # Manual regeneration
+bash scripts/update-docs.sh           # Manual regeneration
+bash scripts/test-shell-functions.sh  # Validate all configs, flags, functions, and docs
 ```
 
 After every successful `nrb` switch, `docs/OPTIONS.md` is automatically regenerated in the background.
 
-The generated file contains all 215+ options with types, defaults, and descriptions, organized by category with a table of contents. See [docs/OPTIONS.md](docs/OPTIONS.md).
+The pipeline: `scripts/generate-docs.nix` evaluates the `ryzen-9950x3d` NixOS configuration, extracts all `myModules.*` options (types, defaults, descriptions), groups them by category, and produces a Markdown file with table of contents. `scripts/update-docs.sh` is a wrapper that runs the Nix build and copies the result to `docs/OPTIONS.md`.
+
+`scripts/test-shell-functions.sh` validates all configurations (including specialisations), verifies nrb flags and functions match the zsh source, and checks documentation completeness. It auto-extracts flags and function names from the zsh module, so it stays in sync without manual updates.
+
+See [docs/OPTIONS.md](docs/OPTIONS.md) for the full reference (200+ options across 13 categories).

@@ -10,9 +10,11 @@
         auto-optimise-store = true;
         keep-outputs = true;
         keep-derivations = true;
-        max-jobs = "auto";
-        cores = 0;
-        download-buffer-size = 12884901888;
+        max-jobs = lib.mkDefault "auto";
+        cores = lib.mkDefault 0;
+        # Max NAR size buffered in RAM during downloads. Larger NARs fall back to
+        # disk streaming (slower but safe). Keep conservative for low-RAM systems.
+        download-buffer-size = lib.mkDefault (2 * 1024 * 1024 * 1024);  # 2 GiB
         sandbox = true;
         substituters = [
           "https://cache.nixos.org"
