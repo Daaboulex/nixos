@@ -33,8 +33,8 @@
         #rust-lang.rust-analyzer
       ];
       
-      # User settings (settings.json)
-      userSettings = {
+      # User settings (settings.json) — override per-host for different displays/preferences
+      userSettings = lib.mkDefault {
         # Editor
         "editor.fontFamily" = "'JetBrainsMono Nerd Font', 'monospace'";
         "editor.fontSize" = 14;

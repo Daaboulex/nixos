@@ -6,6 +6,11 @@
       options.myModules.security.ssh = {
         enable = lib.mkEnableOption "Secure SSH server configuration";
         trustedKeys = lib.mkOption { type = lib.types.listOf lib.types.str; default = []; description = "List of trusted SSH public keys"; };
+        fail2banIgnoreIPs = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [ "127.0.0.1/8" "::1/128" ];
+          description = "IP ranges to never ban (add your LAN/VPN subnets)";
+        };
       };
 
       config = lib.mkIf cfg.enable {
@@ -40,7 +45,7 @@
         services.fail2ban = {
           enable = true;
           maxretry = 3;
-          ignoreIP = [ "127.0.0.1/8" "192.168.0.0/16" ];
+          ignoreIP = cfg.fail2banIgnoreIPs;
           jails.sshd.settings = { enabled = true; port = "ssh"; filter = "sshd"; maxretry = 3; findtime = 600; bantime = 3600; };
         };
       };

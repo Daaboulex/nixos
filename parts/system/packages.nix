@@ -25,7 +25,8 @@
         (lib.mkIf cfg.editors { environment.systemPackages = with pkgs; [ vim nano ]; })
         (lib.mkIf cfg.hardware { environment.systemPackages = with pkgs; [ pciutils usbutils lshw hwinfo dmidecode lm_sensors smartmontools bluez-tools brightnessctl acpi upower ]; })
         (lib.mkIf cfg.diagnostics { environment.systemPackages = with pkgs; [ inxi ethtool powertop mesa-demos vulkan-tools iw lsof minicom ]; })
-        (lib.mkIf cfg.monitoring { environment.systemPackages = with pkgs; [ htop btop lact radeontop ]; })
+        (lib.mkIf cfg.monitoring { environment.systemPackages = with pkgs; [ ]
+          ++ lib.optionals (config.myModules.hardware.graphics.amd.enable or false) [ lact radeontop ]; })
         (lib.mkIf cfg.benchmarking { environment.systemPackages = with pkgs; [ sysbench stress-ng ]; })
       ];
     };

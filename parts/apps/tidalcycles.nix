@@ -2,7 +2,7 @@
   flake.nixosModules.apps-tidalcycles = { config, lib, pkgs, ... }: {
     options.myModules.music.tidalcycles = {
       enable = lib.mkEnableOption "Enable TidalCycles and SuperDirt";
-      autostartSuperDirt = lib.mkOption { type = lib.types.bool; default = false; };
+      autostartSuperDirt = lib.mkOption { type = lib.types.bool; default = false; description = "Auto-start SuperDirt (SuperCollider) as a systemd user service"; };
     };
 
     config = lib.mkIf config.myModules.music.tidalcycles.enable {

@@ -33,6 +33,12 @@
           default = true;
           description = "Apply RDNA 4 (GFX12) stability kernel params: disable scatter-gather display and GFX OFF";
         };
+
+        drmDebug = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = "Enable DRM debug logging (drm.debug=0x1e) for diagnosing display black screens";
+        };
       };
 
       config = lib.mkIf cfg.enable {
@@ -48,6 +54,10 @@
             "amdgpu.sg_display=0"
             # Disable GFX OFF power state — prevents MES INVALIDATE_TLBS timeouts on RDNA 3/4
             "amdgpu.gfxoff=0"
+          ]
+          ++ lib.optionals cfg.drmDebug [
+            # DRM subsystem debug logging — captures display engine events for black screen diagnosis
+            "drm.debug=0x1e"
           ];
 
         services.xserver.videoDrivers = [ "amdgpu" ];

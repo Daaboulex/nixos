@@ -5,20 +5,17 @@
     in {
       options.myModules.desktop.kde = {
         enable = lib.mkEnableOption "KDE Plasma Desktop Environment";
-        
-        sddm = {
-          primaryMonitor = lib.mkOption {
-            type = lib.types.nullOr lib.types.str;
-            default = null;
-            description = "Primary monitor for SDDM login";
-          };
-          secondaryMonitor = lib.mkOption {
-            type = lib.types.nullOr lib.types.str;
-            default = null;
-            description = "Secondary monitor to disable for SDDM";
-          };
+
+        xkbLayout = lib.mkOption {
+          type = lib.types.str;
+          default = "us";
+          description = "XKB keyboard layout (e.g. 'us', 'de', 'us,de')";
         };
-        
+        xkbVariant = lib.mkOption {
+          type = lib.types.str;
+          default = "";
+          description = "XKB keyboard variant";
+        };
         ddcBrightness = lib.mkOption {
           type = lib.types.bool;
           default = false;
@@ -39,12 +36,8 @@
 
         services.xserver = {
           enable = true;
-          xkb = { layout = "us"; variant = ""; };
+          xkb = { layout = cfg.xkbLayout; variant = cfg.xkbVariant; };
         };
-
-        boot.kernelParams = lib.optionals (cfg.sddm.secondaryMonitor != null) [
-          "video=${cfg.sddm.secondaryMonitor}:panel_orientation=right_side_up"
-        ];
 
         environment.systemPackages = with pkgs; [
           kdePackages.sddm-kcm

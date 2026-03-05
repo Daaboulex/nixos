@@ -26,7 +26,7 @@
 
       users.users.${config.myModules.primaryUser} = {
         isNormalUser = true;
-        description = "user";
+        description = config.myModules.primaryUser;
         extraGroups = [
           "networkmanager" "wheel" "video" "input" "disk" "bluetooth" "dialout" "i2c"
         ];

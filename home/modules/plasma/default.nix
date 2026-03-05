@@ -6,12 +6,147 @@
   pkgs,
   lib,
   inputs,
+  osConfig,
   ...
 }:
 
 let
   # Helper for cleaner flatpak app references
-  flatpakApp = id: "file:///home/user/.local/share/flatpak/exports/share/applications/${id}.desktop";
+  flatpakApp = id: "file://${config.home.homeDirectory}/.local/share/flatpak/exports/share/applications/${id}.desktop";
+
+  # Late-tile — KWin helper that retiles windows whose WM_CLASS arrives late
+  # (common with Electron/Flatpak apps like Spotify, Obsidian, etc.)
+  # When a window's class changes after creation, it re-assigns the window to
+  # an empty tile so Fluid Tile can manage it.
+  late-tile = pkgs.stdenvNoCC.mkDerivation {
+    pname = "kwin-script-late-tile";
+    version = "1.0.0";
+
+    dontUnpack = true;
+    dontBuild = true;
+
+    installPhase = ''
+      runHook preInstall
+      mkdir -p $out/share/kwin/scripts/late-tile/contents/code
+
+      cat > $out/share/kwin/scripts/late-tile/metadata.json << 'METADATA'
+      {
+        "KPlugin": {
+          "Id": "late-tile",
+          "Name": "Late Tile",
+          "Description": "Retiles windows whose WM_CLASS arrives after window creation",
+          "Version": "1.0.0",
+          "License": "GPL-3.0",
+          "Category": "Window Management"
+        },
+        "X-Plasma-API": "javascript",
+        "X-Plasma-MainScript": "code/main.mjs"
+      }
+      METADATA
+
+      cat > $out/share/kwin/scripts/late-tile/contents/code/main.mjs << 'SCRIPT'
+      // late-tile: retile windows whose resourceClass changes after creation.
+      // Electron/Flatpak apps often set WM_CLASS late, causing tiling scripts
+      // to miss them on windowAdded. This script watches for class changes and
+      // assigns the window to an available tile.
+
+      const pending = new Set();
+
+      function findEmptyTile(screen, desktop) {
+        const root = workspace.tilingForScreen(screen)?.rootTile;
+        if (!root) return null;
+
+        const queue = [root];
+        while (queue.length > 0) {
+          const tile = queue.shift();
+          if (tile.tiles.length > 0) {
+            for (const child of tile.tiles) queue.push(child);
+          } else if (tile.windows.length === 0) {
+            return tile;
+          }
+        }
+        return null;
+      }
+
+      function tryTile(window) {
+        // Skip windows that are already tiled, blocked, or not normal
+        if (window.tile !== null || !window.normalWindow ||
+            !window.resizeable || !window.maximizable || window.transient) {
+          return;
+        }
+
+        const tile = findEmptyTile(window.output, workspace.currentDesktop);
+        if (tile) {
+          tile.manage(window);
+        }
+      }
+
+      function onWindowAdded(window) {
+        // If the window has no class yet, watch for it to appear
+        if (window.resourceClass === "" || window.resourceClass === "unknown") {
+          pending.add(window);
+          window.windowClassChanged.connect(() => {
+            if (!pending.has(window)) return;
+            pending.delete(window);
+            // Small delay to let the window settle
+            Qt.callLater(() => tryTile(window));
+          });
+        }
+      }
+
+      function onWindowRemoved(window) {
+        pending.delete(window);
+      }
+
+      workspace.windowAdded.connect(onWindowAdded);
+      workspace.windowRemoved.connect(onWindowRemoved);
+
+      // Check existing windows on script load
+      for (const window of workspace.stackingOrder) {
+        onWindowAdded(window);
+      }
+      SCRIPT
+
+      runHook postInstall
+    '';
+
+    meta = with pkgs.lib; {
+      description = "KWin script to retile windows with late WM_CLASS";
+      license = licenses.gpl3Only;
+      platforms = platforms.linux;
+    };
+  };
+
+  # Fluid Tile — KWin auto-tiling script
+  # To update: change rev to new tag, set sha256 = "" and rebuild — Nix prints the correct hash.
+  # Tags: https://codeberg.org/Serroda/fluid-tile/tags
+  fluid-tile = pkgs.stdenvNoCC.mkDerivation {
+    pname = "kwin-script-fluid-tile";
+    version = "7.0-RC3";
+
+    src = pkgs.fetchgit {
+      url = "https://codeberg.org/Serroda/fluid-tile.git";
+      rev = "v7.0-RC3";
+      sha256 = "sha256-2dWWOmYa1WorrP/mI0zOvLOdtBsvCH+eDJLJ6unMVnU=";
+    };
+
+    dontBuild = true;
+
+    installPhase = ''
+      runHook preInstall
+      mkdir -p $out/share/kwin/scripts/fluid-tile
+      cp -r contents $out/share/kwin/scripts/fluid-tile/
+      cp metadata.json $out/share/kwin/scripts/fluid-tile/
+      runHook postInstall
+    '';
+
+    meta = with pkgs.lib; {
+      description = "Auto tiling KWin script for KDE Plasma 6.4+";
+      homepage = "https://codeberg.org/Serroda/fluid-tile";
+      license = licenses.gpl3Only;
+      platforms = platforms.linux;
+    };
+  };
 in
 {
   imports = [ inputs.plasma-manager.homeModules.plasma-manager ];
@@ -40,6 +175,11 @@ in
     # Wayland utilities
     wayland-utils
     wl-clipboard # Clipboard
+
+    # KWin Scripts
+    fluid-tile # Auto-tiling for KDE Plasma
+    late-tile  # Retile windows with late WM_CLASS (Electron/Flatpak)
+
   ];
 
   # ============================================================================
@@ -142,20 +282,15 @@ in
     };
 
     # ==========================================================================
-    # KScreenLocker (commented - using defaults)
+    # KScreenLocker — idle lock + wake lock
     # ==========================================================================
-    # kscreenlocker = {
-    #   autoLock = true;
-    #   timeout = 5;                # Minutes until lock
-    #   lockOnResume = true;
-    #   passwordRequired = true;
-    #   passwordRequiredDelay = 0;  # Seconds
-    #   appearance = {
-    #     alwaysShowClock = true;
-    #     showMediaControls = true;
-    #     # wallpaper = /path/to/wallpaper.png;
-    #   };
-    # };
+    kscreenlocker = {
+      autoLock = lib.mkDefault true;
+      timeout = lib.mkDefault 10;              # Lock after 10 minutes idle
+      lockOnResume = lib.mkDefault true;        # Lock on wake from sleep
+      passwordRequired = lib.mkDefault true;
+      passwordRequiredDelay = lib.mkDefault 0;  # Require password immediately
+    };
 
     # ==========================================================================
     # KWin - Window Manager
@@ -168,25 +303,23 @@ in
         # names = [ "Desktop 1" ];
       };
 
-      # ---- Tiling (migrated from kwinrc.Tiling) ----
+      # ---- Tiling (managed by Fluid Tile script) ----
+      # Per-screen layouts are host-specific (set via home.activation.configureTiling in host config)
       tiling = {
-        padding = 4;
-        # layout = {
-        #   id = "custom-layout-id";
-        #   tiles = { ... };
-        # };
+        padding = 0;
       };
 
       # ---- Night Light (migrated from kwinrc.NightColor) ----
       nightLight = {
-        enable = true;
-        mode = "location"; # "constant", "location", or "times"
+        enable = lib.mkDefault true;
+        mode = lib.mkDefault "location"; # "constant", "location", or "times"
         # temperature = {
         #   day = 6500;
         #   night = 4500;
         # };
-        location = {
-          latitude = "52.52"; # Berlin coordinates
+        # Location set per-host via osConfig.time.timeZone or override in home/hosts/
+        location = lib.mkDefault {
+          latitude = "52.52";
           longitude = "13.405";
         };
         # For mode = "times":
@@ -311,55 +444,24 @@ in
         };
       };
 
-      # ---- Tiling Scripts (disabled - using native tiling) ----
-      scripts = {
-        polonium = {
-          enable = false;
-          # settings = { ... };
-        };
-      };
     };
 
     # ==========================================================================
-    # Power Management (commented - using system defaults)
+    # Power Management — dim / DPMS off (CRT phosphor protection)
     # ==========================================================================
-    # powerdevil = {
-    #   AC = {
-    #     autoSuspend = {
-    #       action = "sleep";
-    #       idleTimeout = 600;
-    #     };
-    #     dimDisplay = {
-    #       enable = true;
-    #       idleTimeout = 300;
-    #     };
-    #     turnOffDisplay = {
-    #       idleTimeout = 600;
-    #     };
-    #     powerProfile = "performance";
-    #   };
-    #   battery = {
-    #     autoSuspend = {
-    #       action = "sleep";
-    #       idleTimeout = 300;
-    #     };
-    #     dimDisplay = {
-    #       enable = true;
-    #       idleTimeout = 120;
-    #     };
-    #     turnOffDisplay = {
-    #       idleTimeout = 300;
-    #     };
-    #     powerProfile = "balanced";
-    #   };
-    #   lowBattery = {
-    #     autoSuspend = {
-    #       action = "hibernate";
-    #       idleTimeout = 120;
-    #     };
-    #     powerProfile = "powerSaving";
-    #   };
-    # };
+    powerdevil = {
+      AC = {
+        autoSuspend.action = lib.mkDefault "nothing";  # Desktop — never auto-suspend
+        dimDisplay = {
+          enable = lib.mkDefault true;
+          idleTimeout = lib.mkDefault 300;             # Dim after 5 minutes
+        };
+        turnOffDisplay = {
+          idleTimeout = lib.mkDefault 600;             # DPMS off after 10 minutes
+        };
+        powerProfile = lib.mkDefault "balanced";
+      };
+    };
 
     # ==========================================================================
     # Hotkeys (custom commands)
@@ -398,7 +500,7 @@ in
           {
             name = "org.kde.plasma.icontasks";
             config.General = {
-              launchers = [
+              launchers = lib.mkDefault [
                 (flatpakApp "io.gitlab.librewolf-community")
                 (flatpakApp "io.github.ungoogled_software.ungoogled_chromium")
                 (flatpakApp "eu.betterbird.Betterbird")
@@ -490,6 +592,10 @@ in
       kwin."Window Quick Tile Left" = "Meta+Left";
       kwin."Window Quick Tile Right" = "Meta+Right";
       kwin."Window Quick Tile Top" = "Meta+Up";
+
+      # ---- Fluid Tile Script Shortcuts ----
+      kwin."Fluid tile | Toggle window to blocklist" = "Meta+F";     # Toggle active window tiling on/off
+      kwin."Fluid tile | Change tile layout" = "Meta+Alt+F";         # Cycle through tile layouts
 
       # ---- Window to Desktop ----
       kwin."Window One Desktop Down" = "Meta+Ctrl+Shift+Down";
@@ -602,16 +708,79 @@ in
     # Config Files (settings without native options)
     # ==========================================================================
     configFile = {
-      # ---- Mouse Input (no native option for specific device settings) ----
-      "kcminputrc"."Libinput][1133][16511][Logitech G502" = {
-        PointerAcceleration = "0";
-        PointerAccelerationProfile = 1;
+      # ---- Fluid Tile — Auto-tiling KWin script ----
+      "kwinrc"."Plugins"."fluid-tileEnabled" = true;
+      "kwinrc"."Plugins"."late-tileEnabled" = true;
+
+      "kwinrc"."Script-fluid-tile" = {
+        # -- Blocklist --
+        # Only blocklist apps that genuinely break when tiled.
+        # ModalsIgnore = true handles popups/dialogs automatically.
+        # Games run fullscreen so they don't need blocklisting.
+        AppsBlocklist = lib.concatStringsSep "," [
+          # Fluid Tile defaults (KDE internals — must keep)
+          "moonlight" "org.kde.xwaylandvideobridge" "wl-paste" "wl-copy"
+          "org.kde.kded6" "qt-sudo" "org.kde.polkit-kde-authentication-agent-1"
+          "org.kde.spectacle" "kcm_kwinrules" "org.freedesktop.impl.portal.desktop.kde"
+          "krunner" "plasmashell" "org.kde.plasmashell" "kwin_wayland"
+          "ksmserver-logout-greeter"
+          # Wine/Proton helper windows & anti-cheat popups
+          "easyanticheat" "battleye" "wine" "explorer.exe"
+          # KDE utilities that break when tiled (popups, pinentry, color pickers)
+          "pinentry-qt" "org.kde.kwalletd6" "org.kde.plasma.emojier"
+          "org.kde.drkonqi" "org.kde.kcolorchooser"
+        ];
+
+        # -- Tile Priority --
+        # Height first → master tile (full-height left column) fills before stacked tiles
+        # Then Left → prefer left side, then Top → top-right before bottom-right
+        TilesPriority = "Height,Width,Left,Top,Right,Bottom";
+
+        # -- Window Behavior --
+        MaximizeExtend = true;       # Maximize when alone on screen (single window = fullscreen)
+        WindowsOrderOpen = true;     # Retile all windows when a new one opens
+        WindowsOrderClose = true;    # Retile remaining windows when one closes (fill gaps)
+        ModalsIgnore = true;         # Ignore dialog/transient/popup windows
+
+        # -- Animation --
+        # Must be >= KDE animation duration. AnimationDurationFactor=0.7 → ~250ms
+        WindowsExtendTileChangedDelay = 300;
+
+        # -- Overflow (v7.0 replaces DesktopAdd/DesktopAddMode) --
+        # When all tiles on a screen are full:
+        #   0 = New desktop after current    4 = Switch to layout with more tiles
+        #   1 = New desktop before current   5 = Let overflow window float
+        #   2 = New desktop at end           3 = New desktop at beginning
+        WindowOverflowAction = 4;    # Switch to layout with more tiles (dynamic growth)
+
+        # -- Virtual Desktop Cleanup --
+        DesktopRemove = true;        # Auto-remove empty desktops when windows close
+        DesktopRemoveMin = 1;        # Always keep at least 1 desktop
+        DesktopRemoveDelay = 500;    # Wait 500ms before removing (avoids flicker during moves)
+        DesktopExtra = false;
+
+        # -- Layout --
+        # Default layout for NEW virtual desktops (created by overflow):
+        #   1 = Single    2 = Two-column   3 = Top/bottom
+        #   4 = Master+stack (left + stacked right)
+        #   5 = Stacked left + right   6 = 2×2 grid
+        LayoutDefault = 2;
+
+        # -- UI --
+        UIMode = 0;                  # Fullscreen overlay for layout switching
+        UIWindowCompactPosition = 1; # Compact bar at top
+        UIWindowCursor = false;
       };
 
       # ---- KWin Settings (no native equivalents) ----
       "kwinrc"."Windows" = {
-        SeparateScreenFocus = true;
-        ActiveMouseScreen = true;
+        SeparateScreenFocus = true;       # Each screen has independent focus (essential for multi-monitor tiling)
+        ActiveMouseScreen = true;         # Active screen follows mouse (switches focus target screen)
+        FocusPolicy = "ClickToFocus";     # Click-to-focus keeps tiled windows stable
+        FocusStealingPreventionLevel = 1; # Low — let new windows take focus (important for tiled window placement)
+        AutoRaise = false;                # Don't auto-raise on hover (would disrupt tiled layout)
+        AutoRaiseInterval = 0;
+        NextFocusPrefersMouse = true;     # When closing a window, focus the one under cursor (not random tile)
       };
 
       "kwinrc"."ElectricBorders" = {
@@ -687,9 +856,9 @@ in
         "first run" = false;
       };
 
-      # ---- Timezone ----
+      # ---- Timezone (derived from NixOS time.timeZone) ----
       "ktimezonedrc"."TimeZones" = {
-        LocalZone = "Europe/Berlin";
+        LocalZone = osConfig.time.timeZone;
         ZoneinfoDir = "/etc/zoneinfo";
         Zonetab = "/etc/zoneinfo/zone.tab";
       };
@@ -748,7 +917,7 @@ in
     };
   };
 
-  # Kate (Text Editor) - Disabled
+  # Kate (Text Editor) - enabled
   programs.kate = {
     enable = true;
     # package = pkgs.kdePackages.kate;
@@ -773,7 +942,7 @@ in
     # dap.customServers = null;
   };
 
-  # Okular (PDF Viewer) - Disabled
+  # Okular (PDF Viewer) - enabled
   programs.okular = {
     enable = true;
     # package = pkgs.kdePackages.okular;

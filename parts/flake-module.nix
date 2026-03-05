@@ -23,6 +23,7 @@
     
     # Desktop & Apps
     ./desktop/kde.nix
+    ./desktop/displays.nix
     ./desktop/flatpak.nix
     
     ./apps/arkenfox.nix

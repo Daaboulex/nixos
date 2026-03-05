@@ -27,7 +27,7 @@
       options.myModules.security.arkenfox = {
         enable = lib.mkEnableOption "Enable Arkenfox Firefox security configuration";
         targetDir = lib.mkOption { type = lib.types.str; description = "Target directory for Firefox profile"; };
-        user = lib.mkOption { type = lib.types.str; default = "user"; description = "User to run the service as"; };
+        user = lib.mkOption { type = lib.types.str; default = config.myModules.primaryUser; description = "User to run the service as"; };
         group = lib.mkOption { type = lib.types.str; default = "users"; description = "Group to run the service as"; };
       };
 

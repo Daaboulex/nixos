@@ -10,6 +10,12 @@
             description = "KMS connector name (e.g. DP-1, HDMI-A-1)";
           };
 
+          alternateConnectors = lib.mkOption {
+            type = lib.types.listOf lib.types.str;
+            default = [];
+            description = "Alternate connector names (e.g. same CRT on motherboard HDMI vs GPU HDMI)";
+          };
+
           mode = {
             width = lib.mkOption { type = lib.types.int; description = "Horizontal resolution"; };
             height = lib.mkOption { type = lib.types.int; description = "Vertical resolution"; };
@@ -73,6 +79,12 @@
             description = "KWin output UUID (also used for tiling config)";
           };
 
+          alternateUuids = lib.mkOption {
+            type = lib.types.listOf lib.types.str;
+            default = [];
+            description = "Alternate UUIDs for the same monitor on different connectors";
+          };
+
           # Tiling
           tiling = {
             layout = lib.mkOption {
@@ -82,7 +94,7 @@
             };
             padding = lib.mkOption {
               type = lib.types.int;
-              default = 4;
+              default = 0;
               description = "Tile padding in pixels";
             };
           };
@@ -196,15 +208,26 @@
           (_: m: "video=${m.connector}:panel_orientation=right_side_up")
           rotatedMonitors;
 
-        # SDDM display layout
+        # SDDM display layout — written via tmpfiles.d (avoids activation read-only FS issues)
+        systemd.tmpfiles.rules = lib.mkIf (sddmMonitors != {}) [
+          "d /var/lib/sddm/.config 0700 sddm sddm -"
+        ];
+
+        environment.etc."sddm-kwinoutputconfig.json" = lib.mkIf (sddmMonitors != {}) {
+          text = kwinOutputConfig;
+          mode = "0644";
+        };
+
         system.activationScripts.sddm-display-config = lib.mkIf (sddmMonitors != {}) {
           text = ''
-            install -d -m 0700 -o sddm -g sddm /var/lib/sddm/.config
-            cat > /var/lib/sddm/.config/kwinoutputconfig.json << 'SDDMEOF'
-${kwinOutputConfig}
-SDDMEOF
-            chown sddm:sddm /var/lib/sddm/.config/kwinoutputconfig.json
+            if [ -d /var/lib/sddm/.config ]; then
+              rm -f /var/lib/sddm/.config/kwinoutputconfig.json
+              cp /etc/sddm-kwinoutputconfig.json /var/lib/sddm/.config/kwinoutputconfig.json
+              chown sddm:sddm /var/lib/sddm/.config/kwinoutputconfig.json
+              chmod 0600 /var/lib/sddm/.config/kwinoutputconfig.json
+            fi
           '';
+          deps = [ "etc" ];
         };
       };
     };

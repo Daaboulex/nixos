@@ -42,6 +42,27 @@
             description = "Minimum free swap percentage before killing";
           };
         };
+
+        acpid = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Enable ACPI event daemon";
+        };
+        upower = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Enable UPower (battery/power monitoring)";
+        };
+        geoclue = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = "Enable GeoClue2 location service";
+        };
+        usbmuxd = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = "Enable USB multiplexing daemon (iOS device support)";
+        };
       };
 
       config = lib.mkIf cfg.enable {
@@ -71,10 +92,10 @@
             ];
           };
 
-          acpid.enable = true;
-          upower.enable = true;
-          geoclue2.enable = true;
-          usbmuxd.enable = true;
+          acpid.enable = cfg.acpid;
+          upower.enable = cfg.upower;
+          geoclue2.enable = cfg.geoclue;
+          usbmuxd.enable = cfg.usbmuxd;
         };
       };
     };

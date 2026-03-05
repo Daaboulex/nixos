@@ -2,7 +2,7 @@
   flake.nixosModules.apps-wine = { config, lib, pkgs, ... }: {
     options.myModules.programs.wine = {
       enable = lib.mkEnableOption "Enable Wine installation";
-      variant = lib.mkOption { type = lib.types.enum [ "stable" "staging" "stableFull" "stagingFull" ]; default = "stagingFull"; };
+      variant = lib.mkOption { type = lib.types.enum [ "stable" "staging" "stableFull" "stagingFull" ]; default = "stagingFull"; description = "Wine variant (staging has more patches, Full includes all optional deps)"; };
     };
     options.myModules.programs.bottles.enable = lib.mkEnableOption "Enable Bottles installation";
 

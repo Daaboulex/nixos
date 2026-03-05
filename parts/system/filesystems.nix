@@ -5,12 +5,12 @@
     in {
       options.myModules.system.filesystems = {
         enable = lib.mkEnableOption "Universal filesystem support";
-        enableAll = lib.mkOption { type = lib.types.bool; default = true; };
-        enableLinux = lib.mkOption { type = lib.types.bool; default = true; };
-        enableWindows = lib.mkOption { type = lib.types.bool; default = true; };
-        enableMac = lib.mkOption { type = lib.types.bool; default = true; };
-        enableOptical = lib.mkOption { type = lib.types.bool; default = true; };
-        enableLegacy = lib.mkOption { type = lib.types.bool; default = false; };
+        enableAll = lib.mkOption { type = lib.types.bool; default = true; description = "Enable all filesystem categories (overrides individual toggles)"; };
+        enableLinux = lib.mkOption { type = lib.types.bool; default = true; description = "Enable Linux filesystems (ext4, btrfs, xfs, f2fs)"; };
+        enableWindows = lib.mkOption { type = lib.types.bool; default = true; description = "Enable Windows filesystems (NTFS, exFAT, FAT32)"; };
+        enableMac = lib.mkOption { type = lib.types.bool; default = true; description = "Enable macOS filesystems (HFS+)"; };
+        enableOptical = lib.mkOption { type = lib.types.bool; default = true; description = "Enable optical disc filesystems (ISO 9660, UDF)"; };
+        enableLegacy = lib.mkOption { type = lib.types.bool; default = false; description = "Enable legacy filesystems (ReiserFS)"; };
       };
 
       config = lib.mkIf cfg.enable {

@@ -2,19 +2,19 @@
 
 {
   # ============================================================================
-  # GTK Configuration - Breeze Dark theme
+  # GTK Configuration - Breeze Dark theme (override per-host for different themes)
   # ============================================================================
   gtk = {
     enable = true;
-    theme = {
+    theme = lib.mkDefault {
       name = "Breeze-Dark";
       package = pkgs.kdePackages.breeze-gtk;
     };
-    iconTheme = {
+    iconTheme = lib.mkDefault {
       name = "breeze-dark";
       package = pkgs.kdePackages.breeze-icons;
     };
-    cursorTheme = {
+    cursorTheme = lib.mkDefault {
       name = "breeze_cursors";
       package = pkgs.kdePackages.breeze;
     };

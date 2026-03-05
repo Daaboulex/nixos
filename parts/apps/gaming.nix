@@ -31,6 +31,22 @@
         nxSaveSync = { enable = lib.mkOption { type = lib.types.bool; default = false; description = "Enable NX-Save-Sync"; }; };
         occt = { enable = lib.mkOption { type = lib.types.bool; default = false; description = "Enable OCCT stability test"; }; };
         lsfgVk = { enable = lib.mkOption { type = lib.types.bool; default = false; description = "Enable lsfg-vk Vulkan frame generation (requires Lossless Scaling)"; }; };
+        prismlauncher = { enable = lib.mkOption { type = lib.types.bool; default = false; description = "Enable Prism Launcher for Minecraft"; }; };
+        gpuDevice = lib.mkOption {
+          type = lib.types.int;
+          default = 0;
+          description = "GPU device index for gamemode optimizations (0 = first GPU)";
+        };
+        gamemode.renice = lib.mkOption {
+          type = lib.types.int;
+          default = 10;
+          description = "Renice priority for gamemode-managed processes";
+        };
+        radv.perftest = lib.mkOption {
+          type = lib.types.str;
+          default = "gpl,nggc";
+          description = "RADV_PERFTEST flags for AMD Vulkan driver (comma-separated)";
+        };
         packages = {
           performance = lib.mkOption { type = lib.types.bool; default = true; description = "Include performance packages"; };
           cachyos = lib.mkOption { type = lib.types.bool; default = true; description = "Use CachyOS optimized packages"; };
@@ -49,10 +65,11 @@
         programs.gamemode = {
           enable = true;
           settings = {
-            general = { renice = 10; };
+            general = { renice = cfg.gamemode.renice; };
             gpu = {
               apply_gpu_optimisations = "accept-responsibility";
-              gpu_device = 0;
+              gpu_device = cfg.gpuDevice;
+            } // lib.optionalAttrs (config.myModules.hardware.graphics.amd.enable or false) {
               amd_performance_level = "high";
             };
           };
@@ -72,7 +89,8 @@
         ++ lib.optionals cfg.azahar.enable [ azahar ]
         ++ lib.optionals cfg.nxSaveSync.enable [ inputs.nx-save-sync.packages.${system}.default ]
         ++ lib.optionals cfg.occt.enable [ pkgs.occt ]
-        ++ lib.optionals cfg.lsfgVk.enable [ pkgs.lsfg-vk ];
+        ++ lib.optionals cfg.lsfgVk.enable [ pkgs.lsfg-vk ]
+        ++ lib.optionals cfg.prismlauncher.enable [ pkgs.prismlauncher ];
 
         users.users.${config.myModules.primaryUser}.extraGroups = [ "gamemode" ];
 
@@ -86,9 +104,10 @@
         environment.sessionVariables = {
           MANGOHUD = lib.mkDefault "0";
           GAMESCOPE_LIMITER_FILE = "/tmp/gamescope-limiter";
-          AMD_VULKAN_ICD = lib.mkDefault "RADV";
-          RADV_PERFTEST = "gpl,nggc";
           VK_LAYER_PATH = "/run/opengl-driver/share/vulkan/explicit_layer.d";
+        } // lib.optionalAttrs (config.myModules.hardware.graphics.amd.enable or false) {
+          AMD_VULKAN_ICD = lib.mkDefault "RADV";
+          RADV_PERFTEST = cfg.radv.perftest;
         };
       };
     };

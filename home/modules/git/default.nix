@@ -6,12 +6,7 @@
   # ============================================================================
   programs.git = {
     enable = true;
-    settings = {
-      user = {
-        name = "stephandaaboul";
-        email = "s.daaboul@jacobs-university.de";
-      };
-    };
+    # User credentials set per-host in home/hosts/<hostname>/default.nix
   };
 
   # ============================================================================

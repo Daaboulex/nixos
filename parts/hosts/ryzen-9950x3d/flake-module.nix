@@ -32,6 +32,7 @@
           
           # Desktop & Apps
           inputs.self.nixosModules.desktop-kde
+          inputs.self.nixosModules.desktop-displays
           inputs.self.nixosModules.desktop-flatpak
           inputs.self.nixosModules.apps-gaming
           
