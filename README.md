@@ -282,7 +282,7 @@ Auto-generated scripts from `myModules.desktop.displays` monitor definitions:
 - **Tiling activation** — writes per-monitor tile layouts to KWin config (using monitor UUIDs), purges stale/phantom entries.
 - **systemd user services** — `display-arrange` (login), `display-arrange-wake` (post-sleep with output detection delay).
 
-### Custom Scripts (`parts/apps/tools.nix`)
+### Custom Scripts (`parts/apps/tools/`)
 
 - **sysdiag** (585 lines) — comprehensive NixOS system diagnostics: CPU, GPU, memory, storage, network, services, kernel, scheduler, display, errors. Auto-detects AMD/Intel/NVIDIA hardware and shows hardware-specific metrics (P-State, GPU clocks, NVMe temps, scx status).
 - **list-iommu-groups** — lists IOMMU groups for GPU passthrough planning.
@@ -368,8 +368,8 @@ Options: `myModules.gaming.*` — see [docs/OPTIONS.md](docs/OPTIONS.md) for all
 | `system-kernel` | `myModules.kernel` | Kernel variant, CachyOS tuning, microarch, extra params |
 | `system-nix` | `myModules.system.nix` | Nix daemon, binary caches, build settings |
 | `system-users` | `myModules.system.users` | User accounts, groups, `primaryUser` option |
-| `system-security` | `myModules.system.security` | Kernel hardening, PAM limits |
-| `system-ssh` | `myModules.system.ssh` | SSH server, hardened ciphers, fail2ban |
+| `system-security` | `myModules.security.system` | Kernel hardening, PAM limits |
+| `system-ssh` | `myModules.security.ssh` | SSH server, hardened ciphers, fail2ban |
 | `system-sops` | `myModules.security.sops` | sops-nix secrets management |
 | `system-services` | `myModules.system.services` | CUPS, fstrim, earlyoom, ACPI, UPower, GeoClue |
 | `system-packages` | `myModules.system.packages` | System packages by category |
