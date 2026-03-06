@@ -30,7 +30,10 @@
     ./apps/portmaster.nix
     ./apps/tidalcycles.nix
     ./apps/wine.nix
-    ./apps/tools.nix
+    ./apps/tools/sysdiag.nix
+    ./apps/tools/iommu.nix
+    ./apps/tools/llm-prep.nix
+    ./apps/tools/development.nix
     
     ./system/cachyos-settings.nix
     ./system/filesystems.nix

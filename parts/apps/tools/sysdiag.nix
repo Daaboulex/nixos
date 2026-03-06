@@ -1,7 +1,6 @@
 { inputs, ... }: {
-  flake.nixosModules.apps-tools = { config, lib, pkgs, ... }:
+  flake.nixosModules.tools-sysdiag = { config, lib, pkgs, ... }:
     let
-      cfg = config.myModules.development.tools;
       cfgTools = config.myModules.tools;
 
       # ════════════════════════════════════════════════════════════════════════
@@ -249,7 +248,7 @@
 
         show_scheduler() {
           section "⚡ SCHEDULER (FULL)"
-          
+
           subsection "Built-in Kernel Scheduler"
           if [ -f /proc/sys/kernel/sched_bore ]; then
             info "Primary" "Bore (Burst-Oriented Response Enhancer)"
@@ -593,128 +592,19 @@
           *)           echo "Unknown option: $1"; show_help; exit 1 ;;
         esac
       '';
-
-      # ════════════════════════════════════════════════════════════════════════
-      # list-iommu-groups — Show IOMMU group assignments
-      # ════════════════════════════════════════════════════════════════════════
-      list-iommu-groups = pkgs.writeShellApplication {
-        name = "list-iommu-groups";
-        runtimeInputs = [ pkgs.bash pkgs.coreutils pkgs.pciutils ];
-        text = ''#!${pkgs.bash}/bin/bash
-          set -euo pipefail
-          echo "=== IOMMU Groups ==="
-          shopt -s nullglob
-          for g in /sys/kernel/iommu_groups/*; do
-            echo "Group $(basename "$g"):"
-            for d in "$g"/devices/*; do
-              echo -n "  "
-              lspci -nns "$(basename "$d")"
-            done
-          done
-        '';
-      };
-
-      # ════════════════════════════════════════════════════════════════════════
-      # llm-prep — Combine project files into a single context for LLMs
-      # ════════════════════════════════════════════════════════════════════════
-      llm-prep = pkgs.writeShellApplication {
-        name = "llm-prep";
-        runtimeInputs = [ pkgs.bash pkgs.coreutils pkgs.findutils pkgs.tree ];
-        text = ''#!${pkgs.bash}/bin/bash
-          # Combines project files into a single context for LLMs
-          # Usage: llm-prep [directory] [-o output.txt]
-          set -euo pipefail
-          
-          TARGET_DIR="''${1:-.}"
-          OUTPUT_FILE="context.txt"
-          
-          if [[ "''${2:-}" == "-o" ]]; then
-            OUTPUT_FILE="''${3:-context.txt}"
-          fi
-
-          echo "Generating context from $TARGET_DIR into $OUTPUT_FILE..."
-          
-          {
-            echo "Project Structure:"
-            ${pkgs.tree}/bin/tree "$TARGET_DIR" -I "result|node_modules|.git" --dirsfirst
-            echo -e "\nFile Contents:\n"
-            
-            ${pkgs.findutils}/bin/find "$TARGET_DIR" -maxdepth 3 -type f \
-              -not -path '*/.*' \
-              -not -path '*/result/*' \
-              -not -name "*.lock" \
-              -not -name "*.png" \
-              -not -name "*.jpg" \
-              -print0 | while IFS= read -r -d "" file; do
-                echo "=== $file ==="
-                cat "$file"
-                echo -e "\n"
-            done
-          } > "$OUTPUT_FILE"
-          
-          echo "Done: $OUTPUT_FILE"
-        '';
-      };
     in {
-      options.myModules.development.tools = {
-        enable = lib.mkEnableOption "Development Tools";
-        helperScripts = lib.mkEnableOption "Enable helper scripts";
-      };
-      options.myModules.tools = {
-        sysdiag.enable = lib.mkEnableOption "sysdiag system diagnostics";
-        listIommuGroups.enable = lib.mkEnableOption "list-iommu-groups";
-        llmPrep.enable = lib.mkEnableOption "llm-prep";
-        claudeCode.enable = lib.mkEnableOption "Claude Code AI Assistant";
-      };
+      options.myModules.tools.sysdiag.enable = lib.mkEnableOption "sysdiag system diagnostics";
 
-      config = lib.mkMerge [
-        (lib.mkIf cfg.enable {
-           environment.systemPackages = with pkgs; [
-             vscodium
-             (pkgs.symlinkJoin {
-               name = "agy-wrapper";
-               paths = [ pkgs.google-antigravity ];
-               postBuild = ''
-                 ln -s $out/bin/antigravity $out/bin/agy
-               '';
-             })
-             gemini-cli
-             (lib.mkIf cfgTools.claudeCode.enable claude-code)
-             direnv
-             devenv
-             nix-prefetch-git
-             saleae-logic-2
-             gnumake
-             cmake
-             pkg-config
-             gcc
-             python3
-             nodejs
-           ];
-           services.udev.packages = [ pkgs.saleae-logic-2 ];
-           services.udev.extraRules = ''
-             SUBSYSTEM=="usb", ATTR{idVendor}=="1fc9", MODE="0666", GROUP="users"
-             KERNEL=="hidraw*", ATTRS{idVendor}=="1fc9", MODE="0666", GROUP="users"
-           '';
-           # Enable helpers if requested
-           myModules.tools.sysdiag.enable = lib.mkIf cfg.helperScripts true;
-           myModules.tools.listIommuGroups.enable = lib.mkIf cfg.helperScripts true;
-           myModules.tools.llmPrep.enable = lib.mkIf cfg.helperScripts true;
-        })
-
-        (lib.mkIf cfgTools.sysdiag.enable {
-          environment.systemPackages = [
-            sysdiag
-            # Runtime dependencies for sysdiag (uses full nix store paths)
-            pkgs.pciutils pkgs.usbutils pkgs.lm_sensors pkgs.smartmontools
-            pkgs.vulkan-tools pkgs.mesa-demos
-            pkgs.fastfetch pkgs.util-linux pkgs.iproute2 pkgs.ethtool
-            pkgs.wlr-randr pkgs.kdePackages.libkscreen pkgs.upower
-            pkgs.gnugrep pkgs.gnused pkgs.gawk pkgs.kmod
-          ];
-        })
-        (lib.mkIf cfgTools.listIommuGroups.enable { environment.systemPackages = [ list-iommu-groups ]; })
-        (lib.mkIf cfgTools.llmPrep.enable { environment.systemPackages = [ llm-prep ]; })
-      ];
+      config = lib.mkIf cfgTools.sysdiag.enable {
+        environment.systemPackages = [
+          sysdiag
+          # Runtime dependencies for sysdiag (uses full nix store paths)
+          pkgs.pciutils pkgs.usbutils pkgs.lm_sensors pkgs.smartmontools
+          pkgs.vulkan-tools pkgs.mesa-demos
+          pkgs.fastfetch pkgs.util-linux pkgs.iproute2 pkgs.ethtool
+          pkgs.wlr-randr pkgs.kdePackages.libkscreen pkgs.upower
+          pkgs.gnugrep pkgs.gnused pkgs.gawk pkgs.kmod
+        ];
+      };
     };
 }

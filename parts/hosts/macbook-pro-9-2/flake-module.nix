@@ -43,7 +43,10 @@
           inputs.self.nixosModules.apps-portmaster
           inputs.self.nixosModules.apps-tidalcycles
           inputs.self.nixosModules.apps-wine
-          inputs.self.nixosModules.apps-tools
+          inputs.self.nixosModules.tools-sysdiag
+          inputs.self.nixosModules.tools-iommu
+          inputs.self.nixosModules.tools-llm-prep
+          inputs.self.nixosModules.apps-development
 
           inputs.self.nixosModules.system-packages
           inputs.cachyos-settings-nix.nixosModules.default

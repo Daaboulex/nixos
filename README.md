@@ -46,7 +46,7 @@ nrb-info               # System state, active specialisation, store size, genera
 | `Ctrl+T` | fzf fuzzy file search |
 | `Alt+C` | fzf fuzzy directory cd |
 
-Shell tools configured in `home/modules/zsh/default.nix`: zoxide, fzf, direnv + nix-direnv, bat, starship prompt.
+Shell tools are individual home modules in `home/modules/`: starship, zoxide, fzf, direnv + nix-direnv, bat.
 
 ## Architecture
 
@@ -119,8 +119,18 @@ home/
 ├── modules/                           # Home Manager modules (auto-discovered)
 │   ├── base/default.nix               # Base user config (home directory, env)
 │   ├── git/default.nix                # Git configuration
-│   ├── zsh/default.nix                # Zsh + starship + zoxide + fzf + direnv + nrb
+│   ├── zsh/default.nix                # Zsh shell config + nrb rebuild helper
+│   ├── starship/default.nix           # Starship shell prompt
+│   ├── zoxide/default.nix             # Zoxide smart cd
+│   ├── fzf/default.nix                # fzf fuzzy finder
+│   ├── direnv/default.nix             # direnv + nix-direnv
+│   ├── bat/default.nix                # bat syntax-highlighted cat
 │   ├── plasma/default.nix             # KDE Plasma settings, KWin scripts, tiling
+│   ├── konsole/default.nix            # Konsole terminal emulator
+│   ├── kate/default.nix               # Kate text editor
+│   ├── okular/default.nix             # Okular PDF viewer
+│   ├── elisa/default.nix              # Elisa music player (disabled)
+│   ├── ghostwriter/default.nix        # Ghostwriter markdown editor (disabled)
 │   ├── vscode/default.nix             # VS Code extensions + settings
 │   ├── gtk/default.nix                # GTK theme + cursor + icons
 │   ├── btop/default.nix               # btop system monitor
@@ -402,7 +412,10 @@ Options: `myModules.gaming.*` — see [docs/OPTIONS.md](docs/OPTIONS.md) for all
 |--------|--------------|-------------|
 | `apps-gaming` | `myModules.gaming` | Steam, Proton, GameMode, vkBasalt, MangoHud/MangoJuice, emulators, RADV tuning |
 | `apps-wine` | `myModules.programs.wine` | Wine variants + Bottles |
-| `apps-tools` | `myModules.tools` | sysdiag, IOMMU listing, llm-prep, claude-code |
+| `tools-sysdiag` | `myModules.tools.sysdiag` | Comprehensive NixOS system diagnostics |
+| `tools-iommu` | `myModules.tools.listIommuGroups` | IOMMU group listing |
+| `tools-llm-prep` | `myModules.tools.llmPrep` | LLM context builder |
+| `apps-development` | `myModules.development.tools` | Dev packages, Claude Code, helper scripts |
 | `apps-arkenfox` | `myModules.security.arkenfox` | Arkenfox auto-download + Flatpak Firefox support |
 | `apps-portmaster` | `myModules.security.portmaster` | Portmaster firewall + system tray notifier |
 | `apps-tidalcycles` | `myModules.music.tidalcycles` | TidalCycles live coding + SuperDirt |
@@ -413,8 +426,18 @@ Options: `myModules.gaming.*` — see [docs/OPTIONS.md](docs/OPTIONS.md) for all
 |--------|-------------|
 | `base` | Base user config, home directory, state version |
 | `git` | Git config, GitHub CLI (credentials set per-host) |
-| `zsh` | Zsh + starship + zoxide + fzf + direnv + bat + `nrb` |
+| `zsh` | Zsh shell config + `nrb` rebuild helper |
+| `starship` | Starship shell prompt |
+| `zoxide` | Zoxide smart cd |
+| `fzf` | fzf fuzzy finder |
+| `direnv` | direnv + nix-direnv |
+| `bat` | bat syntax-highlighted cat |
 | `plasma` | KDE Plasma settings, late-tile + Fluid Tile KWin scripts, shortcuts, night light |
+| `konsole` | Konsole terminal emulator |
+| `kate` | Kate text editor |
+| `okular` | Okular PDF viewer |
+| `elisa` | Elisa music player (disabled) |
+| `ghostwriter` | Ghostwriter markdown editor (disabled) |
 | `vscode` | VSCodium + extensions (Nix IDE, Catppuccin) |
 | `gtk` | Breeze Dark theme, icons, cursors |
 | `btop` | btop monitor (Tokyo Night theme, GPU layout per-host, AMD ROCm GPU detection) |
@@ -583,7 +606,10 @@ Create `parts/hosts/<hostname>/` with three files:
 
           # Apps (optional)
           inputs.self.nixosModules.apps-gaming
-          inputs.self.nixosModules.apps-tools
+          inputs.self.nixosModules.tools-sysdiag
+          inputs.self.nixosModules.tools-iommu
+          inputs.self.nixosModules.tools-llm-prep
+          inputs.self.nixosModules.apps-development
           # ... add more as needed
         ];
       })

@@ -2,30 +2,6 @@
 
 {
   # ============================================================================
-  # Starship Prompt - Modern shell prompt
-  # ============================================================================
-  programs.starship = {
-    enable = true;
-    enableZshIntegration = true;
-    settings = {
-      add_newline = true;
-
-      # Classic "user@host" format with modern styling
-      username = {
-        show_always = true;
-        style_user = "bold blue";
-        format = "[$user]($style)@";
-      };
-
-      hostname = {
-        ssh_only = false;
-        style = "bold blue";
-        format = "[$hostname]($style) ";
-      };
-    };
-  };
-
-  # ============================================================================
   # Zsh Configuration
   # ============================================================================
   programs.zsh = {
@@ -491,31 +467,4 @@
     '';
   };
 
-  # ============================================================================
-  # Shell Tool Integrations
-  # ============================================================================
-
-  # Smarter cd — learns frequent directories (use `z` instead of `cd`)
-  programs.zoxide = {
-    enable = true;
-    enableZshIntegration = true;
-  };
-
-  # Fuzzy finder — Ctrl+R history, Ctrl+T files, Alt+C directories
-  programs.fzf = {
-    enable = true;
-    enableZshIntegration = true;
-  };
-
-  # Per-directory environments — auto-loads .envrc / shell.nix
-  programs.direnv = {
-    enable = true;
-    enableZshIntegration = true;
-    nix-direnv.enable = true;
-  };
-
-  # Syntax-highlighted cat replacement
-  programs.bat = {
-    enable = true;
-  };
 }
