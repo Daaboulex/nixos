@@ -295,16 +295,46 @@ Integrated gaming performance and visual enhancement stack:
 
 #### vkBasalt Usage
 
-vkBasalt is off by default (`ENABLE_VKBASALT=0`). Enable per-game:
+vkBasalt is off by default (`ENABLE_VKBASALT=0`). Enable per-game via Steam launch options or the `vkbasalt-run` wrapper:
 
 ```bash
 # Steam → Game Properties → Launch Options:
-ENABLE_VKBASALT=1 gamemoderun %command%
-
-# Toggle effects in-game: press Home key
-# Adjust live: vkbasalt-cli casSharpness 0.7
-# Adjust live: vkbasalt-cli Vibrance 0.5
+ENABLE_VKBASALT=1 gamemoderun %command%          # Default profile
+vkbasalt-run gamemoderun %command%                # Same, using wrapper
+vkbasalt-run competitive gamemoderun %command%    # Named profile
 ```
+
+**In-game**: press **Home** key to toggle all effects on/off instantly. This is the only live control — all parameter changes require a game restart.
+
+#### vkbasalt-ctl — Parameter Management
+
+`vkbasalt-ctl` manages a user config (`~/.config/vkBasalt.conf`) that overrides the system defaults. Changes apply on next game launch.
+
+```bash
+vkbasalt-ctl show              # Show active config and current values
+vkbasalt-ctl set Vibrance 0.5  # Set any parameter
+vkbasalt-ctl sharpen-up        # Increase CAS sharpness by 0.1
+vkbasalt-ctl sharpen-down      # Decrease CAS sharpness by 0.1
+vkbasalt-ctl vibrance-up       # Increase Vibrance by 0.1
+vkbasalt-ctl vibrance-down     # Decrease Vibrance by 0.1
+vkbasalt-ctl profile competitive  # Switch to a named profile
+vkbasalt-ctl reset             # Remove user config, revert to system defaults
+```
+
+Stream Deck buttons: assign `vkbasalt-ctl sharpen-up`, `vkbasalt-ctl vibrance-down`, `vkbasalt-ctl profile competitive`, etc.
+
+#### vkBasalt Profiles
+
+Named profiles are defined via `myModules.gaming.vkbasalt.profiles` and generate separate config files (`/etc/vkBasalt-<name>.conf`). Use `vkbasalt-run <profile>` at launch or `vkbasalt-ctl profile <name>` to copy into user config.
+
+| Profile | Effects | Use case |
+|---------|---------|----------|
+| *(default)* | CAS + Vibrance + LiftGammaGain | Balanced: sharpening + color boost + subtle grading |
+| `competitive` | CAS only | Minimal overhead, maximum anti-cheat safety |
+| `vibrant` | CAS + Vibrance + LiftGammaGain | Heavy saturation for colorful/stylized games |
+| `cinematic` | CAS + LiftGammaGain + Tonemap | Warm tones, lifted shadows, filmic look |
+
+Add custom profiles in the host config (`myModules.gaming.vkbasalt.profiles.<name>`). Each profile has `effects`, `casSharpness`, `toggleKey`, and `extraConfig` options.
 
 vkBasalt is a standard Vulkan layer (same mechanism as validation layers). It does NOT inject into game processes or modify game memory — it applies effects after the game renders each frame, like a monitor's built-in color settings. No anti-cheat (EAC, BattlEye, VAC) flags Vulkan layers.
 
@@ -316,7 +346,7 @@ vkBasalt is a standard Vulkan layer (same mechanism as validation layers). It do
 | **gamemode** | Sets gamemoderun'd processes to nice=-10 | Direct setpriority, ananicy won't override |
 | **scx_lavd** | BPF CPU scheduler, reads nice values | Never sets nice, only uses them for scheduling |
 
-Options: `myModules.gaming.*` — see [docs/OPTIONS.md](docs/OPTIONS.md) for all 24 gaming options.
+Options: `myModules.gaming.*` — see [docs/OPTIONS.md](docs/OPTIONS.md) for all gaming options.
 
 ## Module Reference
 

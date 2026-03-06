@@ -1,6 +1,6 @@
 # NixOS Custom Modules Documentation
 
-> Auto-generated from `myModules` option definitions. 207 options across 13 categories.
+> Auto-generated from `myModules` option definitions. 208 options across 13 categories.
 >
 > Regenerate: `bash scripts/update-docs.sh`
 
@@ -10,7 +10,7 @@
 - [CACHYOS](#cachyos-15-options) (15 options)
 - [DESKTOP](#desktop-8-options) (8 options)
 - [DEVELOPMENT](#development-2-options) (2 options)
-- [GAMING](#gaming-24-options) (24 options)
+- [GAMING](#gaming-25-options) (25 options)
 - [HARDWARE](#hardware-46-options) (46 options)
 - [KERNEL](#kernel-13-options) (13 options)
 - [MUSIC](#music-2-options) (2 options)
@@ -453,7 +453,7 @@
 
 
 
-## GAMING (24 options)
+## GAMING (25 options)
 
 #### `myModules.gaming.azahar.enable`
 
@@ -614,6 +614,13 @@
 **Description**: Extra lines appended to vkBasalt.conf (ReShade shader parameters like Vibrance, LiftGammaGain)
 - **Type**: `strings concatenated with "\n"`
 - **Default**: `""`
+
+
+#### `myModules.gaming.vkbasalt.profiles`
+
+**Description**: Named vkBasalt profiles generating /etc/vkBasalt-<name>.conf (use with vkbasalt-run <profile> or VKBASALT_CONFIG_FILE)
+- **Type**: `attribute set of (submodule)`
+- **Default**: `{}`
 
 
 #### `myModules.gaming.vkbasalt.toggleKey`

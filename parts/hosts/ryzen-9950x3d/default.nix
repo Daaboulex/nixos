@@ -276,6 +276,7 @@
     # Enable per-game: ENABLE_VKBASALT=1 gamemoderun %command%
     # Toggle in-game: Home key | Adjust live: vkbasalt-cli
     vkbasalt = {
+      # Default profile: balanced vibrance + sharpening + subtle color grading
       effects = "cas:Vibrance:LiftGammaGain";
       casSharpness = "0.5";
       extraConfig = ''
@@ -290,6 +291,41 @@
         LiftGammaGainGamma = 1.0,1.0,1.0,0.98
         LiftGammaGainGain = 1.0,1.0,1.0,1.03
       '';
+      # Named profiles for different game types
+      # Usage: vkbasalt-run <profile> %command% (in Steam launch options)
+      profiles = {
+        # Competitive: CAS sharpening only — minimal overhead, anti-cheat safe
+        competitive = {
+          effects = "cas";
+          casSharpness = "0.6";
+        };
+        # Vibrant: heavy saturation + contrast for colorful/stylized games
+        vibrant = {
+          effects = "cas:Vibrance:LiftGammaGain";
+          casSharpness = "0.4";
+          extraConfig = ''
+            Vibrance = 0.60
+            LiftGammaGainLift = 1.0,1.0,1.0,1.0
+            LiftGammaGainGamma = 1.0,1.0,1.0,0.95
+            LiftGammaGainGain = 1.0,1.0,1.0,1.05
+          '';
+        };
+        # Cinematic: warm tones, lifted shadows, filmic gamma curve
+        cinematic = {
+          effects = "cas:LiftGammaGain:Tonemap";
+          casSharpness = "0.3";
+          extraConfig = ''
+            LiftGammaGainLift = 1.02,1.0,0.98,1.03
+            LiftGammaGainGamma = 1.0,1.0,1.0,0.96
+            LiftGammaGainGain = 1.01,1.0,0.99,1.02
+            Gamma = 1.0
+            Exposure = 0.0
+            Saturation = 0.0
+            Bleach = 0.0
+            Defog = 0.0
+          '';
+        };
+      };
     };
   };
 
