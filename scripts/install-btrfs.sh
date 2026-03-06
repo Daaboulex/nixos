@@ -469,8 +469,8 @@ if $DO_INSTALL; then
   echo "============================================"
   echo ""
   echo " Post-install steps:"
-  echo "  1. Set user password:"
-  echo "     nixos-enter --root /mnt -c 'passwd <username>'"
+  echo "  1. Set user password (default username: user):"
+  echo "     sudo nixos-enter --root /mnt -c 'passwd user'"
   echo ""
   echo "  2. Reboot:"
   echo "     reboot"
@@ -490,6 +490,6 @@ else
   echo " Next steps:"
   echo "  1. Review hardware config: $HOST_DIR/hardware-configuration.nix"
   echo "  2. Install: nixos-install --flake $FLAKE_PATH#$HOSTNAME --no-root-passwd"
-  echo "  3. Set password: nixos-enter --root /mnt -c 'passwd <username>'"
+  echo "  3. Set password: sudo nixos-enter --root /mnt -c 'passwd user'"
   echo "  4. Reboot: reboot"
 fi

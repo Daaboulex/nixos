@@ -1,10 +1,16 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, lib, osConfig ? {}, ... }:
 
-{
+let
+  hasAmdGpu = (osConfig.myModules.hardware.graphics.amd.enable or false);
+in {
   # ============================================================================
   # btop++ — System & GPU monitor
   # ============================================================================
   # NOTE: enable is set per-host in home/hosts/<hostname>.nix
+  # AMD GPU detection requires rocm-smi (btop dlopen's librocm_smi64.so)
+  programs.btop.package = lib.mkDefault (pkgs.btop.override {
+    rocmSupport = hasAmdGpu;
+  });
   programs.btop.settings = {
       # -- Appearance --
       color_theme = "tokyo-night";

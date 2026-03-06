@@ -139,7 +139,7 @@
             edidHash = "9f311191c8a8ef17808acd6e824be682";
             edidIdentifier = "DEL 41313 811028053 18 2021 0";
             uuid = "3527f744-8931-4a23-a80e-55a2c9ec0fbe";
-            tiling.layout = ''{"layoutDirection":"horizontal","tiles":[{"width":0.5},{"width":0.5,"layoutDirection":"vertical","tiles":[{"height":0.333},{"height":0.334},{"height":0.333}]}]}'';
+            tiling.layout = ''{"layoutDirection":"horizontal","tiles":[{"width":0.5},{"width":0.5}]}'';
           };
           portrait = {
             connector = "DP-2";
@@ -271,6 +271,26 @@
     occt.enable = true; # Stability Test & Benchmark
     lsfgVk.enable = true; # Vulkan frame generation (Lossless Scaling)
     prismlauncher.enable = true; # Minecraft Launcher
+    # vkBasalt: CAS sharpening + Vibrance + slight gamma lift
+    # Safe post-processing — no memory injection, no anti-cheat risk
+    # Enable per-game: ENABLE_VKBASALT=1 gamemoderun %command%
+    # Toggle in-game: Home key | Adjust live: vkbasalt-cli
+    vkbasalt = {
+      effects = "cas:Vibrance:LiftGammaGain";
+      casSharpness = "0.5";
+      extraConfig = ''
+        # Vibrance — saturation boost (like VibranceGUI on Windows)
+        # Range: -1.0 (desaturate) to 1.0 (full saturation)
+        Vibrance = 0.35
+
+        # LiftGammaGain — color grading
+        # Each value is R,G,B,brightness (1.0 = neutral)
+        # Lift  = shadow tones, Gamma = midtones, Gain = highlights
+        LiftGammaGainLift = 1.0,1.0,1.0,1.02
+        LiftGammaGainGamma = 1.0,1.0,1.0,0.98
+        LiftGammaGainGain = 1.0,1.0,1.0,1.03
+      '';
+    };
   };
 
   # ============================================================================

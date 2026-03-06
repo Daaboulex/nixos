@@ -202,7 +202,7 @@ External packages enter via overlays stacked in the host's `flake-module.nix`. C
 
 | Overlay | Source |
 |---------|--------|
-| `self.overlays.default` | Custom overlays from `parts/overlays.nix` |
+| `self.overlays.default` | Custom overlays from `parts/overlays.nix` (reshade-shaders) |
 | `nix-cachyos-kernel.overlays.pinned` | CachyOS kernel packages |
 | `tidalcycles.overlays.default` | TidalCycles music packages |
 | `antigravity.overlays.default` | Antigravity IDE |
@@ -334,7 +334,7 @@ Systemd service + timer that downloads the latest Arkenfox `user.js` Firefox sec
 
 | Module | Option Prefix | Description |
 |--------|--------------|-------------|
-| `apps-gaming` | `myModules.gaming` | Steam, Proton, GameMode, emulators, RADV tuning |
+| `apps-gaming` | `myModules.gaming` | Steam, Proton, GameMode, vkBasalt, MangoHud/MangoJuice, emulators, RADV tuning |
 | `apps-wine` | `myModules.programs.wine` | Wine variants + Bottles |
 | `apps-tools` | `myModules.tools` | sysdiag, IOMMU listing, llm-prep, claude-code |
 | `apps-arkenfox` | `myModules.security.arkenfox` | Arkenfox auto-download + Flatpak Firefox support |
@@ -351,7 +351,7 @@ Systemd service + timer that downloads the latest Arkenfox `user.js` Firefox sec
 | `plasma` | KDE Plasma settings, late-tile + Fluid Tile KWin scripts, shortcuts, night light |
 | `vscode` | VSCodium + extensions (Nix IDE, Catppuccin) |
 | `gtk` | Breeze Dark theme, icons, cursors |
-| `btop` | btop monitor (Tokyo Night theme, GPU layout per-host) |
+| `btop` | btop monitor (Tokyo Night theme, GPU layout per-host, AMD ROCm GPU detection) |
 | `htop` | htop config |
 | `xdg` | XDG user directories |
 | `flatpak` | Flatpak apps + Wayland/theme overrides |

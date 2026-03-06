@@ -1,6 +1,6 @@
 # NixOS Custom Modules Documentation
 
-> Auto-generated from `myModules` option definitions. 202 options across 13 categories.
+> Auto-generated from `myModules` option definitions. 207 options across 13 categories.
 >
 > Regenerate: `bash scripts/update-docs.sh`
 
@@ -10,7 +10,7 @@
 - [CACHYOS](#cachyos-15-options) (15 options)
 - [DESKTOP](#desktop-8-options) (8 options)
 - [DEVELOPMENT](#development-2-options) (2 options)
-- [GAMING](#gaming-19-options) (19 options)
+- [GAMING](#gaming-24-options) (24 options)
 - [HARDWARE](#hardware-46-options) (46 options)
 - [KERNEL](#kernel-13-options) (13 options)
 - [MUSIC](#music-2-options) (2 options)
@@ -453,7 +453,7 @@
 
 
 
-## GAMING (19 options)
+## GAMING (24 options)
 
 #### `myModules.gaming.azahar.enable`
 
@@ -586,6 +586,41 @@
 **Description**: Enable Gamescope session for Steam
 - **Type**: `boolean`
 - **Default**: `true`
+
+
+#### `myModules.gaming.vkbasalt.casSharpness`
+
+**Description**: CAS sharpness amount (0.0 = subtle, 1.0 = maximum)
+- **Type**: `string`
+- **Default**: `"0.4"`
+
+
+#### `myModules.gaming.vkbasalt.effects`
+
+**Description**: Colon-separated vkBasalt effects (cas, smaa, fxaa, Vibrance, LiftGammaGain, Tonemap, Levels, Curves)
+- **Type**: `string`
+- **Default**: `"cas"`
+
+
+#### `myModules.gaming.vkbasalt.enable`
+
+**Description**: Enable vkBasalt Vulkan post-processing layer (vibrance, sharpening, color filters)
+- **Type**: `boolean`
+- **Default**: `true`
+
+
+#### `myModules.gaming.vkbasalt.extraConfig`
+
+**Description**: Extra lines appended to vkBasalt.conf (ReShade shader parameters like Vibrance, LiftGammaGain)
+- **Type**: `strings concatenated with "\n"`
+- **Default**: `""`
+
+
+#### `myModules.gaming.vkbasalt.toggleKey`
+
+**Description**: Key to toggle vkBasalt effects in-game
+- **Type**: `string`
+- **Default**: `"Home"`
 
 
 

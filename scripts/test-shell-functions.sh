@@ -205,12 +205,12 @@ else
     fail "No nrb* functions found"
   fi
 
-  # Verify help text lists all flags (the Usage: echo line)
-  HELP_LINE=$(grep -P 'echo.*Usage: nrb' "$ZSH_FILE" || true)
-  if [[ -n "$HELP_LINE" ]]; then
+  # Verify help text lists all flags (the --help|-h case block)
+  HELP_BLOCK=$(sed -n '/--help|-h)/,/return 0/p' "$ZSH_FILE" || true)
+  if [[ -n "$HELP_BLOCK" ]]; then
     local_missing=0
     for flag in "${NRB_FLAGS[@]}"; do
-      if ! echo "$HELP_LINE" | grep -q -- "$flag"; then
+      if ! echo "$HELP_BLOCK" | grep -q -- "$flag"; then
         fail "nrb help text missing $flag"
         local_missing=1
       fi
