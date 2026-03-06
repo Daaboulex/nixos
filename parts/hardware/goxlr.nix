@@ -2,6 +2,7 @@
   flake.nixosModules.hardware-goxlr = { config, lib, pkgs, ... }:
     let
       cfg = config.myModules.audio.goxlr;
+      deviceName = if cfg.isMini then "GoXLRMini" else "GoXLR";
 
       fixedAlsaUcm = pkgs.alsa-ucm-conf.overrideAttrs (old: {
         postPatch = lib.concatStringsSep "\n" ([
@@ -137,11 +138,11 @@
           };
           clearStreamProperties = lib.mkOption { type = lib.types.bool; default = false; description = "Clear PipeWire stream properties before applying EQ filters"; };
           channels = {
-            system = { enable = lib.mkEnableOption "EQ for System channel" // { default = true; }; sink = lib.mkOption { type = lib.types.str; default = "alsa_output.usb-TC-Helicon_GoXLRMini-00.HiFi__Speaker__sink"; description = "PipeWire sink node name for System channel (adjust for full-size GoXLR)"; }; eq = lib.mkOption { type = lib.types.str; default = dt990proEqFilters; description = "PipeWire filter-chain EQ filter definition for System channel"; }; };
-            game = { enable = lib.mkEnableOption "EQ for Game channel" // { default = true; }; sink = lib.mkOption { type = lib.types.str; default = "alsa_output.usb-TC-Helicon_GoXLRMini-00.HiFi__Line1__sink"; description = "PipeWire sink node name for Game channel (adjust for full-size GoXLR)"; }; eq = lib.mkOption { type = lib.types.str; default = dt990proEqFilters; description = "PipeWire filter-chain EQ filter definition for Game channel"; }; };
-            chat = { enable = lib.mkEnableOption "EQ for Chat channel" // { default = true; }; sink = lib.mkOption { type = lib.types.str; default = "alsa_output.usb-TC-Helicon_GoXLRMini-00.HiFi__Headphones__sink"; description = "PipeWire sink node name for Chat channel (adjust for full-size GoXLR)"; }; eq = lib.mkOption { type = lib.types.str; default = dt990proEqFilters; description = "PipeWire filter-chain EQ filter definition for Chat channel"; }; };
-            music = { enable = lib.mkEnableOption "EQ for Music channel" // { default = true; }; sink = lib.mkOption { type = lib.types.str; default = "alsa_output.usb-TC-Helicon_GoXLRMini-00.HiFi__Line2__sink"; description = "PipeWire sink node name for Music channel (adjust for full-size GoXLR)"; }; eq = lib.mkOption { type = lib.types.str; default = dt990proEqFilters; description = "PipeWire filter-chain EQ filter definition for Music channel"; }; };
-            sample = { enable = lib.mkEnableOption "EQ for Sample channel" // { default = true; }; sink = lib.mkOption { type = lib.types.str; default = "alsa_output.usb-TC-Helicon_GoXLRMini-00.HiFi__Line3__sink"; description = "PipeWire sink node name for Sample channel (adjust for full-size GoXLR)"; }; eq = lib.mkOption { type = lib.types.str; default = dt990proEqFilters; description = "PipeWire filter-chain EQ filter definition for Sample channel"; }; };
+            system = { enable = lib.mkEnableOption "EQ for System channel" // { default = true; }; sink = lib.mkOption { type = lib.types.str; default = "alsa_output.usb-TC-Helicon_${deviceName}-00.HiFi__Speaker__sink"; description = "PipeWire sink node name for System channel"; }; eq = lib.mkOption { type = lib.types.str; default = dt990proEqFilters; description = "PipeWire filter-chain EQ filter definition for System channel"; }; };
+            game = { enable = lib.mkEnableOption "EQ for Game channel" // { default = true; }; sink = lib.mkOption { type = lib.types.str; default = "alsa_output.usb-TC-Helicon_${deviceName}-00.HiFi__Line1__sink"; description = "PipeWire sink node name for Game channel"; }; eq = lib.mkOption { type = lib.types.str; default = dt990proEqFilters; description = "PipeWire filter-chain EQ filter definition for Game channel"; }; };
+            chat = { enable = lib.mkEnableOption "EQ for Chat channel" // { default = true; }; sink = lib.mkOption { type = lib.types.str; default = "alsa_output.usb-TC-Helicon_${deviceName}-00.HiFi__Headphones__sink"; description = "PipeWire sink node name for Chat channel"; }; eq = lib.mkOption { type = lib.types.str; default = dt990proEqFilters; description = "PipeWire filter-chain EQ filter definition for Chat channel"; }; };
+            music = { enable = lib.mkEnableOption "EQ for Music channel" // { default = true; }; sink = lib.mkOption { type = lib.types.str; default = "alsa_output.usb-TC-Helicon_${deviceName}-00.HiFi__Line2__sink"; description = "PipeWire sink node name for Music channel"; }; eq = lib.mkOption { type = lib.types.str; default = dt990proEqFilters; description = "PipeWire filter-chain EQ filter definition for Music channel"; }; };
+            sample = { enable = lib.mkEnableOption "EQ for Sample channel" // { default = true; }; sink = lib.mkOption { type = lib.types.str; default = "alsa_output.usb-TC-Helicon_${deviceName}-00.HiFi__Line3__sink"; description = "PipeWire sink node name for Sample channel"; }; eq = lib.mkOption { type = lib.types.str; default = dt990proEqFilters; description = "PipeWire filter-chain EQ filter definition for Sample channel"; }; };
           };
         };
         toggle = {
@@ -171,7 +172,7 @@
           enable = lib.mkEnableOption "DeepFilterNet3 neural noise suppression on chat mic";
           source = lib.mkOption {
             type = lib.types.str;
-            default = "alsa_input.usb-TC-Helicon_GoXLRMini-00.HiFi__Headset__source";
+            default = "alsa_input.usb-TC-Helicon_${deviceName}-00.HiFi__Headset__source";
             description = "PipeWire node name of the raw microphone source";
           };
           attenuationLimit = lib.mkOption {

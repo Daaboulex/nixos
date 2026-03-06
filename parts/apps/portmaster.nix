@@ -2,11 +2,8 @@
   flake.nixosModules.apps-portmaster = { config, lib, pkgs, ... }:
     let
       cfg = config.myModules.security.portmaster;
-      portmasterPkg = config.services.portmaster.package;
     in {
       # Thin wrapper: map myModules namespace → services.portmaster
-      # Once portmaster-nix upstream has notifier/autostart options,
-      # simplify to: services.portmaster = { autostart = cfg.autostart; notifier.enable = cfg.notifier; };
       options.myModules.security.portmaster = {
         enable = lib.mkEnableOption "Portmaster privacy firewall";
         notifier = lib.mkEnableOption "Portmaster system tray notifier (autostart)";
@@ -30,29 +27,10 @@
       config = lib.mkIf cfg.enable {
         services.portmaster = {
           enable = true;
+          autostart = cfg.autostart;
+          notifier.enable = cfg.notifier;
           settings = cfg.settings;
           extraArgs = cfg.extraArgs;
-        };
-
-        # When autostart is false, remove portmaster from multi-user.target
-        # so it doesn't start on boot. The service is still installed and
-        # can be started manually: sudo systemctl start portmaster
-        systemd.services.portmaster.wantedBy = lib.mkIf (!cfg.autostart) (lib.mkForce [ ]);
-
-        # XDG autostart for the Portmaster desktop app (system tray icon).
-        # Checks that portmaster.service is active before launching — prevents
-        # "Could not connect to localhost" popup when the service is stopped.
-        environment.etc."xdg/autostart/portmaster-notifier.desktop" = lib.mkIf cfg.notifier {
-          text = ''
-            [Desktop Entry]
-            Name=Portmaster Notifier
-            Comment=Portmaster system tray notifier
-            Exec=/bin/sh -c 'sleep 3; systemctl is-active --quiet portmaster.service && exec ${portmasterPkg}/bin/portmaster --data /var/lib/portmaster'
-            Type=Application
-            X-KDE-autostart-phase=2
-            X-KDE-StartupNotify=false
-            NoDisplay=true
-          '';
         };
       };
     };

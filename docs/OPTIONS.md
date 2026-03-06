@@ -102,7 +102,7 @@
 
 #### `myModules.audio.goxlr.eq.channels.chat.sink`
 
-**Description**: PipeWire sink node name for Chat channel (adjust for full-size GoXLR)
+**Description**: PipeWire sink node name for Chat channel
 - **Type**: `string`
 - **Default**: `"alsa_output.usb-TC-Helicon_GoXLRMini-00.HiFi__Headphones__sink"`
 
@@ -123,7 +123,7 @@
 
 #### `myModules.audio.goxlr.eq.channels.game.sink`
 
-**Description**: PipeWire sink node name for Game channel (adjust for full-size GoXLR)
+**Description**: PipeWire sink node name for Game channel
 - **Type**: `string`
 - **Default**: `"alsa_output.usb-TC-Helicon_GoXLRMini-00.HiFi__Line1__sink"`
 
@@ -144,7 +144,7 @@
 
 #### `myModules.audio.goxlr.eq.channels.music.sink`
 
-**Description**: PipeWire sink node name for Music channel (adjust for full-size GoXLR)
+**Description**: PipeWire sink node name for Music channel
 - **Type**: `string`
 - **Default**: `"alsa_output.usb-TC-Helicon_GoXLRMini-00.HiFi__Line2__sink"`
 
@@ -165,7 +165,7 @@
 
 #### `myModules.audio.goxlr.eq.channels.sample.sink`
 
-**Description**: PipeWire sink node name for Sample channel (adjust for full-size GoXLR)
+**Description**: PipeWire sink node name for Sample channel
 - **Type**: `string`
 - **Default**: `"alsa_output.usb-TC-Helicon_GoXLRMini-00.HiFi__Line3__sink"`
 
@@ -186,7 +186,7 @@
 
 #### `myModules.audio.goxlr.eq.channels.system.sink`
 
-**Description**: PipeWire sink node name for System channel (adjust for full-size GoXLR)
+**Description**: PipeWire sink node name for System channel
 - **Type**: `string`
 - **Default**: `"alsa_output.usb-TC-Helicon_GoXLRMini-00.HiFi__Speaker__sink"`
 
