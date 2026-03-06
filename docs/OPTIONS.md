@@ -1,6 +1,6 @@
 # NixOS Custom Modules Documentation
 
-> Auto-generated from `myModules` option definitions. 208 options across 13 categories.
+> Auto-generated from `myModules` option definitions. 207 options across 13 categories.
 >
 > Regenerate: `bash scripts/update-docs.sh`
 
@@ -18,7 +18,7 @@
 - [PROGRAMS](#programs-3-options) (3 options)
 - [SECURITY](#security-16-options) (16 options)
 - [SYSTEM](#system-38-options) (38 options)
-- [TOOLS](#tools-4-options) (4 options)
+- [TOOLS](#tools-3-options) (3 options)
 
 ---
 ## AUDIO (35 options)
@@ -1494,7 +1494,7 @@ An empty list (default) builds all drivers.
 
 
 
-## TOOLS (4 options)
+## TOOLS (3 options)
 
 #### `myModules.tools.claudeCode.enable`
 
@@ -1506,13 +1506,6 @@ An empty list (default) builds all drivers.
 #### `myModules.tools.listIommuGroups.enable`
 
 **Description**: Whether to enable list-iommu-groups.
-- **Type**: `boolean`
-- **Default**: `false`
-
-
-#### `myModules.tools.llmPrep.enable`
-
-**Description**: Whether to enable llm-prep.
 - **Type**: `boolean`
 - **Default**: `false`
 

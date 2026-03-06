@@ -48,7 +48,7 @@
           inputs.self.nixosModules.apps-wine
           inputs.self.nixosModules.tools-sysdiag
           inputs.self.nixosModules.tools-iommu
-          inputs.self.nixosModules.tools-llm-prep
+
           inputs.self.nixosModules.apps-development
           
           inputs.self.nixosModules.system-packages

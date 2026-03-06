@@ -101,7 +101,7 @@ parts/
 ├── apps/                              # Application modules
 │   ├── gaming.nix                     # Steam, Proton, emulators, gamemode
 │   ├── wine.nix                       # Wine + Bottles
-│   ├── tools.nix                      # Helper scripts (sysdiag, llm-prep, etc.)
+│   ├── tools/                         # Helper scripts (sysdiag, iommu, dev tools)
 │   ├── arkenfox.nix                   # Firefox/LibreWolf security hardening
 │   ├── portmaster.nix                 # Portmaster network firewall
 │   └── tidalcycles.nix                # Live coding music environment
@@ -286,7 +286,7 @@ Auto-generated scripts from `myModules.desktop.displays` monitor definitions:
 
 - **sysdiag** (585 lines) — comprehensive NixOS system diagnostics: CPU, GPU, memory, storage, network, services, kernel, scheduler, display, errors. Auto-detects AMD/Intel/NVIDIA hardware and shows hardware-specific metrics (P-State, GPU clocks, NVMe temps, scx status).
 - **list-iommu-groups** — lists IOMMU groups for GPU passthrough planning.
-- **llm-prep** — combines project files into a single LLM context document with tree structure.
+
 
 ### Arkenfox Auto-Update (`parts/apps/arkenfox.nix`)
 
@@ -414,7 +414,7 @@ Options: `myModules.gaming.*` — see [docs/OPTIONS.md](docs/OPTIONS.md) for all
 | `apps-wine` | `myModules.programs.wine` | Wine variants + Bottles |
 | `tools-sysdiag` | `myModules.tools.sysdiag` | Comprehensive NixOS system diagnostics |
 | `tools-iommu` | `myModules.tools.listIommuGroups` | IOMMU group listing |
-| `tools-llm-prep` | `myModules.tools.llmPrep` | LLM context builder |
+
 | `apps-development` | `myModules.development.tools` | Dev packages, Claude Code, helper scripts |
 | `apps-arkenfox` | `myModules.security.arkenfox` | Arkenfox auto-download + Flatpak Firefox support |
 | `apps-portmaster` | `myModules.security.portmaster` | Portmaster firewall + system tray notifier |
@@ -608,7 +608,6 @@ Create `parts/hosts/<hostname>/` with three files:
           inputs.self.nixosModules.apps-gaming
           inputs.self.nixosModules.tools-sysdiag
           inputs.self.nixosModules.tools-iommu
-          inputs.self.nixosModules.tools-llm-prep
           inputs.self.nixosModules.apps-development
           # ... add more as needed
         ];

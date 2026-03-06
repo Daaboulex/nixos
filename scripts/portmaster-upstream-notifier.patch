@@ -1,0 +1,41 @@
+This patch adds notifier autostart support to portmaster-nix/module.nix.
+Apply to the Daaboulex/portmaster-nix repository.
+
+Once applied and the flake input is updated, the local portmaster.nix
+can be simplified to just pass `services.portmaster.notifier.enable = cfg.notifier;`
+instead of managing the XDG desktop entry directly.
+
+--- a/module.nix
++++ b/module.nix
+@@ -30,6 +30,23 @@ in
+       description = ''
+         Extra command-line arguments to pass to portmaster-core.
+       '';
+     };
++
++    notifier = {
++      enable = lib.mkEnableOption "Portmaster system tray notifier (XDG autostart)";
++      delay = lib.mkOption {
++        type = lib.types.int;
++        default = 3;
++        description = "Seconds to delay notifier startup (allows desktop environment system tray to initialize)";
++      };
++    };
+   };
+
+   config = lib.mkIf cfg.enable {
++    # XDG autostart for the Portmaster desktop app (system tray icon)
++    environment.etc."xdg/autostart/portmaster-notifier.desktop" = lib.mkIf cfg.notifier.enable {
++      text = ''
++        [Desktop Entry]
++        Name=Portmaster Notifier
++        Comment=Portmaster system tray notifier
++        Exec=/bin/sh -c 'sleep ${toString cfg.notifier.delay}; ${cfg.package}/bin/portmaster --data /var/lib/portmaster'
++        Type=Application
++        X-KDE-autostart-phase=2
++        X-KDE-StartupNotify=false
++        NoDisplay=true
++      '';
++    };
++
+     environment.systemPackages = [ cfg.package ];

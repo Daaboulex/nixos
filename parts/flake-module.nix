@@ -32,7 +32,6 @@
     ./apps/wine.nix
     ./apps/tools/sysdiag.nix
     ./apps/tools/iommu.nix
-    ./apps/tools/llm-prep.nix
     ./apps/tools/development.nix
     
     ./system/cachyos-settings.nix

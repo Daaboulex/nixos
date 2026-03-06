@@ -161,7 +161,6 @@
     tools = {
       sysdiag.enable = true;
       listIommuGroups.enable = false;
-      llmPrep.enable = true;
       claudeCode.enable = true;
     };
 

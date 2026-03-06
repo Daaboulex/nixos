@@ -41,7 +41,6 @@
          # Enable helpers if requested
          myModules.tools.sysdiag.enable = lib.mkIf cfg.helperScripts true;
          myModules.tools.listIommuGroups.enable = lib.mkIf cfg.helperScripts true;
-         myModules.tools.llmPrep.enable = lib.mkIf cfg.helperScripts true;
       };
     };
 }
