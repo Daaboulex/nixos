@@ -448,6 +448,14 @@ fi
 
 echo ">> Copying hardware-configuration.nix into flake..."
 cp /mnt/etc/nixos/hardware-configuration.nix "$HOST_DIR/hardware-configuration.nix"
+
+# Fix nixos-generate-config defaults:
+# - /boot fmask/dmask 0022 → 0077 (security: restrict ESP to root-only)
+# - Add BTRFS SSD mount options if missing
+sed -i 's/fmask=0022/fmask=0077/g; s/dmask=0022/dmask=0077/g' "$HOST_DIR/hardware-configuration.nix"
+if $IS_SSD && ! grep -q 'compress=zstd' "$HOST_DIR/hardware-configuration.nix"; then
+  sed -i '/fsType = "btrfs";/{n;s/options = \[ "subvol=\([^"]*\)" \]/options = [ "subvol=\1" "compress=zstd" "noatime" "ssd" "discard=async" ]/}' "$HOST_DIR/hardware-configuration.nix"
+fi
 echo "   Saved: $HOST_DIR/hardware-configuration.nix"
 
 echo ""

@@ -282,6 +282,42 @@ Auto-generated scripts from `myModules.desktop.displays` monitor definitions:
 
 Systemd service + timer that downloads the latest Arkenfox `user.js` Firefox security hardening config. Runs daily with retry on failure. Supports Flatpak Firefox/LibreWolf profiles.
 
+### Gaming Stack (`parts/apps/gaming.nix`, `parts/overlays.nix`)
+
+Integrated gaming performance and visual enhancement stack:
+
+- **GameMode** — per-game performance daemon: renices to -10, sets AMD GPU to high performance, integrates with ananicy-cpp and scx_lavd without conflicts
+- **vkBasalt** — Vulkan post-processing layer for per-game vibrance, sharpening, and color grading. Ships with ReShade shaders (Vibrance.fx, LiftGammaGain.fx, Tonemap.fx, Curves.fx, etc.) from a custom `reshade-shaders` overlay. Configurable via `myModules.gaming.vkbasalt` options (effects, casSharpness, toggleKey, extraConfig)
+- **vkbasalt-cli** — adjust vkBasalt parameters at runtime without restarting games (`vkbasalt-cli Vibrance 0.5`)
+- **MangoHud + MangoJuice** — FPS/GPU/CPU overlay (MangoHud) with a GUI configurator (MangoJuice)
+- **Steam** — with Proton-GE, Gamescope session support, and steam-devices udev rules
+- **Emulators** — Ryubing (Switch), Eden (Switch community fork), Azahar (3DS), Prism Launcher (Minecraft)
+
+#### vkBasalt Usage
+
+vkBasalt is off by default (`ENABLE_VKBASALT=0`). Enable per-game:
+
+```bash
+# Steam → Game Properties → Launch Options:
+ENABLE_VKBASALT=1 gamemoderun %command%
+
+# Toggle effects in-game: press Home key
+# Adjust live: vkbasalt-cli casSharpness 0.7
+# Adjust live: vkbasalt-cli Vibrance 0.5
+```
+
+vkBasalt is a standard Vulkan layer (same mechanism as validation layers). It does NOT inject into game processes or modify game memory — it applies effects after the game renders each frame, like a monitor's built-in color settings. No anti-cheat (EAC, BattlEye, VAC) flags Vulkan layers.
+
+#### Performance Stack (no conflicts)
+
+| Layer | What it does | Priority interaction |
+|-------|-------------|---------------------|
+| **ananicy-cpp** | Sets Game processes to nice=-5 | Only applies if current nice is worse |
+| **gamemode** | Sets gamemoderun'd processes to nice=-10 | Direct setpriority, ananicy won't override |
+| **scx_lavd** | BPF CPU scheduler, reads nice values | Never sets nice, only uses them for scheduling |
+
+Options: `myModules.gaming.*` — see [docs/OPTIONS.md](docs/OPTIONS.md) for all 24 gaming options.
+
 ## Module Reference
 
 ### System Modules
