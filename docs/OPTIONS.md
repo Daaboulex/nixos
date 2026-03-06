@@ -1,6 +1,6 @@
 # NixOS Custom Modules Documentation
 
-> Auto-generated from `myModules` option definitions. 207 options across 13 categories.
+> Auto-generated from `myModules` option definitions. 208 options across 13 categories.
 >
 > Regenerate: `bash scripts/update-docs.sh`
 
@@ -16,7 +16,7 @@
 - [MUSIC](#music-2-options) (2 options)
 - [PRIMARYUSER](#primaryuser-1-options) (1 options)
 - [PROGRAMS](#programs-3-options) (3 options)
-- [SECURITY](#security-16-options) (16 options)
+- [SECURITY](#security-17-options) (17 options)
 - [SYSTEM](#system-38-options) (38 options)
 - [TOOLS](#tools-3-options) (3 options)
 
@@ -1110,7 +1110,7 @@ An empty list (default) builds all drivers.
 
 
 
-## SECURITY (16 options)
+## SECURITY (17 options)
 
 #### `myModules.security.arkenfox.enable`
 
@@ -1138,6 +1138,13 @@ An empty list (default) builds all drivers.
 **Description**: User to run the service as
 - **Type**: `string`
 - **Default**: `"user"`
+
+
+#### `myModules.security.portmaster.autostart`
+
+**Description**: Whether portmaster.service starts automatically on boot. When false, the service is installed but must be started manually with `sudo systemctl start portmaster`.
+- **Type**: `boolean`
+- **Default**: `true`
 
 
 #### `myModules.security.portmaster.enable`
