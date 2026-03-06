@@ -5,6 +5,8 @@
       portmasterPkg = config.services.portmaster.package;
     in {
       # Thin wrapper: map myModules namespace → services.portmaster
+      # Once portmaster-nix upstream has notifier/autostart options,
+      # simplify to: services.portmaster = { autostart = cfg.autostart; notifier.enable = cfg.notifier; };
       options.myModules.security.portmaster = {
         enable = lib.mkEnableOption "Portmaster privacy firewall";
         notifier = lib.mkEnableOption "Portmaster system tray notifier (autostart)";
@@ -37,11 +39,9 @@
         # can be started manually: sudo systemctl start portmaster
         systemd.services.portmaster.wantedBy = lib.mkIf (!cfg.autostart) (lib.mkForce [ ]);
 
-        # XDG autostart for the Portmaster desktop app (system tray icon)
-        # Uses the Nix-packaged Tauri app — no hardcoded /opt paths.
+        # XDG autostart for the Portmaster desktop app (system tray icon).
         # Checks that portmaster.service is active before launching — prevents
         # "Could not connect to localhost" popup when the service is stopped.
-        # TODO: Move this to portmaster-nix upstream module.nix as services.portmaster.notifier
         environment.etc."xdg/autostart/portmaster-notifier.desktop" = lib.mkIf cfg.notifier {
           text = ''
             [Desktop Entry]

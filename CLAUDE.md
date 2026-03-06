@@ -115,6 +115,18 @@ Home Manager is integrated as a NixOS module (not standalone).
 
 Eight external overlays are stacked in the host's `flake-module.nix` (cachyos-kernel, tidalcycles, antigravity, nx-save-sync, portmaster, occt-nix, claude-code, plus `self.overlays.default`). Custom overlays go in `parts/overlays.nix`.
 
+### External Package Repos
+
+The user's personal NixOS package repositories live at `repos/` (sibling to `parts/`, `home/`, etc.). These are **separate git repos** — not part of the main NixOS flake. They are the source for flake inputs like `portmaster`, `mesa-git-nix`, `lsfg-vk-nix`, etc.
+
+- `repos/portmaster-nix` — Portmaster firewall (Go + Rust/Tauri + Angular)
+- `repos/mesa-git-nix` — Bleeding-edge Mesa from git main
+- `repos/cachyos-settings-nix` — CachyOS performance settings module
+- `repos/lsfg-vk-nix` — Vulkan frame generation
+- `repos/OCCT-nix` — OCCT hardware stress test
+
+When modifying these packages, edit the files in `repos/<name>/`, commit and push there, then `nix flake update <input-name>` in the main flake to pull the changes. Do **not** commit `repos/` contents into the main NixOS flake repo.
+
 ### Secrets
 
 Secrets are managed with **sops-nix**. Encrypted secrets live in `secrets/secrets.yaml`. Age key at `/var/lib/sops-nix/key.txt`. Configured via `parts/system/sops.nix`.
