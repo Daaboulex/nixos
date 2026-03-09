@@ -8,19 +8,19 @@
     enable = true;
     enableZshIntegration = true;
     settings = {
-      add_newline = true;
+      add_newline = lib.mkDefault true;
 
       # Classic "user@host" format with modern styling
       username = {
-        show_always = true;
-        style_user = "bold blue";
-        format = "[$user]($style)@";
+        show_always = lib.mkDefault true;
+        style_user = lib.mkDefault "bold blue";
+        format = lib.mkDefault "[$user]($style)@";
       };
 
       hostname = {
-        ssh_only = false;
-        style = "bold blue";
-        format = "[$hostname]($style) ";
+        ssh_only = lib.mkDefault false;
+        style = lib.mkDefault "bold blue";
+        format = lib.mkDefault "[$hostname]($style) ";
       };
     };
   };

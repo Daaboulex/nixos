@@ -83,7 +83,7 @@
                   type = builtin
                   name = hpf
                   label = bq_highpass
-                  control = { Freq = 120.0 Q = 0.707 }
+                  control = { Freq = 80.0 Q = 0.707 }
                 }
                 {
                   type = ladspa
@@ -177,8 +177,8 @@
           };
           attenuationLimit = lib.mkOption {
             type = lib.types.int;
-            default = 70;
-            description = "Max noise attenuation in dB (0-100). 70 avoids artifacts while maintaining full perceived suppression.";
+            default = 100;
+            description = "Max noise attenuation in dB (0-100). 100 = no limit (official default). 6-12 = light, 18-24 = medium.";
           };
           minThreshold = lib.mkOption {
             type = lib.types.float;
@@ -192,8 +192,8 @@
           };
           maxDfThreshold = lib.mkOption {
             type = lib.types.float;
-            default = 20.0;
-            description = "Max DF processing threshold in dB (-15 to 35). Lower prevents keyboard transient reconstruction.";
+            default = 12.0;
+            description = "Max DF processing threshold in dB (-15 to 35). Lower suppresses transient noise (claps, bumps). Below 10 risks affecting plosives.";
           };
           minProcessingBuffer = lib.mkOption {
             type = lib.types.int;

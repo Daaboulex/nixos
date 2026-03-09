@@ -1,6 +1,5 @@
 { inputs, ... }: {
   flake.nixosConfigurations.ryzen-9950x3d = inputs.nixpkgs.lib.nixosSystem {
-    system = "x86_64-linux";
     specialArgs = { inherit inputs; };
     modules = [
       # Host Specific Config (imported from local directory)
@@ -27,6 +26,7 @@
           inputs.self.nixosModules.hardware-goxlr
           inputs.self.nixosModules.hardware-piper
           inputs.self.nixosModules.hardware-streamcontroller
+          inputs.self.nixosModules.hardware-ducky-one-x-mini
           inputs.self.nixosModules.hardware-performance
           inputs.self.nixosModules.hardware-power
           
@@ -75,6 +75,7 @@
 
       # Overlays (Explicitly included here for now, or use the overlay part if mapped)
       {
+        nixpkgs.hostPlatform = "x86_64-linux";
         nixpkgs.config.allowUnfree = true;
         nixpkgs.overlays = [
           inputs.self.overlays.default
@@ -86,6 +87,7 @@
           inputs.occt-nix.overlays.default
           inputs.claude-code.overlays.default
           inputs.lsfg-vk.overlays.default
+          inputs.vkbasalt-overlay.overlays.default
           inputs.mesa-git-nix.overlays.default
         ];
       }

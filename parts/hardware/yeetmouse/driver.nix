@@ -497,8 +497,8 @@ in {
           param = "Sensitivity";
         }
         {
-          value = if isAttrs sens then toString sens.y else toString sens;
-          param = "SensitivityY";
+          value = toString (if isAttrs sens then sens.y / sens.x else 1.0);
+          param = "RatioYX";
         }
       ];
     };

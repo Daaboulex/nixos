@@ -16,6 +16,38 @@
         SUBSYSTEM=="module", KERNEL=="yeetmouse", ACTION=="add", RUN+="${pkgs.runtimeShell} -c 'chmod 0664 /sys/module/yeetmouse/parameters/* && chgrp users /sys/module/yeetmouse/parameters/*'"
       '';
 
+      # Fallback: apply yeetmouse config after boot via systemd.
+      # The HID udev rule in driver.nix can race with module init (sysfs params
+      # don't exist yet when the rule fires), leaving settings at kernel defaults.
+      # This service guarantees settings are applied once the module is loaded.
+      systemd.services.yeetmouse-config = let
+        cfg' = config.hardware.yeetmouse;
+        echo = "${pkgs.coreutils}/bin/echo";
+        parameterBasePath = "/sys/module/yeetmouse/parameters";
+        globalParams = [ cfg'.inputCap cfg'.outputCap cfg'.offset cfg'.preScale ];
+        params = globalParams ++ cfg'.sensitivity ++ cfg'.rotation ++ cfg'.mode;
+        paramToString = entry: ''
+          ${echo} "${toString entry.value}" > "${parameterBasePath}/${entry.param}"
+        '';
+      in {
+        description = "Apply YeetMouse acceleration parameters";
+        after = [ "systemd-modules-load.service" ];
+        wantedBy = [ "multi-user.target" ];
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+        };
+        script = ''
+          # Wait for sysfs to be ready
+          for i in $(seq 1 20); do
+            [ -f ${parameterBasePath}/update ] && break
+            ${pkgs.coreutils}/bin/sleep 0.25
+          done
+          ${lib.concatMapStrings (s: (paramToString s) + "\n") params}
+          ${echo} "1" > ${parameterBasePath}/update
+        '';
+      };
+
       nixpkgs.overlays = [
         (final: prev: let
           actualKernel = config.boot.kernelPackages.kernel;

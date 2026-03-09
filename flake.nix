@@ -13,7 +13,7 @@
 
     # nix-cachyos-kernel - CachyOS kernel provider
     nix-cachyos-kernel = {
-      url = "github:xddxdd/nix-cachyos-kernel/release";
+      url = "github:xddxdd/nix-cachyos-kernel";
       # Do not override its nixpkgs input, otherwise there can be mismatch between patches and kernel version
     };
 
@@ -110,6 +110,12 @@
     # LSFG-VK - Vulkan Frame Generation (Lossless Scaling)
     lsfg-vk = {
       url = "github:daaboulex/lsfg-vk-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # vkBasalt Overlay - Vulkan post-processing layer with in-game UI (Wayland + X11)
+    vkbasalt-overlay = {
+      url = "github:Daaboulex/vkBasalt_overlay_wayland";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };

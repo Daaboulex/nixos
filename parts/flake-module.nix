@@ -45,6 +45,7 @@
 
     # Drivers/Hardware Extras
     ./hardware/goxlr.nix
+    ./hardware/ducky-one-x-mini.nix
     ./hardware/piper.nix
     ./hardware/streamcontroller.nix
     ./hardware/macbook/default.nix

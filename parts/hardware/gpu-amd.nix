@@ -6,6 +6,20 @@
       options.myModules.hardware.graphics.amd = {
         enable = lib.mkEnableOption "AMD Graphics configuration";
 
+        vulkanDeviceId = lib.mkOption {
+          type = lib.types.nullOr lib.types.str;
+          default = null;
+          example = "1002:7550";
+          description = "Vulkan device vendor:device ID for MESA_VK_DEVICE_SELECT (forces discrete GPU on dual-AMD systems)";
+        };
+
+        vulkanDeviceName = lib.mkOption {
+          type = lib.types.nullOr lib.types.str;
+          default = null;
+          example = "AMD Radeon RX 9070 XT";
+          description = "Vulkan device name substring for DXVK_FILTER_DEVICE_NAME and VKD3D_FILTER_DEVICE_NAME (forces dGPU for translated DX9-12 games)";
+        };
+
         lact = {
           enable = lib.mkOption {
             type = lib.types.bool;
@@ -39,6 +53,12 @@
           default = false;
           description = "Enable DRM debug logging (drm.debug=0x1e) for diagnosing display black screens";
         };
+
+        disableHDCP = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = "Disable HDCP content protection (amdgpu.dc_hdcp_enable=0) — fixes handshake bugs on RDNA 4";
+        };
       };
 
       config = lib.mkIf cfg.enable {
@@ -54,6 +74,9 @@
             "amdgpu.sg_display=0"
             # Disable GFX OFF power state — prevents MES INVALIDATE_TLBS timeouts on RDNA 3/4
             "amdgpu.gfxoff=0"
+          ]
+          ++ lib.optionals cfg.disableHDCP [
+            "amdgpu.dc_hdcp_enable=0"
           ]
           ++ lib.optionals cfg.drmDebug [
             # DRM subsystem debug logging — captures display engine events for black screen diagnosis
@@ -76,6 +99,16 @@
             Restart = "always";
           };
         };
+
+        # Force Vulkan device selection on dual-AMD systems (iGPU + dGPU)
+        environment.sessionVariables = lib.mkIf (cfg.vulkanDeviceId != null || cfg.vulkanDeviceName != null) (
+          lib.optionalAttrs (cfg.vulkanDeviceId != null) {
+            MESA_VK_DEVICE_SELECT = cfg.vulkanDeviceId;
+          } // lib.optionalAttrs (cfg.vulkanDeviceName != null) {
+            DXVK_FILTER_DEVICE_NAME = cfg.vulkanDeviceName;
+            VKD3D_FILTER_DEVICE_NAME = cfg.vulkanDeviceName;
+          }
+        );
 
         hardware.enableRedistributableFirmware = true;
       };

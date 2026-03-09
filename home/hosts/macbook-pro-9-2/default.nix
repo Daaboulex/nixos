@@ -7,8 +7,8 @@
 
   # Git credentials
   programs.git.settings.user = {
-    name = "stephandaaboul";
-    email = "s.daaboul@jacobs-university.de";
+    name = "Daaboulex";
+    email = "39669593+Daaboulex@users.noreply.github.com";
   };
 
   # Enable standard tools
@@ -20,7 +20,7 @@
   services.easyeffects.enable = false;
 
   # ============================================================================
-  # Host-Specific Hardware Settings
+  # Host-Specific KDE/Plasma Settings
   # ============================================================================
 
   # Night light location (Berlin)
@@ -28,6 +28,45 @@
     latitude = "52.52";
     longitude = "13.405";
   };
+
+  # Laptop power management — suspend on lid close, battery profile
+  programs.plasma.powerdevil = {
+    AC = {
+      autoSuspend.action = "nothing";
+      dimDisplay = {
+        enable = true;
+        idleTimeout = 300;
+      };
+      turnOffDisplay.idleTimeout = 600;
+      powerProfile = "balanced";
+    };
+    battery = {
+      autoSuspend = {
+        action = "sleep";
+        idleTimeout = 600;            # Suspend after 10 min on battery
+      };
+      dimDisplay = {
+        enable = true;
+        idleTimeout = 120;            # Dim after 2 min on battery
+      };
+      turnOffDisplay.idleTimeout = 300;
+      powerProfile = "powerSaving";
+    };
+    lowBattery = {
+      autoSuspend = {
+        action = "sleep";
+        idleTimeout = 300;            # Suspend after 5 min on low battery
+      };
+      dimDisplay = {
+        enable = true;
+        idleTimeout = 30;
+      };
+      turnOffDisplay.idleTimeout = 60;
+      powerProfile = "powerSaving";
+    };
+  };
+
+  # Laptop — keep screen locker enabled (module defaults: autoLock=true, lockOnResume=true)
 
   # btop layout — single Intel HD4000 GPU
   programs.btop.settings = {

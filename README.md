@@ -221,6 +221,7 @@ External packages enter via overlays stacked in the host's `flake-module.nix`. C
 | `occt-nix.overlays.default` | OCCT benchmark |
 | `claude-code.overlays.default` | Claude Code AI assistant |
 | `lsfg-vk.overlays.default` | Vulkan frame generation |
+| `vkbasalt-overlay.overlays.default` | vkBasalt overlay (Vulkan post-processing with in-game UI) |
 | `mesa-git-nix.overlays.default` | Bleeding-edge Mesa builds |
 
 To add a new overlay: add the flake input in `flake.nix`, then add `inputs.<name>.overlays.default` to the host's overlay list.
@@ -297,54 +298,26 @@ Systemd service + timer that downloads the latest Arkenfox `user.js` Firefox sec
 Integrated gaming performance and visual enhancement stack:
 
 - **GameMode** — per-game performance daemon: renices to -10, sets AMD GPU to high performance, integrates with ananicy-cpp and scx_lavd without conflicts
-- **vkBasalt** — Vulkan post-processing layer for per-game vibrance, sharpening, and color grading. Ships with ReShade shaders (Vibrance.fx, LiftGammaGain.fx, Tonemap.fx, Curves.fx, etc.) from a custom `reshade-shaders` overlay. Configurable via `myModules.gaming.vkbasalt` options (effects, casSharpness, toggleKey, extraConfig)
-- **vkbasalt-cli** — adjust vkBasalt parameters at runtime without restarting games (`vkbasalt-cli Vibrance 0.5`)
+- **vkBasalt Overlay** — Vulkan post-processing layer with in-game ImGui UI for real-time effect tuning (Wayland + X11). Fork of [vkBasalt overlay](https://github.com/Boux/vkBasalt_overlay) with full Wayland input support. Ships with ReShade shaders (Vibrance.fx, LiftGammaGain.fx, Tonemap.fx, Curves.fx, etc.). Configurable via `myModules.gaming.vkbasalt` options (effects, casSharpness, overlayKey, toggleKey, extraConfig)
 - **MangoHud + MangoJuice** — FPS/GPU/CPU overlay (MangoHud) with a GUI configurator (MangoJuice)
 - **Steam** — with Proton-GE, Gamescope session support, and steam-devices udev rules
 - **Emulators** — Ryubing (Switch), Eden (Switch community fork), Azahar (3DS), Prism Launcher (Minecraft)
 
-#### vkBasalt Usage
+#### vkBasalt Overlay Usage
 
 vkBasalt is off by default (`ENABLE_VKBASALT=0`). Enable per-game via Steam launch options or the `vkbasalt-run` wrapper:
 
 ```bash
 # Steam → Game Properties → Launch Options:
-ENABLE_VKBASALT=1 gamemoderun %command%          # Default profile
-vkbasalt-run gamemoderun %command%                # Same, using wrapper
-vkbasalt-run competitive gamemoderun %command%    # Named profile
+ENABLE_VKBASALT=1 gamemoderun %command%    # Enable vkBasalt
+vkbasalt-run gamemoderun %command%          # Same, using wrapper
 ```
 
-**In-game**: press **Home** key to toggle all effects on/off instantly. This is the only live control — all parameter changes require a game restart.
+**In-game controls:**
+- **F1** — open the overlay UI (add/remove effects, adjust parameters, save/load configs)
+- **Home** — toggle all effects on/off
 
-#### vkbasalt-ctl — Parameter Management
-
-`vkbasalt-ctl` manages a user config (`~/.config/vkBasalt.conf`) that overrides the system defaults. Changes apply on next game launch.
-
-```bash
-vkbasalt-ctl show              # Show active config and current values
-vkbasalt-ctl set Vibrance 0.5  # Set any parameter
-vkbasalt-ctl sharpen-up        # Increase CAS sharpness by 0.1
-vkbasalt-ctl sharpen-down      # Decrease CAS sharpness by 0.1
-vkbasalt-ctl vibrance-up       # Increase Vibrance by 0.1
-vkbasalt-ctl vibrance-down     # Decrease Vibrance by 0.1
-vkbasalt-ctl profile competitive  # Switch to a named profile
-vkbasalt-ctl reset             # Remove user config, revert to system defaults
-```
-
-Stream Deck buttons: assign `vkbasalt-ctl sharpen-up`, `vkbasalt-ctl vibrance-down`, `vkbasalt-ctl profile competitive`, etc.
-
-#### vkBasalt Profiles
-
-Named profiles are defined via `myModules.gaming.vkbasalt.profiles` and generate separate config files (`/etc/vkBasalt-<name>.conf`). Use `vkbasalt-run <profile>` at launch or `vkbasalt-ctl profile <name>` to copy into user config.
-
-| Profile | Effects | Use case |
-|---------|---------|----------|
-| *(default)* | CAS + Vibrance + LiftGammaGain | Balanced: sharpening + color boost + subtle grading |
-| `competitive` | CAS only | Minimal overhead, maximum anti-cheat safety |
-| `vibrant` | CAS + Vibrance + LiftGammaGain | Heavy saturation for colorful/stylized games |
-| `cinematic` | CAS + LiftGammaGain + Tonemap | Warm tones, lifted shadows, filmic look |
-
-Add custom profiles in the host config (`myModules.gaming.vkbasalt.profiles.<name>`). Each profile has `effects`, `casSharpness`, `toggleKey`, and `extraConfig` options.
+All effect parameters (Vibrance, CAS sharpness, LiftGammaGain, etc.) can be adjusted live through the overlay UI without restarting the game. Per-game configs are saved/loaded from `~/.config/vkBasalt-overlay/configs/`.
 
 vkBasalt is a standard Vulkan layer (same mechanism as validation layers). It does NOT inject into game processes or modify game memory — it applies effects after the game renders each frame, like a monitor's built-in color settings. No anti-cheat (EAC, BattlEye, VAC) flags Vulkan layers.
 
@@ -410,7 +383,7 @@ Options: `myModules.gaming.*` — see [docs/OPTIONS.md](docs/OPTIONS.md) for all
 
 | Module | Option Prefix | Description |
 |--------|--------------|-------------|
-| `apps-gaming` | `myModules.gaming` | Steam, Proton, GameMode, vkBasalt, MangoHud/MangoJuice, emulators, RADV tuning |
+| `apps-gaming` | `myModules.gaming` | Steam, Proton, GameMode, vkBasalt overlay, MangoHud/MangoJuice, emulators, RADV tuning |
 | `apps-wine` | `myModules.programs.wine` | Wine variants + Bottles |
 | `tools-sysdiag` | `myModules.tools.sysdiag` | Comprehensive NixOS system diagnostics |
 | `tools-iommu` | `myModules.tools.listIommuGroups` | IOMMU group listing |

@@ -1,6 +1,6 @@
 # NixOS Custom Modules Documentation
 
-> Auto-generated from `myModules` option definitions. 208 options across 13 categories.
+> Auto-generated from `myModules` option definitions. 218 options across 13 categories.
 >
 > Regenerate: `bash scripts/update-docs.sh`
 
@@ -10,9 +10,9 @@
 - [CACHYOS](#cachyos-15-options) (15 options)
 - [DESKTOP](#desktop-8-options) (8 options)
 - [DEVELOPMENT](#development-2-options) (2 options)
-- [GAMING](#gaming-25-options) (25 options)
-- [HARDWARE](#hardware-46-options) (46 options)
-- [KERNEL](#kernel-13-options) (13 options)
+- [GAMING](#gaming-27-options) (27 options)
+- [HARDWARE](#hardware-53-options) (53 options)
+- [KERNEL](#kernel-14-options) (14 options)
 - [MUSIC](#music-2-options) (2 options)
 - [PRIMARYUSER](#primaryuser-1-options) (1 options)
 - [PROGRAMS](#programs-3-options) (3 options)
@@ -25,9 +25,9 @@
 
 #### `myModules.audio.goxlr.denoise.attenuationLimit`
 
-**Description**: Max noise attenuation in dB (0-100). 70 avoids artifacts while maintaining full perceived suppression.
+**Description**: Max noise attenuation in dB (0-100). 100 = no limit (official default). 6-12 = light, 18-24 = medium.
 - **Type**: `signed integer`
-- **Default**: `70`
+- **Default**: `100`
 
 
 #### `myModules.audio.goxlr.denoise.enable`
@@ -39,9 +39,9 @@
 
 #### `myModules.audio.goxlr.denoise.maxDfThreshold`
 
-**Description**: Max DF processing threshold in dB (-15 to 35). Lower prevents keyboard transient reconstruction.
+**Description**: Max DF processing threshold in dB (-15 to 35). Lower suppresses transient noise (claps, bumps). Below 10 risks affecting plosives.
 - **Type**: `floating point number`
-- **Default**: `20.0`
+- **Default**: `12.0`
 
 
 #### `myModules.audio.goxlr.denoise.maxErbThreshold`
@@ -453,7 +453,7 @@
 
 
 
-## GAMING (25 options)
+## GAMING (27 options)
 
 #### `myModules.gaming.azahar.enable`
 
@@ -588,50 +588,64 @@
 - **Default**: `true`
 
 
+#### `myModules.gaming.vkbasalt.autoApply`
+
+**Description**: Auto-apply parameter changes without clicking Apply
+- **Type**: `boolean`
+- **Default**: `true`
+
+
 #### `myModules.gaming.vkbasalt.casSharpness`
 
-**Description**: CAS sharpness amount (0.0 = subtle, 1.0 = maximum)
+**Description**: Default CAS sharpness (0.0 = subtle, 1.0 = maximum)
 - **Type**: `string`
 - **Default**: `"0.4"`
 
 
 #### `myModules.gaming.vkbasalt.effects`
 
-**Description**: Colon-separated vkBasalt effects (cas, smaa, fxaa, Vibrance, LiftGammaGain, Tonemap, Levels, Curves)
+**Description**: Default colon-separated effect chain (cas, smaa, fxaa, Vibrance, LiftGammaGain, Tonemap, etc.)
 - **Type**: `string`
 - **Default**: `"cas"`
 
 
 #### `myModules.gaming.vkbasalt.enable`
 
-**Description**: Enable vkBasalt Vulkan post-processing layer (vibrance, sharpening, color filters)
+**Description**: Enable vkBasalt overlay — Vulkan post-processing with in-game UI (replaces original vkBasalt)
+- **Type**: `boolean`
+- **Default**: `true`
+
+
+#### `myModules.gaming.vkbasalt.enableOnLaunch`
+
+**Description**: Enable effects automatically when a game launches
 - **Type**: `boolean`
 - **Default**: `true`
 
 
 #### `myModules.gaming.vkbasalt.extraConfig`
 
-**Description**: Extra lines appended to vkBasalt.conf (ReShade shader parameters like Vibrance, LiftGammaGain)
+**Description**: Extra lines for system config (ReShade shader parameters like Vibrance, LiftGammaGain values)
 - **Type**: `strings concatenated with "\n"`
 - **Default**: `""`
 
 
-#### `myModules.gaming.vkbasalt.profiles`
+#### `myModules.gaming.vkbasalt.overlayKey`
 
-**Description**: Named vkBasalt profiles generating /etc/vkBasalt-<name>.conf (use with vkbasalt-run <profile> or VKBASALT_CONFIG_FILE)
-- **Type**: `attribute set of (submodule)`
-- **Default**: `{}`
+**Description**: Key to open the overlay UI in-game
+- **Type**: `string`
+- **Default**: `"F1"`
 
 
 #### `myModules.gaming.vkbasalt.toggleKey`
 
-**Description**: Key to toggle vkBasalt effects in-game
+**Description**: Key to toggle effects on/off in-game
 - **Type**: `string`
 - **Default**: `"Home"`
 
 
 
-## HARDWARE (46 options)
+## HARDWARE (53 options)
 
 #### `myModules.hardware.audio.easyeffects.enable`
 
@@ -735,6 +749,41 @@ Requires BIOS CPPC option set to "Driver".
 - **Default**: `"cache"`
 
 
+#### `myModules.hardware.duckyOneXMini.board.product`
+
+**Description**: USB product ID for the keyboard board HID interface
+- **Type**: `string`
+- **Default**: `"001d"`
+
+
+#### `myModules.hardware.duckyOneXMini.enable`
+
+**Description**: Whether to enable Ducky One X Mini keyboard HID access (udev rules for VIA/Vial).
+- **Type**: `boolean`
+- **Default**: `false`
+
+
+#### `myModules.hardware.duckyOneXMini.mcu.product`
+
+**Description**: USB product ID for the keyboard MCU HID interface
+- **Type**: `string`
+- **Default**: `"0021"`
+
+
+#### `myModules.hardware.duckyOneXMini.vendor`
+
+**Description**: USB vendor ID for the Ducky keyboard
+- **Type**: `string`
+- **Default**: `"3233"`
+
+
+#### `myModules.hardware.graphics.amd.disableHDCP`
+
+**Description**: Disable HDCP content protection (amdgpu.dc_hdcp_enable=0) — fixes handshake bugs on RDNA 4
+- **Type**: `boolean`
+- **Default**: `false`
+
+
 #### `myModules.hardware.graphics.amd.drmDebug`
 
 **Description**: Enable DRM debug logging (drm.debug=0x1e) for diagnosing display black screens
@@ -775,6 +824,20 @@ Requires BIOS CPPC option set to "Driver".
 **Description**: Apply RDNA 4 (GFX12) stability kernel params: disable scatter-gather display and GFX OFF
 - **Type**: `boolean`
 - **Default**: `true`
+
+
+#### `myModules.hardware.graphics.amd.vulkanDeviceId`
+
+**Description**: Vulkan device vendor:device ID for MESA_VK_DEVICE_SELECT (forces discrete GPU on dual-AMD systems)
+- **Type**: `null or string`
+- **Default**: `null`
+
+
+#### `myModules.hardware.graphics.amd.vulkanDeviceName`
+
+**Description**: Vulkan device name substring for DXVK_FILTER_DEVICE_NAME and VKD3D_FILTER_DEVICE_NAME (forces dGPU for translated DX9-12 games)
+- **Type**: `null or string`
+- **Default**: `null`
 
 
 #### `myModules.hardware.graphics.enable`
@@ -965,7 +1028,7 @@ An empty list (default) builds all drivers.
 
 
 
-## KERNEL (13 options)
+## KERNEL (14 options)
 
 #### `myModules.kernel.cachyos.bbr3`
 
@@ -1028,6 +1091,13 @@ An empty list (default) builds all drivers.
 **Description**: Tickless behavior (e.g. full, idle)
 - **Type**: `null or string`
 - **Default**: `null`
+
+
+#### `myModules.kernel.channel`
+
+**Description**: CachyOS kernel channel: latest (stable bleeding-edge), lts (long-term support), rc (release candidate)
+- **Type**: `one of "latest", "lts", "rc"`
+- **Default**: `"latest"`
 
 
 #### `myModules.kernel.enable`

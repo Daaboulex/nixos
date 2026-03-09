@@ -131,7 +131,7 @@ let
           script_id="$moved"
           qdbus $KWIN "/$script_id" org.kde.kwin.Script.run 2>/dev/null || true
           qdbus $KWIN "/$script_id" org.kde.kwin.Script.stop 2>/dev/null || true
-          sleep 0.3 # Let Fluid Tile settle before screen removal
+          sleep 0.5 # Let Fluid Tile settle before screen removal
         fi
 
         kscreen-doctor \
@@ -150,8 +150,9 @@ let
           2>/dev/null
         echo "$output enabled"
       fi
-      # Nudge KWin to re-read tiling config for the new screen layout
-      sleep 0.3
+      # Wait for KWin to process screen topology change, then re-read tiling config
+      # 1s covers: kscreen-doctor → KWin output rebuild → Fluid Tile screen detection
+      sleep 1
       qdbus $KWIN /KWin reconfigure 2>/dev/null || true
     '';
 

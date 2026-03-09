@@ -71,7 +71,10 @@
         enable = true;
         amd = {
           enable = true;
+          vulkanDeviceId = "1002:7550"; # RX 9070 XT — force dGPU for Vulkan on dual-AMD systems
+          vulkanDeviceName = "AMD Radeon RX 9070 XT"; # Substring match for DXVK/VKD3D device filter
           drmDebug = false; # Was destroying ALL boot logs (~800 msg/sec overflows kmsg ring buffer)
+          disableHDCP = true; # RDNA 4 HDCP handshake bugs — causes black screens / flicker
         };
         enable32Bit = true;
         mesaGit = {
@@ -107,6 +110,7 @@
           # Acceleration parameters are set via hardware.yeetmouse below
         };
       };
+      duckyOneXMini.enable = true;
       piper.enable = true;
       streamcontroller = {
         enable = true;
@@ -155,14 +159,14 @@
           };
           crt = {
             connector = "HDMI-A-1";                       # GPU HDMI
-            alternateConnectors = [ "HDMI-A-3" ];          # Motherboard HDMI
+            alternateConnectors = [ "HDMI-A-3" ];          # Motherboard HDMI (fallback)
             mode = { width = 1280; height = 1024; refreshRate = 75025; };
             position = { x = 0; y = 183; };
             priority = 3;
             enabled = false;
             vrr = "never";
-            uuid = "c808e708-83c0-4558-b83c-62dc0cae958f";         # GPU HDMI UUID
-            alternateUuids = [ "6b146127-4137-452c-a823-3f9b7ef75b14" ]; # Motherboard HDMI UUID
+            uuid = "6b146127-4137-452c-a823-3f9b7ef75b14";         # CRT EDID-derived UUID (stable across ports)
+            alternateUuids = [ "c808e708-83c0-4558-b83c-62dc0cae958f" ]; # Old kscreen UUID (stale)
             tiling.layout = ''{"layoutDirection":"horizontal","tiles":[{"width":1.0}]}'';
             toggle = {
               enable = true;
@@ -194,7 +198,14 @@
           sample.eq = config.myModules.audio.goxlr.eq.presets.dt990pro;
         };
       };
-      denoise.enable = true;
+      denoise = {
+        enable = true;
+        # Condenser mic ~40cm away: reduce aggression to prevent voice cutoff
+        attenuationLimit = 12;     # Light suppression (default 100 = unlimited, way too aggressive)
+        minThreshold = -10.0;      # Don't process very quiet signals as noise (default -15)
+        maxErbThreshold = 10.0;    # Lower = less muffling on speech (default 20)
+        maxDfThreshold = 8.0;      # Lower = preserve keyboard/transient sounds more (default 12)
+      };
       toggle = {
         enable = true;
         activeProfile = "Yellow Default";
@@ -271,61 +282,24 @@
     occt.enable = true; # Stability Test & Benchmark
     lsfgVk.enable = true; # Vulkan frame generation (Lossless Scaling)
     prismlauncher.enable = true; # Minecraft Launcher
-    # vkBasalt: CAS sharpening + Vibrance + slight gamma lift
+    # vkBasalt overlay: CAS sharpening + Vibrance + subtle color grading
     # Safe post-processing — no memory injection, no anti-cheat risk
-    # Enable per-game: ENABLE_VKBASALT=1 gamemoderun %command%
-    # Toggle in-game: Home key | Adjust live: vkbasalt-cli
+    # Enable per-game: vkbasalt-run %command% (or ENABLE_VKBASALT=1)
+    # In-game: F1 opens overlay UI, Home toggles effects
+    # Per-game configs are managed live through the overlay UI
     vkbasalt = {
-      # Default profile: balanced vibrance + sharpening + subtle color grading
+      toggleKey = "Pause";
       effects = "cas:Vibrance:LiftGammaGain";
       casSharpness = "0.5";
       extraConfig = ''
         # Vibrance — saturation boost (like VibranceGUI on Windows)
-        # Range: -1.0 (desaturate) to 1.0 (full saturation)
         Vibrance = 0.35
 
-        # LiftGammaGain — color grading
-        # Each value is R,G,B,brightness (1.0 = neutral)
-        # Lift  = shadow tones, Gamma = midtones, Gain = highlights
+        # LiftGammaGain — color grading (R,G,B,brightness; 1.0 = neutral)
         LiftGammaGainLift = 1.0,1.0,1.0,1.02
         LiftGammaGainGamma = 1.0,1.0,1.0,0.98
         LiftGammaGainGain = 1.0,1.0,1.0,1.03
       '';
-      # Named profiles for different game types
-      # Usage: vkbasalt-run <profile> %command% (in Steam launch options)
-      profiles = {
-        # Competitive: CAS sharpening only — minimal overhead, anti-cheat safe
-        competitive = {
-          effects = "cas";
-          casSharpness = "0.6";
-        };
-        # Vibrant: heavy saturation + contrast for colorful/stylized games
-        vibrant = {
-          effects = "cas:Vibrance:LiftGammaGain";
-          casSharpness = "0.4";
-          extraConfig = ''
-            Vibrance = 0.60
-            LiftGammaGainLift = 1.0,1.0,1.0,1.0
-            LiftGammaGainGamma = 1.0,1.0,1.0,0.95
-            LiftGammaGainGain = 1.0,1.0,1.0,1.05
-          '';
-        };
-        # Cinematic: warm tones, lifted shadows, filmic gamma curve
-        cinematic = {
-          effects = "cas:LiftGammaGain:Tonemap";
-          casSharpness = "0.3";
-          extraConfig = ''
-            LiftGammaGainLift = 1.02,1.0,0.98,1.03
-            LiftGammaGainGamma = 1.0,1.0,1.0,0.96
-            LiftGammaGainGain = 1.01,1.0,0.99,1.02
-            Gamma = 1.0
-            Exposure = 0.0
-            Saturation = 0.0
-            Bleach = 0.0
-            Defog = 0.0
-          '';
-        };
-      };
     };
   };
 

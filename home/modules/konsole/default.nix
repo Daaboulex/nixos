@@ -6,33 +6,45 @@
   # ============================================================================
   programs.konsole = {
     enable = true;
-    defaultProfile = "NixOS-Default";
+    defaultProfile = lib.mkDefault "NixOS-Default";
 
     profiles."NixOS-Default" = {
       font = {
-        name = "JetBrainsMono Nerd Font";
-        size = 12;
+        name = lib.mkDefault "JetBrainsMono Nerd Font";
+        size = lib.mkDefault 12;
       };
 
       extraConfig = {
         "Scrolling" = {
-          HistoryMode = 2; # Unlimited
+          HistoryMode = lib.mkDefault 2; # Unlimited
         };
         "Terminal Features" = {
-          BlinkingCursorEnabled = true;
+          BlinkingCursorEnabled = lib.mkDefault true;
         };
       };
     };
   };
 
-  # Konsole window/tab settings (managed via plasma configFile)
+  # ============================================================================
+  # Konsole configFile — settings without native plasma-manager options
+  # ============================================================================
   programs.plasma.configFile = {
-    "konsolerc"."MainWindow" = {
-      MenuBar = "Disabled";
-      ToolBarsMovable = "Disabled";
+    "konsolerc"."Desktop Entry" = {
+      DefaultProfile = lib.mkDefault "NixOS-Default.profile";
     };
+
+    "konsolerc"."MainWindow" = {
+      MenuBar = lib.mkDefault "Disabled";
+      ToolBarsMovable = lib.mkDefault "Disabled";
+    };
+
+    "konsolerc"."Notification Messages" = {
+      CloseAllEmptyTabs = lib.mkDefault true;         # Don't ask when closing empty tabs
+      CloseAllTabs = lib.mkDefault true;              # Don't ask when closing all tabs
+    };
+
     "konsolerc"."TabBar" = {
-      NewTabBehavior = "PutNewTabAfterCurrentTab";
+      NewTabBehavior = lib.mkDefault "PutNewTabAfterCurrentTab";
     };
   };
 }
