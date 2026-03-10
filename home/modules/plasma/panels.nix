@@ -4,24 +4,11 @@
 
 let
   # Helper for cleaner flatpak app references
-  flatpakApp = id: "file://${config.home.homeDirectory}/.local/share/flatpak/exports/share/applications/${id}.desktop";
+  flatpakApp =
+    id:
+    "file://${config.home.homeDirectory}/.local/share/flatpak/exports/share/applications/${id}.desktop";
 in
 {
-  # ---- Fix: enforce panel properties at every login ----
-  # Plasma 6 Wayland defaults to floating=true / small height. plasma-manager's
-  # panel config only runs when the panel JS hash changes. If plasmashell
-  # crashes and restarts mid-session it reverts to defaults. This desktopScript
-  # runs at every login to re-enforce the correct panel state.
-  programs.plasma.startup.desktopScript."fix-floating" = {
-    text = lib.mkDefault ''
-      panels().forEach(function(panel) {
-        panel.floating = false;
-      });
-    '';
-    priority = 3;
-    runAlways = true;
-  };
-
   programs.plasma.panels = [
     {
       location = "bottom";
@@ -64,7 +51,7 @@ in
         {
           name = "org.kde.plasma.digitalclock";
           config.Appearance = {
-            use24hFormat = "2";           # 2 = force 24h (0 = locale, 1 = force 12h)
+            use24hFormat = "2"; # 2 = force 24h (0 = locale, 1 = force 12h)
           };
         }
       ];

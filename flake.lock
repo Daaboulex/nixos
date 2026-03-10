@@ -978,11 +978,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1773097722,
-        "narHash": "sha256-ORXGDPS9DzPjqLYvXhGO8Hxy8PaMcIIJSLlSyqzT/fs=",
+        "lastModified": 1773168636,
+        "narHash": "sha256-foyi4HOT0BOGNsPKzdEuQ1JhIX9rAAq2pUW8IF/DeIg=",
         "owner": "Daaboulex",
         "repo": "vkBasalt_overlay_wayland",
-        "rev": "d48bd97aabef139a84cdfe7f41d69a0e1472c9ca",
+        "rev": "ad8277065dce161c467c25fc65e72e27814d0916",
         "type": "github"
       },
       "original": {

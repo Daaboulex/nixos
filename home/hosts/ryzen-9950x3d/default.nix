@@ -1,7 +1,9 @@
 { config, lib, ... }:
 
 let
-  flatpakApp = id: "file://${config.home.homeDirectory}/.local/share/flatpak/exports/share/applications/${id}.desktop";
+  flatpakApp =
+    id:
+    "file://${config.home.homeDirectory}/.local/share/flatpak/exports/share/applications/${id}.desktop";
 in
 
 {
@@ -23,13 +25,13 @@ in
 
   # Development & editors
   programs.btop.enable = true;
-  programs.htop.enable = false;       # Redundant with btop on powerful hardware
+  programs.htop.enable = false; # Redundant with btop on powerful hardware
   programs.vscode.enable = true;
-  programs.kate.enable = true;        # KDE text editor (default in module)
-  programs.konsole.enable = true;     # KDE terminal (default in module)
-  programs.okular.enable = true;      # PDF viewer (default in module)
+  programs.kate.enable = true; # KDE text editor (default in module)
+  programs.konsole.enable = true; # KDE terminal (default in module)
+  programs.okular.enable = true; # PDF viewer (default in module)
   programs.ghostwriter.enable = false; # Markdown editor — not using
-  programs.elisa.enable = false;      # KDE music player — not using (Spotify via Flatpak)
+  programs.elisa.enable = false; # KDE music player — not using (Spotify via Flatpak)
 
   # Audio
   services.easyeffects.enable = false; # GoXLR handles all audio processing
@@ -44,21 +46,21 @@ in
     {
       name = "Logitech G502";
       vendorId = "046d";
-      productId = "407f";       # yeetmouse virtual device
+      productId = "407f"; # yeetmouse virtual device
       acceleration = 0;
       accelerationProfile = "none";
     }
     {
       name = "Logitech G502 LIGHTSPEED Wireless Gaming Mouse";
       vendorId = "046d";
-      productId = "c08d";       # wired USB
+      productId = "c08d"; # wired USB
       acceleration = 0;
       accelerationProfile = "none";
     }
     {
       name = "Logitech G502 LIGHTSPEED Wireless Gaming Mouse";
       vendorId = "046d";
-      productId = "c539";       # wireless receiver
+      productId = "c539"; # wireless receiver
       acceleration = 0;
       accelerationProfile = "none";
     }
@@ -72,14 +74,6 @@ in
 
   # Desktop power: module defaults (never suspend, balanced) are correct for desktop
   # No overrides needed — mkDefault in module covers this
-
-  # Enforce panel properties at every login (override generic module default)
-  programs.plasma.startup.desktopScript."fix-floating".text = ''
-    panels().forEach(function(panel) {
-      panel.floating = false;
-      panel.height = 44;
-    });
-  '';
 
   # Panel layout (desktop has Antigravity launcher)
   programs.plasma.panels = lib.mkForce [
@@ -115,7 +109,7 @@ in
         {
           name = "org.kde.plasma.digitalclock";
           config.Appearance = {
-            use24hFormat = "2";           # 2 = force 24h (0 = locale, 1 = force 12h)
+            use24hFormat = "2"; # 2 = force 24h (0 = locale, 1 = force 12h)
           };
         }
       ];
@@ -179,11 +173,11 @@ in
     enableDefaultConfig = false;
     matchBlocks = {
       "macbook" = {
-        hostname = "macbook-pro-9-2.local";  # mDNS — avahi resolves .local hostnames
+        hostname = "macbook-pro-9-2.local"; # mDNS — avahi resolves .local hostnames
         user = "root";
         identityFile = "~/.ssh/id_ed25519";
         extraOptions = {
-          StrictHostKeyChecking = "accept-new";  # Auto-accept on first connect, verify after
+          StrictHostKeyChecking = "accept-new"; # Auto-accept on first connect, verify after
         };
       };
       "macbook-user" = {

@@ -1,8 +1,16 @@
-{ inputs, ... }: {
-  flake.nixosModules.desktop-kde = { config, lib, pkgs, ... }:
+{ inputs, ... }:
+{
+  flake.nixosModules.desktop-kde =
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
       cfg = config.myModules.desktop.kde;
-    in {
+    in
+    {
       _class = "nixos";
       options.myModules.desktop.kde = {
         enable = lib.mkEnableOption "KDE Plasma Desktop Environment";
@@ -37,7 +45,10 @@
 
         services.xserver = {
           enable = true;
-          xkb = { layout = cfg.xkbLayout; variant = cfg.xkbVariant; };
+          xkb = {
+            layout = cfg.xkbLayout;
+            variant = cfg.xkbVariant;
+          };
         };
 
         environment.systemPackages = with pkgs; [
@@ -46,7 +57,11 @@
         ];
 
         environment.plasma6.excludePackages = with pkgs.kdePackages; [
-          elisa kmahjongg kmines kpat ksudoku
+          elisa
+          kmahjongg
+          kmines
+          kpat
+          ksudoku
         ];
 
         hardware.i2c.enable = cfg.ddcBrightness;
@@ -55,14 +70,23 @@
           enable = true;
           xdgOpenUsePortal = true;
           extraPortals = [
-            pkgs.xdg-desktop-portal-gtk
             pkgs.kdePackages.xdg-desktop-portal-kde
           ];
         };
         # KDE Connect firewall rules
         networking.firewall = {
-          allowedTCPPortRanges = [ { from = 1714; to = 1764; } ];
-          allowedUDPPortRanges = [ { from = 1714; to = 1764; } ];
+          allowedTCPPortRanges = [
+            {
+              from = 1714;
+              to = 1764;
+            }
+          ];
+          allowedUDPPortRanges = [
+            {
+              from = 1714;
+              to = 1764;
+            }
+          ];
         };
 
         i18n.defaultLocale = lib.mkDefault "en_US.UTF-8";
