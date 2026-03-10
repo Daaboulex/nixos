@@ -55,6 +55,7 @@ Shell tools are individual home modules in `home/modules/`: starship, zoxide, fz
 
 ```
 flake.nix                              # Entry point — delegates to parts/
+.envrc                                 # direnv auto-loads devShell (pre-commit hooks)
 parts/
 ├── flake-module.nix                   # Central import hub for all modules + hosts
 ├── overlays.nix                       # Custom package overlays
@@ -90,6 +91,7 @@ parts/
 │   ├── goxlr.nix                      # GoXLR audio interface (EQ, denoise, profiles)
 │   ├── piper.nix                      # Piper mouse configuration GUI
 │   ├── streamcontroller.nix           # Stream Deck integration
+│   ├── ducky-one-x-mini.nix           # Ducky One X Mini keyboard (60% HID fixes)
 │   ├── macbook/                       # MacBook-specific hardware
 │   │   ├── default.nix                # Fan control, touchpad, keyboard config
 │   │   ├── applesmc-comprehensive-fixes.patch  # AppleSMC race + null fixes
@@ -143,6 +145,7 @@ home/
 │   ├── btop/default.nix               # btop system monitor
 │   ├── htop/default.nix               # htop system monitor
 │   ├── xdg/default.nix                # XDG MIME types + desktop integration
+│   ├── gdb/default.nix                # GDB debugger (debuginfod, safe-path)
 │   ├── flatpak/default.nix            # Flatpak app declarations + theme overrides
 │   └── displays/default.nix           # Display arrangement + toggle + tiling scripts
 ├── hosts/
@@ -306,7 +309,7 @@ Systemd service + timer that downloads the latest Arkenfox `user.js` Firefox sec
 
 Integrated gaming performance and visual enhancement stack:
 
-- **GameMode** — per-game performance daemon: renices to -10, sets AMD GPU to high performance, integrates with ananicy-cpp and scx_lavd without conflicts
+- **GameMode** — per-game performance daemon: X3D V-Cache CCD mode switching, core pinning to V-Cache CCD, governor EPP hint (powersave→performance), GPU `power_dpm_force_performance_level=high`. Renice/ioprio disabled to avoid conflict with ananicy-cpp.
 - **vkBasalt Overlay** — Vulkan post-processing layer with in-game ImGui UI for real-time effect tuning (Wayland + X11). Fork of [vkBasalt overlay](https://github.com/Boux/vkBasalt_overlay) with full Wayland input support. Ships with ReShade shaders (Vibrance.fx, LiftGammaGain.fx, Tonemap.fx, Curves.fx, etc.). Configurable via `myModules.gaming.vkbasalt` options (effects, casSharpness, overlayKey, toggleKey, extraConfig)
 - **MangoHud + MangoJuice** — FPS/GPU/CPU overlay (MangoHud) with a GUI configurator (MangoJuice)
 - **Steam** — with Proton-GE, Gamescope session support, and steam-devices udev rules
@@ -330,13 +333,15 @@ All effect parameters (Vibrance, CAS sharpness, LiftGammaGain, etc.) can be adju
 
 vkBasalt is a standard Vulkan layer (same mechanism as validation layers). It does NOT inject into game processes or modify game memory — it applies effects after the game renders each frame, like a monitor's built-in color settings. No anti-cheat (EAC, BattlEye, VAC) flags Vulkan layers.
 
-#### Performance Stack (no conflicts)
+#### Scheduler & Performance Stack (5 layers)
 
-| Layer | What it does | Priority interaction |
-|-------|-------------|---------------------|
-| **ananicy-cpp** | Sets Game processes to nice=-5 | Only applies if current nice is worse |
-| **gamemode** | Sets gamemoderun'd processes to nice=-10 | Direct setpriority, ananicy won't override |
-| **scx_lavd** | BPF CPU scheduler, reads nice values | Never sets nice, only uses them for scheduling |
+| Layer | Component | What it does |
+|-------|-----------|-------------|
+| 1 | **amd_3d_vcache** | Firmware CCD routing (V-Cache vs frequency CCD). GameMode switches mode per-game. |
+| 2 | **amd_pstate** | CPPC frequency scaling via EPP hints. Governor: `powersave` (dynamic, boosts to max). |
+| 3 | **BORE** | CachyOS default kernel scheduler — burst-aware, low-latency. |
+| 4 | **scx_lavd** | BPF scheduler overlay — latency-aware virtual deadline scheduling. |
+| 5 | **ananicy-cpp** | CachyOS process priority rules (nice/ionice). GameMode renice disabled to avoid conflict. |
 
 Options: `myModules.gaming.*` — see [docs/OPTIONS.md](docs/OPTIONS.md) for all gaming options.
 
@@ -374,12 +379,13 @@ Options: `myModules.gaming.*` — see [docs/OPTIONS.md](docs/OPTIONS.md) for all
 | `hardware-networking` | `myModules.hardware.networking` | Network drivers, DNS nameservers, firewall |
 | `hardware-bluetooth` | `myModules.hardware.bluetooth` | Bluetooth daemon and profiles |
 | `hardware-performance` | `myModules.hardware.performance` | CPU governor, ananicy-cpp, IRQ balance, scx schedulers |
-| `hardware-power` | `myModules.hardware.power` | TLP power management |
+| `hardware-power` | `myModules.hardware.power` | Power profiles, TLP laptop power management |
 | `hardware-goxlr` | `myModules.audio.goxlr` | GoXLR audio (UCM patch, EQ, denoise, toggle) |
 | `hardware-piper` | `myModules.hardware.piper` | Gaming mouse configuration |
 | `hardware-streamcontroller` | `myModules.hardware.streamcontroller` | Stream Deck (patched for USB websockets) |
 | `hardware-macbook` | `myModules.hardware.macbook` | MacBook fan (mbpfan), touchpad, keyboard, kernel patches |
 | `hardware-yeetmouse` | `myModules.hardware.yeetmouse` | Mouse acceleration driver (8 modes, LLVM build) |
+| `hardware-ducky-one-x-mini` | `myModules.hardware.duckyOneXMini` | Ducky One X Mini keyboard (60% HID quirks) |
 
 ### Desktop Modules
 
@@ -425,11 +431,12 @@ Options: `myModules.gaming.*` — see [docs/OPTIONS.md](docs/OPTIONS.md) for all
 | `gtk` | Breeze Dark theme, icons, cursors |
 | `btop` | btop monitor (Tokyo Night theme, GPU layout per-host, AMD ROCm GPU detection) |
 | `htop` | htop config |
+| `gdb` | GDB debugger config (debuginfod CachyOS server, safe-path for Nix store) |
 | `xdg` | XDG user directories |
 | `flatpak` | Flatpak apps + Wayland/theme overrides |
 | `displays` | display-arrange, toggle scripts, tiling activation, wake service |
 
-For full option details with types and defaults, see [docs/OPTIONS.md](docs/OPTIONS.md) (auto-generated, 200+ options across 13 categories).
+For full option details with types and defaults, see [docs/OPTIONS.md](docs/OPTIONS.md) (auto-generated, 232 options across 13 categories).
 
 ## Installing on a New System
 
@@ -800,8 +807,11 @@ The project uses [treefmt-nix](https://github.com/numtide/treefmt-nix) for unifi
 ```bash
 nix fmt                    # Format all files (nixfmt, shfmt, shellcheck, deadnix, statix)
 nix flake check            # Run all checks (formatting + VM tests)
-nix develop                # Enter devShell with pre-commit hooks auto-installed
 ```
+
+The devShell with pre-commit hooks is **auto-loaded by direnv** when you `cd` into the repo (via `.envrc`). No need to run `nix develop` manually. Hooks run on every `git commit`:
+- **treefmt** — formats staged files (nixfmt, deadnix, statix, shfmt, shellcheck)
+- **update-options-docs** — regenerates `docs/OPTIONS.md` when `parts/` files are staged
 
 Formatters: `nixfmt` (official Nix formatter), `deadnix` (unused binding removal), `statix` (anti-pattern detection), `shfmt` (shell formatting), `shellcheck` (shell linting).
 
@@ -815,6 +825,23 @@ nix build .#checks.x86_64-linux.vm-users           # Test user creation
 nix build .#checks.x86_64-linux.vm-ssh             # Test SSH hardening
 nix build .#checks.x86_64-linux.vm-networking      # Test NetworkManager
 ```
+
+### Remote Deployment
+
+Build on a powerful machine and deploy to a remote host over SSH:
+
+```bash
+# Build the macbook config locally on the desktop
+nix build .#nixosConfigurations.macbook-pro-9-2.config.system.build.toplevel
+
+# Copy the closure to the remote machine
+nix copy --to ssh://macbook ./result
+
+# Activate on remote
+ssh macbook $(readlink ./result)/bin/switch-to-configuration switch
+```
+
+SSH is configured with Ed25519 keys, hardened ciphers, fail2ban, and `trusted-users = [ "root" "@wheel" ]` for store access. SSH client aliases (`macbook`, `macbook-user`) are defined in the desktop's Home Manager config.
 
 ### Claude Code Skills
 
@@ -882,10 +909,13 @@ bash scripts/update-docs.sh           # Manual regeneration
 bash scripts/test-shell-functions.sh  # Validate all configs, flags, functions, and docs
 ```
 
-After every successful `nrb` switch, `docs/OPTIONS.md` is automatically regenerated in the background.
+`docs/OPTIONS.md` is regenerated automatically in three ways:
+1. **Pre-commit hook** — regenerates and stages when `parts/` files are committed (via direnv devShell)
+2. **Post-switch** — regenerates in background after every `nrb` switch
+3. **Manual** — `bash scripts/update-docs.sh`
 
 The pipeline: `scripts/generate-docs.nix` evaluates the `ryzen-9950x3d` NixOS configuration, extracts all `myModules.*` options (types, defaults, descriptions), groups them by category, and produces a Markdown file with table of contents. `scripts/update-docs.sh` is a wrapper that runs the Nix build and copies the result to `docs/OPTIONS.md`.
 
 `scripts/test-shell-functions.sh` validates all configurations (including specialisations), verifies nrb flags and functions match the zsh source, and checks documentation completeness. It auto-extracts flags and function names from the zsh module, so it stays in sync without manual updates.
 
-See [docs/OPTIONS.md](docs/OPTIONS.md) for the full reference (200+ options across 13 categories).
+See [docs/OPTIONS.md](docs/OPTIONS.md) for the full reference (232 options across 13 categories).

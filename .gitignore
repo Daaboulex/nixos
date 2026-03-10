@@ -40,6 +40,9 @@ OCCT-nix/
 Todo.txt
 *.txt
 
+# direnv cache
+.direnv/
+
 # AI files
 CLAUDE.md
 GEMINI.md
