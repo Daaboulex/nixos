@@ -40,6 +40,7 @@
     ./hardware/yeetmouse/default.nix
     ./hardware/macbook/default.nix
     ./hardware/ducky-one-x-mini.nix
+    ./hardware/debugging-probes.nix
     ./hardware/piper.nix
     ./hardware/streamcontroller.nix
 
@@ -65,7 +66,16 @@
     ./hosts/macbook-pro-9-2/flake-module.nix
   ];
 
-  perSystem = { config, self', inputs', pkgs, system, ... }: {
-    # Per-system configuration if needed (e.g. devShells, packages)
-  };
+  perSystem =
+    {
+      config,
+      self',
+      inputs',
+      pkgs,
+      system,
+      ...
+    }:
+    {
+      # Per-system configuration if needed (e.g. devShells, packages)
+    };
 }

@@ -21,8 +21,8 @@
       users.enable = true;
       services = {
         enable = true;
-        geoclue = true;   # Night light location
-        usbmuxd = true;   # iOS device support
+        geoclue = true; # Night light location
+        usbmuxd = true; # iOS device support
       };
       filesystems = {
         enable = true;
@@ -30,7 +30,7 @@
       };
       packages = {
         enable = true;
-        benchmarking = true;  # Off by default — enable for stress-testing workstation
+        benchmarking = true; # Off by default — enable for stress-testing workstation
       };
     };
 
@@ -44,7 +44,11 @@
         trustedKeys = [
           "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKmK9yl3ndTzn5Qt42njlROMMf2LzOCjwzQwob1mrP9p user@ryzen-9950x3d"
         ];
-        fail2banIgnoreIPs = [ "127.0.0.1/8" "::1/128" "192.168.0.0/16" ];
+        fail2banIgnoreIPs = [
+          "127.0.0.1/8"
+          "::1/128"
+          "192.168.0.0/16"
+        ];
       };
       sops = {
         enable = true;
@@ -52,8 +56,8 @@
       };
       portmaster = {
         enable = true;
-        notifier = true;   # System tray icon (autostart)
-        autostart = true;   # Start on boot
+        notifier = true; # System tray icon (autostart)
+        autostart = true; # Start on boot
       };
       arkenfox = {
         enable = true;
@@ -79,12 +83,12 @@
           enable = true;
           vulkanDeviceId = "1002:7550"; # RX 9070 XT — force dGPU for Vulkan on dual-AMD systems
           vulkanDeviceName = "AMD Radeon RX 9070 XT"; # Substring match for DXVK/VKD3D device filter
-          lact.enable = false;            # LACT GPU control — not needed, amdgpu sysfs suffices
-          initrd.enable = true;           # Load amdgpu early (faster display init)
-          enablePPFeatureMask = true;     # Full power management feature flags
-          rdna4Fixes = true;              # RDNA 4 stability kernel params
-          drmDebug = false;               # Was destroying ALL boot logs (~800 msg/sec overflows kmsg ring buffer)
-          disableHDCP = true;             # RDNA 4 HDCP handshake bugs — causes black screens / flicker
+          lact.enable = false; # LACT GPU control — not needed, amdgpu sysfs suffices
+          initrd.enable = true; # Load amdgpu early (faster display init)
+          enablePPFeatureMask = true; # Full power management feature flags
+          rdna4Fixes = true; # RDNA 4 stability kernel params
+          drmDebug = false; # Was destroying ALL boot logs (~800 msg/sec overflows kmsg ring buffer)
+          disableHDCP = true; # RDNA 4 HDCP handshake bugs — causes black screens / flicker
         };
         enable32Bit = true;
         mesaGit = {
@@ -109,7 +113,7 @@
         # it amplifies priority gaps, potentially starving tasks and triggering the
         # scx watchdog timeout. Disable if you see stalls; scx_lavd handles priority itself.
         ananicy = true;
-        irqbalance = false;     # Not needed — scx_lavd handles core affinity
+        irqbalance = false; # Not needed — scx_lavd handles core affinity
         scx = {
           enable = true;
           scheduler = "scx_lavd"; # Latency-aware virtual deadline (Valve/Steam Deck/Meta choice)
@@ -126,8 +130,8 @@
       };
       power = {
         enable = true;
-        profile = "balanced";    # Profile label only — actual governor set by performance module ("powersave")
-        laptop = false;          # Not a laptop — no TLP
+        profile = "balanced"; # Profile label only — actual governor set by performance module ("powersave")
+        laptop = false; # Not a laptop — no TLP
       };
       yeetmouse = {
         enable = true;
@@ -137,6 +141,7 @@
         };
       };
       duckyOneXMini.enable = true;
+      debuggingProbes.enable = true;
       piper.enable = true;
       streamcontroller = {
         enable = true;
@@ -154,7 +159,7 @@
         enable = true;
         # theme uses module default
       };
-      initrd.enable = true;     # Systemd initrd (faster boot, needed for impermanence rollback)
+      initrd.enable = true; # Systemd initrd (faster boot, needed for impermanence rollback)
       # consoleMode uses module default
     };
 
@@ -177,8 +182,15 @@
         monitors = {
           main = {
             connector = "DP-1";
-            mode = { width = 1920; height = 1080; refreshRate = 239757; };
-            position = { x = 0; y = 127; };
+            mode = {
+              width = 1920;
+              height = 1080;
+              refreshRate = 239757;
+            };
+            position = {
+              x = 0;
+              y = 127;
+            };
             priority = 1;
             vrr = "automatic";
             edidHash = "9f311191c8a8ef17808acd6e824be682";
@@ -188,8 +200,15 @@
           };
           portrait = {
             connector = "DP-2";
-            mode = { width = 1920; height = 1080; refreshRate = 239761; };
-            position = { x = 1920; y = 0; };
+            mode = {
+              width = 1920;
+              height = 1080;
+              refreshRate = 239761;
+            };
+            position = {
+              x = 1920;
+              y = 0;
+            };
             priority = 2;
             rotation = "right";
             vrr = "automatic";
@@ -199,21 +218,34 @@
             tiling.layout = ''{"layoutDirection":"vertical","tiles":[{"height":0.333},{"height":0.334},{"height":0.333}]}'';
           };
           crt = {
-            connector = "HDMI-A-1";                       # GPU HDMI
-            alternateConnectors = [ "HDMI-A-3" ];          # Motherboard HDMI (fallback)
-            mode = { width = 1280; height = 1024; refreshRate = 75025; };
-            position = { x = 0; y = 183; };
+            connector = "HDMI-A-1"; # GPU HDMI
+            alternateConnectors = [ "HDMI-A-3" ]; # Motherboard HDMI (fallback)
+            mode = {
+              width = 1280;
+              height = 1024;
+              refreshRate = 75025;
+            };
+            position = {
+              x = 0;
+              y = 183;
+            };
             priority = 3;
             enabled = false;
             vrr = "never";
-            uuid = "6b146127-4137-452c-a823-3f9b7ef75b14";         # CRT EDID-derived UUID (stable across ports)
+            uuid = "6b146127-4137-452c-a823-3f9b7ef75b14"; # CRT EDID-derived UUID (stable across ports)
             alternateUuids = [ "c808e708-83c0-4558-b83c-62dc0cae958f" ]; # Old kscreen UUID (stale)
             tiling.layout = ''{"layoutDirection":"horizontal","tiles":[{"width":1.0}]}'';
             toggle = {
               enable = true;
               scriptName = "crt-toggle";
-              repositions."DP-1" = { x = 1280; y = 127; };
-              repositions."DP-2" = { x = 3200; y = 0; };
+              repositions."DP-1" = {
+                x = 1280;
+                y = 127;
+              };
+              repositions."DP-2" = {
+                x = 3200;
+                y = 0;
+              };
             };
           };
         };
@@ -242,10 +274,10 @@
       denoise = {
         enable = true;
         # Condenser mic ~40cm away: reduce aggression to prevent voice cutoff
-        attenuationLimit = 12;     # Light suppression (default 100 = unlimited, way too aggressive)
-        minThreshold = -10.0;      # Don't process very quiet signals as noise (default -15)
-        maxErbThreshold = 10.0;    # Lower = less muffling on speech (default 20)
-        maxDfThreshold = 8.0;      # Lower = preserve keyboard/transient sounds more (default 12)
+        attenuationLimit = 12; # Light suppression (default 100 = unlimited, way too aggressive)
+        minThreshold = -10.0; # Don't process very quiet signals as noise (default -15)
+        maxErbThreshold = 10.0; # Lower = less muffling on speech (default 20)
+        maxDfThreshold = 8.0; # Lower = preserve keyboard/transient sounds more (default 12)
       };
       toggle = {
         enable = true;
@@ -284,10 +316,10 @@
         "nowatchdog"
         "acpi_enforce_resources=lax"
         "pci=realloc"
-        "usbcore.autosuspend=-1"                  # Disable USB autosuspend (fixes xhci_hcd suspend timeout)
-        "split_lock_detect=off"                    # Prevents perf drops in games using split-lock instructions
-        "nvme_core.default_ps_max_latency_us=0"    # Disable NVMe power state transitions (prevents micro-stutters)
-        "tsc=reliable"                             # Pin TSC as clocksource — Zen 5 has invariant TSC
+        "usbcore.autosuspend=-1" # Disable USB autosuspend (fixes xhci_hcd suspend timeout)
+        "split_lock_detect=off" # Prevents perf drops in games using split-lock instructions
+        "nvme_core.default_ps_max_latency_us=0" # Disable NVMe power state transitions (prevents micro-stutters)
+        "tsc=reliable" # Pin TSC as clocksource — Zen 5 has invariant TSC
       ];
       cachyos = {
         cpusched = "bore"; # BORE compiled into kernel as fallback; scx_lavd overlays it via BPF when loaded
@@ -314,31 +346,31 @@
     };
     protonplus.enable = true;
     heroic.enable = true;
-    gamescope.enable = false;    # Standalone gamescope — use Steam's built-in instead
-    mangohud.enable = false;     # MangoHud — disabled, use vkBasalt overlay instead
-    gpuDevice = 1;               # RX 9070 XT = card1 (gpu1 in btop)
+    gamescope.enable = false; # Standalone gamescope — use Steam's built-in instead
+    mangohud.enable = false; # MangoHud — disabled, use vkBasalt overlay instead
+    gpuDevice = 1; # RX 9070 XT = card1 (gpu1 in btop)
     gamemode = {
-      renice = 0;                  # Disabled — ananicy-cpp handles process priorities globally
-      ioprio = "off";              # Disabled — ananicy-cpp manages IO priority
-      desiredgov = "performance";  # EPP hint: powersave→performance (modest boost on amd_pstate active)
+      renice = 0; # Disabled — ananicy-cpp handles process priorities globally
+      ioprio = "off"; # Disabled — ananicy-cpp manages IO priority
+      desiredgov = "performance"; # EPP hint: powersave→performance (modest boost on amd_pstate active)
       x3dMode = {
-        desired = "cache";         # Gaming: prefer V-Cache CCD0 (96MB L3)
-        default = "frequency";     # Non-gaming: prefer high-clock CCD1
+        desired = "cache"; # Gaming: prefer V-Cache CCD0 (96MB L3)
+        default = "frequency"; # Non-gaming: prefer high-clock CCD1
       };
-      pinCores = "yes";            # Auto-detect and pin game to V-Cache CCD
+      pinCores = "yes"; # Auto-detect and pin game to V-Cache CCD
       gpuPerformanceLevel = "high"; # Force RX 9070 XT to max clocks during gaming
     };
-    radv.perftest = "";          # No extra RADV_PERFTEST flags needed on RDNA 4
+    radv.perftest = ""; # No extra RADV_PERFTEST flags needed on RDNA 4
     packages = {
       performance = true;
       cachyos = true;
     };
-    ryubing.enable = true;       # Nintendo Switch emulator (Ryujinx fork)
-    eden.enable = true;          # Nintendo Switch emulator (community fork)
-    azahar.enable = true;        # 3DS emulator (Citra fork)
-    nxSaveSync.enable = false;   # Switch save sync tool
-    occt.enable = true;          # Stability Test & Benchmark
-    lsfgVk.enable = true;        # Vulkan frame generation (Lossless Scaling)
+    ryubing.enable = true; # Nintendo Switch emulator (Ryujinx fork)
+    eden.enable = true; # Nintendo Switch emulator (community fork)
+    azahar.enable = true; # 3DS emulator (Citra fork)
+    nxSaveSync.enable = false; # Switch save sync tool
+    occt.enable = true; # Stability Test & Benchmark
+    lsfgVk.enable = true; # Vulkan frame generation (Lossless Scaling)
     prismlauncher.enable = true; # Minecraft Launcher
     # vkBasalt overlay: CAS sharpening + Vibrance + subtle color grading
     # Safe post-processing — no memory injection, no anti-cheat risk
@@ -346,7 +378,7 @@
     # In-game: F1 opens overlay UI, Home toggles effects
     # Per-game configs are managed live through the overlay UI
     vkbasalt = {
-      enable = true;               # vkBasalt Vulkan post-processing overlay
+      enable = true; # vkBasalt Vulkan post-processing overlay
       toggleKey = "Pause";
       effects = "cas:Vibrance:LiftGammaGain";
       casSharpness = "0.5";
@@ -403,10 +435,10 @@
     # Note: AMD kernel modules (amdgpu, kvm-amd, k10temp) in cpu-amd.nix / gpu-amd.nix
     loader.timeout = lib.mkForce 10;
     blacklistedKernelModules = [
-      "acpi_pad"    # Forces CPU idle states — counterproductive on performance desktop
-      "mac_hid"     # macOS HID emulation — not needed
-      "mousedev"    # Legacy mouse device — not needed on Wayland
-      "eeepc_wmi"   # ASUS Eee PC WMI — loaded via ASUS WMI chain, not needed
+      "acpi_pad" # Forces CPU idle states — counterproductive on performance desktop
+      "mac_hid" # macOS HID emulation — not needed
+      "mousedev" # Legacy mouse device — not needed on Wayland
+      "eeepc_wmi" # ASUS Eee PC WMI — loaded via ASUS WMI chain, not needed
     ];
   };
 
@@ -441,7 +473,7 @@
   # ============================================================================
   # Nix Daemon — 64GB RAM allows aggressive download buffering
   # ============================================================================
-  nix.settings.download-buffer-size = 12 * 1024 * 1024 * 1024;  # 12 GiB
+  nix.settings.download-buffer-size = 12 * 1024 * 1024 * 1024; # 12 GiB
 
   # ============================================================================
   # Filesystems

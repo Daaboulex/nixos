@@ -1,4 +1,5 @@
-{ inputs, ... }: {
+{ inputs, ... }:
+{
   flake.nixosConfigurations.ryzen-9950x3d = inputs.nixpkgs.lib.nixosSystem {
     specialArgs = { inherit inputs; };
     modules = [
@@ -6,63 +7,67 @@
       ./default.nix
 
       # Dendritic modules
-      ({ config, ... }: {
-        imports = [
-          # System
-          inputs.self.nixosModules.system-boot
-          inputs.self.nixosModules.system-kernel
-          inputs.self.nixosModules.system-nix
-          inputs.self.nixosModules.system-users
-          inputs.self.nixosModules.system-security
-          inputs.self.nixosModules.system-filesystems
-          inputs.self.nixosModules.system-ssh
-          inputs.self.nixosModules.system-sops
-          inputs.self.nixosModules.system-impermanence
-          inputs.self.nixosModules.system-services
-          inputs.self.nixosModules.system-packages
+      (
+        { config, ... }:
+        {
+          imports = [
+            # System
+            inputs.self.nixosModules.system-boot
+            inputs.self.nixosModules.system-kernel
+            inputs.self.nixosModules.system-nix
+            inputs.self.nixosModules.system-users
+            inputs.self.nixosModules.system-security
+            inputs.self.nixosModules.system-filesystems
+            inputs.self.nixosModules.system-ssh
+            inputs.self.nixosModules.system-sops
+            inputs.self.nixosModules.system-impermanence
+            inputs.self.nixosModules.system-services
+            inputs.self.nixosModules.system-packages
 
-          # Hardware
-          inputs.self.nixosModules.hardware-core
-          inputs.self.nixosModules.hardware-cpu-amd
-          inputs.self.nixosModules.hardware-gpu-amd
-          inputs.self.nixosModules.hardware-graphics
-          inputs.self.nixosModules.hardware-audio
-          inputs.self.nixosModules.hardware-networking
-          inputs.self.nixosModules.hardware-bluetooth
-          inputs.self.nixosModules.hardware-yeetmouse
-          inputs.self.nixosModules.hardware-goxlr
-          inputs.self.nixosModules.hardware-piper
-          inputs.self.nixosModules.hardware-streamcontroller
-          inputs.self.nixosModules.hardware-ducky-one-x-mini
-          inputs.self.nixosModules.hardware-performance
-          inputs.self.nixosModules.hardware-power
+            # Hardware
+            inputs.self.nixosModules.hardware-core
+            inputs.self.nixosModules.hardware-cpu-amd
+            inputs.self.nixosModules.hardware-gpu-amd
+            inputs.self.nixosModules.hardware-graphics
+            inputs.self.nixosModules.hardware-audio
+            inputs.self.nixosModules.hardware-networking
+            inputs.self.nixosModules.hardware-bluetooth
+            inputs.self.nixosModules.hardware-yeetmouse
+            inputs.self.nixosModules.hardware-goxlr
+            inputs.self.nixosModules.hardware-piper
+            inputs.self.nixosModules.hardware-streamcontroller
+            inputs.self.nixosModules.hardware-ducky-one-x-mini
+            inputs.self.nixosModules.hardware-debugging-probes
+            inputs.self.nixosModules.hardware-performance
+            inputs.self.nixosModules.hardware-power
 
-          # Desktop
-          inputs.self.nixosModules.desktop-kde
-          inputs.self.nixosModules.desktop-displays
-          inputs.self.nixosModules.desktop-flatpak
+            # Desktop
+            inputs.self.nixosModules.desktop-kde
+            inputs.self.nixosModules.desktop-displays
+            inputs.self.nixosModules.desktop-flatpak
 
-          # Apps
-          inputs.self.nixosModules.apps-gaming
-          inputs.self.nixosModules.apps-arkenfox
-          inputs.self.nixosModules.apps-portmaster
-          inputs.self.nixosModules.apps-tidalcycles
-          inputs.self.nixosModules.apps-wine
-          inputs.self.nixosModules.apps-development
+            # Apps
+            inputs.self.nixosModules.apps-gaming
+            inputs.self.nixosModules.apps-arkenfox
+            inputs.self.nixosModules.apps-portmaster
+            inputs.self.nixosModules.apps-tidalcycles
+            inputs.self.nixosModules.apps-wine
+            inputs.self.nixosModules.apps-development
 
-          # Tools
-          inputs.self.nixosModules.tools-sysdiag
-          inputs.self.nixosModules.tools-iommu
+            # Tools
+            inputs.self.nixosModules.tools-sysdiag
+            inputs.self.nixosModules.tools-iommu
 
-          # CachyOS settings
-          inputs.self.nixosModules.cachyos-settings
+            # CachyOS settings
+            inputs.self.nixosModules.cachyos-settings
 
-          # External modules
-          inputs.portmaster.nixosModules.default
-          inputs.cachyos-settings-nix.nixosModules.default
-          inputs.impermanence.nixosModules.impermanence
-        ];
-      })
+            # External modules
+            inputs.portmaster.nixosModules.default
+            inputs.cachyos-settings-nix.nixosModules.default
+            inputs.impermanence.nixosModules.impermanence
+          ];
+        }
+      )
 
       # Home Manager
       ../../../home/home.nix

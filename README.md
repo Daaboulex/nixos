@@ -92,6 +92,7 @@ parts/
 │   ├── piper.nix                      # Piper mouse configuration GUI
 │   ├── streamcontroller.nix           # Stream Deck integration
 │   ├── ducky-one-x-mini.nix           # Ducky One X Mini keyboard (60% HID fixes)
+│   ├── debugging-probes.nix           # Embedded debug probes (LPC-Link2, ESP32) udev
 │   ├── macbook/                       # MacBook-specific hardware
 │   │   ├── default.nix                # Fan control, touchpad, keyboard config
 │   │   ├── applesmc-comprehensive-fixes.patch  # AppleSMC race + null fixes
@@ -386,6 +387,7 @@ Options: `myModules.gaming.*` — see [docs/OPTIONS.md](docs/OPTIONS.md) for all
 | `hardware-macbook` | `myModules.hardware.macbook` | MacBook fan (mbpfan), touchpad, keyboard, kernel patches |
 | `hardware-yeetmouse` | `myModules.hardware.yeetmouse` | Mouse acceleration driver (8 modes, LLVM build) |
 | `hardware-ducky-one-x-mini` | `myModules.hardware.duckyOneXMini` | Ducky One X Mini keyboard (60% HID quirks) |
+| `hardware-debugging-probes` | `myModules.hardware.debuggingProbes` | Embedded debug probes (LPC-Link2, ESP32) udev rules |
 
 ### Desktop Modules
 
@@ -436,7 +438,7 @@ Options: `myModules.gaming.*` — see [docs/OPTIONS.md](docs/OPTIONS.md) for all
 | `flatpak` | Flatpak apps + Wayland/theme overrides |
 | `displays` | display-arrange, toggle scripts, tiling activation, wake service |
 
-For full option details with types and defaults, see [docs/OPTIONS.md](docs/OPTIONS.md) (auto-generated, 232 options across 13 categories).
+For full option details with types and defaults, see [docs/OPTIONS.md](docs/OPTIONS.md) (auto-generated, 233 options across 13 categories).
 
 ## Installing on a New System
 
@@ -918,4 +920,4 @@ The pipeline: `scripts/generate-docs.nix` evaluates the `ryzen-9950x3d` NixOS co
 
 `scripts/test-shell-functions.sh` validates all configurations (including specialisations), verifies nrb flags and functions match the zsh source, and checks documentation completeness. It auto-extracts flags and function names from the zsh module, so it stays in sync without manual updates.
 
-See [docs/OPTIONS.md](docs/OPTIONS.md) for the full reference (232 options across 13 categories).
+See [docs/OPTIONS.md](docs/OPTIONS.md) for the full reference (233 options across 13 categories).

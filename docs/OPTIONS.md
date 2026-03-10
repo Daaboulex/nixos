@@ -1,6 +1,6 @@
 # NixOS Custom Modules Documentation
 
-> Auto-generated from `myModules` option definitions. 232 options across 13 categories.
+> Auto-generated from `myModules` option definitions. 233 options across 13 categories.
 >
 > Regenerate: `bash scripts/update-docs.sh`
 
@@ -11,7 +11,7 @@
 - [DESKTOP](#desktop-8-options) (8 options)
 - [DEVELOPMENT](#development-3-options) (3 options)
 - [GAMING](#gaming-33-options) (33 options)
-- [HARDWARE](#hardware-53-options) (53 options)
+- [HARDWARE](#hardware-54-options) (54 options)
 - [KERNEL](#kernel-14-options) (14 options)
 - [MUSIC](#music-2-options) (2 options)
 - [PRIMARYUSER](#primaryuser-1-options) (1 options)
@@ -694,7 +694,7 @@
 
 
 
-## HARDWARE (53 options)
+## HARDWARE (54 options)
 
 #### `myModules.hardware.audio.easyeffects.enable`
 
@@ -796,6 +796,13 @@ Requires BIOS CPPC option set to "Driver".
 
 - **Type**: `one of "cache", "frequency"`
 - **Default**: `"cache"`
+
+
+#### `myModules.hardware.debuggingProbes.enable`
+
+**Description**: Whether to enable Embedded debugging probes (LPC-Link2, ESP32) udev rules.
+- **Type**: `boolean`
+- **Default**: `false`
 
 
 #### `myModules.hardware.duckyOneXMini.board.product`
