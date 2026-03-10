@@ -497,11 +497,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1773109368,
-        "narHash": "sha256-9LdbuVDhC4oDEyhnIubIBBFIofMxQqTnR6VQxqlj4WA=",
+        "lastModified": 1773148129,
+        "narHash": "sha256-f1Rq+Wtg4sRCHh/hDnIrEkgXKWKnVsIVw1uLDGIYujI=",
         "owner": "daaboulex",
         "repo": "mesa-git-nix",
-        "rev": "2393aa09d345b7e1e752990cc0a4247014f5a55e",
+        "rev": "7277d8b5a019a2d5e2181e727172f6a88282b76c",
         "type": "github"
       },
       "original": {
