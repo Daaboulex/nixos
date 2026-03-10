@@ -83,7 +83,7 @@
           enable = true;
           vulkanDeviceId = "1002:7550"; # RX 9070 XT — force dGPU for Vulkan on dual-AMD systems
           vulkanDeviceName = "AMD Radeon RX 9070 XT"; # Substring match for DXVK/VKD3D device filter
-          lact.enable = false; # LACT GPU control — not needed, amdgpu sysfs suffices
+          lact.enable = true;
           initrd.enable = true; # Load amdgpu early (faster display init)
           enablePPFeatureMask = true; # Full power management feature flags
           rdna4Fixes = true; # RDNA 4 stability kernel params

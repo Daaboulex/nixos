@@ -230,7 +230,7 @@ See `/deploy` skill for the configured workflow.
 - **Module class annotation**: every `nixosModule` includes `_class = "nixos"` as the first attribute, preventing accidental import into wrong evaluation contexts (Home Manager, etc.).
 - **`types.lazyAttrsOf`**: use `lib.types.lazyAttrsOf` instead of `lib.types.attrsOf` for attrs-of-submodule options (defers evaluation, avoids infinite recursion).
 - **`withSystem` for per-system access**: use `{ inputs, withSystem, ... }:` in flake-parts modules that need per-system input packages (see `parts/apps/gaming.nix` for the pattern).
-- **treefmt formatting**: run `nix fmt` before committing. Formatters: nixfmt, deadnix, statix, shfmt, shellcheck.
+- **treefmt formatting**: **ALWAYS run `nix fmt` before staging `.nix` files** — the pre-commit hook uses `--fail-on-change` and will reject unformatted code, causing commit failure. Run `nix fmt` from the repo root after editing any `.nix` file. Formatters: nixfmt, deadnix, statix, shfmt, shellcheck. This applies to external repos too (e.g. `repos/vkbasalt-overlay-src`).
 - **Disko disk layouts**: each host has a `disko.nix` alongside `hardware-configuration.nix`. For new installs, use disko instead of `scripts/install-btrfs.sh`.
 - **Impermanence**: opt-in module at `parts/system/impermanence.nix`. Phase 1 = system-only (wipes `/`, keeps `/home`). Requires `@persist` + `@root-blank` subvolumes. See module header for setup steps. User must explicitly enable after creating subvolumes.
 - **VM tests**: add integration tests for new modules in `parts/tests.nix` using `pkgs.nixosTest`. Tests run headless in VMs and verify services start correctly.
