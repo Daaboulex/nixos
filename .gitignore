@@ -40,8 +40,9 @@ OCCT-nix/
 Todo.txt
 *.txt
 
-# direnv cache
+# direnv cache + pre-commit hook config (generated, machine-specific nix store paths)
 .direnv/
+.pre-commit-config.yaml
 
 # AI files
 CLAUDE.md
