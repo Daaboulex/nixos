@@ -1,17 +1,19 @@
 { inputs, ... }: {
-  flake.nixosModules.system-security = { config, lib, pkgs, ... }: 
+  flake.nixosModules.system-security = { config, lib, pkgs, ... }:
     let
+      cfg = config.myModules.security.system;
     in {
-        options.myModules.security.system = {
+      _class = "nixos";
+      options.myModules.security.system = {
         enable = lib.mkEnableOption "System-wide security hardening";
-        firejail.enable = lib.mkOption { type = lib.types.bool; default = false; description = "Enable Firejail sandboxing"; };
+        firejail.enable = lib.mkOption { type = lib.types.bool; default = false; description = "Firejail sandboxing"; };
       };
 
-      config = lib.mkIf config.myModules.security.system.enable {
+      config = lib.mkIf cfg.enable {
         security.rtkit.enable = true;
-        
+
+        # @audio rtprio is handled by myModules.cachyos.settings (CachyOS upstream)
         security.pam.loginLimits = [
-          # @audio rtprio is handled by myModules.cachyos.settings (CachyOS upstream)
           { domain = "@audio"; type = "soft"; item = "memlock"; value = -1; }
           { domain = "@audio"; type = "hard"; item = "memlock"; value = -1; }
           { domain = "@wheel"; type = "-"; item = "rtprio"; value = 99; }
@@ -21,8 +23,9 @@
         security.sudo = { enable = true; wheelNeedsPassword = true; };
         security.polkit.enable = true;
         security.pam.services.login.limits = [ { domain = "*"; type = "hard"; item = "core"; value = 0; } ];
-        
-        environment.systemPackages = with pkgs; [ gnupg pinentry-gtk2 ] ++ lib.optionals config.myModules.security.system.firejail.enable [ firejail ];
+
+        environment.systemPackages = with pkgs; [ gnupg pinentry-gtk2 ]
+          ++ lib.optionals cfg.firejail.enable [ firejail ];
       };
     };
 }

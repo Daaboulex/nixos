@@ -182,6 +182,10 @@ in
     wayland-utils
     wl-clipboard # Clipboard
 
+    # KDE debugging & diagnostics
+    kdePackages.kdebugsettings  # Configure Qt/KDE debug logging categories
+    kdePackages.plasma-sdk      # Plasma development & debugging tools (plasmoidviewer, etc.)
+
     # KWin Scripts
     fluid-tile # Auto-tiling for KDE Plasma
     late-tile  # Retile windows with late WM_CLASS (Electron/Flatpak)
@@ -203,12 +207,19 @@ in
   # ============================================================================
   home.activation.cleanPanelViews = lib.hm.dag.entryBefore [ "reloadSystemd" ] ''
     SHELLRC="$HOME/.config/plasmashellrc"
-    if [ -f "$SHELLRC" ]; then
+    # Only strip stale PlasmaViews panel sections when plasmashell is NOT running.
+    # Modifying plasmashellrc while plasmashell is active causes it to crash
+    # (SIGSEGV in Plasma::Containment::lastScreen) and restart with defaults.
+    if [ -f "$SHELLRC" ] && ! ${pkgs.procps}/bin/pgrep -x plasmashell > /dev/null 2>&1; then
       ${pkgs.gnused}/bin/sed -i '/^\[PlasmaViews\]\[Panel [0-9]*\]/,/^\[/{/^\[PlasmaViews\]\[Panel/d;/^\[/!d}' "$SHELLRC"
     fi
-    # Delete panel script hash so plasma-manager fully recreates the panel
-    # on next login (restores launchers, floating=false, height, etc.)
-    rm -f "$HOME/.local/share/plasma-manager/last_run_desktop_script_panels"
+    # NOTE: Do NOT delete last_run_desktop_script_panels here!
+    # Deleting the hash forces plasma-manager to re-run the panel script at
+    # next login, which deletes appletsrc and all containments while plasmashell
+    # is already running — causing SIGSEGV in Containment::lastScreen().
+    # The hash mechanism is intentional: panels are only recreated when the
+    # actual panel config changes. The fix-floating desktopScript (runAlways)
+    # handles floating enforcement separately.
   '';
 
   # ============================================================================

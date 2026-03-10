@@ -24,8 +24,9 @@
         exit 0
       '';
     in {
+      _class = "nixos";
       options.myModules.security.arkenfox = {
-        enable = lib.mkEnableOption "Enable Arkenfox Firefox security configuration";
+        enable = lib.mkEnableOption "Arkenfox Firefox security configuration";
         targetDir = lib.mkOption { type = lib.types.str; description = "Target directory for Firefox profile"; };
         user = lib.mkOption { type = lib.types.str; default = config.myModules.primaryUser; description = "User to run the service as"; };
         group = lib.mkOption { type = lib.types.str; default = "users"; description = "Group to run the service as"; };
@@ -46,7 +47,7 @@
             ExecStart = "${downloadScript}/bin/arkenfox-download";
           };
         };
-        
+
         systemd.timers.arkenfox-flatpak-download = {
           description = "Timer for Arkenfox user.js updates";
           wantedBy = [ "timers.target" ];

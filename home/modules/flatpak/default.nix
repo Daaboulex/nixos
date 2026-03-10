@@ -26,7 +26,7 @@
       global = {
         # Force Wayland by default but keep audio working
         Context.sockets = ["wayland" "pulseaudio"];
-        
+
         # Theming environment variables (override per-host if using a different theme)
         Environment = lib.mkDefault {
           GTK_THEME = "Breeze-Dark";

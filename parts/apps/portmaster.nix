@@ -3,6 +3,7 @@
     let
       cfg = config.myModules.security.portmaster;
     in {
+      _class = "nixos";
       # Thin wrapper: map myModules namespace → services.portmaster
       options.myModules.security.portmaster = {
         enable = lib.mkEnableOption "Portmaster privacy firewall";

@@ -1,44 +1,45 @@
-{ inputs, ... }: {
+{ inputs, withSystem, ... }: {
   flake.nixosModules.apps-gaming = { config, lib, pkgs, ... }:
     let
       cfg = config.myModules.gaming;
-      system = pkgs.stdenv.hostPlatform.system;
-      
+      perSystem = withSystem pkgs.stdenv.hostPlatform.system ({ inputs', ... }: inputs');
+
       heroicWithExtras = pkgs.heroic.override {
-        extraPkgs = pkgs: 
+        extraPkgs = pkgs:
           [ pkgs.gamemode ]
           ++ lib.optionals cfg.gamescope.enable [ pkgs.gamescope ]
           ++ lib.optionals cfg.mangohud.enable [ pkgs.mangohud ];
       };
       
     in {
+      _class = "nixos";
       # =========================================================================
       # General Gaming Options
       # =========================================================================
       options.myModules.gaming = {
         enable = lib.mkEnableOption "Gaming optimizations and software";
         steam = {
-          enable = lib.mkOption { type = lib.types.bool; default = true; description = "Enable Steam"; };
-          gamescope = lib.mkOption { type = lib.types.bool; default = true; description = "Enable Gamescope session for Steam"; };
+          enable = lib.mkOption { type = lib.types.bool; default = true; description = "Steam"; };
+          gamescope = lib.mkOption { type = lib.types.bool; default = true; description = "Gamescope session for Steam"; };
         };
         protonplus = { enable = lib.mkEnableOption "ProtonPlus for managing Proton versions"; };
-        heroic = { enable = lib.mkOption { type = lib.types.bool; default = true; description = "Enable Heroic Games Launcher"; }; };
-        gamescope = { enable = lib.mkOption { type = lib.types.bool; default = true; description = "Enable Gamescope"; }; };
-        mangohud = { enable = lib.mkOption { type = lib.types.bool; default = true; description = "Enable MangoHud"; }; };
-        ryubing = { enable = lib.mkOption { type = lib.types.bool; default = false; description = "Enable Ryubing"; }; };
-        eden = { enable = lib.mkOption { type = lib.types.bool; default = false; description = "Enable Eden"; }; };
-        azahar = { enable = lib.mkOption { type = lib.types.bool; default = false; description = "Enable Azahar"; }; };
-        nxSaveSync = { enable = lib.mkOption { type = lib.types.bool; default = false; description = "Enable NX-Save-Sync"; }; };
-        occt = { enable = lib.mkOption { type = lib.types.bool; default = false; description = "Enable OCCT stability test"; }; };
-        lsfgVk = { enable = lib.mkOption { type = lib.types.bool; default = false; description = "Enable lsfg-vk Vulkan frame generation (requires Lossless Scaling)"; }; };
-        prismlauncher = { enable = lib.mkOption { type = lib.types.bool; default = false; description = "Enable Prism Launcher for Minecraft"; }; };
+        heroic = { enable = lib.mkOption { type = lib.types.bool; default = true; description = "Heroic Games Launcher"; }; };
+        gamescope = { enable = lib.mkOption { type = lib.types.bool; default = true; description = "Gamescope"; }; };
+        mangohud = { enable = lib.mkOption { type = lib.types.bool; default = true; description = "MangoHud"; }; };
+        ryubing = { enable = lib.mkOption { type = lib.types.bool; default = false; description = "Ryubing"; }; };
+        eden = { enable = lib.mkOption { type = lib.types.bool; default = false; description = "Eden"; }; };
+        azahar = { enable = lib.mkOption { type = lib.types.bool; default = false; description = "Azahar"; }; };
+        nxSaveSync = { enable = lib.mkOption { type = lib.types.bool; default = false; description = "NX-Save-Sync"; }; };
+        occt = { enable = lib.mkOption { type = lib.types.bool; default = false; description = "OCCT stability test"; }; };
+        lsfgVk = { enable = lib.mkOption { type = lib.types.bool; default = false; description = "lsfg-vk Vulkan frame generation (requires Lossless Scaling)"; }; };
+        prismlauncher = { enable = lib.mkOption { type = lib.types.bool; default = false; description = "Prism Launcher for Minecraft"; }; };
         vkbasalt = {
-          enable = lib.mkOption { type = lib.types.bool; default = true; description = "Enable vkBasalt overlay — Vulkan post-processing with in-game UI (replaces original vkBasalt)"; };
+          enable = lib.mkOption { type = lib.types.bool; default = true; description = "vkBasalt overlay — Vulkan post-processing with in-game UI"; };
           effects = lib.mkOption { type = lib.types.str; default = "cas"; description = "Default colon-separated effect chain (cas, smaa, fxaa, Vibrance, LiftGammaGain, Tonemap, etc.)"; };
           casSharpness = lib.mkOption { type = lib.types.str; default = "0.4"; description = "Default CAS sharpness (0.0 = subtle, 1.0 = maximum)"; };
           toggleKey = lib.mkOption { type = lib.types.str; default = "Home"; description = "Key to toggle effects on/off in-game"; };
           overlayKey = lib.mkOption { type = lib.types.str; default = "F1"; description = "Key to open the overlay UI in-game"; };
-          enableOnLaunch = lib.mkOption { type = lib.types.bool; default = true; description = "Enable effects automatically when a game launches"; };
+          enableOnLaunch = lib.mkOption { type = lib.types.bool; default = true; description = "Effects enabled automatically when a game launches"; };
           autoApply = lib.mkOption { type = lib.types.bool; default = true; description = "Auto-apply parameter changes without clicking Apply"; };
           extraConfig = lib.mkOption { type = lib.types.lines; default = ""; description = "Extra lines for system config (ReShade shader parameters like Vibrance, LiftGammaGain values)"; };
         };
@@ -47,10 +48,44 @@
           default = 0;
           description = "GPU device index for gamemode optimizations (0 = first GPU)";
         };
-        gamemode.renice = lib.mkOption {
-          type = lib.types.int;
-          default = 10;
-          description = "Renice priority for gamemode-managed processes";
+        gamemode = {
+          renice = lib.mkOption {
+            type = lib.types.int;
+            default = 0;
+            description = "Renice priority for gamemode-managed processes (0 = disabled, avoids conflict with ananicy-cpp)";
+          };
+          ioprio = lib.mkOption {
+            type = lib.types.str;
+            default = "off";
+            description = "IO priority for game processes (off = disabled to avoid ananicy-cpp conflict, or 0-7)";
+          };
+          desiredgov = lib.mkOption {
+            type = lib.types.str;
+            default = "performance";
+            description = "CPU governor to set when a game starts (performance = aggressive EPP hint on amd_pstate)";
+          };
+          x3dMode = {
+            desired = lib.mkOption {
+              type = lib.types.nullOr (lib.types.enum [ "cache" "frequency" ]);
+              default = null;
+              description = "X3D V-Cache CCD mode when gaming (cache = prefer V-Cache CCD, frequency = prefer high-clock CCD)";
+            };
+            default = lib.mkOption {
+              type = lib.types.nullOr (lib.types.enum [ "cache" "frequency" ]);
+              default = null;
+              description = "X3D V-Cache CCD mode when not gaming (restored on exit)";
+            };
+          };
+          pinCores = lib.mkOption {
+            type = lib.types.str;
+            default = "no";
+            description = "Pin game to specific cores (yes = auto-detect, or core list like 0-7,16-23, no = disabled)";
+          };
+          gpuPerformanceLevel = lib.mkOption {
+            type = lib.types.nullOr (lib.types.enum [ "auto" "low" "high" ]);
+            default = null;
+            description = "AMDGPU power_dpm_force_performance_level (null = don't set, auto = driver decides, high = max clocks)";
+          };
         };
         radv.perftest = lib.mkOption {
           type = lib.types.str;
@@ -58,8 +93,8 @@
           description = "RADV_PERFTEST flags for AMD Vulkan driver (comma-separated)";
         };
         packages = {
-          performance = lib.mkOption { type = lib.types.bool; default = true; description = "Include performance packages"; };
-          cachyos = lib.mkOption { type = lib.types.bool; default = true; description = "Use CachyOS optimized packages"; };
+          performance = lib.mkOption { type = lib.types.bool; default = true; description = "Performance packages"; };
+          cachyos = lib.mkOption { type = lib.types.bool; default = true; description = "CachyOS optimized packages"; };
         };
       };
 
@@ -75,13 +110,29 @@
         programs.gamemode = {
           enable = true;
           settings = {
-            general = { renice = cfg.gamemode.renice; };
-            gpu = {
+            general = {
+              renice = cfg.gamemode.renice;
+              ioprio = cfg.gamemode.ioprio;
+              desiredgov = cfg.gamemode.desiredgov;
+              softrealtime = "off";        # Incompatible with BORE/scx_lavd
+              inhibit_screensaver = 1;
+              disable_splitlock = 1;       # Helps certain games with split-lock mitigation overhead
+            };
+            gpu = lib.mkIf (cfg.gamemode.gpuPerformanceLevel != null) ({
               apply_gpu_optimisations = "accept-responsibility";
               gpu_device = cfg.gpuDevice;
             } // lib.optionalAttrs (config.myModules.hardware.graphics.amd.enable or false) {
-              amd_performance_level = "high";
-            };
+              amd_performance_level = cfg.gamemode.gpuPerformanceLevel;
+            });
+            cpu = lib.mkMerge [
+              { pin_cores = cfg.gamemode.pinCores; park_cores = "no"; }
+              (lib.mkIf (cfg.gamemode.x3dMode.desired != null) {
+                amd_x3d_mode_desired = cfg.gamemode.x3dMode.desired;
+              })
+              (lib.mkIf (cfg.gamemode.x3dMode.default != null) {
+                amd_x3d_mode_default = cfg.gamemode.x3dMode.default;
+              })
+            ];
           };
         };
         hardware.steam-hardware.enable = cfg.steam.enable;
@@ -95,9 +146,9 @@
         ++ lib.optionals cfg.gamescope.enable [ gamescope ]
         ++ lib.optionals cfg.heroic.enable [ heroicWithExtras ]
         ++ lib.optionals cfg.ryubing.enable [ ryubing ]
-        ++ lib.optionals cfg.eden.enable [ inputs.eden.packages.${system}.eden ]
+        ++ lib.optionals cfg.eden.enable [ perSystem.eden.packages.eden ]
         ++ lib.optionals cfg.azahar.enable [ azahar ]
-        ++ lib.optionals cfg.nxSaveSync.enable [ inputs.nx-save-sync.packages.${system}.default ]
+        ++ lib.optionals cfg.nxSaveSync.enable [ perSystem.nx-save-sync.packages.default ]
         ++ lib.optionals cfg.occt.enable [ pkgs.occt ]
         ++ lib.optionals cfg.lsfgVk.enable [ pkgs.lsfg-vk ]
         ++ lib.optionals cfg.prismlauncher.enable [ pkgs.prismlauncher ]

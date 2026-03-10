@@ -3,20 +3,21 @@
     let
       cfg = config.myModules.system.services;
     in {
+      _class = "nixos";
       options.myModules.system.services = {
         enable = lib.mkEnableOption "Common system services";
 
         printing = lib.mkOption {
           type = lib.types.bool;
           default = true;
-          description = "Enable printing support (CUPS)";
+          description = "Printing support (CUPS)";
         };
 
         fstrim = {
           enable = lib.mkOption {
             type = lib.types.bool;
             default = true;
-            description = "Enable periodic SSD TRIM";
+            description = "Periodic SSD TRIM";
           };
           interval = lib.mkOption {
             type = lib.types.str;
@@ -29,7 +30,7 @@
           enable = lib.mkOption {
             type = lib.types.bool;
             default = true;
-            description = "Enable early OOM killer (prevents system freezes)";
+            description = "Early OOM killer (prevents system freezes)";
           };
           freeMemThreshold = lib.mkOption {
             type = lib.types.int;
@@ -46,22 +47,22 @@
         acpid = lib.mkOption {
           type = lib.types.bool;
           default = true;
-          description = "Enable ACPI event daemon";
+          description = "ACPI event daemon";
         };
         upower = lib.mkOption {
           type = lib.types.bool;
           default = true;
-          description = "Enable UPower (battery/power monitoring)";
+          description = "UPower (battery/power monitoring)";
         };
         geoclue = lib.mkOption {
           type = lib.types.bool;
           default = false;
-          description = "Enable GeoClue2 location service";
+          description = "GeoClue2 location service";
         };
         usbmuxd = lib.mkOption {
           type = lib.types.bool;
           default = false;
-          description = "Enable USB multiplexing daemon (iOS device support)";
+          description = "USB multiplexing daemon (iOS device support)";
         };
       };
 

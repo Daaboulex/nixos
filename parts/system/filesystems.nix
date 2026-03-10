@@ -3,14 +3,15 @@
     let
       cfg = config.myModules.system.filesystems;
     in {
+      _class = "nixos";
       options.myModules.system.filesystems = {
         enable = lib.mkEnableOption "Universal filesystem support";
-        enableAll = lib.mkOption { type = lib.types.bool; default = true; description = "Enable all filesystem categories (overrides individual toggles)"; };
-        enableLinux = lib.mkOption { type = lib.types.bool; default = true; description = "Enable Linux filesystems (ext4, btrfs, xfs, f2fs)"; };
-        enableWindows = lib.mkOption { type = lib.types.bool; default = true; description = "Enable Windows filesystems (NTFS, exFAT, FAT32)"; };
-        enableMac = lib.mkOption { type = lib.types.bool; default = true; description = "Enable macOS filesystems (HFS+)"; };
-        enableOptical = lib.mkOption { type = lib.types.bool; default = true; description = "Enable optical disc filesystems (ISO 9660, UDF)"; };
-        enableLegacy = lib.mkOption { type = lib.types.bool; default = false; description = "Enable legacy filesystems (ReiserFS)"; };
+        enableAll = lib.mkOption { type = lib.types.bool; default = true; description = "All filesystem categories (overrides individual toggles)"; };
+        enableLinux = lib.mkOption { type = lib.types.bool; default = true; description = "Linux filesystems (ext4, btrfs, xfs, f2fs)"; };
+        enableWindows = lib.mkOption { type = lib.types.bool; default = true; description = "Windows filesystems (NTFS, exFAT, FAT32)"; };
+        enableMac = lib.mkOption { type = lib.types.bool; default = true; description = "macOS filesystems (HFS+)"; };
+        enableOptical = lib.mkOption { type = lib.types.bool; default = true; description = "Optical disc filesystems (ISO 9660, UDF)"; };
+        enableLegacy = lib.mkOption { type = lib.types.bool; default = false; description = "Legacy filesystems (ReiserFS)"; };
       };
 
       config = lib.mkIf cfg.enable {

@@ -2,10 +2,10 @@
   flake.nixosConfigurations.ryzen-9950x3d = inputs.nixpkgs.lib.nixosSystem {
     specialArgs = { inherit inputs; };
     modules = [
-      # Host Specific Config (imported from local directory)
+      # Host config
       ./default.nix
-      
-      # Dendritic Parts Modules (Using the flake config)
+
+      # Dendritic modules
       ({ config, ... }: {
         imports = [
           # System
@@ -14,6 +14,13 @@
           inputs.self.nixosModules.system-nix
           inputs.self.nixosModules.system-users
           inputs.self.nixosModules.system-security
+          inputs.self.nixosModules.system-filesystems
+          inputs.self.nixosModules.system-ssh
+          inputs.self.nixosModules.system-sops
+          inputs.self.nixosModules.system-impermanence
+          inputs.self.nixosModules.system-services
+          inputs.self.nixosModules.system-packages
+
           # Hardware
           inputs.self.nixosModules.hardware-core
           inputs.self.nixosModules.hardware-cpu-amd
@@ -29,51 +36,54 @@
           inputs.self.nixosModules.hardware-ducky-one-x-mini
           inputs.self.nixosModules.hardware-performance
           inputs.self.nixosModules.hardware-power
-          
-          # Desktop & Apps
+
+          # Desktop
           inputs.self.nixosModules.desktop-kde
           inputs.self.nixosModules.desktop-displays
           inputs.self.nixosModules.desktop-flatpak
+
+          # Apps
           inputs.self.nixosModules.apps-gaming
-          
-          inputs.self.nixosModules.system-filesystems
-          inputs.self.nixosModules.system-ssh
-          inputs.self.nixosModules.system-sops
-          inputs.self.nixosModules.system-services
-          
           inputs.self.nixosModules.apps-arkenfox
-          inputs.portmaster.nixosModules.default
           inputs.self.nixosModules.apps-portmaster
           inputs.self.nixosModules.apps-tidalcycles
           inputs.self.nixosModules.apps-wine
+          inputs.self.nixosModules.apps-development
+
+          # Tools
           inputs.self.nixosModules.tools-sysdiag
           inputs.self.nixosModules.tools-iommu
 
-          inputs.self.nixosModules.apps-development
-          
-          inputs.self.nixosModules.system-packages
-          inputs.cachyos-settings-nix.nixosModules.default
+          # CachyOS settings
           inputs.self.nixosModules.cachyos-settings
+
+          # External modules
+          inputs.portmaster.nixosModules.default
+          inputs.cachyos-settings-nix.nixosModules.default
+          inputs.impermanence.nixosModules.impermanence
         ];
       })
 
-      # Legacy Home Configuration (Shared)
+      # Home Manager
       ../../../home/home.nix
-      
-      # External Modules
-      inputs.nix-flatpak.nixosModules.nix-flatpak
       inputs.home-manager.nixosModules.home-manager
-      inputs.lanzaboote.nixosModules.lanzaboote
-      inputs.sops-nix.nixosModules.sops
-
-      # Home Manager Configuration
       {
         home-manager.useGlobalPkgs = true;
         home-manager.useUserPackages = true;
         home-manager.extraSpecialArgs = { inherit inputs; };
       }
 
-      # Overlays (Explicitly included here for now, or use the overlay part if mapped)
+      # External modules
+      inputs.nix-flatpak.nixosModules.nix-flatpak
+      inputs.lanzaboote.nixosModules.lanzaboote
+      inputs.sops-nix.nixosModules.sops
+      # Disko: declarative disk layout for new installations
+      # Import disko module for `disko` CLI availability; the disk layout in
+      # disko.nix is only used at install time (not imported here to avoid
+      # conflicting fileSystems definitions with hardware-configuration.nix).
+      inputs.disko.nixosModules.disko
+
+      # Overlays
       {
         nixpkgs.hostPlatform = "x86_64-linux";
         nixpkgs.config.allowUnfree = true;

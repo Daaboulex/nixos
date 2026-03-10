@@ -3,6 +3,7 @@
     let
       cfg = config.myModules.security.sops;
     in {
+      _class = "nixos";
       options.myModules.security.sops = {
         enable = lib.mkEnableOption "sops-nix secret management";
         defaultSopsFile = lib.mkOption { type = lib.types.path; default = ../../secrets/secrets.yaml; description = "Default sops file"; };

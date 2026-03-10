@@ -3,6 +3,7 @@
     let
       cfg = config.myModules.hardware.graphics.amd;
     in {
+      _class = "nixos";
       options.myModules.hardware.graphics.amd = {
         enable = lib.mkEnableOption "AMD Graphics configuration";
 
@@ -24,7 +25,7 @@
           enable = lib.mkOption {
             type = lib.types.bool;
             default = true;
-            description = "Enable LACT daemon for AMD GPU control/overclocking";
+            description = "LACT daemon for AMD GPU control/overclocking";
           };
         };
 
@@ -32,14 +33,14 @@
           enable = lib.mkOption {
             type = lib.types.bool;
             default = config.myModules.system.boot.plymouth.enable or false;
-            description = "Load amdgpu kernel module in initrd (required for Plymouth)";
+            description = "Load amdgpu in initrd (required for Plymouth)";
           };
         };
 
         enablePPFeatureMask = lib.mkOption {
           type = lib.types.bool;
           default = true;
-          description = "Enable full AMD GPU power management features (ppfeaturemask=0xffffffff)";
+          description = "Full AMD GPU power management features (ppfeaturemask=0xffffffff)";
         };
 
         rdna4Fixes = lib.mkOption {
@@ -51,13 +52,13 @@
         drmDebug = lib.mkOption {
           type = lib.types.bool;
           default = false;
-          description = "Enable DRM debug logging (drm.debug=0x1e) for diagnosing display black screens";
+          description = "DRM debug logging (drm.debug=0x1e) for diagnosing display black screens";
         };
 
         disableHDCP = lib.mkOption {
           type = lib.types.bool;
           default = false;
-          description = "Disable HDCP content protection (amdgpu.dc_hdcp_enable=0) — fixes handshake bugs on RDNA 4";
+          description = "Disable HDCP (amdgpu.dc_hdcp_enable=0) — fixes handshake bugs on RDNA 4";
         };
       };
 
@@ -85,10 +86,9 @@
 
         services.xserver.videoDrivers = [ "amdgpu" ];
 
-        environment.systemPackages = lib.mkIf cfg.lact.enable (with pkgs; [
-          lact
-          corectrl
-        ]);
+        environment.systemPackages = lib.mkIf cfg.lact.enable [
+          pkgs.lact
+        ];
 
         systemd.services.lactd = lib.mkIf cfg.lact.enable {
           description = "AMDGPU Control Daemon";

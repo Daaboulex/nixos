@@ -65,6 +65,7 @@
         '';
       };
     in {
+      _class = "nixos";
       options.myModules.hardware.macbook = {
         patches.enable = lib.mkEnableOption "MacBook kernel patches (AppleSMC fixes, AT24 warning suppression)";
 
@@ -72,7 +73,7 @@
           enable = lib.mkOption {
             type = lib.types.bool;
             default = true;
-            description = "Enable mbpfan daemon for MacBook fan control";
+            description = "mbpfan daemon for MacBook fan control";
           };
           lowTemp = lib.mkOption { type = lib.types.int; default = 45; description = "Temperature to start ramping fan (Celsius)"; };
           highTemp = lib.mkOption { type = lib.types.int; default = 65; description = "Temperature for high fan speed (Celsius)"; };
@@ -84,10 +85,10 @@
           enable = lib.mkOption {
             type = lib.types.bool;
             default = true;
-            description = "Enable MacBook touchpad with natural scrolling and tap-to-click";
+            description = "MacBook touchpad with natural scrolling and tap-to-click";
           };
           naturalScrolling = lib.mkOption { type = lib.types.bool; default = true; description = "Natural (reverse) scrolling direction"; };
-          tapping = lib.mkOption { type = lib.types.bool; default = true; description = "Enable tap-to-click"; };
+          tapping = lib.mkOption { type = lib.types.bool; default = true; description = "Tap-to-click"; };
         };
 
         keyboard = {

@@ -112,7 +112,7 @@
               description = "Name of the toggle script";
             };
             repositions = lib.mkOption {
-              type = lib.types.attrsOf (lib.types.submodule {
+              type = lib.types.lazyAttrsOf (lib.types.submodule {
                 options = {
                   x = lib.mkOption { type = lib.types.int; };
                   y = lib.mkOption { type = lib.types.int; };
@@ -186,6 +186,7 @@
       # Monitors that need kernel rotation params
       rotatedMonitors = lib.filterAttrs (_: m: m.rotation != "normal") cfg.monitors;
     in {
+      _class = "nixos";
       options.myModules.desktop.displays = {
         enable = lib.mkEnableOption "declarative display configuration";
 
@@ -196,7 +197,7 @@
         };
 
         monitors = lib.mkOption {
-          type = lib.types.attrsOf (lib.types.submodule monitorOpts);
+          type = lib.types.lazyAttrsOf (lib.types.submodule monitorOpts);
           default = {};
           description = "Monitor definitions";
         };

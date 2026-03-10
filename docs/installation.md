@@ -20,6 +20,95 @@ Hosts with specialisations build **all kernel variants** in a single install. Ea
 
 ---
 
+## Alternative: Declarative Install with Disko
+
+Each host includes a `disko.nix` file that declaratively describes the disk layout (BTRFS + LUKS subvolumes). This provides a reproducible, version-controlled alternative to the `install-btrfs.sh` script.
+
+### Usage
+
+```bash
+# From a NixOS live USB with flakes enabled
+export NIX_CONFIG="experimental-features = nix-command flakes"
+
+# Clone the repository
+git clone <repo-url> ~/nix && cd ~/nix
+
+# Partition and format using disko (replaces manual partitioning)
+sudo nix run github:nix-community/disko -- --mode disko parts/hosts/<hostname>/disko.nix
+
+# Install NixOS
+sudo nixos-install --flake .#<hostname>
+
+# Reboot
+reboot
+```
+
+### Important: Disko is install-time only
+
+The `disko.nix` files are **not imported into the running NixOS configuration**. The disko NixOS module is imported in each host's `flake-module.nix` for CLI availability, but the actual disk layout declarations in `parts/hosts/<hostname>/disko.nix` are only used at install time via `nix run disko`. The running system's mounts come from `hardware-configuration.nix` as usual.
+
+### Notes
+
+- Disko manages the NixOS root disk only (ESP + LUKS + BTRFS subvolumes)
+- Additional data drives (NTFS, ext4) remain in `hardware-configuration.nix`
+- The `device` path in `disko.nix` references the existing install's disk UUID — **update it** to your actual target disk path (e.g. `/dev/nvme0n1` or `/dev/sda`) before running disko (check with `lsblk`)
+- The `install-btrfs.sh` script remains available as a more interactive alternative with safety prompts
+
+---
+
+## Setting Up Impermanence (Optional)
+
+The `system-impermanence` module enables ephemeral root — `/` is rolled back to a blank BTRFS snapshot on every boot. Only explicitly declared state persists. This forces all system state to be reproducible.
+
+### Prerequisites
+
+Create the required subvolumes on your running system:
+
+```bash
+# Mount the top-level BTRFS volume
+sudo mount -t btrfs -o subvol=/ /dev/mapper/cryptroot /mnt
+
+# Create the persist subvolume
+sudo btrfs subvolume create /mnt/@persist
+
+# Create a blank snapshot of root (used for rollback)
+sudo btrfs subvolume snapshot -r /mnt/@ /mnt/@root-blank
+
+# Copy existing state that must survive reboots
+for d in /var/lib/nixos /var/lib/systemd /var/lib/bluetooth /var/lib/flatpak \
+         /var/lib/colord /var/lib/NetworkManager /var/lib/portmaster \
+         /var/lib/upower /var/lib/sops-nix /var/lib/sbctl \
+         /etc/NetworkManager/system-connections /etc/ssh; do
+  [ -d "$d" ] && sudo mkdir -p "/mnt/@persist$d" && sudo cp -a "$d/." "/mnt/@persist$d/"
+done
+[ -f /etc/machine-id ] && sudo cp /etc/machine-id /mnt/@persist/etc/machine-id
+
+sudo umount /mnt
+```
+
+### Enable
+
+In your host's `default.nix`:
+
+```nix
+myModules.system.impermanence.enable = true;
+```
+
+Then rebuild and reboot:
+
+```bash
+nrb --boot
+# Reboot to activate — root will be wiped on next boot
+```
+
+### What Persists
+
+The module automatically persists: `/var/lib/nixos`, `/var/lib/bluetooth`, `/var/lib/flatpak`, `/var/lib/NetworkManager`, `/var/lib/portmaster`, `/var/lib/sops-nix`, `/var/lib/sbctl`, `/etc/ssh`, `/etc/machine-id`, and more. Add extra paths via `myModules.system.impermanence.extraDirectories`.
+
+`/home` is NOT affected — it remains on its own persistent `@home` subvolume.
+
+---
+
 ## Step 1: Create the Live USB
 
 ### Download the ISO

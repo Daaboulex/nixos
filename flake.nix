@@ -118,6 +118,29 @@
       url = "github:Daaboulex/vkBasalt_overlay_wayland";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # treefmt-nix - Unified code formatting via flake-parts
+    treefmt-nix = {
+      url = "github:numtide/treefmt-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # git-hooks.nix - Pre-commit hooks via flake-parts
+    git-hooks-nix = {
+      url = "github:cachix/git-hooks.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # Impermanence - Opt-in state management (erase root on every boot)
+    impermanence = {
+      url = "github:nix-community/impermanence";
+    };
+
+    # Disko - Declarative disk partitioning
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   # ============================================================================

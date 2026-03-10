@@ -123,10 +123,11 @@
         }
       '';
     in {
+      _class = "nixos";
       options.myModules.audio.goxlr = {
         enable = lib.mkEnableOption "GoXLR Mini support";
         isMini = lib.mkOption { type = lib.types.bool; default = true; description = "Apply GoXLR Mini UCM patch"; };
-        utility.enable = lib.mkOption { type = lib.types.bool; default = true; description = "Enable goxlr-utility daemon"; };
+        utility.enable = lib.mkOption { type = lib.types.bool; default = true; description = "goxlr-utility daemon"; };
         installProfiles = lib.mkOption { type = lib.types.bool; default = true; description = "Install custom GoXLR UCM profiles"; };
         eq = {
           enable = lib.mkEnableOption "PipeWire parametric EQ for GoXLR channels";

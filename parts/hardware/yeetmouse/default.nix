@@ -1,5 +1,6 @@
 { inputs, ... }: {
   flake.nixosModules.hardware-yeetmouse = { config, lib, pkgs, ... }: {
+    _class = "nixos";
     options.myModules.hardware.yeetmouse = {
       enable = lib.mkEnableOption "YeetMouse input driver";
     };

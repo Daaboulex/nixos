@@ -1,15 +1,13 @@
 { inputs, ... }: {
   flake.nixosModules.tools-iommu = { config, lib, pkgs, ... }:
     let
-      cfgTools = config.myModules.tools;
+      cfg = config.myModules.tools;
 
-      # ════════════════════════════════════════════════════════════════════════
       # list-iommu-groups — Show IOMMU group assignments
-      # ════════════════════════════════════════════════════════════════════════
       list-iommu-groups = pkgs.writeShellApplication {
         name = "list-iommu-groups";
         runtimeInputs = [ pkgs.bash pkgs.coreutils pkgs.pciutils ];
-        text = ''#!${pkgs.bash}/bin/bash
+        text = ''
           set -euo pipefail
           echo "=== IOMMU Groups ==="
           shopt -s nullglob
@@ -23,9 +21,10 @@
         '';
       };
     in {
-      options.myModules.tools.listIommuGroups.enable = lib.mkEnableOption "list-iommu-groups";
+      _class = "nixos";
+      options.myModules.tools.iommu = lib.mkEnableOption "IOMMU group listing tool";
 
-      config = lib.mkIf cfgTools.listIommuGroups.enable {
+      config = lib.mkIf cfg.iommu {
         environment.systemPackages = [ list-iommu-groups ];
       };
     };

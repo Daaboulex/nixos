@@ -29,29 +29,31 @@
         enableAll = true;
       };
       packages = {
-        base = true;
-        sync = true;
-        dev = true;
-        media = true;
-        mobile = true;
-        editors = true;
-        hardware = true;
-        diagnostics = true;
-        monitoring = true;
-        benchmarking = true;
+        enable = true;
+        benchmarking = true;  # Off by default — enable for stress-testing workstation
       };
     };
 
     security = {
-      system.enable = true;
+      system = {
+        enable = true;
+        firejail.enable = false; # Not needed — Portmaster handles app isolation
+      };
       ssh = {
         enable = true;
+        trustedKeys = [
+          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKmK9yl3ndTzn5Qt42njlROMMf2LzOCjwzQwob1mrP9p user@ryzen-9950x3d"
+        ];
         fail2banIgnoreIPs = [ "127.0.0.1/8" "::1/128" "192.168.0.0/16" ];
       };
-      sops.enable = true;
+      sops = {
+        enable = true;
+        # defaultSopsFile and ageKeyFile use module defaults
+      };
       portmaster = {
         enable = true;
-        notifier = true;  # System tray icon (autostart)
+        notifier = true;   # System tray icon (autostart)
+        autostart = true;   # Start on boot
       };
       arkenfox = {
         enable = true;
@@ -67,14 +69,22 @@
         pipewire.lowLatency = true;
 
       };
+      bluetooth = {
+        enable = true;
+        powerOnBoot = true;
+      };
       graphics = {
         enable = true;
         amd = {
           enable = true;
           vulkanDeviceId = "1002:7550"; # RX 9070 XT — force dGPU for Vulkan on dual-AMD systems
           vulkanDeviceName = "AMD Radeon RX 9070 XT"; # Substring match for DXVK/VKD3D device filter
-          drmDebug = false; # Was destroying ALL boot logs (~800 msg/sec overflows kmsg ring buffer)
-          disableHDCP = true; # RDNA 4 HDCP handshake bugs — causes black screens / flicker
+          lact.enable = false;            # LACT GPU control — not needed, amdgpu sysfs suffices
+          initrd.enable = true;           # Load amdgpu early (faster display init)
+          enablePPFeatureMask = true;     # Full power management feature flags
+          rdna4Fixes = true;              # RDNA 4 stability kernel params
+          drmDebug = false;               # Was destroying ALL boot logs (~800 msg/sec overflows kmsg ring buffer)
+          disableHDCP = true;             # RDNA 4 HDCP handshake bugs — causes black screens / flicker
         };
         enable32Bit = true;
         mesaGit = {
@@ -91,18 +101,34 @@
       };
       performance = {
         enable = true;
-        governor = "powersave"; # Use powersave with EPP for Ryzen 9950X3D
-        ananicy = true; # Use Ananicy CachyOS rules for process priority
+        # amd_pstate active + "powersave" governor: CPU still boosts to max under load.
+        # "powersave" just lets firmware scale dynamically via EPP — does NOT cap frequency.
+        # "performance" would waste 20-40W at idle for negligible gaming benefit.
+        governor = "powersave";
+        # CachyOS wiki warns ananicy-cpp can conflict with sched-ext schedulers:
+        # it amplifies priority gaps, potentially starving tasks and triggering the
+        # scx watchdog timeout. Disable if you see stalls; scx_lavd handles priority itself.
+        ananicy = true;
+        irqbalance = false;     # Not needed — scx_lavd handles core affinity
         scx = {
           enable = true;
-          scheduler = "scx_lavd"; # Latency-aware virtual deadline — best for gaming (Valve/Steam Deck choice)
-          extraArgs = [ "--performance" ]; # Gaming mode: prioritize latency over power saving
+          scheduler = "scx_lavd"; # Latency-aware virtual deadline (Valve/Steam Deck/Meta choice)
+          extraArgs = [ "--performance" ]; # Static performance mode (no autopilot)
+          # With power-profiles-daemon disabled, autopilot can't be toggled dynamically.
+          # Use --performance for consistent low-latency gaming. Trade-off: higher idle power.
         };
-        # Scheduler stack: amd_3d_vcache (firmware CCD routing) → amd_pstate (CPPC preferred cores)
-        #                   → BORE (kernel fallback) → scx_lavd (BPF overlay, takes precedence when loaded)
-        # None of these conflict — CCD preference is set at hardware/firmware level.
+        # Scheduler stack (no conflicts — each operates at a different layer):
+        #   Layer 1: amd_3d_vcache mode=cache → firmware CCD routing (prefer V-Cache CCD0)
+        #   Layer 2: amd_pstate active + powersave → firmware CPPC frequency scaling via EPP
+        #   Layer 3: BORE (CFS-based, compiled into CachyOS kernel) → kernel scheduler fallback
+        #   Layer 4: scx_lavd (BPF overlay) → takes over scheduling when loaded, BORE is fallback
+        #   Layer 5: ananicy-cpp → process nice/ionice rules (may conflict with Layer 4)
       };
-      power.enable = true;
+      power = {
+        enable = true;
+        profile = "balanced";    # Profile label only — actual governor set by performance module ("powersave")
+        laptop = false;          # Not a laptop — no TLP
+      };
       yeetmouse = {
         enable = true;
         devices.g502 = {
@@ -122,9 +148,24 @@
       loader = "systemd-boot";
       secureBoot = {
         enable = true;
-        # pkiBundle = "/etc/secureboot"; # Removed to use default /var/lib/sbctl
+        # pkiBundle uses default /var/lib/sbctl
       };
-      plymouth.enable = true;
+      plymouth = {
+        enable = true;
+        # theme uses module default
+      };
+      initrd.enable = true;     # Systemd initrd (faster boot, needed for impermanence rollback)
+      # consoleMode uses module default
+    };
+
+    # Impermanence — disabled until @persist + @root-blank subvolumes are created
+    # See docs/installation.md for setup steps
+    system.impermanence = {
+      enable = false;
+      # persistPath = "/persist";
+      # luksDevice = "cryptroot";
+      # rollback.enable = true;
+      # rollback.blankSnapshot = "@root-blank";
     };
 
     desktop = {
@@ -214,10 +255,14 @@
     };
 
     development = {
-      tools = {
-        enable = true;
-        helperScripts = true;
-      };
+      enable = true;
+      claudeCode = true;
+      saleae = true;
+    };
+
+    tools = {
+      sysdiag = true;
+      iommu = true;
     };
 
     programs = {
@@ -269,18 +314,31 @@
     };
     protonplus.enable = true;
     heroic.enable = true;
-    gamescope.enable = false;
-    mangohud.enable = false;
+    gamescope.enable = false;    # Standalone gamescope — use Steam's built-in instead
+    mangohud.enable = false;     # MangoHud — disabled, use vkBasalt overlay instead
+    gpuDevice = 1;               # RX 9070 XT = card1 (gpu1 in btop)
+    gamemode = {
+      renice = 0;                  # Disabled — ananicy-cpp handles process priorities globally
+      ioprio = "off";              # Disabled — ananicy-cpp manages IO priority
+      desiredgov = "performance";  # EPP hint: powersave→performance (modest boost on amd_pstate active)
+      x3dMode = {
+        desired = "cache";         # Gaming: prefer V-Cache CCD0 (96MB L3)
+        default = "frequency";     # Non-gaming: prefer high-clock CCD1
+      };
+      pinCores = "yes";            # Auto-detect and pin game to V-Cache CCD
+      gpuPerformanceLevel = "high"; # Force RX 9070 XT to max clocks during gaming
+    };
+    radv.perftest = "";          # No extra RADV_PERFTEST flags needed on RDNA 4
     packages = {
       performance = true;
       cachyos = true;
     };
-    ryubing.enable = true; # Nintendo Switch emulator (Ryujinx fork)
-    eden.enable = true; # Nintendo Switch emulator (community fork)
-    azahar.enable = true; # 3DS emulator (Citra fork)
-    nxSaveSync.enable = false; # Switch save sync tool
-    occt.enable = true; # Stability Test & Benchmark
-    lsfgVk.enable = true; # Vulkan frame generation (Lossless Scaling)
+    ryubing.enable = true;       # Nintendo Switch emulator (Ryujinx fork)
+    eden.enable = true;          # Nintendo Switch emulator (community fork)
+    azahar.enable = true;        # 3DS emulator (Citra fork)
+    nxSaveSync.enable = false;   # Switch save sync tool
+    occt.enable = true;          # Stability Test & Benchmark
+    lsfgVk.enable = true;        # Vulkan frame generation (Lossless Scaling)
     prismlauncher.enable = true; # Minecraft Launcher
     # vkBasalt overlay: CAS sharpening + Vibrance + subtle color grading
     # Safe post-processing — no memory injection, no anti-cheat risk
@@ -288,6 +346,7 @@
     # In-game: F1 opens overlay UI, Home toggles effects
     # Per-game configs are managed live through the overlay UI
     vkbasalt = {
+      enable = true;               # vkBasalt Vulkan post-processing overlay
       toggleKey = "Pause";
       effects = "cas:Vibrance:LiftGammaGain";
       casSharpness = "0.5";
@@ -301,15 +360,6 @@
         LiftGammaGainGain = 1.0,1.0,1.0,1.03
       '';
     };
-  };
-
-  # ============================================================================
-  # Tools Configuration
-  # ============================================================================
-  myModules.tools = {
-    sysdiag.enable = true;        # System diagnostics (replaces list-gpu-drivers)
-    listIommuGroups.enable = true; # IOMMU group listing
-    claudeCode.enable = true;     # Claude Code AI Assistant
   };
 
   # ============================================================================

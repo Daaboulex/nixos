@@ -3,6 +3,7 @@
     let
       cfg = config.myModules.desktop.kde;
     in {
+      _class = "nixos";
       options.myModules.desktop.kde = {
         enable = lib.mkEnableOption "KDE Plasma Desktop Environment";
 
@@ -19,13 +20,13 @@
         ddcBrightness = lib.mkOption {
           type = lib.types.bool;
           default = false;
-          description = "Enable i2c for PowerDevil DDC brightness control";
+          description = "i2c for PowerDevil DDC brightness control";
         };
       };
 
       config = lib.mkIf cfg.enable {
         services.desktopManager.plasma6.enable = true;
-        
+
         services.displayManager = {
           sddm = {
             enable = true;
@@ -53,9 +54,9 @@
         xdg.portal = {
           enable = true;
           xdgOpenUsePortal = true;
-          extraPortals = [ 
-            pkgs.xdg-desktop-portal-gtk 
-            pkgs.kdePackages.xdg-desktop-portal-kde 
+          extraPortals = [
+            pkgs.xdg-desktop-portal-gtk
+            pkgs.kdePackages.xdg-desktop-portal-kde
           ];
         };
         # KDE Connect firewall rules

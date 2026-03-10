@@ -3,6 +3,7 @@
     let
       cfg = config.myModules.hardware.cpu.amd;
     in {
+      _class = "nixos";
       options.myModules.hardware.cpu.amd = {
         enable = lib.mkEnableOption "AMD CPU optimizations";
 
@@ -10,7 +11,7 @@
           enable = lib.mkOption {
             type = lib.types.bool;
             default = true;
-            description = "Enable AMD P-State driver for modern power management";
+            description = "AMD P-State driver for modern power management";
           };
           mode = lib.mkOption {
             type = lib.types.enum [ "active" "passive" "guided" ];
@@ -23,7 +24,7 @@
           enable = lib.mkOption {
             type = lib.types.bool;
             default = true;
-            description = "Enable AMD Preferred Core technology";
+            description = "AMD Preferred Core technology";
           };
         };
 
@@ -31,7 +32,7 @@
           enable = lib.mkOption {
             type = lib.types.bool;
             default = false;
-            description = "Enable AMD 3D V-Cache optimizer (for dual-CCD X3D processors like 9950X3D/9900X3D)";
+            description = "AMD 3D V-Cache optimizer (for dual-CCD X3D processors like 9950X3D/9900X3D)";
           };
           mode = lib.mkOption {
             type = lib.types.enum [ "cache" "frequency" ];
@@ -49,7 +50,7 @@
           enable = lib.mkOption {
             type = lib.types.bool;
             default = true;
-            description = "Enable KVM-AMD virtualization support";
+            description = "KVM-AMD virtualization support";
           };
         };
 

@@ -3,6 +3,7 @@
     let
       cfg = config.myModules.hardware.audio;
     in {
+      _class = "nixos";
       options.myModules.hardware.audio = {
         enable = lib.mkEnableOption "Audio configuration with PipeWire";
         pipewire.lowLatency = lib.mkEnableOption "Low latency configuration (48kHz, 128 samples)";

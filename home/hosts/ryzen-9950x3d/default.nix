@@ -15,36 +15,54 @@ in
     email = "39669593+Daaboulex@users.noreply.github.com";
   };
 
-  # Enable standard tools
+  # ============================================================================
+  # Home Manager Module Toggles
+  # ============================================================================
+  # All HM modules auto-discover from home/modules/. These control per-host overrides.
+  # Modules without explicit enable here use their module defaults (most default true).
+
+  # Development & editors
   programs.btop.enable = true;
-  programs.htop.enable = false;
+  programs.htop.enable = false;       # Redundant with btop on powerful hardware
   programs.vscode.enable = true;
+  programs.kate.enable = true;        # KDE text editor (default in module)
+  programs.konsole.enable = true;     # KDE terminal (default in module)
+  programs.okular.enable = true;      # PDF viewer (default in module)
+  programs.ghostwriter.enable = false; # Markdown editor — not using
+  programs.elisa.enable = false;      # KDE music player — not using (Spotify via Flatpak)
 
   # Audio
-  services.easyeffects.enable = false;
+  services.easyeffects.enable = false; # GoXLR handles all audio processing
 
   # ============================================================================
-  # Host-Specific Hardware Settings
+  # Host-Specific Plasma Settings
   # ============================================================================
-
-  # Night light location (Berlin)
-  programs.plasma.kwin.nightLight.location = {
-    latitude = "52.52";
-    longitude = "13.405";
-  };
 
   # Logitech G502 — disable acceleration (handled by yeetmouse)
-  # All three device IDs: yeetmouse virtual (407f), wired (c08d), wireless receiver (c539)
-  programs.plasma.configFile."kcminputrc" = let
-    flatAccel = {
-      PointerAcceleration = "0";
-      PointerAccelerationProfile = 1;  # 1 = flat
-    };
-  in {
-    "Libinput][1133][16511][Logitech G502" = flatAccel;              # yeetmouse (046d:407f)
-    "Libinput][1133][49293][Logitech G502 LIGHTSPEED Wireless Gaming Mouse" = flatAccel;  # wired (046d:c08d)
-    "Libinput][1133][50489][Logitech G502 LIGHTSPEED Wireless Gaming Mouse" = flatAccel;  # wireless (046d:c539)
-  };
+  # Three device IDs: yeetmouse virtual (407f), wired (c08d), wireless receiver (c539)
+  programs.plasma.input.mice = [
+    {
+      name = "Logitech G502";
+      vendorId = "046d";
+      productId = "407f";       # yeetmouse virtual device
+      acceleration = 0;
+      accelerationProfile = "none";
+    }
+    {
+      name = "Logitech G502 LIGHTSPEED Wireless Gaming Mouse";
+      vendorId = "046d";
+      productId = "c08d";       # wired USB
+      acceleration = 0;
+      accelerationProfile = "none";
+    }
+    {
+      name = "Logitech G502 LIGHTSPEED Wireless Gaming Mouse";
+      vendorId = "046d";
+      productId = "c539";       # wireless receiver
+      acceleration = 0;
+      accelerationProfile = "none";
+    }
+  ];
 
   # Desktop — no auto-lock or lock-on-resume
   programs.plasma.kscreenlocker = {
@@ -55,11 +73,19 @@ in
   # Desktop power: module defaults (never suspend, balanced) are correct for desktop
   # No overrides needed — mkDefault in module covers this
 
-  # Panel launchers (desktop has Antigravity)
+  # Enforce panel properties at every login (override generic module default)
+  programs.plasma.startup.desktopScript."fix-floating".text = ''
+    panels().forEach(function(panel) {
+      panel.floating = false;
+      panel.height = 44;
+    });
+  '';
+
+  # Panel layout (desktop has Antigravity launcher)
   programs.plasma.panels = lib.mkForce [
     {
       location = "bottom";
-      height = 70;
+      height = 44;
       floating = false;
       lengthMode = "fill";
       widgets = [
@@ -89,14 +115,7 @@ in
         {
           name = "org.kde.plasma.digitalclock";
           config.Appearance = {
-            autoFontAndSize = "true";
-            fontWeight = "400";
             use24hFormat = "2";           # 2 = force 24h (0 = locale, 1 = force 12h)
-            dateFormat = "custom";
-            customDateFormat = "dd.MM.yyyy";
-            dateDisplayFormat = "BesideTime";  # "BesideTime" or "BelowTime"
-            showDate = "true";
-            showSeconds = "Never";        # "Never", "InToolTip", "Always"
           };
         }
       ];
@@ -107,7 +126,8 @@ in
   programs.btop.settings = {
     selected_preset = lib.mkForce 0;
     shown_boxes = lib.mkForce "cpu gpu0 gpu1 mem proc";
-    presets = lib.mkForce "cpu:0:default,gpu1:0:default,mem:0:default,proc:0:default cpu:0:default,gpu0:0:default,gpu1:0:default,mem:0:default,net:0:default,proc:0:default";
+    presets = lib.mkForce "cpu:0:default,gpu0:0:default,gpu1:0:default,mem:0:default,proc:0:default cpu:0:default,gpu0:0:default,gpu1:0:default,mem:0:default,net:0:default,proc:0:default";
+    show_cpu_watts = lib.mkDefault true;
   };
 
   # ============================================================================
@@ -148,6 +168,32 @@ in
   services.flatpak.overrides = {
     "org.signal.Signal".Environment = {
       SIGNAL_PASSWORD_STORE = "kwallet6";
+    };
+  };
+
+  # ============================================================================
+  # SSH Client Configuration (for remote deployment to MacBook)
+  # ============================================================================
+  programs.ssh = {
+    enable = true;
+    enableDefaultConfig = false;
+    matchBlocks = {
+      "macbook" = {
+        hostname = "macbook-pro-9-2.local";  # mDNS — avahi resolves .local hostnames
+        user = "root";
+        identityFile = "~/.ssh/id_ed25519";
+        extraOptions = {
+          StrictHostKeyChecking = "accept-new";  # Auto-accept on first connect, verify after
+        };
+      };
+      "macbook-user" = {
+        hostname = "macbook-pro-9-2.local";
+        user = "user";
+        identityFile = "~/.ssh/id_ed25519";
+        extraOptions = {
+          StrictHostKeyChecking = "accept-new";
+        };
+      };
     };
   };
 

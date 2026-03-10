@@ -3,6 +3,7 @@
     let
       cfg = config.myModules.security.ssh;
     in {
+      _class = "nixos";
       options.myModules.security.ssh = {
         enable = lib.mkEnableOption "Secure SSH server configuration";
         trustedKeys = lib.mkOption { type = lib.types.listOf lib.types.str; default = []; description = "List of trusted SSH public keys"; };
@@ -23,7 +24,7 @@
             ChallengeResponseAuthentication = false;
             PermitEmptyPasswords = false;
             PermitRootLogin = "prohibit-password";
-            AllowUsers = [ config.myModules.primaryUser ];
+            AllowUsers = [ "root" config.myModules.primaryUser ];
             MaxAuthTries = 3;
             MaxSessions = 10;
             Ciphers = [ "chacha20-poly1305@openssh.com" "aes256-gcm@openssh.com" "aes128-gcm@openssh.com" ];
@@ -40,6 +41,7 @@
         };
 
         users.users.${config.myModules.primaryUser}.openssh.authorizedKeys.keys = cfg.trustedKeys;
+        users.users.root.openssh.authorizedKeys.keys = cfg.trustedKeys;
         networking.firewall.allowedTCPPorts = [ 22 ];
 
         services.fail2ban = {

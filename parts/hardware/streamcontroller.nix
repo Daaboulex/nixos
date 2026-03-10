@@ -1,10 +1,8 @@
 { inputs, ... }: {
-  flake.nixosModules.hardware-streamcontroller = { config, lib, pkgs, ... }: {
-    options.myModules.hardware.streamcontroller = {
-      enable = lib.mkEnableOption "StreamController (Elgato Stream Deck)";
-    };
+  flake.nixosModules.hardware-streamcontroller = { config, lib, pkgs, ... }:
+    let
+      cfg = config.myModules.hardware.streamcontroller;
 
-    config = lib.mkIf config.myModules.hardware.streamcontroller.enable (let
       streamcontrollerPatched = pkgs.streamcontroller.overrideAttrs (old: {
         propagatedBuildInputs = (old.propagatedBuildInputs or []) ++ [ pkgs.python3Packages.websockets ];
         postPatch = (old.postPatch or "") + ''
@@ -12,8 +10,14 @@
         '';
       });
     in {
-      environment.systemPackages = [ streamcontrollerPatched pkgs.kdotool ];
-      services.udev.packages = [ streamcontrollerPatched ];
-    });
-  };
+      _class = "nixos";
+      options.myModules.hardware.streamcontroller = {
+        enable = lib.mkEnableOption "StreamController (Elgato Stream Deck)";
+      };
+
+      config = lib.mkIf cfg.enable {
+        environment.systemPackages = [ streamcontrollerPatched pkgs.kdotool ];
+        services.udev.packages = [ streamcontrollerPatched ];
+      };
+    };
 }

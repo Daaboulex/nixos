@@ -3,23 +3,26 @@
     let
       cfg = config.myModules.system.packages;
     in {
+      _class = "nixos";
       options.myModules.system.packages = {
-        base = lib.mkEnableOption "Base system utilities";
-        sync = lib.mkEnableOption "Sync tools";
-        dev = lib.mkEnableOption "Development tools";
-        media = lib.mkEnableOption "Media tools";
-        mobile = lib.mkEnableOption "Mobile device tools";
-        editors = lib.mkEnableOption "Text editors";
-        hardware = lib.mkEnableOption "Hardware tools";
-        diagnostics = lib.mkEnableOption "Diagnostics tools";
-        monitoring = lib.mkEnableOption "System monitoring tools";
-        benchmarking = lib.mkEnableOption "Benchmarking tools";
+        enable = lib.mkEnableOption "System packages";
+        base = lib.mkOption { type = lib.types.bool; default = true; description = "Base system utilities (wget, curl, jq, etc.)"; };
+        dev = lib.mkOption { type = lib.types.bool; default = true; description = "Developer CLI tools (nil, sherlock)"; };
+        media = lib.mkOption { type = lib.types.bool; default = true; description = "Media processing tools (ffmpeg)"; };
+        mobile = lib.mkOption { type = lib.types.bool; default = true; description = "Mobile device connectivity (iOS)"; };
+        editors = lib.mkOption { type = lib.types.bool; default = true; description = "Terminal text editors (vim, nano)"; };
+        hardware = lib.mkOption { type = lib.types.bool; default = true; description = "Hardware inspection and monitoring tools"; };
+        diagnostics = lib.mkOption { type = lib.types.bool; default = true; description = "System diagnostics tools"; };
+        monitoring = lib.mkOption { type = lib.types.bool; default = true; description = "GPU and system monitoring tools"; };
+        benchmarking = lib.mkOption { type = lib.types.bool; default = false; description = "Benchmarking and stress-testing tools"; };
       };
 
-      config = lib.mkMerge [
+      config = lib.mkIf cfg.enable (lib.mkMerge [
         (lib.mkIf cfg.base { environment.systemPackages = with pkgs; [ wget curl tree unzip zip p7zip unrar jq which man-pages nix-output-monitor comma sbctl samba cifs-utils iproute2 libblockdev fastfetch libinput util-linux gptfdisk gnugrep gnused gawk coreutils testdisk gparted android-tools ]; })
-        (lib.mkIf cfg.sync { environment.systemPackages = [ pkgs.freefilesync ]; })
-        (lib.mkIf cfg.dev { environment.systemPackages = with pkgs; [ git gh git-lfs sherlock nil ]; })
+        (lib.mkIf cfg.dev { environment.systemPackages = with pkgs; [
+          # git, gh, git-lfs: owned by HM git module
+          sherlock nil
+        ]; })
         (lib.mkIf cfg.media { environment.systemPackages = [ pkgs.ffmpeg ]; })
         (lib.mkIf cfg.mobile { environment.systemPackages = with pkgs; [ libimobiledevice ifuse ]; })
         (lib.mkIf cfg.editors { environment.systemPackages = with pkgs; [ vim nano ]; })
@@ -28,6 +31,6 @@
         (lib.mkIf cfg.monitoring { environment.systemPackages = with pkgs; [ ]
           ++ lib.optionals (config.myModules.hardware.graphics.amd.enable or false) [ lact radeontop ]; })
         (lib.mkIf cfg.benchmarking { environment.systemPackages = with pkgs; [ sysbench stress-ng ]; })
-      ];
+      ]);
     };
 }

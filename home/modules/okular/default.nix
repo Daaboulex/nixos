@@ -2,29 +2,17 @@
 
 {
   # ============================================================================
-  # Okular (PDF Viewer)
+  # Okular (PDF Viewer) — native plasma-manager options where available
   # ============================================================================
   programs.okular = {
     enable = true;
-    # package = pkgs.kdePackages.okular;
-    # general = {
-    #   openFileInTabs = true;
-    #   showScrollbars = true;
-    #   smoothScrolling = true;
-    #   viewContinuous = true;
-    #   viewMode = "Single";  # "Single", "Facing", "FacingFirstCentered", "Summary"
-    #   zoomMode = "fitWidth";  # "100%", "fitWidth", "fitPage", "autoFit"
-    # };
+    accessibility.changeColors.enable = lib.mkDefault false;
   };
 
   # ============================================================================
   # Okular configFile — settings without native plasma-manager options
   # ============================================================================
   programs.plasma.configFile = {
-    "okularpartrc"."Document" = {
-      ChangeColors = lib.mkDefault false;             # Don't alter document colors
-    };
-
     "okularpartrc"."Main View" = {
       ShowLeftPanel = lib.mkDefault false;            # Maximise reading area
     };

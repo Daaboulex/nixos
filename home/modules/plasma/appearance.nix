@@ -60,26 +60,29 @@
     # };
 
     # ==========================================================================
-    # Config Files — Appearance & Session
+    # Session Restore (native plasma-manager options)
+    # ==========================================================================
+    session = {
+      general.askForConfirmationOnLogout = lib.mkDefault true;
+      sessionRestore = {
+        restoreOpenApplicationsOnLogin = lib.mkDefault "onLastLogout";
+        excludeApplications = lib.mkDefault [];
+      };
+    };
+
+    # ==========================================================================
+    # Config Files — Appearance settings without native options
     # ==========================================================================
     configFile = {
       # ---- KDE Globals ----
       "kdeglobals"."KDE" = {
-        AnimationDurationFactor = lib.mkDefault "0.7071067811865475"; # 30% faster animations
+        AnimationDurationFactor = lib.mkDefault "0.7071067811865475"; # ~30% faster animations (sqrt(0.5))
         LookAndFeelPackage = lib.mkDefault "org.kde.breezedark.desktop";
       };
 
       "kdeglobals"."KFileDialog Settings" = {
         "Show hidden files" = lib.mkDefault true;
         "Sort directories first" = lib.mkDefault true;
-      };
-
-      # ---- Session Restore ----
-      "ksmserverrc"."General" = {
-        loginMode = lib.mkDefault "restorePreviousLogout";
-        confirmLogout = lib.mkDefault true;
-        shutdownType = lib.mkDefault 0;
-        excludeApps = lib.mkDefault "";
       };
 
       # ---- Launch Feedback ----

@@ -1,19 +1,19 @@
 # Plasma Panel Configuration
 # Bottom panel with all widgets (launcher, pager, tasks, tray, clock)
-{ config, pkgs, lib, ... }:
+{ config, lib, ... }:
 
 let
   # Helper for cleaner flatpak app references
   flatpakApp = id: "file://${config.home.homeDirectory}/.local/share/flatpak/exports/share/applications/${id}.desktop";
 in
 {
-  # ---- Fix: enforce non-floating on every login ----
-  # Plasma 6 Wayland defaults to floating=true. The panel JS only runs when its
-  # content changes (hash check), so any crash/restart resets floating=1 and it
-  # sticks. This desktopScript runs AFTER panel creation (priority 3 > 2) and
-  # forces floating=false on every login regardless of hash state.
+  # ---- Fix: enforce panel properties at every login ----
+  # Plasma 6 Wayland defaults to floating=true / small height. plasma-manager's
+  # panel config only runs when the panel JS hash changes. If plasmashell
+  # crashes and restarts mid-session it reverts to defaults. This desktopScript
+  # runs at every login to re-enforce the correct panel state.
   programs.plasma.startup.desktopScript."fix-floating" = {
-    text = ''
+    text = lib.mkDefault ''
       panels().forEach(function(panel) {
         panel.floating = false;
       });
@@ -60,18 +60,11 @@ in
             showVirtualDevices = "true";
           };
         }
-        # Digital Clock — 24h, German date format (dd.MM.yyyy)
+        # Digital Clock — force 24h, locale-default date styling
         {
           name = "org.kde.plasma.digitalclock";
           config.Appearance = {
-            autoFontAndSize = "true";
-            fontWeight = "400";
             use24hFormat = "2";           # 2 = force 24h (0 = locale, 1 = force 12h)
-            dateFormat = "custom";
-            customDateFormat = "dd.MM.yyyy";
-            dateDisplayFormat = "BesideTime";  # "BesideTime" or "BelowTime"
-            showDate = "true";
-            showSeconds = "Never";        # "Never", "InToolTip", "Always"
           };
         }
       ];

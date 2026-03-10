@@ -1,22 +1,25 @@
 { inputs, ... }: {
-  flake.nixosModules.hardware-bluetooth = { config, lib, pkgs, ... }: {
-    options.myModules.hardware.bluetooth = {
-      enable = lib.mkEnableOption "Bluetooth configuration";
-      powerOnBoot = lib.mkOption { type = lib.types.bool; default = false; description = "Power on Bluetooth controller on boot"; };
-    };
-
-    config = lib.mkIf config.myModules.hardware.bluetooth.enable {
-      hardware.bluetooth = {
-        enable = true;
-        powerOnBoot = config.myModules.hardware.bluetooth.powerOnBoot;
-        settings.General = {
-          Enable = "Source,Sink,Media,Socket";
-          Experimental = true;
-        };
+  flake.nixosModules.hardware-bluetooth = { config, lib, pkgs, ... }:
+    let
+      cfg = config.myModules.hardware.bluetooth;
+    in {
+      _class = "nixos";
+      options.myModules.hardware.bluetooth = {
+        enable = lib.mkEnableOption "Bluetooth configuration";
+        powerOnBoot = lib.mkOption { type = lib.types.bool; default = false; description = "Power on Bluetooth controller on boot"; };
       };
-      
-      # Add user to bluetooth group
-      users.users.${config.myModules.primaryUser}.extraGroups = [ "bluetooth" ];
+
+      config = lib.mkIf cfg.enable {
+        hardware.bluetooth = {
+          enable = true;
+          powerOnBoot = cfg.powerOnBoot;
+          settings.General = {
+            Enable = "Source,Sink,Media,Socket";
+            Experimental = true;
+          };
+        };
+
+        users.users.${config.myModules.primaryUser}.extraGroups = [ "bluetooth" ];
+      };
     };
-  };
 }

@@ -6,6 +6,7 @@
   # ============================================================================
   programs.git = {
     enable = true;
+    lfs.enable = true;
     # User credentials set per-host in home/hosts/<hostname>/default.nix
   };
 

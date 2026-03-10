@@ -1,6 +1,6 @@
 # NixOS Custom Modules Documentation
 
-> Auto-generated from `myModules` option definitions. 218 options across 13 categories.
+> Auto-generated from `myModules` option definitions. 232 options across 13 categories.
 >
 > Regenerate: `bash scripts/update-docs.sh`
 
@@ -9,16 +9,16 @@
 - [AUDIO](#audio-35-options) (35 options)
 - [CACHYOS](#cachyos-15-options) (15 options)
 - [DESKTOP](#desktop-8-options) (8 options)
-- [DEVELOPMENT](#development-2-options) (2 options)
-- [GAMING](#gaming-27-options) (27 options)
+- [DEVELOPMENT](#development-3-options) (3 options)
+- [GAMING](#gaming-33-options) (33 options)
 - [HARDWARE](#hardware-53-options) (53 options)
 - [KERNEL](#kernel-14-options) (14 options)
 - [MUSIC](#music-2-options) (2 options)
 - [PRIMARYUSER](#primaryuser-1-options) (1 options)
 - [PROGRAMS](#programs-3-options) (3 options)
 - [SECURITY](#security-17-options) (17 options)
-- [SYSTEM](#system-38-options) (38 options)
-- [TOOLS](#tools-3-options) (3 options)
+- [SYSTEM](#system-46-options) (46 options)
+- [TOOLS](#tools-2-options) (2 options)
 
 ---
 ## AUDIO (35 options)
@@ -263,7 +263,7 @@
 
 #### `myModules.audio.goxlr.utility.enable`
 
-**Description**: Enable goxlr-utility daemon
+**Description**: goxlr-utility daemon
 - **Type**: `boolean`
 - **Default**: `true`
 
@@ -389,7 +389,7 @@
 #### `myModules.desktop.displays.monitors`
 
 **Description**: Monitor definitions
-- **Type**: `attribute set of (submodule)`
+- **Type**: `lazy attribute set of (submodule)`
 - **Default**: `{}`
 
 
@@ -409,7 +409,7 @@
 
 #### `myModules.desktop.kde.ddcBrightness`
 
-**Description**: Enable i2c for PowerDevil DDC brightness control
+**Description**: i2c for PowerDevil DDC brightness control
 - **Type**: `boolean`
 - **Default**: `false`
 
@@ -436,35 +436,42 @@
 
 
 
-## DEVELOPMENT (2 options)
+## DEVELOPMENT (3 options)
 
-#### `myModules.development.tools.enable`
+#### `myModules.development.claudeCode`
 
-**Description**: Whether to enable Development Tools.
+**Description**: Whether to enable Claude Code AI assistant.
 - **Type**: `boolean`
 - **Default**: `false`
 
 
-#### `myModules.development.tools.helperScripts`
+#### `myModules.development.enable`
 
-**Description**: Whether to enable Enable helper scripts.
+**Description**: Whether to enable Development tools (compilers, build systems, AI assistants).
+- **Type**: `boolean`
+- **Default**: `false`
+
+
+#### `myModules.development.saleae`
+
+**Description**: Whether to enable Saleae Logic analyzer and udev rules.
 - **Type**: `boolean`
 - **Default**: `false`
 
 
 
-## GAMING (27 options)
+## GAMING (33 options)
 
 #### `myModules.gaming.azahar.enable`
 
-**Description**: Enable Azahar
+**Description**: Azahar
 - **Type**: `boolean`
 - **Default**: `false`
 
 
 #### `myModules.gaming.eden.enable`
 
-**Description**: Enable Eden
+**Description**: Eden
 - **Type**: `boolean`
 - **Default**: `false`
 
@@ -476,16 +483,58 @@
 - **Default**: `false`
 
 
+#### `myModules.gaming.gamemode.desiredgov`
+
+**Description**: CPU governor to set when a game starts (performance = aggressive EPP hint on amd_pstate)
+- **Type**: `string`
+- **Default**: `"performance"`
+
+
+#### `myModules.gaming.gamemode.gpuPerformanceLevel`
+
+**Description**: AMDGPU power_dpm_force_performance_level (null = don't set, auto = driver decides, high = max clocks)
+- **Type**: `null or one of "auto", "low", "high"`
+- **Default**: `null`
+
+
+#### `myModules.gaming.gamemode.ioprio`
+
+**Description**: IO priority for game processes (off = disabled to avoid ananicy-cpp conflict, or 0-7)
+- **Type**: `string`
+- **Default**: `"off"`
+
+
+#### `myModules.gaming.gamemode.pinCores`
+
+**Description**: Pin game to specific cores (yes = auto-detect, or core list like 0-7,16-23, no = disabled)
+- **Type**: `string`
+- **Default**: `"no"`
+
+
 #### `myModules.gaming.gamemode.renice`
 
-**Description**: Renice priority for gamemode-managed processes
+**Description**: Renice priority for gamemode-managed processes (0 = disabled, avoids conflict with ananicy-cpp)
 - **Type**: `signed integer`
-- **Default**: `10`
+- **Default**: `0`
+
+
+#### `myModules.gaming.gamemode.x3dMode.default`
+
+**Description**: X3D V-Cache CCD mode when not gaming (restored on exit)
+- **Type**: `null or one of "cache", "frequency"`
+- **Default**: `null`
+
+
+#### `myModules.gaming.gamemode.x3dMode.desired`
+
+**Description**: X3D V-Cache CCD mode when gaming (cache = prefer V-Cache CCD, frequency = prefer high-clock CCD)
+- **Type**: `null or one of "cache", "frequency"`
+- **Default**: `null`
 
 
 #### `myModules.gaming.gamescope.enable`
 
-**Description**: Enable Gamescope
+**Description**: Gamescope
 - **Type**: `boolean`
 - **Default**: `true`
 
@@ -499,56 +548,56 @@
 
 #### `myModules.gaming.heroic.enable`
 
-**Description**: Enable Heroic Games Launcher
+**Description**: Heroic Games Launcher
 - **Type**: `boolean`
 - **Default**: `true`
 
 
 #### `myModules.gaming.lsfgVk.enable`
 
-**Description**: Enable lsfg-vk Vulkan frame generation (requires Lossless Scaling)
+**Description**: lsfg-vk Vulkan frame generation (requires Lossless Scaling)
 - **Type**: `boolean`
 - **Default**: `false`
 
 
 #### `myModules.gaming.mangohud.enable`
 
-**Description**: Enable MangoHud
+**Description**: MangoHud
 - **Type**: `boolean`
 - **Default**: `true`
 
 
 #### `myModules.gaming.nxSaveSync.enable`
 
-**Description**: Enable NX-Save-Sync
+**Description**: NX-Save-Sync
 - **Type**: `boolean`
 - **Default**: `false`
 
 
 #### `myModules.gaming.occt.enable`
 
-**Description**: Enable OCCT stability test
+**Description**: OCCT stability test
 - **Type**: `boolean`
 - **Default**: `false`
 
 
 #### `myModules.gaming.packages.cachyos`
 
-**Description**: Use CachyOS optimized packages
+**Description**: CachyOS optimized packages
 - **Type**: `boolean`
 - **Default**: `true`
 
 
 #### `myModules.gaming.packages.performance`
 
-**Description**: Include performance packages
+**Description**: Performance packages
 - **Type**: `boolean`
 - **Default**: `true`
 
 
 #### `myModules.gaming.prismlauncher.enable`
 
-**Description**: Enable Prism Launcher for Minecraft
+**Description**: Prism Launcher for Minecraft
 - **Type**: `boolean`
 - **Default**: `false`
 
@@ -569,21 +618,21 @@
 
 #### `myModules.gaming.ryubing.enable`
 
-**Description**: Enable Ryubing
+**Description**: Ryubing
 - **Type**: `boolean`
 - **Default**: `false`
 
 
 #### `myModules.gaming.steam.enable`
 
-**Description**: Enable Steam
+**Description**: Steam
 - **Type**: `boolean`
 - **Default**: `true`
 
 
 #### `myModules.gaming.steam.gamescope`
 
-**Description**: Enable Gamescope session for Steam
+**Description**: Gamescope session for Steam
 - **Type**: `boolean`
 - **Default**: `true`
 
@@ -611,14 +660,14 @@
 
 #### `myModules.gaming.vkbasalt.enable`
 
-**Description**: Enable vkBasalt overlay — Vulkan post-processing with in-game UI (replaces original vkBasalt)
+**Description**: vkBasalt overlay — Vulkan post-processing with in-game UI
 - **Type**: `boolean`
 - **Default**: `true`
 
 
 #### `myModules.gaming.vkbasalt.enableOnLaunch`
 
-**Description**: Enable effects automatically when a game launches
+**Description**: Effects enabled automatically when a game launches
 - **Type**: `boolean`
 - **Default**: `true`
 
@@ -684,7 +733,7 @@
 
 #### `myModules.hardware.core.enable`
 
-**Description**: Whether to enable Core hardware configuration (Firmware, Microcode, Sensors).
+**Description**: Whether to enable Core hardware configuration (firmware, microcode, sensors).
 - **Type**: `boolean`
 - **Default**: `false`
 
@@ -698,21 +747,21 @@
 
 #### `myModules.hardware.cpu.amd.kvm.enable`
 
-**Description**: Enable KVM-AMD virtualization support
+**Description**: KVM-AMD virtualization support
 - **Type**: `boolean`
 - **Default**: `true`
 
 
 #### `myModules.hardware.cpu.amd.prefcore.enable`
 
-**Description**: Enable AMD Preferred Core technology
+**Description**: AMD Preferred Core technology
 - **Type**: `boolean`
 - **Default**: `true`
 
 
 #### `myModules.hardware.cpu.amd.pstate.enable`
 
-**Description**: Enable AMD P-State driver for modern power management
+**Description**: AMD P-State driver for modern power management
 - **Type**: `boolean`
 - **Default**: `true`
 
@@ -733,7 +782,7 @@
 
 #### `myModules.hardware.cpu.amd.x3dVcache.enable`
 
-**Description**: Enable AMD 3D V-Cache optimizer (for dual-CCD X3D processors like 9950X3D/9900X3D)
+**Description**: AMD 3D V-Cache optimizer (for dual-CCD X3D processors like 9950X3D/9900X3D)
 - **Type**: `boolean`
 - **Default**: `false`
 
@@ -779,14 +828,14 @@ Requires BIOS CPPC option set to "Driver".
 
 #### `myModules.hardware.graphics.amd.disableHDCP`
 
-**Description**: Disable HDCP content protection (amdgpu.dc_hdcp_enable=0) — fixes handshake bugs on RDNA 4
+**Description**: Disable HDCP (amdgpu.dc_hdcp_enable=0) — fixes handshake bugs on RDNA 4
 - **Type**: `boolean`
 - **Default**: `false`
 
 
 #### `myModules.hardware.graphics.amd.drmDebug`
 
-**Description**: Enable DRM debug logging (drm.debug=0x1e) for diagnosing display black screens
+**Description**: DRM debug logging (drm.debug=0x1e) for diagnosing display black screens
 - **Type**: `boolean`
 - **Default**: `false`
 
@@ -800,21 +849,21 @@ Requires BIOS CPPC option set to "Driver".
 
 #### `myModules.hardware.graphics.amd.enablePPFeatureMask`
 
-**Description**: Enable full AMD GPU power management features (ppfeaturemask=0xffffffff)
+**Description**: Full AMD GPU power management features (ppfeaturemask=0xffffffff)
 - **Type**: `boolean`
 - **Default**: `true`
 
 
 #### `myModules.hardware.graphics.amd.initrd.enable`
 
-**Description**: Load amdgpu kernel module in initrd (required for Plymouth)
+**Description**: Load amdgpu in initrd (required for Plymouth)
 - **Type**: `boolean`
 - **Default**: `true`
 
 
 #### `myModules.hardware.graphics.amd.lact.enable`
 
-**Description**: Enable LACT daemon for AMD GPU control/overclocking
+**Description**: LACT daemon for AMD GPU control/overclocking
 - **Type**: `boolean`
 - **Default**: `true`
 
@@ -849,7 +898,7 @@ Requires BIOS CPPC option set to "Driver".
 
 #### `myModules.hardware.graphics.enable32Bit`
 
-**Description**: Enable 32-bit graphics support
+**Description**: 32-bit graphics support
 - **Type**: `boolean`
 - **Default**: `true`
 
@@ -868,7 +917,7 @@ An empty list (default) builds all drivers.
 
 #### `myModules.hardware.graphics.mesaGit.enable`
 
-**Description**: Whether to enable Use mesa-git (bleeding-edge) instead of nixpkgs mesa.
+**Description**: Whether to enable mesa-git (bleeding-edge) instead of nixpkgs mesa.
 - **Type**: `boolean`
 - **Default**: `false`
 
@@ -903,7 +952,7 @@ An empty list (default) builds all drivers.
 
 #### `myModules.hardware.performance.ananicy`
 
-**Description**: Enable Ananicy
+**Description**: Ananicy-cpp process prioritization
 - **Type**: `boolean`
 - **Default**: `true`
 
@@ -924,7 +973,7 @@ An empty list (default) builds all drivers.
 
 #### `myModules.hardware.performance.irqbalance`
 
-**Description**: Enable IRQ balancing across CPU cores
+**Description**: IRQ balancing across CPU cores
 - **Type**: `boolean`
 - **Default**: `true`
 
@@ -1032,14 +1081,14 @@ An empty list (default) builds all drivers.
 
 #### `myModules.kernel.cachyos.bbr3`
 
-**Description**: Enable BBR3 TCP congestion control
+**Description**: BBR3 TCP congestion control
 - **Type**: `null or boolean`
 - **Default**: `null`
 
 
 #### `myModules.kernel.cachyos.ccHarder`
 
-**Description**: Enable -O3 optimizations
+**Description**: -O3 optimizations
 - **Type**: `null or boolean`
 - **Default**: `null`
 
@@ -1067,7 +1116,7 @@ An empty list (default) builds all drivers.
 
 #### `myModules.kernel.cachyos.kcfi`
 
-**Description**: Enable KCFI (Kernel Control Flow Integrity)
+**Description**: KCFI (Kernel Control Flow Integrity)
 - **Type**: `null or boolean`
 - **Default**: `null`
 
@@ -1140,7 +1189,7 @@ An empty list (default) builds all drivers.
 
 #### `myModules.music.tidalcycles.enable`
 
-**Description**: Whether to enable Enable TidalCycles and SuperDirt.
+**Description**: Whether to enable TidalCycles and SuperDirt.
 - **Type**: `boolean`
 - **Default**: `false`
 
@@ -1160,14 +1209,14 @@ An empty list (default) builds all drivers.
 
 #### `myModules.programs.bottles.enable`
 
-**Description**: Whether to enable Enable Bottles installation.
+**Description**: Whether to enable Bottles installation.
 - **Type**: `boolean`
 - **Default**: `false`
 
 
 #### `myModules.programs.wine.enable`
 
-**Description**: Whether to enable Enable Wine installation.
+**Description**: Whether to enable Wine installation.
 - **Type**: `boolean`
 - **Default**: `false`
 
@@ -1184,7 +1233,7 @@ An empty list (default) builds all drivers.
 
 #### `myModules.security.arkenfox.enable`
 
-**Description**: Whether to enable Enable Arkenfox Firefox security configuration.
+**Description**: Whether to enable Arkenfox Firefox security configuration.
 - **Type**: `boolean`
 - **Default**: `false`
 
@@ -1296,13 +1345,13 @@ An empty list (default) builds all drivers.
 
 #### `myModules.security.system.firejail.enable`
 
-**Description**: Enable Firejail sandboxing
+**Description**: Firejail sandboxing
 - **Type**: `boolean`
 - **Default**: `false`
 
 
 
-## SYSTEM (38 options)
+## SYSTEM (46 options)
 
 #### `myModules.system.boot.consoleMode`
 
@@ -1320,7 +1369,7 @@ An empty list (default) builds all drivers.
 
 #### `myModules.system.boot.initrd.enable`
 
-**Description**: Enable systemd initrd and early KMS for Plymouth
+**Description**: Systemd initrd for Plymouth
 - **Type**: `boolean`
 - **Default**: `true`
 
@@ -1369,44 +1418,100 @@ An empty list (default) builds all drivers.
 
 #### `myModules.system.filesystems.enableAll`
 
-**Description**: Enable all filesystem categories (overrides individual toggles)
+**Description**: All filesystem categories (overrides individual toggles)
 - **Type**: `boolean`
 - **Default**: `true`
 
 
 #### `myModules.system.filesystems.enableLegacy`
 
-**Description**: Enable legacy filesystems (ReiserFS)
+**Description**: Legacy filesystems (ReiserFS)
 - **Type**: `boolean`
 - **Default**: `false`
 
 
 #### `myModules.system.filesystems.enableLinux`
 
-**Description**: Enable Linux filesystems (ext4, btrfs, xfs, f2fs)
+**Description**: Linux filesystems (ext4, btrfs, xfs, f2fs)
 - **Type**: `boolean`
 - **Default**: `true`
 
 
 #### `myModules.system.filesystems.enableMac`
 
-**Description**: Enable macOS filesystems (HFS+)
+**Description**: macOS filesystems (HFS+)
 - **Type**: `boolean`
 - **Default**: `true`
 
 
 #### `myModules.system.filesystems.enableOptical`
 
-**Description**: Enable optical disc filesystems (ISO 9660, UDF)
+**Description**: Optical disc filesystems (ISO 9660, UDF)
 - **Type**: `boolean`
 - **Default**: `true`
 
 
 #### `myModules.system.filesystems.enableWindows`
 
-**Description**: Enable Windows filesystems (NTFS, exFAT, FAT32)
+**Description**: Windows filesystems (NTFS, exFAT, FAT32)
 - **Type**: `boolean`
 - **Default**: `true`
+
+
+#### `myModules.system.impermanence.enable`
+
+**Description**: Whether to enable Impermanence (erase root on every boot).
+- **Type**: `boolean`
+- **Default**: `false`
+
+
+#### `myModules.system.impermanence.extraDirectories`
+
+**Description**: Extra system directories to persist
+- **Type**: `list of (string or (attribute set))`
+- **Default**: `[]`
+
+
+#### `myModules.system.impermanence.extraFiles`
+
+**Description**: Extra system files to persist
+- **Type**: `list of string`
+- **Default**: `[]`
+
+
+#### `myModules.system.impermanence.luksDevice`
+
+**Description**: LUKS device mapper name (e.g. cryptroot)
+- **Type**: `string`
+- **Default**: `"cryptroot"`
+
+
+#### `myModules.system.impermanence.persistPath`
+
+**Description**: Mountpoint for the persistent BTRFS subvolume
+- **Type**: `absolute path`
+- **Default**: `"/persist"`
+
+
+#### `myModules.system.impermanence.rollback.blankSnapshot`
+
+**Description**: Name of the read-only blank root snapshot
+- **Type**: `string`
+- **Default**: `"@root-blank"`
+
+
+#### `myModules.system.impermanence.rollback.enable`
+
+**Description**: Enable initrd rollback service that erases root on every boot
+- **Type**: `boolean`
+- **Default**: `true`
+
+
+#### `myModules.system.impermanence.rollback.rootSubvolume`
+
+**Description**: Name of the root BTRFS subvolume
+- **Type**: `string`
+- **Default**: `"@"`
 
 
 #### `myModules.system.nix.enable`
@@ -1418,84 +1523,84 @@ An empty list (default) builds all drivers.
 
 #### `myModules.system.packages.base`
 
-**Description**: Whether to enable Base system utilities.
+**Description**: Base system utilities (wget, curl, jq, etc.)
 - **Type**: `boolean`
-- **Default**: `false`
+- **Default**: `true`
 
 
 #### `myModules.system.packages.benchmarking`
 
-**Description**: Whether to enable Benchmarking tools.
+**Description**: Benchmarking and stress-testing tools
 - **Type**: `boolean`
 - **Default**: `false`
 
 
 #### `myModules.system.packages.dev`
 
-**Description**: Whether to enable Development tools.
+**Description**: Developer CLI tools (nil, sherlock)
 - **Type**: `boolean`
-- **Default**: `false`
+- **Default**: `true`
 
 
 #### `myModules.system.packages.diagnostics`
 
-**Description**: Whether to enable Diagnostics tools.
+**Description**: System diagnostics tools
 - **Type**: `boolean`
-- **Default**: `false`
+- **Default**: `true`
 
 
 #### `myModules.system.packages.editors`
 
-**Description**: Whether to enable Text editors.
+**Description**: Terminal text editors (vim, nano)
+- **Type**: `boolean`
+- **Default**: `true`
+
+
+#### `myModules.system.packages.enable`
+
+**Description**: Whether to enable System packages.
 - **Type**: `boolean`
 - **Default**: `false`
 
 
 #### `myModules.system.packages.hardware`
 
-**Description**: Whether to enable Hardware tools.
+**Description**: Hardware inspection and monitoring tools
 - **Type**: `boolean`
-- **Default**: `false`
+- **Default**: `true`
 
 
 #### `myModules.system.packages.media`
 
-**Description**: Whether to enable Media tools.
+**Description**: Media processing tools (ffmpeg)
 - **Type**: `boolean`
-- **Default**: `false`
+- **Default**: `true`
 
 
 #### `myModules.system.packages.mobile`
 
-**Description**: Whether to enable Mobile device tools.
+**Description**: Mobile device connectivity (iOS)
 - **Type**: `boolean`
-- **Default**: `false`
+- **Default**: `true`
 
 
 #### `myModules.system.packages.monitoring`
 
-**Description**: Whether to enable System monitoring tools.
+**Description**: GPU and system monitoring tools
 - **Type**: `boolean`
-- **Default**: `false`
-
-
-#### `myModules.system.packages.sync`
-
-**Description**: Whether to enable Sync tools.
-- **Type**: `boolean`
-- **Default**: `false`
+- **Default**: `true`
 
 
 #### `myModules.system.services.acpid`
 
-**Description**: Enable ACPI event daemon
+**Description**: ACPI event daemon
 - **Type**: `boolean`
 - **Default**: `true`
 
 
 #### `myModules.system.services.earlyoom.enable`
 
-**Description**: Enable early OOM killer (prevents system freezes)
+**Description**: Early OOM killer (prevents system freezes)
 - **Type**: `boolean`
 - **Default**: `true`
 
@@ -1523,7 +1628,7 @@ An empty list (default) builds all drivers.
 
 #### `myModules.system.services.fstrim.enable`
 
-**Description**: Enable periodic SSD TRIM
+**Description**: Periodic SSD TRIM
 - **Type**: `boolean`
 - **Default**: `true`
 
@@ -1537,28 +1642,28 @@ An empty list (default) builds all drivers.
 
 #### `myModules.system.services.geoclue`
 
-**Description**: Enable GeoClue2 location service
+**Description**: GeoClue2 location service
 - **Type**: `boolean`
 - **Default**: `false`
 
 
 #### `myModules.system.services.printing`
 
-**Description**: Enable printing support (CUPS)
+**Description**: Printing support (CUPS)
 - **Type**: `boolean`
 - **Default**: `true`
 
 
 #### `myModules.system.services.upower`
 
-**Description**: Enable UPower (battery/power monitoring)
+**Description**: UPower (battery/power monitoring)
 - **Type**: `boolean`
 - **Default**: `true`
 
 
 #### `myModules.system.services.usbmuxd`
 
-**Description**: Enable USB multiplexing daemon (iOS device support)
+**Description**: USB multiplexing daemon (iOS device support)
 - **Type**: `boolean`
 - **Default**: `false`
 
@@ -1571,23 +1676,16 @@ An empty list (default) builds all drivers.
 
 
 
-## TOOLS (3 options)
+## TOOLS (2 options)
 
-#### `myModules.tools.claudeCode.enable`
+#### `myModules.tools.iommu`
 
-**Description**: Whether to enable Claude Code AI Assistant.
+**Description**: Whether to enable IOMMU group listing tool.
 - **Type**: `boolean`
 - **Default**: `false`
 
 
-#### `myModules.tools.listIommuGroups.enable`
-
-**Description**: Whether to enable list-iommu-groups.
-- **Type**: `boolean`
-- **Default**: `false`
-
-
-#### `myModules.tools.sysdiag.enable`
+#### `myModules.tools.sysdiag`
 
 **Description**: Whether to enable sysdiag system diagnostics.
 - **Type**: `boolean`

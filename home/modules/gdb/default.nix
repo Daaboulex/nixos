@@ -9,7 +9,7 @@
   # - debuginfod: auto-download symbols from CachyOS debuginfod server
   home.packages = [ pkgs.gdb ];
 
-  xdg.configFile."gdb/gdbinit".text = ''
+  home.file.".gdbinit".text = ''
     # Allow auto-loading debug helper scripts from any path (Nix store)
     set auto-load safe-path /
 

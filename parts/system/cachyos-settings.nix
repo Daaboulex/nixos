@@ -17,6 +17,7 @@
         let isGpu = builtins.elem name gpuToggles;
         in lib.mkEnableOption "CachyOS ${name}" // lib.optionalAttrs (!isGpu) { default = true; };
     in {
+      _class = "nixos";
       # ==================================================================
       # Options — myModules wrapper + extraPerformance (not upstream)
       # ==================================================================

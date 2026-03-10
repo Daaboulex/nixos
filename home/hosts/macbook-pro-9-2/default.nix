@@ -11,23 +11,29 @@
     email = "39669593+Daaboulex@users.noreply.github.com";
   };
 
-  # Enable standard tools
+  # ============================================================================
+  # Home Manager Module Toggles
+  # ============================================================================
+  # All HM modules auto-discover from home/modules/. These control per-host overrides.
+
+  # Development & editors
   programs.btop.enable = true;
-  programs.htop.enable = true;     # Lightweight alternative for old hardware
+  programs.htop.enable = true;        # Lightweight alternative for 2C/4T hardware
   programs.vscode.enable = true;
+  programs.kate.enable = true;        # KDE text editor
+  programs.konsole.enable = true;     # KDE terminal
+  programs.okular.enable = true;      # PDF viewer
+  programs.ghostwriter.enable = false; # Markdown editor — not using
+  programs.elisa.enable = false;      # KDE music player — not using (Spotify via Flatpak)
 
   # Audio
-  services.easyeffects.enable = false;
+  services.easyeffects.enable = false; # No audio processing needed
 
   # ============================================================================
   # Host-Specific KDE/Plasma Settings
   # ============================================================================
 
-  # Night light location (Berlin)
-  programs.plasma.kwin.nightLight.location = {
-    latitude = "52.52";
-    longitude = "13.405";
-  };
+  # Night light: uses module default (Berlin) — override here if laptop moves
 
   # Laptop power management — suspend on lid close, battery profile
   programs.plasma.powerdevil = {
@@ -35,33 +41,33 @@
       autoSuspend.action = "nothing";
       dimDisplay = {
         enable = true;
-        idleTimeout = 300;
+        idleTimeout = 300;              # Dim after 5 min on AC
       };
-      turnOffDisplay.idleTimeout = 600;
+      turnOffDisplay.idleTimeout = 600; # Turn off after 10 min
       powerProfile = "balanced";
     };
     battery = {
       autoSuspend = {
         action = "sleep";
-        idleTimeout = 600;            # Suspend after 10 min on battery
+        idleTimeout = 600;              # Suspend after 10 min on battery
       };
       dimDisplay = {
         enable = true;
-        idleTimeout = 120;            # Dim after 2 min on battery
+        idleTimeout = 120;              # Dim after 2 min on battery
       };
-      turnOffDisplay.idleTimeout = 300;
+      turnOffDisplay.idleTimeout = 300; # Turn off after 5 min
       powerProfile = "powerSaving";
     };
     lowBattery = {
       autoSuspend = {
         action = "sleep";
-        idleTimeout = 300;            # Suspend after 5 min on low battery
+        idleTimeout = 300;              # Suspend after 5 min on low battery
       };
       dimDisplay = {
         enable = true;
-        idleTimeout = 30;
+        idleTimeout = 30;               # Dim after 30 sec
       };
-      turnOffDisplay.idleTimeout = 60;
+      turnOffDisplay.idleTimeout = 60;  # Turn off after 1 min
       powerProfile = "powerSaving";
     };
   };
@@ -94,13 +100,13 @@
     "io.github.flattool.Ignition"
     "io.github.giantpinkrobots.flatsweep"
     "io.github.ungoogled_software.ungoogled_chromium"
-    "io.gitlab.adhami3310.Impression"
+    "io.gitlab.adhami3310.Impression"  # USB image writer
     "io.gitlab.librewolf-community"
     "md.obsidian.Obsidian"
     "org.ardour.Ardour"
     "org.cryptomator.Cryptomator"
     "org.gimp.GIMP"
-    "org.pipewire.Helvum"
+    "org.pipewire.Helvum"              # PipeWire patchbay (useful for music production)
     "org.gnome.meld"
     "org.kde.kdenlive"
     "org.kicad.KiCad"

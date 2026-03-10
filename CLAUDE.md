@@ -17,6 +17,8 @@ This project follows a **dendritic architecture** — every concern branches int
 
 When adding or modifying anything in this repo, always aim for the most performant, most modular, and most correct approach. Prefer upstream NixOS options over raw config when available. Use `lib.mkDefault`, `lib.mkForce`, and option priorities correctly. Keep modules single-responsibility — if a module grows to cover two concerns, split it.
 
+**If a user prompt is ambiguous or unclear, always ask for clarification before proceeding.** Do not guess intent — wrong assumptions waste more time than a quick question. This applies especially to: which host a change targets, whether to add or remove something, and scope of refactors.
+
 ## Common Commands
 
 ### `nrb` — NixOS Rebuild Helper
@@ -29,16 +31,38 @@ nrb --update           # Update flake inputs + build + switch
 nrb --dry              # Build + show diff, don't activate
 nrb --boot             # Build + activate on next reboot
 nrb --trace            # Build with --show-trace (debugging)
+nrb --check            # Evaluate all configs without building (fast sanity check)
+nrb --host <name>      # Build a specific nixosConfiguration
+nrb --list             # Show all configurations + specialisations
 nrb --update --dry     # Update inputs + build + diff only
 ```
 
-Features: build timing, kernel change detection (warns if reboot needed), nvd system diff, Home Manager generation diff, generation number display, rollback hint. Build runs unprivileged (only profile set + activation use sudo).
+Related standalone functions:
+- `nrb-check` — same as `nrb --check` (evaluate all configs + specialisations)
+- `nrb-info` — show current system state, generations, active specialisation, store size, HM generation
+
+Features: build timing, kernel change detection (warns if reboot needed), nvd system diff, Home Manager generation diff, specialisation listing, generation number display, rollback hint, background docs regeneration. Build runs unprivileged (only profile set + activation use sudo).
 
 ### Other Commands
 
 ```bash
 # Update a specific flake input
 nix flake update <input-name>
+
+# Format all code
+nix fmt
+
+# Run all checks (formatting, linting, VM tests)
+nix flake check
+
+# Enter devShell with pre-commit hooks
+nix develop
+
+# Run a specific VM test
+nix build .#checks.x86_64-linux.vm-ssh --print-build-logs
+
+# Declarative disk partitioning (new installs)
+sudo nix run github:nix-community/disko -- --mode disko parts/hosts/<hostname>/disko.nix
 
 # Generate option documentation
 bash scripts/update-docs.sh
@@ -69,29 +93,35 @@ Configured in `home/modules/zsh/default.nix`:
 
 ### Flake Structure (flake-parts)
 
-`flake.nix` uses **flake-parts** (`hercules-ci/flake-parts`) to compose the system — not raw flake outputs. This gives structured `perSystem` scoping and modular imports. The top-level flake delegates to `parts/flake-module.nix` which imports all module definitions and host configurations. New modules, hosts, and overlays are added by extending the imports in `parts/flake-module.nix`, never by editing `flake.nix` outputs directly.
+`flake.nix` uses **flake-parts** (`hercules-ci/flake-parts`) to compose the system — not raw flake outputs. This gives structured `perSystem` scoping and modular imports. The top-level flake delegates to `parts/flake-module.nix` which imports all module definitions and host configurations. Beyond NixOS modules and hosts, `parts/flake-module.nix` also imports `treefmt.nix` (code formatting), `git-hooks.nix` (pre-commit hooks), and `tests.nix` (VM integration tests). New modules, hosts, and overlays are added by extending the imports in `parts/flake-module.nix`, never by editing `flake.nix` outputs directly.
 
 ### Module System
 
 All custom modules live under `parts/` and are exported as `nixosModules.<scope>-<name>`:
 
-- `parts/system/` — boot, kernel, nix daemon, users, security, filesystems, packages, services, ssh, sops, cachyos-settings
-- `parts/hardware/` — cpu (amd/intel), gpu (amd/intel/nvidia), graphics, audio, networking, bluetooth, performance, power, macbook, yeetmouse, goxlr, piper, streamcontroller
+- `parts/system/` — boot, kernel, nix daemon, users, security, filesystems, packages, services, ssh, sops, impermanence, cachyos-settings
+- `parts/hardware/` — cpu (amd/intel), gpu (amd/intel/nvidia), graphics, audio, networking, bluetooth, performance, power, macbook, yeetmouse, goxlr, piper, streamcontroller, ducky-one-x-mini
 - `parts/desktop/` — kde, displays, flatpak
-- `parts/apps/` — gaming, tools, arkenfox, portmaster, tidalcycles, wine
+- `parts/apps/` — gaming, tools (sysdiag, iommu, development), arkenfox, portmaster, tidalcycles, wine
 
 Each module follows this pattern:
 ```nix
-{ config, lib, pkgs, ... }:
-let cfg = config.myModules.<scope>.<feature>;
-in {
-  options.myModules.<scope>.<feature> = {
-    enable = lib.mkEnableOption "...";
-    # feature-specific options
-  };
-  config = lib.mkIf cfg.enable { ... };
+{ inputs, ... }: {
+  flake.nixosModules.<scope>-<name> = { config, lib, pkgs, ... }:
+    let
+      cfg = config.myModules.<scope>.<feature>;
+    in {
+      _class = "nixos";
+      options.myModules.<scope>.<feature> = {
+        enable = lib.mkEnableOption "description without 'Enable' prefix";
+        # feature-specific options with lib.mkDefault defaults
+      };
+      config = lib.mkIf cfg.enable { ... };
+    };
 }
 ```
+
+Option naming: use `lib.mkEnableOption "Foo"` (not `"Enable Foo"` — mkEnableOption adds "Enable" automatically). Sub-options can be bare booleans (`lib.mkEnableOption "..."`) or `lib.mkOption` with `default = true` for opt-out categories (see `packages.nix`).
 
 ### Host Configuration
 
@@ -113,7 +143,7 @@ Home Manager is integrated as a NixOS module (not standalone).
 
 ### Overlays
 
-Eight external overlays are stacked in the host's `flake-module.nix` (cachyos-kernel, tidalcycles, antigravity, nx-save-sync, portmaster, occt-nix, claude-code, plus `self.overlays.default`). Custom overlays go in `parts/overlays.nix`.
+External overlays are stacked in the host's `flake-module.nix`. The ryzen host has ~12 overlays (cachyos-kernel, tidalcycles, antigravity, nx-save-sync, portmaster, occt-nix, claude-code, mesa-git, lsfg-vk, vkbasalt-overlay, plus `self.overlays.default`). The macbook has a smaller subset. Custom overlays go in `parts/overlays.nix`.
 
 ### External Package Repos
 
@@ -131,6 +161,53 @@ When modifying these packages, edit the files in `repos/<name>/`, commit and pus
 
 Secrets are managed with **sops-nix**. Encrypted secrets live in `secrets/secrets.yaml`. Age key at `/var/lib/sops-nix/key.txt`. Configured via `parts/system/sops.nix`.
 
+## Kernel, Scheduler & Power Stack
+
+### CachyOS Kernel (LTO)
+
+The project uses the **CachyOS kernel** from `chaotic-cx/nyx` flake input. Key properties:
+- **LTO (Link-Time Optimization)**: entire kernel compiled with Clang LTO for microarchitecture-specific codegen (Zen 5 / `x86-64-v4` for desktop, `x86-64-v2` for MacBook Ivy Bridge)
+- **BORE scheduler**: default CPU scheduler (Burst-Oriented Response Enhancer) — low-latency, burst-aware, good for desktop/gaming
+- **sched-ext support**: BPF-based scheduler overlay framework (allows `scx_lavd`, `scx_rusty`, etc.)
+- **Variants**: `cachyos` (standard), `cachyos-lto` (with LTO, what we use), `cachyos-sched-ext` (sched-ext focused). Set via `myModules.kernel.variant`
+- The CachyOS kernel input must NOT have its nixpkgs overridden — patch contexts are tied to specific kernel source versions
+
+### Scheduler Stack (5 Layers, No Conflicts)
+
+The system runs a multi-layer scheduling stack. Each layer operates at a different level:
+
+1. **amd_3d_vcache** (firmware) — Routes threads to CCD0 (V-Cache, 96MB L3) vs CCD1 based on `X3D_MODE` hint. Automatic, no kernel config needed.
+2. **amd_pstate** (CPPC driver) — Controls CPU frequency scaling via EPP (Energy Performance Preference). Mode: `active`. Governor: `powersave` (correct — firmware handles dynamic boost, CPU still reaches max clocks under load).
+3. **BORE** (kernel scheduler) — CachyOS default. Handles runqueue decisions, burst detection, latency optimization. Always active as the base scheduler.
+4. **scx_lavd** (BPF overlay) — sched-ext scheduler that overlays BORE with latency-aware virtual deadline scheduling. Has its own autopilot power mode. Optional layer.
+5. **ananicy-cpp** (userspace) — CachyOS process prioritization rules. Sets nice/ionice/cgroup per process. **Potential conflict with scx_lavd** — CachyOS wiki warns ananicy can amplify priority gaps and trigger scx watchdog timeouts.
+
+### Governor & Power Configuration
+
+- **`powersave` governor is correct** for `amd_pstate active` mode on Zen 5. Despite the name, it allows full boost clocks — the firmware (CPPC) handles dynamic scaling based on EPP hints. `performance` governor wastes 20-40W at idle by pinning all cores to max frequency.
+- **Governor is set in ONE place**: `parts/hardware/performance.nix` via `powerManagement.cpuFreqGovernor = lib.mkDefault cfg.governor`. The `power.nix` module does NOT set governor (removed to avoid priority conflicts where `mkIf` at normal priority silently overrode `mkDefault`).
+- **CachyOS settings module** (`cachyos-settings-nix`) controls sysctls only: `vm.swappiness` (150 with ZRAM), dirty byte limits, `vfs_cache_pressure`, IO schedulers (mq-deadline/kyber), THP, BBR/CAKE networking. It does **not** set governor or CPU scheduler — no conflict with the stack above.
+
+### GameMode Integration (9950X3D)
+
+GameMode (`gamemoderun`) interacts with the scheduler/power stack when a game starts:
+- **Governor**: switches `powersave` → `performance` (EPP hint change on amd_pstate active — modest, dynamic scaling still works)
+- **X3D cache mode**: dynamically shifts game to V-Cache CCD (`cache` mode), other processes to high-clock CCD (`frequency` mode) — the single most impactful optimization for dual-CCD X3D
+- **Core pinning**: pins game processes to V-Cache CCD cores (auto-detected)
+- **GPU**: sets `power_dpm_force_performance_level = high` on AMDGPU (forces max clocks)
+- **Renice/ioprio**: **DISABLED** — conflicts with ananicy-cpp which manages priorities globally. Both fighting over nice/ionice values causes unpredictable behavior.
+- **Split lock**: disables split-lock mitigation (helps some games)
+- **Does NOT touch**: IO schedulers, sysctls, THP, scx_lavd, BORE scheduler, CachyOS settings
+
+### Remote Deployment
+
+Building for the MacBook from the desktop over SSH. Common approaches:
+- **`nixos-rebuild --target-host`**: simplest but fragile — requires root SSH or `trusted-users` + signing keys on remote, and `nixos-rebuild-ng` on unstable has regressions
+- **Manual `nix build` + `nix copy` + remote activate**: most reliable. Build locally, copy closure via SSH, activate on remote
+- **`deploy-rs`**: Rust tool with automatic rollback on failed activation
+
+See `/deploy` skill for the configured workflow.
+
 ## Key Conventions
 
 - **Dendritic modularity**: every feature gets its own module file with `myModules.*` options. Never add NixOS config without gating it behind a `myModules` enable flag. If a module touches two unrelated concerns, split it into two modules.
@@ -142,7 +219,7 @@ Secrets are managed with **sops-nix**. Encrypted secrets live in `secrets/secret
 - `allowUnfree = true` is set globally
 - System targets `x86_64-linux` only
 - **Documentation maintenance**: every code change must update ALL affected documentation. Specifically:
-  - **`docs/OPTIONS.md`**: regenerate via `bash scripts/update-docs.sh` when adding/modifying module options or new modules. Every option must have a `description` string.
+  - **`docs/OPTIONS.md`**: regenerate via `bash scripts/update-docs.sh` when adding/modifying module options or new modules. Every option must have a `description` string. Note that VM tests and treefmt checks also appear in `nix flake check` output.
   - **`README.md`**: update module reference tables when module structure changes (new modules, renamed modules, new categories). Update option counts, overlay tables, and feature descriptions when capabilities change.
   - **`docs/installation.md`**: update when changing the install script, partition layout, post-install steps, or host configurations.
   - **`docs/secure-boot.md`**: update when changing Lanzaboote, sbctl, or Secure Boot configuration.
@@ -150,104 +227,53 @@ Secrets are managed with **sops-nix**. Encrypted secrets live in `secrets/secret
   - **`scripts/install-btrfs.sh`**: update post-install hints and safety messages when changing user management, passwd defaults, or filesystem options.
   - **`scripts/test-shell-functions.sh`**: run after changes to zsh functions, nrb flags, or documentation to validate — the test script auto-extracts flags and functions from the zsh source so it stays in sync automatically.
   - **General rule**: if you change behavior, update every doc that references that behavior. When in doubt, grep the `docs/`, `scripts/`, `README.md`, and `CLAUDE.md` for related keywords.
+- **Module class annotation**: every `nixosModule` includes `_class = "nixos"` as the first attribute, preventing accidental import into wrong evaluation contexts (Home Manager, etc.).
+- **`types.lazyAttrsOf`**: use `lib.types.lazyAttrsOf` instead of `lib.types.attrsOf` for attrs-of-submodule options (defers evaluation, avoids infinite recursion).
+- **`withSystem` for per-system access**: use `{ inputs, withSystem, ... }:` in flake-parts modules that need per-system input packages (see `parts/apps/gaming.nix` for the pattern).
+- **treefmt formatting**: run `nix fmt` before committing. Formatters: nixfmt, deadnix, statix, shfmt, shellcheck.
+- **Disko disk layouts**: each host has a `disko.nix` alongside `hardware-configuration.nix`. For new installs, use disko instead of `scripts/install-btrfs.sh`.
+- **Impermanence**: opt-in module at `parts/system/impermanence.nix`. Phase 1 = system-only (wipes `/`, keeps `/home`). Requires `@persist` + `@root-blank` subvolumes. See module header for setup steps. User must explicitly enable after creating subvolumes.
+- **VM tests**: add integration tests for new modules in `parts/tests.nix` using `pkgs.nixosTest`. Tests run headless in VMs and verify services start correctly.
+- **Claude Code slash commands**: 21 custom skills in `.claude/commands/`. When adding new workflows or capabilities, create a matching slash command. When modifying existing workflows, update the corresponding command file. Full list:
+  - **Build & Deploy**: `/build`, `/deploy`, `/rollback`, `/diff`, `/info`, `/gc`
+  - **Code Quality**: `/check`, `/fmt`, `/test`, `/audit`, `/security-audit`
+  - **Module Management**: `/add-module`, `/search-option`, `/option-coverage`
+  - **Documentation**: `/update-docs`, `/profile-readme`
+  - **Infrastructure**: `/update-input`, `/repos`, `/compare-hosts`, `/new-host`, `/impermanence`
 - **No hardcoded values in generic modules**: usernames, paths, hardware IDs, and host-specific settings must be options with `lib.mkDefault` or set in host configs. Gate vendor-specific config behind `(config.myModules.hardware.*.enable or false)`.
+- **Current option paths** (canonical reference — update this when paths change):
+  - `myModules.system.{boot,kernel,nix,users,security,filesystems,packages,services,ssh,sops,impermanence}` — packages has `enable` gate + sub-options (`base`, `dev`, `media`, `mobile`, `editors`, `hardware`, `diagnostics`, `monitoring` default `true`; `benchmarking` defaults `false`)
+  - `myModules.hardware.{core,cpu.amd,cpu.intel,gpu.amd,gpu.intel,gpu.nvidia,graphics,audio,networking,bluetooth,performance,power,macbook,yeetmouse,goxlr,piper,streamcontroller,duckyOneXMini}`
+  - `myModules.desktop.{kde,displays,flatpak}`
+  - `myModules.gaming.{enable,eden,nxSaveSync,...}` — uses `withSystem` for per-system inputs
+  - `myModules.development.{enable,claudeCode,saleae}` — NOT `development.tools`
+  - `myModules.tools.{sysdiag,iommu}` — bare booleans, NOT `.enable` nested
+  - `myModules.programs.{arkenfox,portmaster,tidalcycles,wine}`
+  - `myModules.cachyos.settings`, `myModules.kernel.*`, `myModules.primaryUser`
 
-## Dual-Model Protocol: Claude + Gemini CLI
+### AI Agent & Versioning Best Practices
 
-Claude is the primary architect and pair programmer. The **Gemini CLI** (`gemini`) serves as a high-capacity analytical engine (1M token context window) for large-scale codebase operations.
+- **Always verify builds**: after any module change, run `nix eval .#nixosConfigurations.<hostname>.config.myModules.<path>.enable` to validate before suggesting `nrb`.
+- **Parallel research**: use the Agent tool with `subagent_type=Explore` for codebase searches and `subagent_type=general-purpose` with web access for ecosystem research. Launch independent agents in parallel.
+- **Commit discipline**: never auto-commit. Present changes to the user with `git diff --stat`. Use descriptive commit messages focused on "why" not "what".
+- **Slash commands first**: before starting a task manually, check if a matching `/command` exists in `.claude/commands/`. Use skills for standardized workflows.
+- **Skills maintenance**: when adding a new workflow or changing an existing one, always create or update the corresponding `.claude/commands/*.md` file. Skills are the canonical reference for how tasks are performed. **Proactively create new skills** when you notice a repeatable workflow that doesn't have one — don't wait to be asked. Skills prevent knowledge loss across sessions better than memory alone.
+- **Memory updates**: after discovering important patterns, debugging insights, or user preferences, update `/home/user/.claude/projects/-home-user-Documents-nix/memory/MEMORY.md`. Check existing entries before adding to avoid duplicates.
+- **Documentation sync**: every code change must update all affected docs (CLAUDE.md, README.md, docs/OPTIONS.md via `scripts/update-docs.sh`). Run `/update-docs` after structural changes.
+- **Safe exploration**: use `nix eval` and `nix flake check --no-build` for validation, not full builds. Reserve `nrb` for when the user explicitly wants to switch.
+- **External repos**: packages in `repos/` are separate git repositories. Edit there, push, then `nix flake update <input>` in the main flake. Never commit `repos/` contents into the main repo.
 
-### When to Delegate to Gemini CLI
+### Home Manager & KDE Module Change Protocol
 
-Claude must delegate primary analysis to `gemini` when:
+When modifying any file under `home/modules/` or `home/hosts/`, follow this checklist:
 
-- **Large files**: any single file exceeds ~300 lines (check with `wc -l`)
-- **High context volume**: total target files for a request exceed ~100KB
-- **Bulk refactors**: task affects 5+ files simultaneously
-- **Initial mapping**: first exploration of a directory structure >50k lines
+1. **Generic vs host-specific**: settings that differ per machine (panel height, launchers, display layout) go in `home/hosts/<hostname>/default.nix` using `lib.mkForce` or plain values. Generic modules use `lib.mkDefault`.
+2. **Plasma panel rules**:
+   - Panel properties (height, floating, location) are set in the panel config AND enforced at login by a `desktopScript` (`fix-floating`, `runAlways = true`).
+   - The `cleanPanelViews` activation hook only runs when plasmashell is NOT active (guarded by `pgrep`). Never modify `plasmashellrc` while plasmashell is running — it causes SIGSEGV crashes.
+   - Panel hash files (`last_run_desktop_script_panels`) are deleted on activation to force panel recreation at next login.
+   - After panel changes, verify with: `qdbus org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript 'panels().forEach(function(p){print("floating=" + p.floating + " height=" + p.height)})'`
+3. **Activation hooks**: use `lib.hm.dag.entryBefore [ "reloadSystemd" ]`. Be aware these run during `nrb` while the desktop may be active.
+4. **KWin scripts**: packaged inline in the plasma module `let` block. Update `rev` + set `sha256 = ""` + rebuild for new hash.
+5. **After changes**: run `bash scripts/update-docs.sh` if module options changed. Update `README.md` module tables if structure changed.
 
-### Gemini CLI Reference
-
-**Invocation modes:**
-```bash
-# Interactive session (REPL) — use @ inside prompts for file injection
-gemini
-
-# Headless / non-interactive — use -p flag
-gemini -p "Explain the boot module" @parts/system/boot.nix
-
-# Pipe input
-cat parts/system/kernel.nix | gemini -p "Review this kernel config"
-```
-
-**File/directory ingestion with `@` (recursive, respects .gitignore):**
-```bash
-# In any prompt (interactive or -p), prefix paths with @
-gemini -p "Summarize the architecture" @parts/
-gemini -p "Review these changes" @parts/system/ @parts/hardware/
-```
-
-**Model selection with `-m`:**
-```bash
-gemini -m gemini-3-pro-preview -p "Deep audit" @parts/       # Pro: deep reasoning
-gemini -m gemini-3-flash-preview -p "Quick check" @home/      # Flash: fast/frequent
-```
-
-**Approval and sandbox modes:**
-```bash
-gemini --yolo -p "Format all nix files" @parts/               # Auto-approve all tool calls (sandboxed)
-gemini --sandbox -p "Refactor modules" @parts/                 # Sandbox without auto-approve
-gemini --checkpointing -p "Reorganize" @parts/                 # Snapshot before file edits (/restore to undo)
-```
-
-**Structured output for scripting:**
-```bash
-gemini -p "List all myModules options" @parts/ --output-format json
-gemini -p "Audit modules" @parts/ --output-format stream-json  # Real-time streaming
-```
-
-**Key interactive slash commands:**
-- `/compress` — summarize context to save tokens
-- `/chat save <tag>` / `/chat resume <tag>` — checkpoint conversations
-- `/restore` — undo file edits made by tools
-- `/stats` — show token usage
-- `/memory add <text>` — persist notes across sessions
-- `!<cmd>` — run shell command; `!` alone toggles persistent shell mode
-
-### Rate Limit Handling
-
-Free tier: 60 requests/min, 1,000 requests/day.
-
-| Error Type | Detection | Action |
-|---|---|---|
-| Burst limit | `PerMinute` or `retryDelay < 5m` | Wait specified time and retry silently |
-| Daily limit | `RESOURCE_EXHAUSTED` or `PerDay` | Fallback: `gemini -m gemini-3-flash-preview` |
-| Terminal | All tiers hit daily limit | Stop and report to user |
-
-```bash
-# Auto-fallback from Pro to Flash on failure
-gemini -m gemini-3-pro-preview -p "Audit @parts/" || gemini -m gemini-3-flash-preview -p "Audit @parts/"
-```
-
-### Useful Delegation Patterns for This Repo
-
-```bash
-# Security review
-gemini -p "Perform a security review" @parts/system/ssh.nix @parts/system/security.nix
-
-# Consistency check: host config vs module option definitions
-gemini -p "Verify all myModules.* options used in default.nix are defined" @parts/hosts/ryzen-9950x3d/default.nix @parts/
-
-# Audit option coverage
-gemini -p "List any myModules options that are defined but never enabled" @parts/
-
-# Heavy output — redirect then have Claude read only the summary
-gemini -p "Full audit of module structure" @parts/ > .gemini_audit_tmp.txt
-```
-
-### Configuration & Context Management
-
-- **GEMINI.md**: Gemini CLI reads `GEMINI.md` from project root (and subdirectories hierarchically). Mirror key conventions from `CLAUDE.md` into `GEMINI.md` for consistency.
-- **Settings**: project-level config in `.gemini/settings.json`, user-level in `~/.gemini/settings.json`
-- **`.geminiignore`**: exclude files from context (like `.gitignore` syntax)
-- Redirect heavy Gemini output to a temp file and have Claude read only the summary to preserve context
-- After a major Gemini-assisted analysis, consider `/clear` in Claude to reclaim context

@@ -2,10 +2,10 @@
   flake.nixosConfigurations.macbook-pro-9-2 = inputs.nixpkgs.lib.nixosSystem {
     specialArgs = { inherit inputs; };
     modules = [
-      # Host Specific Config
+      # Host config
       ./default.nix
 
-      # Dendritic Parts Modules
+      # Dendritic modules
       ({ config, ... }: {
         imports = [
           # System
@@ -14,6 +14,12 @@
           inputs.self.nixosModules.system-nix
           inputs.self.nixosModules.system-users
           inputs.self.nixosModules.system-security
+          inputs.self.nixosModules.system-filesystems
+          inputs.self.nixosModules.system-ssh
+          inputs.self.nixosModules.system-sops
+          inputs.self.nixosModules.system-impermanence
+          inputs.self.nixosModules.system-services
+          inputs.self.nixosModules.system-packages
 
           # Hardware (Intel — no AMD modules)
           inputs.self.nixosModules.hardware-core
@@ -27,53 +33,54 @@
           inputs.self.nixosModules.hardware-performance
           inputs.self.nixosModules.hardware-power
 
-          # Desktop & Apps
+          # Desktop
           inputs.self.nixosModules.desktop-kde
           inputs.self.nixosModules.desktop-displays
           inputs.self.nixosModules.desktop-flatpak
 
-          inputs.self.nixosModules.system-filesystems
-          inputs.self.nixosModules.system-ssh
-          inputs.self.nixosModules.system-sops
-          inputs.self.nixosModules.system-services
-
+          # Apps
           inputs.self.nixosModules.apps-arkenfox
-          inputs.portmaster.nixosModules.default
           inputs.self.nixosModules.apps-portmaster
           inputs.self.nixosModules.apps-tidalcycles
           inputs.self.nixosModules.apps-wine
+          inputs.self.nixosModules.apps-development
+
+          # Tools
           inputs.self.nixosModules.tools-sysdiag
           inputs.self.nixosModules.tools-iommu
 
-          inputs.self.nixosModules.apps-development
-
-          inputs.self.nixosModules.system-packages
-          inputs.cachyos-settings-nix.nixosModules.default
+          # CachyOS settings
           inputs.self.nixosModules.cachyos-settings
+
+          # External modules
+          inputs.portmaster.nixosModules.default
+          inputs.cachyos-settings-nix.nixosModules.default
+          inputs.impermanence.nixosModules.impermanence
         ];
       })
 
-      # Home Manager (auto-discovers host via hostname)
+      # Home Manager
       ../../../home/home.nix
-
-      # External Modules
-      inputs.nix-flatpak.nixosModules.nix-flatpak
       inputs.home-manager.nixosModules.home-manager
-      inputs.lanzaboote.nixosModules.lanzaboote
-      inputs.sops-nix.nixosModules.sops
-
-      # Home Manager Configuration
       {
         home-manager.useGlobalPkgs = true;
         home-manager.useUserPackages = true;
         home-manager.extraSpecialArgs = { inherit inputs; };
       }
 
+      # External modules
+      inputs.nix-flatpak.nixosModules.nix-flatpak
+      inputs.lanzaboote.nixosModules.lanzaboote
+      inputs.sops-nix.nixosModules.sops
+      # Disko: declarative disk layout for new installations
+      # Import disko module for `disko` CLI availability; the disk layout in
+      # disko.nix is only used at install time (not imported here to avoid
+      # conflicting fileSystems definitions with hardware-configuration.nix).
+      inputs.disko.nixosModules.disko
+
       # Overlays
-      # CachyOS kernel overlay is included unconditionally — it only exposes
-      # packages in pkgs.cachyosKernels.*, which are unused unless
-      # kernel.variant = "cachyos". This allows specialisations to switch
-      # kernel variants without needing a different pkgs fixpoint.
+      # CachyOS kernel overlay included unconditionally — exposes pkgs.cachyosKernels.*
+      # for specialisations to switch kernel variants without a different pkgs fixpoint
       {
         nixpkgs.hostPlatform = "x86_64-linux";
         nixpkgs.config.allowUnfree = true;
@@ -87,17 +94,12 @@
         ];
       }
 
-      # ================================================================
-      # Kernel Variant Specialisations
-      # ================================================================
-      # Each specialisation creates a separate boot entry in systemd-boot.
-      # One `nrb` builds all 3 variants — if the active kernel breaks,
-      # select another variant from the boot menu.
-      # ================================================================
+      # Kernel variant specialisations
+      # Each creates a separate boot entry in systemd-boot.
+      # One `nrb` builds all 3 variants — select another from boot menu if active breaks.
       {
         specialisation = {
           # Xanmod: optimized kernel (better latency, newer patches)
-          # applesmc/at24 patches not needed — xanmod includes upstream fixes
           xanmod.configuration = {
             system.nixos.tags = [ "xanmod" ];
             myModules.kernel.variant = "xanmod";
@@ -105,7 +107,6 @@
           };
 
           # CachyOS: full CachyOS kernel + optimizations
-          # Patches disabled for first build to test if CachyOS already includes fixes
           cachyos.configuration = {
             system.nixos.tags = [ "cachyos" ];
             myModules.kernel.variant = "cachyos";

@@ -2,30 +2,44 @@
 
 {
   # ============================================================================
-  # Kate (Text Editor)
+  # Kate (Text Editor) — native plasma-manager options where available
   # ============================================================================
   programs.kate = {
     enable = true;
-    # package = pkgs.kdePackages.kate;
-    # editor = {
-    #   font = {
-    #     family = "JetBrainsMono Nerd Font";
-    #     pointSize = 11;
-    #   };
-    #   indent = {
-    #     width = 2;
-    #     replaceWithSpaces = true;
-    #     showLines = true;
-    #   };
-    #   tabWidth = 2;
-    #   inputMode = "normal";  # or "vi"
-    #   brackets = {
-    #     automaticallyAddClosing = true;
-    #     highlightMatching = true;
-    #   };
-    # };
-    # lsp.customServers = null;
-    # dap.customServers = null;
+
+    editor = {
+      tabWidth = lib.mkDefault 4;
+
+      indent = {
+        width = lib.mkDefault 4;
+        autodetect = lib.mkDefault true;
+        keepExtraSpaces = lib.mkDefault false;
+        replaceWithSpaces = lib.mkDefault false;
+        showLines = lib.mkDefault true;
+      };
+
+      font = {
+        family = lib.mkDefault "Hack";
+        pointSize = lib.mkDefault 10;
+      };
+
+      inputMode = lib.mkDefault "normal";
+
+      brackets = {
+        automaticallyAddClosing = lib.mkDefault false;
+        highlightMatching = lib.mkDefault true;
+        flashMatching = lib.mkDefault false;
+        characters = lib.mkDefault "<>(){}[]'\"`";
+      };
+    };
+
+    # LSP server for Nix (nil)
+    lsp.customServers = lib.mkDefault {
+      nix = {
+        command = [ "nil" ];
+        highlightingModeRegex = "^Nix$";
+      };
+    };
   };
 
   # ============================================================================
@@ -42,28 +56,6 @@
       "Show Url Nav Bar" = lib.mkDefault true;
     };
 
-    "katerc"."KTextEditor Document" = {
-      "Auto Detect Indent" = lib.mkDefault true;
-      "Indentation Width" = lib.mkDefault 4;
-      "Keep Extra Spaces" = lib.mkDefault false;
-      ReplaceTabsDyn = lib.mkDefault false;
-      "Tab Handling" = lib.mkDefault 2;
-      "Tab Width" = lib.mkDefault 4;
-    };
-
-    "katerc"."KTextEditor Renderer" = {
-      "Animate Bracket Matching" = lib.mkDefault false;
-      "Show Indentation Lines" = lib.mkDefault true;
-      "Text Font" = lib.mkDefault "Hack,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1";
-    };
-
-    "katerc"."KTextEditor View" = {
-      "Auto Brackets" = lib.mkDefault false;
-      "Bracket Match Preview" = lib.mkDefault false;
-      "Chars To Enclose Selection" = lib.mkDefault "<>(){}[]'\"\`";
-      "Input Mode" = lib.mkDefault 0;
-    };
-
     "katerc"."filetree" = {
       listMode = lib.mkDefault false;
       middleClickToClose = lib.mkDefault false;
@@ -75,7 +67,6 @@
     };
 
     "katerc"."lspclient" = {
-      AllowedServerCommandLines = lib.mkDefault "/run/current-system/sw/bin/nil";
       AutoHover = lib.mkDefault true;
       AutoImport = lib.mkDefault true;
       CompletionDocumentation = lib.mkDefault true;

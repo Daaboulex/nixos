@@ -4,6 +4,7 @@
       cfg = config.myModules.system.boot;
       hostName = config.networking.hostName;
     in {
+      _class = "nixos";
       options.myModules.system.boot = {
         enable = lib.mkEnableOption "Boot configuration";
 
@@ -36,23 +37,18 @@
           default = "max";
           description = "Console resolution mode (max, keep, or specific like 1920x1080)";
         };
-        
+
         initrd = {
           enable = lib.mkOption {
             type = lib.types.bool;
             default = true;
-            description = "Enable systemd initrd and early KMS for Plymouth";
+            description = "Systemd initrd for Plymouth";
           };
         };
       };
 
       config = lib.mkIf cfg.enable {
-        # Initrd Configuration
         boot.initrd.systemd.enable = cfg.initrd.enable;
-        
-        # Early KMS: Force load graphics drivers in initrd for Plymouth
-        # Handled by hardware.graphics.<vendor>.initrd.enable now
-        boot.initrd.kernelModules = lib.optionals cfg.initrd.enable [ ];
 
         # Systemd-boot
         boot.loader.systemd-boot.enable = lib.mkIf (cfg.loader == "systemd-boot" && !cfg.secureBoot.enable) true;
@@ -66,7 +62,7 @@
         # Secure Boot (Lanzaboote)
         boot.lanzaboote.enable = lib.mkIf cfg.secureBoot.enable true;
         boot.lanzaboote.pkiBundle = lib.mkIf cfg.secureBoot.enable cfg.secureBoot.pkiBundle;
-        
+
         # Plymouth
         boot.plymouth.enable = lib.mkIf cfg.plymouth.enable true;
         boot.plymouth.theme = lib.mkIf cfg.plymouth.enable cfg.plymouth.theme;

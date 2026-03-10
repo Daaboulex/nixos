@@ -8,6 +8,7 @@ Modular NixOS flake configuration built on [flake-parts](https://github.com/herc
 - **Bleeding-edge** — tracks `nixos-unstable`, CachyOS kernels with LTO, and latest upstream flake inputs.
 - **Performance-first** — microarchitecture-specific compilation, BORE scheduler, ananicy-cpp, sysctl tuning, THP, hardware-specific governors.
 - **Best practices** — flake-parts composition, sops-nix secrets, Lanzaboote Secure Boot, hardened SSH, proper NixOS module patterns.
+- **Reproducible state** — opt-in impermanence erases root on every boot; only explicitly declared system state survives.
 
 ## Quick Start
 
@@ -57,6 +58,9 @@ flake.nix                              # Entry point — delegates to parts/
 parts/
 ├── flake-module.nix                   # Central import hub for all modules + hosts
 ├── overlays.nix                       # Custom package overlays
+├── treefmt.nix                        # Unified code formatting (nixfmt, shfmt, etc.)
+├── git-hooks.nix                      # Pre-commit hooks (formatting, linting)
+├── tests.nix                          # NixOS VM integration tests
 ├── system/                            # System-level NixOS modules
 │   ├── boot.nix                       # Bootloader, Secure Boot (Lanzaboote), Plymouth
 │   ├── kernel.nix                     # Kernel variant selection + CachyOS tuning
@@ -68,6 +72,7 @@ parts/
 │   ├── services.nix                   # System services (CUPS, fstrim, earlyoom, etc.)
 │   ├── packages.nix                   # System-wide packages by category
 │   ├── filesystems.nix                # Filesystem support (Linux, Windows, Mac, etc.)
+│   ├── impermanence.nix              # Opt-in ephemeral root (BTRFS rollback)
 │   └── cachyos-settings.nix           # CachyOS system tuning (journald, sysctl, THP)
 ├── hardware/                          # Hardware-specific modules
 │   ├── core.nix                       # Firmware, fwupd, common sensors
@@ -109,11 +114,13 @@ parts/
     ├── ryzen-9950x3d/                 # Desktop host (Zen 5, RDNA 4, CachyOS-LTO)
     │   ├── flake-module.nix           # nixosConfiguration + module imports + overlays
     │   ├── default.nix                # Host-specific myModules.* option values
-    │   └── hardware-configuration.nix # Auto-generated (BTRFS + LUKS layout)
+    │   ├── hardware-configuration.nix # Auto-generated (BTRFS + LUKS layout)
+    │   └── disko.nix                  # Declarative disk partitioning layout
     └── macbook-pro-9-2/               # Laptop host (Ivy Bridge, Intel HD4000)
         ├── flake-module.nix           # Single config + xanmod/cachyos specialisations
         ├── default.nix                # MacBook-specific tuning + hardware fixes
-        └── hardware-configuration.nix # Auto-generated
+        ├── hardware-configuration.nix # Auto-generated
+        └── disko.nix                  # Declarative disk partitioning layout
 home/
 ├── home.nix                           # Home Manager entry point (auto-discovers modules)
 ├── modules/                           # Home Manager modules (auto-discovered)
@@ -152,6 +159,7 @@ docs/
 └── secure-boot.md                     # Secure Boot setup & recovery guide
 secrets/
 └── secrets.yaml                       # Encrypted secrets (sops-nix)
+.claude/commands/                      # Claude Code slash commands (build, check, fmt, etc.)
 ```
 
 ### Module System
@@ -163,6 +171,7 @@ Every custom NixOS module follows this pattern:
   flake.nixosModules.<scope>-<name> = { config, lib, pkgs, ... }:
     let cfg = config.myModules.<scope>.<feature>;
     in {
+      _class = "nixos";
       options.myModules.<scope>.<feature> = {
         enable = lib.mkEnableOption "Feature description";
         # feature-specific options with lib.mkOption
@@ -347,6 +356,7 @@ Options: `myModules.gaming.*` — see [docs/OPTIONS.md](docs/OPTIONS.md) for all
 | `system-services` | `myModules.system.services` | CUPS, fstrim, earlyoom, ACPI, UPower, GeoClue |
 | `system-packages` | `myModules.system.packages` | System packages by category |
 | `system-filesystems` | `myModules.system.filesystems` | Filesystem kernel modules + userspace tools |
+| `system-impermanence` | `myModules.system.impermanence` | Opt-in ephemeral root (BTRFS rollback, persist declarations) |
 | `cachyos-settings` | `myModules.cachyos.settings` | CachyOS sysctl tuning, journald, THP |
 
 ### Hardware Modules
@@ -386,9 +396,9 @@ Options: `myModules.gaming.*` — see [docs/OPTIONS.md](docs/OPTIONS.md) for all
 | `apps-gaming` | `myModules.gaming` | Steam, Proton, GameMode, vkBasalt overlay, MangoHud/MangoJuice, emulators, RADV tuning |
 | `apps-wine` | `myModules.programs.wine` | Wine variants + Bottles |
 | `tools-sysdiag` | `myModules.tools.sysdiag` | Comprehensive NixOS system diagnostics |
-| `tools-iommu` | `myModules.tools.listIommuGroups` | IOMMU group listing |
+| `tools-iommu` | `myModules.tools.iommu` | IOMMU group listing |
 
-| `apps-development` | `myModules.development.tools` | Dev packages, Claude Code, helper scripts |
+| `apps-development` | `myModules.development` | Build tools, Claude Code, Saleae Logic |
 | `apps-arkenfox` | `myModules.security.arkenfox` | Arkenfox auto-download + Flatpak Firefox support |
 | `apps-portmaster` | `myModules.security.portmaster` | Portmaster firewall + system tray notifier |
 | `apps-tidalcycles` | `myModules.music.tidalcycles` | TidalCycles live coding + SuperDirt |
@@ -460,6 +470,18 @@ Safety features:
 Creates: GPT + 512M ESP + optional swap + BTRFS with subvolumes (@, @home, @nix, @log, @cache, @tmp, @snapshots). SSD auto-detection adds `ssd,discard=async` mount options.
 
 For a complete walkthrough including WiFi setup, post-install configuration, troubleshooting, and partition layout diagrams, see [docs/installation.md](docs/installation.md).
+
+### Declarative Install with Disko
+
+Each host includes a `disko.nix` declarative disk layout that mirrors the BTRFS + LUKS subvolume structure. For new installations:
+
+```bash
+# From a NixOS live USB with flakes enabled
+sudo nix run github:nix-community/disko -- --mode disko parts/hosts/<hostname>/disko.nix
+sudo nixos-install --flake .#<hostname>
+```
+
+Disko manages the NixOS root disk (ESP + LUKS + BTRFS subvolumes). Additional data drives (NTFS, ext4) remain in `hardware-configuration.nix`.
 
 ### Manual Install
 
@@ -707,6 +729,7 @@ sudo sbctl enroll-keys --microsoft
      flake.nixosModules.<scope>-<name> = { config, lib, pkgs, ... }:
        let cfg = config.myModules.<scope>.<name>;
        in {
+         _class = "nixos";
          options.myModules.<scope>.<name> = {
            enable = lib.mkEnableOption "Description of the feature";
            # Add sub-options with lib.mkOption + description
@@ -735,6 +758,9 @@ sudo sbctl enroll-keys --microsoft
 - Keep modules single-responsibility — if it covers two concerns, split it
 - No hardcoded usernames, paths, or hardware identifiers in generic modules — use `config.myModules.primaryUser` for the username
 - Host-specific values (UUIDs, connectors, profile names, product IDs) belong in `parts/hosts/<hostname>/default.nix`
+- All modules include `_class = "nixos"` for type-safe module composition
+- Use `types.lazyAttrsOf` for attrs-of-submodule options
+- Use `withSystem` from flake-parts to access per-system inputs in NixOS modules
 
 ## Flake Inputs
 
@@ -759,6 +785,64 @@ sudo sbctl enroll-keys --microsoft
 | `claude-code` | Claude Code AI assistant |
 | `mesa-git-nix` | Bleeding-edge Mesa from git main |
 | `lsfg-vk` | Vulkan frame generation (Lossless Scaling) |
+| `vkbasalt-overlay` | vkBasalt Vulkan post-processing overlay |
+| `treefmt-nix` | Unified code formatting via flake-parts |
+| `git-hooks-nix` | Pre-commit hooks via flake-parts |
+| `disko` | Declarative disk partitioning |
+| `impermanence` | Opt-in state persistence for ephemeral root |
+
+## Development Tools
+
+### Code Quality (treefmt + git-hooks)
+
+The project uses [treefmt-nix](https://github.com/numtide/treefmt-nix) for unified formatting and [git-hooks.nix](https://github.com/cachix/git-hooks.nix) for pre-commit validation:
+
+```bash
+nix fmt                    # Format all files (nixfmt, shfmt, shellcheck, deadnix, statix)
+nix flake check            # Run all checks (formatting + VM tests)
+nix develop                # Enter devShell with pre-commit hooks auto-installed
+```
+
+Formatters: `nixfmt` (official Nix formatter), `deadnix` (unused binding removal), `statix` (anti-pattern detection), `shfmt` (shell formatting), `shellcheck` (shell linting).
+
+### NixOS VM Tests
+
+Integration tests verify key modules work correctly in isolated VMs:
+
+```bash
+nix build .#checks.x86_64-linux.vm-nix-settings   # Test nix daemon config
+nix build .#checks.x86_64-linux.vm-users           # Test user creation
+nix build .#checks.x86_64-linux.vm-ssh             # Test SSH hardening
+nix build .#checks.x86_64-linux.vm-networking      # Test NetworkManager
+```
+
+### Claude Code Skills
+
+Custom slash commands for common workflows (in `.claude/commands/`):
+
+| Command | Description |
+|---------|-------------|
+| `/build` | Run `nrb` with optional flags |
+| `/deploy` | Build locally and deploy to a remote host over SSH |
+| `/rollback` | Rollback to previous NixOS generation |
+| `/diff` | Show changes since last commit or between generations |
+| `/info` | System state, kernel, generations, store size |
+| `/gc` | Garbage collect and optimize Nix store |
+| `/check` | Run all flake checks (formatting, linting, VM tests) |
+| `/fmt` | Format all code with treefmt |
+| `/test` | Run NixOS VM integration tests |
+| `/audit` | Audit configuration for issues and best practices |
+| `/security-audit` | Security-focused audit (SSH, firewall, secrets) |
+| `/add-module` | Scaffold a new module following conventions |
+| `/new-host` | Scaffold a complete new host configuration |
+| `/search-option` | Search for myModules options |
+| `/option-coverage` | Analyze option usage across hosts |
+| `/compare-hosts` | Compare configurations between hosts |
+| `/update-input` | Update flake inputs and verify build |
+| `/update-docs` | Regenerate all documentation |
+| `/profile-readme` | Sync GitHub profile README with project stats |
+| `/repos` | Manage external package repositories |
+| `/impermanence` | Guide impermanence setup and migration |
 
 ## Secrets Management
 

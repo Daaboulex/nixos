@@ -3,11 +3,12 @@
     let
       cfg = config.myModules.hardware.performance;
     in {
+      _class = "nixos";
       options.myModules.hardware.performance = {
         enable = lib.mkEnableOption "Performance tuning and optimization";
         governor = lib.mkOption { type = lib.types.str; default = "powersave"; description = "CPU frequency governor"; };
-        ananicy = lib.mkOption { type = lib.types.bool; default = true; description = "Enable Ananicy"; };
-        irqbalance = lib.mkOption { type = lib.types.bool; default = true; description = "Enable IRQ balancing across CPU cores"; };
+        ananicy = lib.mkOption { type = lib.types.bool; default = true; description = "Ananicy-cpp process prioritization"; };
+        irqbalance = lib.mkOption { type = lib.types.bool; default = true; description = "IRQ balancing across CPU cores"; };
         scx = {
           enable = lib.mkEnableOption "Sched-ext (scx) userspace CPU schedulers";
           scheduler = lib.mkOption {
