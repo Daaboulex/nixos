@@ -670,11 +670,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1773326626,
-        "narHash": "sha256-KRAfRzTUv/3sLKKUfT8UhTxTDeKd60kEU03QwiH/NKM=",
+        "lastModified": 1773326695,
+        "narHash": "sha256-tRgMPcHJbPv5/T+Hqq8wUI7up7IFGbT3qMiOcQ4WE0s=",
         "owner": "daaboulex",
         "repo": "OCCT-nix",
-        "rev": "d0e17bb46043b40fdcc0908d6d45a006995841dc",
+        "rev": "fed9b443f19805f124f5cee556e153edf915dac3",
         "type": "github"
       },
       "original": {

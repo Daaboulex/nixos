@@ -1,8 +1,16 @@
-{ inputs, ... }: {
-  flake.nixosModules.hardware-gpu-amd = { config, lib, pkgs, ... }:
+{ inputs, ... }:
+{
+  flake.nixosModules.hardware-gpu-amd =
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
       cfg = config.myModules.hardware.graphics.amd;
-    in {
+    in
+    {
       _class = "nixos";
       options.myModules.hardware.graphics.amd = {
         enable = lib.mkEnableOption "AMD Graphics configuration";
@@ -100,15 +108,18 @@
           };
         };
 
-        # Force Vulkan device selection on dual-AMD systems (iGPU + dGPU)
-        environment.sessionVariables = lib.mkIf (cfg.vulkanDeviceId != null || cfg.vulkanDeviceName != null) (
-          lib.optionalAttrs (cfg.vulkanDeviceId != null) {
-            MESA_VK_DEVICE_SELECT = cfg.vulkanDeviceId;
-          } // lib.optionalAttrs (cfg.vulkanDeviceName != null) {
-            DXVK_FILTER_DEVICE_NAME = cfg.vulkanDeviceName;
-            VKD3D_FILTER_DEVICE_NAME = cfg.vulkanDeviceName;
-          }
-        );
+        environment.sessionVariables = {
+          # RustiCL doesn't auto-enable radeonsi yet — required for OpenCL on AMD GPUs
+          RUSTICL_ENABLE = "radeonsi";
+        }
+        // lib.optionalAttrs (cfg.vulkanDeviceId != null) {
+          # Force Vulkan device selection on dual-AMD systems (iGPU + dGPU)
+          MESA_VK_DEVICE_SELECT = cfg.vulkanDeviceId;
+        }
+        // lib.optionalAttrs (cfg.vulkanDeviceName != null) {
+          DXVK_FILTER_DEVICE_NAME = cfg.vulkanDeviceName;
+          VKD3D_FILTER_DEVICE_NAME = cfg.vulkanDeviceName;
+        };
 
         hardware.enableRedistributableFirmware = true;
       };
