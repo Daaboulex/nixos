@@ -1,6 +1,12 @@
 # Plasma KWin Window Manager
 # Virtual desktops, tiling, night light, effects, and configFile overrides
-{ config, pkgs, lib, osConfig, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  osConfig,
+  ...
+}:
 
 {
   programs.plasma = {
@@ -24,7 +30,7 @@
         enable = lib.mkDefault true;
         mode = lib.mkDefault "location";
         location = lib.mkDefault {
-          latitude = "52.52";      # Berlin — override per-host if needed
+          latitude = "52.52"; # Berlin — override per-host if needed
           longitude = "13.405";
         };
       };
@@ -45,26 +51,44 @@
     # ==========================================================================
     configFile = {
       # ---- Fluid Tile — Auto-tiling KWin script ----
-      "kwinrc"."Plugins"."fluid-tileEnabled" = lib.mkDefault true;
+      "kwinrc"."Plugins"."fluid-tileEnabled" = lib.mkDefault false;
       "kwinrc"."Plugins"."late-tileEnabled" = lib.mkDefault true;
       "kwinrc"."Plugins"."krohnkiteEnabled" = lib.mkDefault false;
       "kwinrc"."Plugins"."poloniumEnabled" = lib.mkDefault false;
 
       "kwinrc"."Script-fluid-tile" = {
         # -- Blocklist --
-        AppsBlocklist = lib.mkDefault (lib.concatStringsSep "," [
-          # Fluid Tile defaults (KDE internals)
-          "moonlight" "org.kde.xwaylandvideobridge" "wl-paste" "wl-copy"
-          "org.kde.kded6" "qt-sudo" "org.kde.polkit-kde-authentication-agent-1"
-          "org.kde.spectacle" "kcm_kwinrules" "org.freedesktop.impl.portal.desktop.kde"
-          "krunner" "plasmashell" "org.kde.plasmashell" "kwin_wayland"
-          "ksmserver-logout-greeter"
-          # Wine/Proton helper windows & anti-cheat
-          "easyanticheat" "battleye" "wine" "explorer.exe"
-          # KDE utilities that break when tiled
-          "pinentry-qt" "org.kde.kwalletd6" "org.kde.plasma.emojier"
-          "org.kde.drkonqi" "org.kde.kcolorchooser"
-        ]);
+        AppsBlocklist = lib.mkDefault (
+          lib.concatStringsSep "," [
+            # Fluid Tile defaults (KDE internals)
+            "moonlight"
+            "org.kde.xwaylandvideobridge"
+            "wl-paste"
+            "wl-copy"
+            "org.kde.kded6"
+            "qt-sudo"
+            "org.kde.polkit-kde-authentication-agent-1"
+            "org.kde.spectacle"
+            "kcm_kwinrules"
+            "org.freedesktop.impl.portal.desktop.kde"
+            "krunner"
+            "plasmashell"
+            "org.kde.plasmashell"
+            "kwin_wayland"
+            "ksmserver-logout-greeter"
+            # Wine/Proton helper windows & anti-cheat
+            "easyanticheat"
+            "battleye"
+            "wine"
+            "explorer.exe"
+            # KDE utilities that break when tiled
+            "pinentry-qt"
+            "org.kde.kwalletd6"
+            "org.kde.plasma.emojier"
+            "org.kde.drkonqi"
+            "org.kde.kcolorchooser"
+          ]
+        );
 
         # -- Tile Priority --
         TilesPriority = lib.mkDefault "Height,Width,Left,Top,Right,Bottom";
@@ -112,7 +136,7 @@
       };
 
       "kwinrc"."Effect-overview" = {
-        BorderActivate = lib.mkDefault 9;               # Disable hot corner
+        BorderActivate = lib.mkDefault 9; # Disable hot corner
       };
 
       "kwinrc"."ElectricBorders" = {
@@ -123,7 +147,7 @@
       };
 
       "kwinrc"."TabBox" = {
-        LayoutName = lib.mkDefault "compact";
+        LayoutName = lib.mkDefault "org.kde.breeze.desktop";
       };
 
       "kwinrc"."Xwayland" = {

@@ -88,7 +88,7 @@
           enablePPFeatureMask = true; # Full power management feature flags
           rdna4Fixes = true; # RDNA 4 stability kernel params
           drmDebug = false; # Was destroying ALL boot logs (~800 msg/sec overflows kmsg ring buffer)
-          disableHDCP = true; # RDNA 4 HDCP handshake bugs — causes black screens / flicker
+          disableHDCP = false; # HDCP enabled (was disabled for RDNA 4 handshake debugging)
         };
         enable32Bit = true;
         mesaGit = {

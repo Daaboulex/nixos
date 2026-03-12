@@ -119,12 +119,12 @@ let
   # Tags: https://codeberg.org/Serroda/fluid-tile/tags
   fluid-tile = pkgs.stdenvNoCC.mkDerivation {
     pname = "kwin-script-fluid-tile";
-    version = "7.0-RC4";
+    version = "7.0";
 
     src = pkgs.fetchgit {
       url = "https://codeberg.org/Serroda/fluid-tile.git";
-      rev = "v7.0-RC4";
-      sha256 = "sha256-wJLFLPITW5Z9unu+TOJQditeVWXkR2R4+I1yepeVYS8=";
+      rev = "v7.0";
+      sha256 = "sha256-SoL1aMHgK0UcruiSdYumtzW692VagwQyP5MpyP7eXW0=";
     };
 
     dontBuild = true;
