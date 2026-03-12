@@ -1,6 +1,6 @@
 { inputs, ... }:
 {
-  flake.nixosModules.system-sops =
+  flake.nixosModules.security-sops =
     {
       config,
       lib,

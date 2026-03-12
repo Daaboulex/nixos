@@ -1,271 +1,42 @@
 # NixOS Custom Modules Documentation
 
-> Auto-generated from `myModules` option definitions. 237 options across 13 categories.
+> Auto-generated from `myModules` option definitions. 241 options across 22 categories.
 >
 > Regenerate: `bash scripts/update-docs.sh`
 
 ## Table of Contents
 
-- [AUDIO](#audio-35-options) (35 options)
+- [BOTTLES](#bottles-1-options) (1 options)
 - [CACHYOS](#cachyos-15-options) (15 options)
+- [COOLERCONTROL](#coolercontrol-2-options) (2 options)
+- [CORECYCLER](#corecycler-2-options) (2 options)
+- [DEBUGGINGPROBES](#debuggingprobes-1-options) (1 options)
 - [DESKTOP](#desktop-8-options) (8 options)
 - [DEVELOPMENT](#development-3-options) (3 options)
+- [DUCKYONEXMINI](#duckyonexmini-4-options) (4 options)
 - [GAMING](#gaming-33-options) (33 options)
-- [HARDWARE](#hardware-56-options) (56 options)
+- [GOXLR](#goxlr-35-options) (35 options)
+- [HARDWARE](#hardware-43-options) (43 options)
+- [IOMMU](#iommu-1-options) (1 options)
 - [KERNEL](#kernel-14-options) (14 options)
-- [MUSIC](#music-2-options) (2 options)
+- [PIPER](#piper-1-options) (1 options)
 - [PRIMARYUSER](#primaryuser-1-options) (1 options)
-- [PROGRAMS](#programs-3-options) (3 options)
 - [SECURITY](#security-17-options) (17 options)
+- [STREAMCONTROLLER](#streamcontroller-1-options) (1 options)
+- [SYSDIAG](#sysdiag-1-options) (1 options)
 - [SYSTEM](#system-48-options) (48 options)
-- [TOOLS](#tools-2-options) (2 options)
+- [TIDALCYCLES](#tidalcycles-2-options) (2 options)
+- [WINE](#wine-2-options) (2 options)
+- [YEETMOUSE](#yeetmouse-6-options) (6 options)
 
 ---
-## AUDIO (35 options)
+## BOTTLES (1 options)
 
-#### `myModules.audio.goxlr.denoise.attenuationLimit`
+#### `myModules.bottles.enable`
 
-**Description**: Max noise attenuation in dB (0-100). 100 = no limit (official default). 6-12 = light, 18-24 = medium.
-- **Type**: `signed integer`
-- **Default**: `100`
-
-
-#### `myModules.audio.goxlr.denoise.enable`
-
-**Description**: Whether to enable DeepFilterNet3 neural noise suppression on chat mic.
+**Description**: Whether to enable Bottles installation.
 - **Type**: `boolean`
 - **Default**: `false`
-
-
-#### `myModules.audio.goxlr.denoise.maxDfThreshold`
-
-**Description**: Max DF processing threshold in dB (-15 to 35). Lower suppresses transient noise (claps, bumps). Below 10 risks affecting plosives.
-- **Type**: `floating point number`
-- **Default**: `12.0`
-
-
-#### `myModules.audio.goxlr.denoise.maxErbThreshold`
-
-**Description**: Max ERB processing threshold in dB (-15 to 35). Lower reduces muffling on loud speech.
-- **Type**: `floating point number`
-- **Default**: `20.0`
-
-
-#### `myModules.audio.goxlr.denoise.minProcessingBuffer`
-
-**Description**: Min processing buffer in frames (0-10). 0 = lowest latency.
-- **Type**: `signed integer`
-- **Default**: `0`
-
-
-#### `myModules.audio.goxlr.denoise.minThreshold`
-
-**Description**: Min processing threshold in dB (-15 to 35).
-- **Type**: `floating point number`
-- **Default**: `-15.0`
-
-
-#### `myModules.audio.goxlr.denoise.postFilterBeta`
-
-**Description**: Post-filter beta (0-0.05). 0 = disabled. DF3 is sufficient without it; higher values muffle voice.
-- **Type**: `floating point number`
-- **Default**: `0.0`
-
-
-#### `myModules.audio.goxlr.denoise.source`
-
-**Description**: PipeWire node name of the raw microphone source
-- **Type**: `string`
-- **Default**: `"alsa_input.usb-TC-Helicon_GoXLR-00.HiFi__Headset__source"`
-
-
-#### `myModules.audio.goxlr.enable`
-
-**Description**: Whether to enable GoXLR Mini support.
-- **Type**: `boolean`
-- **Default**: `false`
-
-
-#### `myModules.audio.goxlr.eq.channels.chat.enable`
-
-**Description**: Whether to enable EQ for Chat channel.
-- **Type**: `boolean`
-- **Default**: `true`
-
-
-#### `myModules.audio.goxlr.eq.channels.chat.eq`
-
-**Description**: PipeWire filter-chain EQ filter definition for Chat channel
-- **Type**: `string`
-- **Default**: `"filters = [\n  { type = bq_highshelf, freq = 0, gain = -5.23, q = 1.0 },\n  { type = bq_lowshelf, freq = 105.0, gain...`
-
-
-#### `myModules.audio.goxlr.eq.channels.chat.sink`
-
-**Description**: PipeWire sink node name for Chat channel
-- **Type**: `string`
-- **Default**: `"alsa_output.usb-TC-Helicon_GoXLR-00.HiFi__Headphones__sink"`
-
-
-#### `myModules.audio.goxlr.eq.channels.game.enable`
-
-**Description**: Whether to enable EQ for Game channel.
-- **Type**: `boolean`
-- **Default**: `true`
-
-
-#### `myModules.audio.goxlr.eq.channels.game.eq`
-
-**Description**: PipeWire filter-chain EQ filter definition for Game channel
-- **Type**: `string`
-- **Default**: `"filters = [\n  { type = bq_highshelf, freq = 0, gain = -5.23, q = 1.0 },\n  { type = bq_lowshelf, freq = 105.0, gain...`
-
-
-#### `myModules.audio.goxlr.eq.channels.game.sink`
-
-**Description**: PipeWire sink node name for Game channel
-- **Type**: `string`
-- **Default**: `"alsa_output.usb-TC-Helicon_GoXLR-00.HiFi__Line1__sink"`
-
-
-#### `myModules.audio.goxlr.eq.channels.music.enable`
-
-**Description**: Whether to enable EQ for Music channel.
-- **Type**: `boolean`
-- **Default**: `true`
-
-
-#### `myModules.audio.goxlr.eq.channels.music.eq`
-
-**Description**: PipeWire filter-chain EQ filter definition for Music channel
-- **Type**: `string`
-- **Default**: `"filters = [\n  { type = bq_highshelf, freq = 0, gain = -5.23, q = 1.0 },\n  { type = bq_lowshelf, freq = 105.0, gain...`
-
-
-#### `myModules.audio.goxlr.eq.channels.music.sink`
-
-**Description**: PipeWire sink node name for Music channel
-- **Type**: `string`
-- **Default**: `"alsa_output.usb-TC-Helicon_GoXLR-00.HiFi__Line2__sink"`
-
-
-#### `myModules.audio.goxlr.eq.channels.sample.enable`
-
-**Description**: Whether to enable EQ for Sample channel.
-- **Type**: `boolean`
-- **Default**: `true`
-
-
-#### `myModules.audio.goxlr.eq.channels.sample.eq`
-
-**Description**: PipeWire filter-chain EQ filter definition for Sample channel
-- **Type**: `string`
-- **Default**: `"filters = [\n  { type = bq_highshelf, freq = 0, gain = -5.23, q = 1.0 },\n  { type = bq_lowshelf, freq = 105.0, gain...`
-
-
-#### `myModules.audio.goxlr.eq.channels.sample.sink`
-
-**Description**: PipeWire sink node name for Sample channel
-- **Type**: `string`
-- **Default**: `"alsa_output.usb-TC-Helicon_GoXLR-00.HiFi__Line3__sink"`
-
-
-#### `myModules.audio.goxlr.eq.channels.system.enable`
-
-**Description**: Whether to enable EQ for System channel.
-- **Type**: `boolean`
-- **Default**: `true`
-
-
-#### `myModules.audio.goxlr.eq.channels.system.eq`
-
-**Description**: PipeWire filter-chain EQ filter definition for System channel
-- **Type**: `string`
-- **Default**: `"filters = [\n  { type = bq_highshelf, freq = 0, gain = -5.23, q = 1.0 },\n  { type = bq_lowshelf, freq = 105.0, gain...`
-
-
-#### `myModules.audio.goxlr.eq.channels.system.sink`
-
-**Description**: PipeWire sink node name for System channel
-- **Type**: `string`
-- **Default**: `"alsa_output.usb-TC-Helicon_GoXLR-00.HiFi__Speaker__sink"`
-
-
-#### `myModules.audio.goxlr.eq.clearStreamProperties`
-
-**Description**: Clear PipeWire stream properties before applying EQ filters
-- **Type**: `boolean`
-- **Default**: `false`
-
-
-#### `myModules.audio.goxlr.eq.enable`
-
-**Description**: Whether to enable PipeWire parametric EQ for GoXLR channels.
-- **Type**: `boolean`
-- **Default**: `false`
-
-
-#### `myModules.audio.goxlr.eq.presets`
-
-**Description**: Built-in EQ presets (read-only). Use as values for channel eq options.
-- **Type**: `attribute set of string`
-- **Default**: `{"dt990pro":"filters = [\n  { type = bq_highshelf, freq = 0, gain = -5.23, q = 1.0 },\n  { type = bq_lowshelf, freq =...`
-
-
-#### `myModules.audio.goxlr.installProfiles`
-
-**Description**: Install custom GoXLR UCM profiles
-- **Type**: `boolean`
-- **Default**: `true`
-
-
-#### `myModules.audio.goxlr.isMini`
-
-**Description**: Apply GoXLR Mini UCM patch
-- **Type**: `boolean`
-- **Default**: `true`
-
-
-#### `myModules.audio.goxlr.toggle.activeMicProfile`
-
-**Description**: Microphone profile to load when waking (active state)
-- **Type**: `string`
-- **Default**: `"Default"`
-
-
-#### `myModules.audio.goxlr.toggle.activeProfile`
-
-**Description**: Device profile to load when waking (active state)
-- **Type**: `string`
-- **Default**: `"Default"`
-
-
-#### `myModules.audio.goxlr.toggle.enable`
-
-**Description**: Whether to enable goxlr-toggle script for switching between active and sleep profiles.
-- **Type**: `boolean`
-- **Default**: `false`
-
-
-#### `myModules.audio.goxlr.toggle.sleepMicProfile`
-
-**Description**: Microphone profile to load when sleeping
-- **Type**: `string`
-- **Default**: `"Sleep"`
-
-
-#### `myModules.audio.goxlr.toggle.sleepProfile`
-
-**Description**: Device profile to load when sleeping
-- **Type**: `string`
-- **Default**: `"Sleep"`
-
-
-#### `myModules.audio.goxlr.utility.enable`
-
-**Description**: goxlr-utility daemon
-- **Type**: `boolean`
-- **Default**: `true`
 
 
 
@@ -377,6 +148,50 @@
 
 
 
+## COOLERCONTROL (2 options)
+
+#### `myModules.coolercontrol.autostart`
+
+**Description**: Whether to autostart the CoolerControl GUI at login via XDG autostart
+- **Type**: `boolean`
+- **Default**: `true`
+
+
+#### `myModules.coolercontrol.enable`
+
+**Description**: Whether to enable CoolerControl fan and cooling device management.
+- **Type**: `boolean`
+- **Default**: `false`
+
+
+
+## CORECYCLER (2 options)
+
+#### `myModules.corecycler.enable`
+
+**Description**: Whether to enable Linux CoreCycler per-core CPU stability tester and PBO Curve Optimizer tuner.
+- **Type**: `boolean`
+- **Default**: `false`
+
+
+#### `myModules.corecycler.ryzenSmu`
+
+**Description**: Whether to load the ryzen_smu kernel module for Curve Optimizer read/write via SMU
+- **Type**: `boolean`
+- **Default**: `true`
+
+
+
+## DEBUGGINGPROBES (1 options)
+
+#### `myModules.debuggingProbes.enable`
+
+**Description**: Whether to enable Embedded debugging probes (LPC-Link2, ESP32) udev rules.
+- **Type**: `boolean`
+- **Default**: `false`
+
+
+
 ## DESKTOP (8 options)
 
 #### `myModules.desktop.displays.enable`
@@ -457,6 +272,37 @@
 **Description**: Whether to enable Saleae Logic analyzer and udev rules.
 - **Type**: `boolean`
 - **Default**: `false`
+
+
+
+## DUCKYONEXMINI (4 options)
+
+#### `myModules.duckyOneXMini.board.product`
+
+**Description**: USB product ID for the keyboard board HID interface
+- **Type**: `string`
+- **Default**: `"001d"`
+
+
+#### `myModules.duckyOneXMini.enable`
+
+**Description**: Whether to enable Ducky One X Mini keyboard HID access (udev rules for VIA/Vial).
+- **Type**: `boolean`
+- **Default**: `false`
+
+
+#### `myModules.duckyOneXMini.mcu.product`
+
+**Description**: USB product ID for the keyboard MCU HID interface
+- **Type**: `string`
+- **Default**: `"0021"`
+
+
+#### `myModules.duckyOneXMini.vendor`
+
+**Description**: USB vendor ID for the Ducky keyboard
+- **Type**: `string`
+- **Default**: `"3233"`
 
 
 
@@ -694,7 +540,255 @@
 
 
 
-## HARDWARE (56 options)
+## GOXLR (35 options)
+
+#### `myModules.goxlr.denoise.attenuationLimit`
+
+**Description**: Max noise attenuation in dB (0-100). 100 = no limit (official default). 6-12 = light, 18-24 = medium.
+- **Type**: `signed integer`
+- **Default**: `100`
+
+
+#### `myModules.goxlr.denoise.enable`
+
+**Description**: Whether to enable DeepFilterNet3 neural noise suppression on chat mic.
+- **Type**: `boolean`
+- **Default**: `false`
+
+
+#### `myModules.goxlr.denoise.maxDfThreshold`
+
+**Description**: Max DF processing threshold in dB (-15 to 35). Lower suppresses transient noise (claps, bumps). Below 10 risks affecting plosives.
+- **Type**: `floating point number`
+- **Default**: `12.0`
+
+
+#### `myModules.goxlr.denoise.maxErbThreshold`
+
+**Description**: Max ERB processing threshold in dB (-15 to 35). Lower reduces muffling on loud speech.
+- **Type**: `floating point number`
+- **Default**: `20.0`
+
+
+#### `myModules.goxlr.denoise.minProcessingBuffer`
+
+**Description**: Min processing buffer in frames (0-10). 0 = lowest latency.
+- **Type**: `signed integer`
+- **Default**: `0`
+
+
+#### `myModules.goxlr.denoise.minThreshold`
+
+**Description**: Min processing threshold in dB (-15 to 35).
+- **Type**: `floating point number`
+- **Default**: `-15.0`
+
+
+#### `myModules.goxlr.denoise.postFilterBeta`
+
+**Description**: Post-filter beta (0-0.05). 0 = disabled. DF3 is sufficient without it; higher values muffle voice.
+- **Type**: `floating point number`
+- **Default**: `0.0`
+
+
+#### `myModules.goxlr.denoise.source`
+
+**Description**: PipeWire node name of the raw microphone source
+- **Type**: `string`
+- **Default**: `"alsa_input.usb-TC-Helicon_GoXLR-00.HiFi__Headset__source"`
+
+
+#### `myModules.goxlr.enable`
+
+**Description**: Whether to enable GoXLR Mini support.
+- **Type**: `boolean`
+- **Default**: `false`
+
+
+#### `myModules.goxlr.eq.channels.chat.enable`
+
+**Description**: Whether to enable EQ for Chat channel.
+- **Type**: `boolean`
+- **Default**: `true`
+
+
+#### `myModules.goxlr.eq.channels.chat.eq`
+
+**Description**: PipeWire filter-chain EQ filter definition for Chat channel
+- **Type**: `string`
+- **Default**: `"filters = [\n  { type = bq_highshelf, freq = 0, gain = -5.23, q = 1.0 },\n  { type = bq_lowshelf, freq = 105.0, gain...`
+
+
+#### `myModules.goxlr.eq.channels.chat.sink`
+
+**Description**: PipeWire sink node name for Chat channel
+- **Type**: `string`
+- **Default**: `"alsa_output.usb-TC-Helicon_GoXLR-00.HiFi__Headphones__sink"`
+
+
+#### `myModules.goxlr.eq.channels.game.enable`
+
+**Description**: Whether to enable EQ for Game channel.
+- **Type**: `boolean`
+- **Default**: `true`
+
+
+#### `myModules.goxlr.eq.channels.game.eq`
+
+**Description**: PipeWire filter-chain EQ filter definition for Game channel
+- **Type**: `string`
+- **Default**: `"filters = [\n  { type = bq_highshelf, freq = 0, gain = -5.23, q = 1.0 },\n  { type = bq_lowshelf, freq = 105.0, gain...`
+
+
+#### `myModules.goxlr.eq.channels.game.sink`
+
+**Description**: PipeWire sink node name for Game channel
+- **Type**: `string`
+- **Default**: `"alsa_output.usb-TC-Helicon_GoXLR-00.HiFi__Line1__sink"`
+
+
+#### `myModules.goxlr.eq.channels.music.enable`
+
+**Description**: Whether to enable EQ for Music channel.
+- **Type**: `boolean`
+- **Default**: `true`
+
+
+#### `myModules.goxlr.eq.channels.music.eq`
+
+**Description**: PipeWire filter-chain EQ filter definition for Music channel
+- **Type**: `string`
+- **Default**: `"filters = [\n  { type = bq_highshelf, freq = 0, gain = -5.23, q = 1.0 },\n  { type = bq_lowshelf, freq = 105.0, gain...`
+
+
+#### `myModules.goxlr.eq.channels.music.sink`
+
+**Description**: PipeWire sink node name for Music channel
+- **Type**: `string`
+- **Default**: `"alsa_output.usb-TC-Helicon_GoXLR-00.HiFi__Line2__sink"`
+
+
+#### `myModules.goxlr.eq.channels.sample.enable`
+
+**Description**: Whether to enable EQ for Sample channel.
+- **Type**: `boolean`
+- **Default**: `true`
+
+
+#### `myModules.goxlr.eq.channels.sample.eq`
+
+**Description**: PipeWire filter-chain EQ filter definition for Sample channel
+- **Type**: `string`
+- **Default**: `"filters = [\n  { type = bq_highshelf, freq = 0, gain = -5.23, q = 1.0 },\n  { type = bq_lowshelf, freq = 105.0, gain...`
+
+
+#### `myModules.goxlr.eq.channels.sample.sink`
+
+**Description**: PipeWire sink node name for Sample channel
+- **Type**: `string`
+- **Default**: `"alsa_output.usb-TC-Helicon_GoXLR-00.HiFi__Line3__sink"`
+
+
+#### `myModules.goxlr.eq.channels.system.enable`
+
+**Description**: Whether to enable EQ for System channel.
+- **Type**: `boolean`
+- **Default**: `true`
+
+
+#### `myModules.goxlr.eq.channels.system.eq`
+
+**Description**: PipeWire filter-chain EQ filter definition for System channel
+- **Type**: `string`
+- **Default**: `"filters = [\n  { type = bq_highshelf, freq = 0, gain = -5.23, q = 1.0 },\n  { type = bq_lowshelf, freq = 105.0, gain...`
+
+
+#### `myModules.goxlr.eq.channels.system.sink`
+
+**Description**: PipeWire sink node name for System channel
+- **Type**: `string`
+- **Default**: `"alsa_output.usb-TC-Helicon_GoXLR-00.HiFi__Speaker__sink"`
+
+
+#### `myModules.goxlr.eq.clearStreamProperties`
+
+**Description**: Clear PipeWire stream properties before applying EQ filters
+- **Type**: `boolean`
+- **Default**: `false`
+
+
+#### `myModules.goxlr.eq.enable`
+
+**Description**: Whether to enable PipeWire parametric EQ for GoXLR channels.
+- **Type**: `boolean`
+- **Default**: `false`
+
+
+#### `myModules.goxlr.eq.presets`
+
+**Description**: Built-in EQ presets (read-only). Use as values for channel eq options.
+- **Type**: `attribute set of string`
+- **Default**: `{"dt990pro":"filters = [\n  { type = bq_highshelf, freq = 0, gain = -5.23, q = 1.0 },\n  { type = bq_lowshelf, freq =...`
+
+
+#### `myModules.goxlr.installProfiles`
+
+**Description**: Install custom GoXLR UCM profiles
+- **Type**: `boolean`
+- **Default**: `true`
+
+
+#### `myModules.goxlr.isMini`
+
+**Description**: Apply GoXLR Mini UCM patch
+- **Type**: `boolean`
+- **Default**: `true`
+
+
+#### `myModules.goxlr.toggle.activeMicProfile`
+
+**Description**: Microphone profile to load when waking (active state)
+- **Type**: `string`
+- **Default**: `"Default"`
+
+
+#### `myModules.goxlr.toggle.activeProfile`
+
+**Description**: Device profile to load when waking (active state)
+- **Type**: `string`
+- **Default**: `"Default"`
+
+
+#### `myModules.goxlr.toggle.enable`
+
+**Description**: Whether to enable goxlr-toggle script for switching between active and sleep profiles.
+- **Type**: `boolean`
+- **Default**: `false`
+
+
+#### `myModules.goxlr.toggle.sleepMicProfile`
+
+**Description**: Microphone profile to load when sleeping
+- **Type**: `string`
+- **Default**: `"Sleep"`
+
+
+#### `myModules.goxlr.toggle.sleepProfile`
+
+**Description**: Device profile to load when sleeping
+- **Type**: `string`
+- **Default**: `"Sleep"`
+
+
+#### `myModules.goxlr.utility.enable`
+
+**Description**: goxlr-utility daemon
+- **Type**: `boolean`
+- **Default**: `true`
+
+
+
+## HARDWARE (43 options)
 
 #### `myModules.hardware.audio.easyeffects.enable`
 
@@ -796,41 +890,6 @@ Requires BIOS CPPC option set to "Driver".
 
 - **Type**: `one of "cache", "frequency"`
 - **Default**: `"cache"`
-
-
-#### `myModules.hardware.debuggingProbes.enable`
-
-**Description**: Whether to enable Embedded debugging probes (LPC-Link2, ESP32) udev rules.
-- **Type**: `boolean`
-- **Default**: `false`
-
-
-#### `myModules.hardware.duckyOneXMini.board.product`
-
-**Description**: USB product ID for the keyboard board HID interface
-- **Type**: `string`
-- **Default**: `"001d"`
-
-
-#### `myModules.hardware.duckyOneXMini.enable`
-
-**Description**: Whether to enable Ducky One X Mini keyboard HID access (udev rules for VIA/Vial).
-- **Type**: `boolean`
-- **Default**: `false`
-
-
-#### `myModules.hardware.duckyOneXMini.mcu.product`
-
-**Description**: USB product ID for the keyboard MCU HID interface
-- **Type**: `string`
-- **Default**: `"0021"`
-
-
-#### `myModules.hardware.duckyOneXMini.vendor`
-
-**Description**: USB vendor ID for the Ducky keyboard
-- **Type**: `string`
-- **Default**: `"3233"`
 
 
 #### `myModules.hardware.graphics.amd.disableHDCP`
@@ -1024,13 +1083,6 @@ Assembled into RUSTICL_ENABLE session variable as a comma-separated list.
 - **Default**: `"scx_lavd"`
 
 
-#### `myModules.hardware.piper.enable`
-
-**Description**: Whether to enable Piper mouse configuration tool and ratbagd service.
-- **Type**: `boolean`
-- **Default**: `false`
-
-
 #### `myModules.hardware.power.enable`
 
 **Description**: Whether to enable Power management configuration.
@@ -1052,51 +1104,12 @@ Assembled into RUSTICL_ENABLE session variable as a comma-separated list.
 - **Default**: `"balanced"`
 
 
-#### `myModules.hardware.streamcontroller.enable`
 
-**Description**: Whether to enable StreamController (Elgato Stream Deck).
-- **Type**: `boolean`
-- **Default**: `false`
+## IOMMU (1 options)
 
+#### `myModules.iommu`
 
-#### `myModules.hardware.yeetmouse.devices.g502.dpi`
-
-**Description**: Mouse DPI setting (reported to libinput via HWDB)
-- **Type**: `signed integer`
-- **Default**: `1600`
-
-
-#### `myModules.hardware.yeetmouse.devices.g502.enable`
-
-**Description**: Whether to enable Libinput flat acceleration profile for Logitech G502 (Wired/Wireless).
-- **Type**: `boolean`
-- **Default**: `false`
-
-
-#### `myModules.hardware.yeetmouse.devices.g502.pollingRate`
-
-**Description**: Mouse polling rate in Hz (reported to libinput via HWDB)
-- **Type**: `signed integer`
-- **Default**: `1000`
-
-
-#### `myModules.hardware.yeetmouse.devices.g502.wiredProductId`
-
-**Description**: USB product ID for the wired G502 (check with lsusb)
-- **Type**: `string`
-- **Default**: `"c08d"`
-
-
-#### `myModules.hardware.yeetmouse.devices.g502.wirelessProductId`
-
-**Description**: USB product ID for the Lightspeed Receiver
-- **Type**: `string`
-- **Default**: `"c539"`
-
-
-#### `myModules.hardware.yeetmouse.enable`
-
-**Description**: Whether to enable YeetMouse input driver.
+**Description**: Whether to enable IOMMU group listing tool.
 - **Type**: `boolean`
 - **Default**: `false`
 
@@ -1203,18 +1216,11 @@ Assembled into RUSTICL_ENABLE session variable as a comma-separated list.
 
 
 
-## MUSIC (2 options)
+## PIPER (1 options)
 
-#### `myModules.music.tidalcycles.autostartSuperDirt`
+#### `myModules.piper.enable`
 
-**Description**: Auto-start SuperDirt (SuperCollider) as a systemd user service
-- **Type**: `boolean`
-- **Default**: `false`
-
-
-#### `myModules.music.tidalcycles.enable`
-
-**Description**: Whether to enable TidalCycles and SuperDirt.
+**Description**: Whether to enable Piper mouse configuration tool and ratbagd service.
 - **Type**: `boolean`
 - **Default**: `false`
 
@@ -1227,30 +1233,6 @@ Assembled into RUSTICL_ENABLE session variable as a comma-separated list.
 **Description**: Primary system username used across all modules
 - **Type**: `string`
 - **Default**: `"user"`
-
-
-
-## PROGRAMS (3 options)
-
-#### `myModules.programs.bottles.enable`
-
-**Description**: Whether to enable Bottles installation.
-- **Type**: `boolean`
-- **Default**: `false`
-
-
-#### `myModules.programs.wine.enable`
-
-**Description**: Whether to enable Wine installation.
-- **Type**: `boolean`
-- **Default**: `false`
-
-
-#### `myModules.programs.wine.variant`
-
-**Description**: Wine variant (staging has more patches, Full includes all optional deps)
-- **Type**: `one of "stable", "staging", "stableFull", "stagingFull"`
-- **Default**: `"stagingFull"`
 
 
 
@@ -1371,6 +1353,26 @@ Assembled into RUSTICL_ENABLE session variable as a comma-separated list.
 #### `myModules.security.system.firejail.enable`
 
 **Description**: Firejail sandboxing
+- **Type**: `boolean`
+- **Default**: `false`
+
+
+
+## STREAMCONTROLLER (1 options)
+
+#### `myModules.streamcontroller.enable`
+
+**Description**: Whether to enable StreamController (Elgato Stream Deck).
+- **Type**: `boolean`
+- **Default**: `false`
+
+
+
+## SYSDIAG (1 options)
+
+#### `myModules.sysdiag`
+
+**Description**: Whether to enable sysdiag system diagnostics.
 - **Type**: `boolean`
 - **Default**: `false`
 
@@ -1715,18 +1717,80 @@ Assembled into RUSTICL_ENABLE session variable as a comma-separated list.
 
 
 
-## TOOLS (2 options)
+## TIDALCYCLES (2 options)
 
-#### `myModules.tools.iommu`
+#### `myModules.tidalcycles.autostartSuperDirt`
 
-**Description**: Whether to enable IOMMU group listing tool.
+**Description**: Auto-start SuperDirt (SuperCollider) as a systemd user service
 - **Type**: `boolean`
 - **Default**: `false`
 
 
-#### `myModules.tools.sysdiag`
+#### `myModules.tidalcycles.enable`
 
-**Description**: Whether to enable sysdiag system diagnostics.
+**Description**: Whether to enable TidalCycles and SuperDirt.
+- **Type**: `boolean`
+- **Default**: `false`
+
+
+
+## WINE (2 options)
+
+#### `myModules.wine.enable`
+
+**Description**: Whether to enable Wine installation.
+- **Type**: `boolean`
+- **Default**: `false`
+
+
+#### `myModules.wine.variant`
+
+**Description**: Wine variant (staging has more patches, Full includes all optional deps)
+- **Type**: `one of "stable", "staging", "stableFull", "stagingFull"`
+- **Default**: `"stagingFull"`
+
+
+
+## YEETMOUSE (6 options)
+
+#### `myModules.yeetmouse.devices.g502.dpi`
+
+**Description**: Mouse DPI setting (reported to libinput via HWDB)
+- **Type**: `signed integer`
+- **Default**: `1600`
+
+
+#### `myModules.yeetmouse.devices.g502.enable`
+
+**Description**: Whether to enable Libinput flat acceleration profile for Logitech G502 (Wired/Wireless).
+- **Type**: `boolean`
+- **Default**: `false`
+
+
+#### `myModules.yeetmouse.devices.g502.pollingRate`
+
+**Description**: Mouse polling rate in Hz (reported to libinput via HWDB)
+- **Type**: `signed integer`
+- **Default**: `1000`
+
+
+#### `myModules.yeetmouse.devices.g502.wiredProductId`
+
+**Description**: USB product ID for the wired G502 (check with lsusb)
+- **Type**: `string`
+- **Default**: `"c08d"`
+
+
+#### `myModules.yeetmouse.devices.g502.wirelessProductId`
+
+**Description**: USB product ID for the Lightspeed Receiver
+- **Type**: `string`
+- **Default**: `"c539"`
+
+
+#### `myModules.yeetmouse.enable`
+
+**Description**: Whether to enable YeetMouse input driver.
 - **Type**: `boolean`
 - **Default**: `false`
 

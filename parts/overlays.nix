@@ -1,6 +1,9 @@
 { inputs, ... }:
 {
   flake.overlays.default = _final: prev: {
+    # Linux CoreCycler — Per-core CPU stability tester and PBO CO tuner
+    linux-corecycler = inputs.linux-corecycler.packages.${prev.system}.default;
+
     # ReShade shaders for vkBasalt (includes Vibrance, LUT, color grading)
     reshade-shaders = prev.stdenvNoCC.mkDerivation {
       pname = "reshade-shaders";

@@ -1,6 +1,6 @@
 { inputs, ... }:
 {
-  flake.nixosModules.apps-development =
+  flake.nixosModules.development =
     {
       config,
       lib,

@@ -50,7 +50,7 @@
           name = "ssh";
           nodes.machine = {
             imports = [
-              inputs.self.nixosModules.system-ssh
+              inputs.self.nixosModules.security-ssh
               inputs.self.nixosModules.system-users
             ];
             myModules.security.ssh.enable = true;

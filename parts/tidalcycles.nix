@@ -1,6 +1,6 @@
 { inputs, ... }:
 {
-  flake.nixosModules.apps-tidalcycles =
+  flake.nixosModules.tidalcycles =
     {
       config,
       lib,
@@ -8,11 +8,11 @@
       ...
     }:
     let
-      cfg = config.myModules.music.tidalcycles;
+      cfg = config.myModules.tidalcycles;
     in
     {
       _class = "nixos";
-      options.myModules.music.tidalcycles = {
+      options.myModules.tidalcycles = {
         enable = lib.mkEnableOption "TidalCycles and SuperDirt";
         autostartSuperDirt = lib.mkOption {
           type = lib.types.bool;

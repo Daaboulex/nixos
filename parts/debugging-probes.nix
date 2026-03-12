@@ -1,6 +1,6 @@
 { inputs, ... }:
 {
-  flake.nixosModules.hardware-debugging-probes =
+  flake.nixosModules.debugging-probes =
     {
       config,
       lib,
@@ -8,11 +8,11 @@
       ...
     }:
     let
-      cfg = config.myModules.hardware.debuggingProbes;
+      cfg = config.myModules.debuggingProbes;
     in
     {
       _class = "nixos";
-      options.myModules.hardware.debuggingProbes = {
+      options.myModules.debuggingProbes = {
         enable = lib.mkEnableOption "Embedded debugging probes (LPC-Link2, ESP32) udev rules";
       };
 

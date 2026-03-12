@@ -1,6 +1,6 @@
 { inputs, ... }:
 {
-  flake.nixosModules.hardware-yeetmouse =
+  flake.nixosModules.yeetmouse =
     {
       config,
       lib,
@@ -9,7 +9,7 @@
     }:
     {
       _class = "nixos";
-      options.myModules.hardware.yeetmouse = {
+      options.myModules.yeetmouse = {
         enable = lib.mkEnableOption "YeetMouse input driver";
       };
 
@@ -19,11 +19,7 @@
       ];
 
       config =
-        lib.mkIf
-          (
-            config.myModules.hardware.yeetmouse.enable
-            || config.myModules.hardware.yeetmouse.devices.g502.enable
-          )
+        lib.mkIf (config.myModules.yeetmouse.enable || config.myModules.yeetmouse.devices.g502.enable)
           {
             hardware.yeetmouse.enable = true;
 

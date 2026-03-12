@@ -16,13 +16,17 @@
             inputs.self.nixosModules.system-kernel
             inputs.self.nixosModules.system-nix
             inputs.self.nixosModules.system-users
-            inputs.self.nixosModules.system-security
             inputs.self.nixosModules.system-filesystems
-            inputs.self.nixosModules.system-ssh
-            inputs.self.nixosModules.system-sops
             inputs.self.nixosModules.system-impermanence
             inputs.self.nixosModules.system-services
             inputs.self.nixosModules.system-packages
+
+            # Security
+            inputs.self.nixosModules.security-system
+            inputs.self.nixosModules.security-ssh
+            inputs.self.nixosModules.security-sops
+            inputs.self.nixosModules.security-arkenfox
+            inputs.self.nixosModules.security-portmaster
 
             # Hardware (Intel — no AMD modules)
             inputs.self.nixosModules.hardware-core
@@ -32,7 +36,6 @@
             inputs.self.nixosModules.hardware-audio
             inputs.self.nixosModules.hardware-networking
             inputs.self.nixosModules.hardware-bluetooth
-            inputs.self.nixosModules.hardware-macbook
             inputs.self.nixosModules.hardware-performance
             inputs.self.nixosModules.hardware-power
 
@@ -41,16 +44,13 @@
             inputs.self.nixosModules.desktop-displays
             inputs.self.nixosModules.desktop-flatpak
 
-            # Apps
-            inputs.self.nixosModules.apps-arkenfox
-            inputs.self.nixosModules.apps-portmaster
-            inputs.self.nixosModules.apps-tidalcycles
-            inputs.self.nixosModules.apps-wine
-            inputs.self.nixosModules.apps-development
-
-            # Tools
-            inputs.self.nixosModules.tools-sysdiag
-            inputs.self.nixosModules.tools-iommu
+            # Standalone
+            inputs.self.nixosModules.macbook
+            inputs.self.nixosModules.wine
+            inputs.self.nixosModules.tidalcycles
+            inputs.self.nixosModules.development
+            inputs.self.nixosModules.sysdiag
+            inputs.self.nixosModules.iommu
 
             # CachyOS settings
             inputs.self.nixosModules.cachyos-settings
@@ -107,14 +107,14 @@
           xanmod.configuration = {
             system.nixos.tags = [ "xanmod" ];
             myModules.kernel.variant = "xanmod";
-            myModules.hardware.macbook.patches.enable = false;
+            myModules.macbook.patches.enable = false;
           };
 
           # CachyOS: full CachyOS kernel + optimizations
           cachyos.configuration = {
             system.nixos.tags = [ "cachyos" ];
             myModules.kernel.variant = "cachyos";
-            myModules.hardware.macbook.patches.enable = false;
+            myModules.macbook.patches.enable = false;
             myModules.kernel.cachyos = {
               bbr3 = true;
               hzTicks = "1000";

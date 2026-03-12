@@ -223,18 +223,23 @@
         laptop = false; # Not a laptop — no TLP
       };
       # MacBook: not imported on this host (see flake-module.nix)
-      yeetmouse = {
-        enable = true;
-        devices.g502 = {
-          enable = true; # Libinput flat profile HWDB entries (prevents double acceleration)
-          # Acceleration parameters are set via hardware.yeetmouse below
-        };
-      };
-      duckyOneXMini.enable = true;
-      debuggingProbes.enable = true;
-      piper.enable = true;
-      streamcontroller.enable = true;
     };
+
+    # --------------------------------------------------------------------------
+    # Standalone Modules
+    # --------------------------------------------------------------------------
+    yeetmouse = {
+      enable = true;
+      devices.g502 = {
+        enable = true; # Libinput flat profile HWDB entries (prevents double acceleration)
+        # Acceleration parameters are set via hardware.yeetmouse below
+      };
+    };
+    duckyOneXMini.enable = true;
+    debuggingProbes.enable = true;
+    piper.enable = true;
+    streamcontroller.enable = true;
+    coolercontrol.enable = true; # Fan/cooling device management (daemon + GUI)
 
     # --------------------------------------------------------------------------
     # Kernel
@@ -357,19 +362,17 @@
     };
 
     # --------------------------------------------------------------------------
-    # Music
+    # TidalCycles
     # --------------------------------------------------------------------------
-    music = {
-      tidalcycles = {
-        enable = true;
-        autostartSuperDirt = false;
-      };
+    tidalcycles = {
+      enable = true;
+      autostartSuperDirt = false;
     };
 
     # --------------------------------------------------------------------------
-    # Audio (GoXLR)
+    # GoXLR
     # --------------------------------------------------------------------------
-    audio.goxlr = {
+    goxlr = {
       enable = true;
       isMini = false; # (default) — full-size GoXLR
       utility.enable = true; # (default)
@@ -378,11 +381,11 @@
         enable = true;
         clearStreamProperties = true; # (default)
         channels = {
-          system.eq = config.myModules.audio.goxlr.eq.presets.dt990pro;
-          game.eq = config.myModules.audio.goxlr.eq.presets.dt990pro;
-          chat.eq = config.myModules.audio.goxlr.eq.presets.dt990pro;
-          music.eq = config.myModules.audio.goxlr.eq.presets.dt990pro;
-          sample.eq = config.myModules.audio.goxlr.eq.presets.dt990pro;
+          system.eq = config.myModules.goxlr.eq.presets.dt990pro;
+          game.eq = config.myModules.goxlr.eq.presets.dt990pro;
+          chat.eq = config.myModules.goxlr.eq.presets.dt990pro;
+          music.eq = config.myModules.goxlr.eq.presets.dt990pro;
+          sample.eq = config.myModules.goxlr.eq.presets.dt990pro;
         };
       };
       denoise = {
@@ -410,23 +413,19 @@
     };
 
     # --------------------------------------------------------------------------
-    # Tools
+    # Tools & Programs
     # --------------------------------------------------------------------------
-    tools = {
-      sysdiag = true;
-      iommu = true;
+    sysdiag = true;
+    iommu = true;
+    corecycler = {
+      enable = true; # Per-core CPU stability tester + PBO Curve Optimizer tuner
+      ryzenSmu = true; # Load ryzen_smu for runtime CO read/write via SMU
     };
-
-    # --------------------------------------------------------------------------
-    # Programs
-    # --------------------------------------------------------------------------
-    programs = {
-      wine = {
-        enable = true;
-        variant = "staging";
-      };
-      bottles.enable = true;
+    wine = {
+      enable = true;
+      variant = "staging";
     };
+    bottles.enable = true;
 
     # --------------------------------------------------------------------------
     # CachyOS Settings
@@ -513,11 +512,6 @@
   };
 
   # ============================================================================
-  # CoolerControl — Fan/cooling device management
-  # ============================================================================
-  programs.coolercontrol.enable = true;
-
-  # ============================================================================
   # System & Localization
   # ============================================================================
   system.stateVersion = "26.05";
@@ -546,6 +540,17 @@
   boot = {
     # Note: btrfs already handled by filesystems.nix (enableAll)
     # Note: AMD kernel modules (amdgpu, kvm-amd, k10temp) in cpu-amd.nix / gpu-amd.nix
+    #
+    # NCT6799 Super I/O fan header mapping (ASUS ROG Crosshair X870E Hero):
+    #   fan1 / pwm1  = CPU_FAN   → Arctic Liquid Freezer III radiator fans (~1036 RPM)
+    #   fan2 / pwm2  = CPU_OPT   → Empty
+    #   fan3 / pwm3  = CHA_FAN1  → Chassis fan (~1333 RPM)
+    #   fan4 / pwm4  = CHA_FAN2  → Chassis fan (~1309 RPM)
+    #   fan5 / pwm5  = CHA_FAN3  → Chassis fan (~1041 RPM)
+    #   fan6 / pwm6  = CHA_FAN4  → Empty
+    #   fan7 / pwm7  = W_PUMP+   → Arctic Liquid Freezer III pump (~2789 RPM, always full)
+    #   (VRM contact frame fan is SATA-powered — not visible to hwmon)
+    kernelModules = [ "nct6775" ]; # Nuvoton NCT6799 Super I/O — exposes motherboard fan/temp/voltage sensors
     loader.timeout = lib.mkForce 10;
     blacklistedKernelModules = [
       "acpi_pad" # Forces CPU idle states — counterproductive on performance desktop
@@ -560,7 +565,7 @@
   # ============================================================================
   # Single source of truth for mouse acceleration parameters.
   # The upstream driver.nix applies these to sysfs via udev on any HID mouse connect.
-  # G502 HWDB (flat libinput profile) is handled by myModules.hardware.yeetmouse.devices.g502.
+  # G502 HWDB (flat libinput profile) is handled by myModules.yeetmouse.devices.g502.
   hardware.yeetmouse = {
     sensitivity = 0.5; # Match Raw Accel Windows (0.5)
     # sensitivity = 0.3125; # Match Raw Accel Windows (500/1600)

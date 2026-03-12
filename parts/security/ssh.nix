@@ -1,6 +1,6 @@
 { inputs, ... }:
 {
-  flake.nixosModules.system-ssh =
+  flake.nixosModules.security-ssh =
     {
       config,
       lib,

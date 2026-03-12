@@ -18,10 +18,10 @@
 with lib;
 
 let
-  cfg = config.myModules.hardware.yeetmouse.devices.g502;
+  cfg = config.myModules.yeetmouse.devices.g502;
 in
 {
-  options.myModules.hardware.yeetmouse.devices.g502 = {
+  options.myModules.yeetmouse.devices.g502 = {
     enable = mkEnableOption "Libinput flat acceleration profile for Logitech G502 (Wired/Wireless)";
 
     wiredProductId = mkOption {

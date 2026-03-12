@@ -1,6 +1,6 @@
 { inputs, ... }:
 {
-  flake.nixosModules.apps-wine =
+  flake.nixosModules.wine =
     {
       config,
       lib,
@@ -8,12 +8,12 @@
       ...
     }:
     let
-      wineCfg = config.myModules.programs.wine;
-      bottlesCfg = config.myModules.programs.bottles;
+      wineCfg = config.myModules.wine;
+      bottlesCfg = config.myModules.bottles;
     in
     {
       _class = "nixos";
-      options.myModules.programs.wine = {
+      options.myModules.wine = {
         enable = lib.mkEnableOption "Wine installation";
         variant = lib.mkOption {
           type = lib.types.enum [
@@ -26,7 +26,7 @@
           description = "Wine variant (staging has more patches, Full includes all optional deps)";
         };
       };
-      options.myModules.programs.bottles.enable = lib.mkEnableOption "Bottles installation";
+      options.myModules.bottles.enable = lib.mkEnableOption "Bottles installation";
 
       config = lib.mkMerge [
         (lib.mkIf wineCfg.enable {

@@ -1,6 +1,6 @@
 { inputs, ... }:
 {
-  flake.nixosModules.apps-portmaster =
+  flake.nixosModules.security-portmaster =
     {
       config,
       lib,

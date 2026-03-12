@@ -1,6 +1,6 @@
 { inputs, ... }:
 {
-  flake.nixosModules.hardware-streamcontroller =
+  flake.nixosModules.streamcontroller =
     {
       config,
       lib,
@@ -8,7 +8,7 @@
       ...
     }:
     let
-      cfg = config.myModules.hardware.streamcontroller;
+      cfg = config.myModules.streamcontroller;
 
       streamcontrollerPatched = pkgs.streamcontroller.overrideAttrs (old: {
         propagatedBuildInputs = (old.propagatedBuildInputs or [ ]) ++ [ pkgs.python3Packages.websockets ];
@@ -19,7 +19,7 @@
     in
     {
       _class = "nixos";
-      options.myModules.hardware.streamcontroller = {
+      options.myModules.streamcontroller = {
         enable = lib.mkEnableOption "StreamController (Elgato Stream Deck)";
       };
 

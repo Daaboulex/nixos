@@ -171,6 +171,7 @@
               sysbench
               stress-ng
               memtest_vulkan
+              linux-corecycler
             ];
           })
         ]

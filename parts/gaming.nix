@@ -1,6 +1,6 @@
 { inputs, withSystem, ... }:
 {
-  flake.nixosModules.apps-gaming =
+  flake.nixosModules.gaming =
     {
       config,
       lib,

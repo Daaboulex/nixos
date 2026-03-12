@@ -2,7 +2,7 @@
 # NixOS Host Configuration Template
 # ==========================================================================
 # Auto-generated from myModules option definitions.
-# 237 options across 63 groups.
+# 241 options across 79 groups.
 #
 # Usage: copy this file to parts/hosts/<hostname>/default.nix and uncomment
 # the options you want to set. Options left commented use their module defaults.
@@ -23,37 +23,8 @@
   ];
 
   myModules = {
-# --- audio.goxlr (35 options) ---
-    # denoise.attenuationLimit = 100;  # signed integer — Max noise attenuation in dB (0-100). 100 = no limit (official default). 6-12 ...
-    # denoise.enable = false;  # boolean — Whether to enable DeepFilterNet3 neural noise suppression on chat mic.
-    # denoise.maxDfThreshold = 12.000000;  # floating point number — Max DF processing threshold in dB (-15 to 35). Lower suppresses transient noi...
-    # denoise.maxErbThreshold = 20.000000;  # floating point number — Max ERB processing threshold in dB (-15 to 35). Lower reduces muffling on lou...
-    # denoise.minProcessingBuffer = 0;  # signed integer — Min processing buffer in frames (0-10). 0 = lowest latency.
-    # denoise.minThreshold = -15.000000;  # floating point number — Min processing threshold in dB (-15 to 35).
-    # denoise.postFilterBeta = 0.000000;  # floating point number — Post-filter beta (0-0.05). 0 = disabled. DF3 is sufficient without it; higher...
-    # denoise.source = "alsa_input.usb-TC-Helicon_GoXLR-00.HiFi__Headset__source";  # string — PipeWire node name of the raw microphone source
-    # enable = false;  # boolean — Whether to enable GoXLR Mini support.
-    # eq.channels.chat.enable = true;  # boolean — Whether to enable EQ for Chat channel.
-    # eq.channels.chat.sink = "alsa_output.usb-TC-Helicon_GoXLR-00.HiFi__Headphones__sink";  # string — PipeWire sink node name for Chat channel
-    # eq.channels.game.enable = true;  # boolean — Whether to enable EQ for Game channel.
-    # eq.channels.game.sink = "alsa_output.usb-TC-Helicon_GoXLR-00.HiFi__Line1__sink";  # string — PipeWire sink node name for Game channel
-    # eq.channels.music.enable = true;  # boolean — Whether to enable EQ for Music channel.
-    # eq.channels.music.sink = "alsa_output.usb-TC-Helicon_GoXLR-00.HiFi__Line2__sink";  # string — PipeWire sink node name for Music channel
-    # eq.channels.sample.enable = true;  # boolean — Whether to enable EQ for Sample channel.
-    # eq.channels.sample.sink = "alsa_output.usb-TC-Helicon_GoXLR-00.HiFi__Line3__sink";  # string — PipeWire sink node name for Sample channel
-    # eq.channels.system.enable = true;  # boolean — Whether to enable EQ for System channel.
-    # eq.channels.system.sink = "alsa_output.usb-TC-Helicon_GoXLR-00.HiFi__Speaker__sink";  # string — PipeWire sink node name for System channel
-    # eq.clearStreamProperties = false;  # boolean — Clear PipeWire stream properties before applying EQ filters
-    # eq.enable = false;  # boolean — Whether to enable PipeWire parametric EQ for GoXLR channels.
-    # installProfiles = true;  # boolean — Install custom GoXLR UCM profiles
-    # isMini = true;  # boolean — Apply GoXLR Mini UCM patch
-    # toggle.activeMicProfile = "Default";  # string — Microphone profile to load when waking (active state)
-    # toggle.activeProfile = "Default";  # string — Device profile to load when waking (active state)
-    # toggle.enable = false;  # boolean — Whether to enable goxlr-toggle script for switching between active and sleep ...
-    # toggle.sleepMicProfile = "Sleep";  # string — Microphone profile to load when sleeping
-    # toggle.sleepProfile = "Sleep";  # string — Device profile to load when sleeping
-    # utility.enable = true;  # boolean — goxlr-utility daemon
-    # ... and 6 more options with complex defaults (see docs/OPTIONS.md)
+# --- bottles.enable (1 options) ---
+    # bottles.enable = false;  # boolean — Whether to enable Bottles installation.
 
 # --- cachyos.settings (15 options) ---
     # amdgpuGcnCompat.enable = false;  # boolean — Whether to enable CachyOS amdgpuGcnCompat.
@@ -71,6 +42,21 @@
     # thp.enable = true;  # boolean — Whether to enable CachyOS thp.
     # timesyncd.enable = true;  # boolean — Whether to enable CachyOS timesyncd.
     # zram.enable = true;  # boolean — Whether to enable CachyOS zram.
+
+# --- coolercontrol.autostart (1 options) ---
+    # coolercontrol.autostart = true;  # boolean — Whether to autostart the CoolerControl GUI at login via XDG autostart
+
+# --- coolercontrol.enable (1 options) ---
+    # coolercontrol.enable = false;  # boolean — Whether to enable CoolerControl fan and cooling device management.
+
+# --- corecycler.enable (1 options) ---
+    # corecycler.enable = false;  # boolean — Whether to enable Linux CoreCycler per-core CPU stability tester and PBO Curv...
+
+# --- corecycler.ryzenSmu (1 options) ---
+    # corecycler.ryzenSmu = true;  # boolean — Whether to load the ryzen_smu kernel module for Curve Optimizer read/write vi...
+
+# --- debuggingProbes.enable (1 options) ---
+    # debuggingProbes.enable = false;  # boolean — Whether to enable Embedded debugging probes (LPC-Link2, ESP32) udev rules.
 
 # --- desktop.displays (3 options) ---
     # enable = false;  # boolean — Whether to enable declarative display configuration.
@@ -94,6 +80,18 @@
 
 # --- development.saleae (1 options) ---
     # development.saleae = false;  # boolean — Whether to enable Saleae Logic analyzer and udev rules.
+
+# --- duckyOneXMini.board (1 options) ---
+    # product = "001d";  # string — USB product ID for the keyboard board HID interface
+
+# --- duckyOneXMini.enable (1 options) ---
+    # duckyOneXMini.enable = false;  # boolean — Whether to enable Ducky One X Mini keyboard HID access (udev rules for VIA/Vi...
+
+# --- duckyOneXMini.mcu (1 options) ---
+    # product = "0021";  # string — USB product ID for the keyboard MCU HID interface
+
+# --- duckyOneXMini.vendor (1 options) ---
+    # duckyOneXMini.vendor = "3233";  # string — USB vendor ID for the Ducky keyboard
 
 # --- gaming.azahar (1 options) ---
     # enable = false;  # boolean — Azahar
@@ -164,6 +162,50 @@
     # overlayKey = "F1";  # string — Key to open the overlay UI in-game
     # toggleKey = "Home";  # string — Key to toggle effects on/off in-game
 
+# --- goxlr.denoise (8 options) ---
+    # attenuationLimit = 100;  # signed integer — Max noise attenuation in dB (0-100). 100 = no limit (official default). 6-12 ...
+    # enable = false;  # boolean — Whether to enable DeepFilterNet3 neural noise suppression on chat mic.
+    # maxDfThreshold = 12.000000;  # floating point number — Max DF processing threshold in dB (-15 to 35). Lower suppresses transient noi...
+    # maxErbThreshold = 20.000000;  # floating point number — Max ERB processing threshold in dB (-15 to 35). Lower reduces muffling on lou...
+    # minProcessingBuffer = 0;  # signed integer — Min processing buffer in frames (0-10). 0 = lowest latency.
+    # minThreshold = -15.000000;  # floating point number — Min processing threshold in dB (-15 to 35).
+    # postFilterBeta = 0.000000;  # floating point number — Post-filter beta (0-0.05). 0 = disabled. DF3 is sufficient without it; higher...
+    # source = "alsa_input.usb-TC-Helicon_GoXLR-00.HiFi__Headset__source";  # string — PipeWire node name of the raw microphone source
+
+# --- goxlr.enable (1 options) ---
+    # goxlr.enable = false;  # boolean — Whether to enable GoXLR Mini support.
+
+# --- goxlr.eq (18 options) ---
+    # channels.chat.enable = true;  # boolean — Whether to enable EQ for Chat channel.
+    # channels.chat.sink = "alsa_output.usb-TC-Helicon_GoXLR-00.HiFi__Headphones__sink";  # string — PipeWire sink node name for Chat channel
+    # channels.game.enable = true;  # boolean — Whether to enable EQ for Game channel.
+    # channels.game.sink = "alsa_output.usb-TC-Helicon_GoXLR-00.HiFi__Line1__sink";  # string — PipeWire sink node name for Game channel
+    # channels.music.enable = true;  # boolean — Whether to enable EQ for Music channel.
+    # channels.music.sink = "alsa_output.usb-TC-Helicon_GoXLR-00.HiFi__Line2__sink";  # string — PipeWire sink node name for Music channel
+    # channels.sample.enable = true;  # boolean — Whether to enable EQ for Sample channel.
+    # channels.sample.sink = "alsa_output.usb-TC-Helicon_GoXLR-00.HiFi__Line3__sink";  # string — PipeWire sink node name for Sample channel
+    # channels.system.enable = true;  # boolean — Whether to enable EQ for System channel.
+    # channels.system.sink = "alsa_output.usb-TC-Helicon_GoXLR-00.HiFi__Speaker__sink";  # string — PipeWire sink node name for System channel
+    # clearStreamProperties = false;  # boolean — Clear PipeWire stream properties before applying EQ filters
+    # enable = false;  # boolean — Whether to enable PipeWire parametric EQ for GoXLR channels.
+    # ... and 6 more options with complex defaults (see docs/OPTIONS.md)
+
+# --- goxlr.installProfiles (1 options) ---
+    # goxlr.installProfiles = true;  # boolean — Install custom GoXLR UCM profiles
+
+# --- goxlr.isMini (1 options) ---
+    # goxlr.isMini = true;  # boolean — Apply GoXLR Mini UCM patch
+
+# --- goxlr.toggle (5 options) ---
+    # activeMicProfile = "Default";  # string — Microphone profile to load when waking (active state)
+    # activeProfile = "Default";  # string — Device profile to load when waking (active state)
+    # enable = false;  # boolean — Whether to enable goxlr-toggle script for switching between active and sleep ...
+    # sleepMicProfile = "Sleep";  # string — Microphone profile to load when sleeping
+    # sleepProfile = "Sleep";  # string — Device profile to load when sleeping
+
+# --- goxlr.utility (1 options) ---
+    # enable = true;  # boolean — goxlr-utility daemon
+
 # --- hardware.audio (3 options) ---
     # easyeffects.enable = false;  # boolean — Install EasyEffects audio effects processor
     # enable = false;  # boolean — Whether to enable Audio configuration with PipeWire.
@@ -186,15 +228,6 @@
     # amd.x3dVcache.enable = false;  # boolean — AMD 3D V-Cache optimizer (for dual-CCD X3D processors like 9950X3D/9900X3D)
     # amd.x3dVcache.mode = "cache";  # one of "cache", "frequency" — 3D V-Cache scheduling preference:
 - "cache": prefer CCD with larger L3 cache ...
-
-# --- hardware.debuggingProbes (1 options) ---
-    # enable = false;  # boolean — Whether to enable Embedded debugging probes (LPC-Link2, ESP32) udev rules.
-
-# --- hardware.duckyOneXMini (4 options) ---
-    # board.product = "001d";  # string — USB product ID for the keyboard board HID interface
-    # enable = false;  # boolean — Whether to enable Ducky One X Mini keyboard HID access (udev rules for VIA/Vi...
-    # mcu.product = "0021";  # string — USB product ID for the keyboard MCU HID interface
-    # vendor = "3233";  # string — USB vendor ID for the Ducky keyboard
 
 # --- hardware.graphics (15 options) ---
     # amd.disableHDCP = false;  # boolean — Disable HDCP (amdgpu.dc_hdcp_enable=0) — fixes handshake bugs on RDNA 4
@@ -230,24 +263,13 @@ GPU vend...
     # scx.extraArgs = [ ];  # list of string — Extra arguments passed to the scheduler
     # scx.scheduler = "scx_lavd";  # one of "scx_lavd", "scx_bpfland", "scx_cosmos", "scx_rusty", "scx_rustland", "scx_flash", "scx_p2dq", "scx_beerland", "scx_mitosis", "scx_tickless", "scx_central", "scx_nest", "scx_layered" — Which SCX scheduler to run
 
-# --- hardware.piper (1 options) ---
-    # enable = false;  # boolean — Whether to enable Piper mouse configuration tool and ratbagd service.
-
 # --- hardware.power (3 options) ---
     # enable = false;  # boolean — Whether to enable Power management configuration.
     # laptop = false;  # boolean — Whether to enable Laptop power optimizations (TLP).
     # profile = "balanced";  # one of "performance", "balanced", "powersave" — Power profile to apply
 
-# --- hardware.streamcontroller (1 options) ---
-    # enable = false;  # boolean — Whether to enable StreamController (Elgato Stream Deck).
-
-# --- hardware.yeetmouse (6 options) ---
-    # devices.g502.dpi = 1600;  # signed integer — Mouse DPI setting (reported to libinput via HWDB)
-    # devices.g502.enable = false;  # boolean — Whether to enable Libinput flat acceleration profile for Logitech G502 (Wired...
-    # devices.g502.pollingRate = 1000;  # signed integer — Mouse polling rate in Hz (reported to libinput via HWDB)
-    # devices.g502.wiredProductId = "c08d";  # string — USB product ID for the wired G502 (check with lsusb)
-    # devices.g502.wirelessProductId = "c539";  # string — USB product ID for the Lightspeed Receiver
-    # enable = false;  # boolean — Whether to enable YeetMouse input driver.
+# --- iommu (1 options) ---
+    # iommu = false;  # boolean — Whether to enable IOMMU group listing tool.
 
 # --- kernel.cachyos (9 options) ---
     # bbr3 = null;  # null or boolean — BBR3 TCP congestion control
@@ -275,19 +297,11 @@ GPU vend...
 # --- kernel.variant (1 options) ---
     # kernel.variant = "default";  # one of "cachyos", "cachyos-lto", "cachyos-sched-ext", "zen", "xanmod", "default" — Kernel variant to use (cachyos, zen, xanmod, or NixOS default)
 
-# --- music.tidalcycles (2 options) ---
-    # autostartSuperDirt = false;  # boolean — Auto-start SuperDirt (SuperCollider) as a systemd user service
-    # enable = false;  # boolean — Whether to enable TidalCycles and SuperDirt.
+# --- piper.enable (1 options) ---
+    # piper.enable = false;  # boolean — Whether to enable Piper mouse configuration tool and ratbagd service.
 
 # --- primaryUser (1 options) ---
     # primaryUser = "user";  # string — Primary system username used across all modules
-
-# --- programs.bottles (1 options) ---
-    # enable = false;  # boolean — Whether to enable Bottles installation.
-
-# --- programs.wine (2 options) ---
-    # enable = false;  # boolean — Whether to enable Wine installation.
-    # variant = "stagingFull";  # one of "stable", "staging", "stableFull", "stagingFull" — Wine variant (staging has more patches, Full includes all optional deps)
 
 # --- security.arkenfox (4 options) ---
     # enable = false;  # boolean — Whether to enable Arkenfox Firefox security configuration.
@@ -315,6 +329,12 @@ GPU vend...
 # --- security.system (2 options) ---
     # enable = false;  # boolean — Whether to enable System-wide security hardening.
     # firejail.enable = false;  # boolean — Firejail sandboxing
+
+# --- streamcontroller.enable (1 options) ---
+    # streamcontroller.enable = false;  # boolean — Whether to enable StreamController (Elgato Stream Deck).
+
+# --- sysdiag (1 options) ---
+    # sysdiag = false;  # boolean — Whether to enable sysdiag system diagnostics.
 
 # --- system.boot (8 options) ---
     # consoleMode = "max";  # null or string — Console resolution mode (max, keep, or specific like 1920x1080)
@@ -378,11 +398,27 @@ GPU vend...
 # --- system.users (1 options) ---
     # enable = false;  # boolean — Whether to enable User configuration.
 
-# --- tools.iommu (1 options) ---
-    # tools.iommu = false;  # boolean — Whether to enable IOMMU group listing tool.
+# --- tidalcycles.autostartSuperDirt (1 options) ---
+    # tidalcycles.autostartSuperDirt = false;  # boolean — Auto-start SuperDirt (SuperCollider) as a systemd user service
 
-# --- tools.sysdiag (1 options) ---
-    # tools.sysdiag = false;  # boolean — Whether to enable sysdiag system diagnostics.
+# --- tidalcycles.enable (1 options) ---
+    # tidalcycles.enable = false;  # boolean — Whether to enable TidalCycles and SuperDirt.
+
+# --- wine.enable (1 options) ---
+    # wine.enable = false;  # boolean — Whether to enable Wine installation.
+
+# --- wine.variant (1 options) ---
+    # wine.variant = "stagingFull";  # one of "stable", "staging", "stableFull", "stagingFull" — Wine variant (staging has more patches, Full includes all optional deps)
+
+# --- yeetmouse.devices (5 options) ---
+    # g502.dpi = 1600;  # signed integer — Mouse DPI setting (reported to libinput via HWDB)
+    # g502.enable = false;  # boolean — Whether to enable Libinput flat acceleration profile for Logitech G502 (Wired...
+    # g502.pollingRate = 1000;  # signed integer — Mouse polling rate in Hz (reported to libinput via HWDB)
+    # g502.wiredProductId = "c08d";  # string — USB product ID for the wired G502 (check with lsusb)
+    # g502.wirelessProductId = "c539";  # string — USB product ID for the Lightspeed Receiver
+
+# --- yeetmouse.enable (1 options) ---
+    # yeetmouse.enable = false;  # boolean — Whether to enable YeetMouse input driver.
   };
 
   # System basics (edit these for your host)

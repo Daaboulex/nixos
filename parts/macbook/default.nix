@@ -1,6 +1,6 @@
 { inputs, ... }:
 {
-  flake.nixosModules.hardware-macbook =
+  flake.nixosModules.macbook =
     {
       config,
       lib,
@@ -8,7 +8,7 @@
       ...
     }:
     let
-      cfg = config.myModules.hardware.macbook;
+      cfg = config.myModules.macbook;
       inherit (config.boot.kernelPackages) kernel;
 
       # LLVM flags for Clang-based kernels (CachyOS)
@@ -77,7 +77,7 @@
     in
     {
       _class = "nixos";
-      options.myModules.hardware.macbook = {
+      options.myModules.macbook = {
         patches.enable = lib.mkEnableOption "MacBook kernel patches (AppleSMC fixes, AT24 warning suppression)";
 
         fan = {

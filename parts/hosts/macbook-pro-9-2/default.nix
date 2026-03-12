@@ -167,28 +167,6 @@
         iommu.enable = false; # No VT-d passthrough needed
       };
       # AMD CPU: not imported on this host (see flake-module.nix)
-      macbook = {
-        patches.enable = lib.mkDefault false; # Disabled — specialisations override; see note below
-        # Specialisation priority: this must be mkDefault so specialisations can set false
-        # at normal priority. The "default" kernel variant may work with patches, but
-        # xanmod/cachyos variants have different contexts that may not match.
-        fan = {
-          enable = true;
-          lowTemp = 45; # Start ramping fan at 45 C
-          highTemp = 65; # High fan speed at 65 C
-          maxTemp = 80; # Maximum temperature
-          pollingInterval = 1; # Check every second
-        };
-        touchpad = {
-          enable = true;
-          naturalScrolling = true; # (default)
-          tapping = true; # (default) — tap-to-click
-        };
-        keyboard = {
-          fnMode = 2; # Press fn for F-keys (default: media keys)
-          swapOptCmd = true; # Cmd acts as Alt (standard PC layout)
-        };
-      };
       performance = {
         enable = true;
         governor = "powersave"; # intel_pstate powersave — dynamic scaling, efficient for laptop
@@ -201,8 +179,32 @@
         profile = "balanced"; # (default)
         laptop = true; # Enable TLP for laptop power management
       };
-      # YeetMouse, GoXLR, Piper, StreamController, Ducky, DebugProbes:
-      # not imported on this host (see flake-module.nix)
+    };
+
+    # --------------------------------------------------------------------------
+    # MacBook
+    # --------------------------------------------------------------------------
+    macbook = {
+      patches.enable = lib.mkDefault false; # Disabled — specialisations override; see note below
+      # Specialisation priority: this must be mkDefault so specialisations can set false
+      # at normal priority. The "default" kernel variant may work with patches, but
+      # xanmod/cachyos variants have different contexts that may not match.
+      fan = {
+        enable = true;
+        lowTemp = 45; # Start ramping fan at 45 C
+        highTemp = 65; # High fan speed at 65 C
+        maxTemp = 80; # Maximum temperature
+        pollingInterval = 1; # Check every second
+      };
+      touchpad = {
+        enable = true;
+        naturalScrolling = true; # (default)
+        tapping = true; # (default) — tap-to-click
+      };
+      keyboard = {
+        fnMode = 2; # Press fn for F-keys (default: media keys)
+        swapOptCmd = true; # Cmd acts as Alt (standard PC layout)
+      };
     };
 
     # --------------------------------------------------------------------------
@@ -237,9 +239,9 @@
     };
 
     # --------------------------------------------------------------------------
-    # Music
+    # TidalCycles
     # --------------------------------------------------------------------------
-    music.tidalcycles = {
+    tidalcycles = {
       enable = true;
       autostartSuperDirt = false;
     };
@@ -254,23 +256,16 @@
     };
 
     # --------------------------------------------------------------------------
-    # Tools
+    # Tools & Programs
     # --------------------------------------------------------------------------
-    tools = {
-      sysdiag = true;
-      iommu = false; # No IOMMU passthrough on this machine
+    sysdiag = true;
+    iommu = false; # No IOMMU passthrough on this machine
+    # corecycler: not imported on this host (AMD PBO CO tuner — Intel laptop)
+    wine = {
+      enable = true;
+      variant = "staging";
     };
-
-    # --------------------------------------------------------------------------
-    # Programs
-    # --------------------------------------------------------------------------
-    programs = {
-      wine = {
-        enable = true;
-        variant = "staging";
-      };
-      bottles.enable = false; # Not needed on laptop
-    };
+    bottles.enable = false; # Not needed on laptop
 
     # --------------------------------------------------------------------------
     # CachyOS Settings

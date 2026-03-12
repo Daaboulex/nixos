@@ -1,6 +1,6 @@
 { inputs, ... }:
 {
-  flake.nixosModules.apps-arkenfox =
+  flake.nixosModules.security-arkenfox =
     {
       config,
       lib,

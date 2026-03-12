@@ -119,6 +119,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Linux CoreCycler - Per-core CPU stability tester and PBO CO tuner
+    linux-corecycler = {
+      url = "github:Daaboulex/linux-corecycler";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # CoolerControl - Fan/cooling device management (v4.0.1)
     coolercontrol = {
       url = "github:Daaboulex/coolercontrol-nix";

@@ -1,6 +1,6 @@
 { inputs, ... }:
 {
-  flake.nixosModules.tools-iommu =
+  flake.nixosModules.iommu =
     {
       config,
       lib,
@@ -8,7 +8,7 @@
       ...
     }:
     let
-      cfg = config.myModules.tools;
+      cfg = config.myModules;
 
       # list-iommu-groups — Show IOMMU group assignments
       list-iommu-groups = pkgs.writeShellApplication {
@@ -34,7 +34,7 @@
     in
     {
       _class = "nixos";
-      options.myModules.tools.iommu = lib.mkEnableOption "IOMMU group listing tool";
+      options.myModules.iommu = lib.mkEnableOption "IOMMU group listing tool";
 
       config = lib.mkIf cfg.iommu {
         environment.systemPackages = [ list-iommu-groups ];

@@ -1,6 +1,6 @@
 { inputs, ... }:
 {
-  flake.nixosModules.hardware-goxlr =
+  flake.nixosModules.goxlr =
     {
       config,
       lib,
@@ -8,7 +8,7 @@
       ...
     }:
     let
-      cfg = config.myModules.audio.goxlr;
+      cfg = config.myModules.goxlr;
       deviceName = if cfg.isMini then "GoXLRMini" else "GoXLR";
 
       fixedAlsaUcm = pkgs.alsa-ucm-conf.overrideAttrs (old: {
@@ -144,7 +144,7 @@
     in
     {
       _class = "nixos";
-      options.myModules.audio.goxlr = {
+      options.myModules.goxlr = {
         enable = lib.mkEnableOption "GoXLR Mini support";
         isMini = lib.mkOption {
           type = lib.types.bool;
