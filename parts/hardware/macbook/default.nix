@@ -1,35 +1,45 @@
-{ inputs, ... }: {
-  flake.nixosModules.hardware-macbook = { config, lib, pkgs, ... }:
+{ inputs, ... }:
+{
+  flake.nixosModules.hardware-macbook =
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
       cfg = config.myModules.hardware.macbook;
-      kernel = config.boot.kernelPackages.kernel;
+      inherit (config.boot.kernelPackages) kernel;
 
       # LLVM flags for Clang-based kernels (CachyOS)
-      extraMakeFlags = if (kernel.stdenv.cc.isClang or false) then [ "LLVM=1" ] else [];
-      extraBuildInputs = if (kernel.stdenv.cc.isClang or false)
-        then [
-          pkgs.llvmPackages.clang-unwrapped
-          pkgs.llvmPackages.bintools-unwrapped
-          pkgs.llvmPackages.lld
-        ]
-        else [
-          pkgs.gcc-unwrapped
-          pkgs.binutils-unwrapped
-        ];
+      extraMakeFlags = if (kernel.stdenv.cc.isClang or false) then [ "LLVM=1" ] else [ ];
+      extraBuildInputs =
+        if (kernel.stdenv.cc.isClang or false) then
+          [
+            pkgs.llvmPackages.clang-unwrapped
+            pkgs.llvmPackages.bintools-unwrapped
+            pkgs.llvmPackages.lld
+          ]
+        else
+          [
+            pkgs.gcc-unwrapped
+            pkgs.binutils-unwrapped
+          ];
 
       # Select applesmc patch based on kernel version — the driver was rewritten in 6.19
       # (static globals → per-device struct), so the patch differs significantly.
       applesmcPatch =
-        if lib.versionAtLeast kernel.version "6.19"
-        then ./applesmc-6.19-fixes.patch
-        else ./applesmc-comprehensive-fixes.patch;
+        if lib.versionAtLeast kernel.version "6.19" then
+          ./applesmc-6.19-fixes.patch
+        else
+          ./applesmc-comprehensive-fixes.patch;
 
       # Patched applesmc — fixes race conditions in keyboard backlight,
       # null pointer dereference in cache access, workqueue flush on cleanup
       applesmc-patched = pkgs.stdenv.mkDerivation {
         pname = "applesmc-patched";
         version = "${kernel.version}-patched";
-        src = kernel.src;
+        inherit (kernel) src;
         nativeBuildInputs = kernel.moduleBuildDependencies ++ extraBuildInputs;
         patches = [ applesmcPatch ];
         buildPhase = ''
@@ -49,7 +59,7 @@
       at24-patched = pkgs.stdenv.mkDerivation {
         pname = "at24-patched";
         version = "${kernel.version}-patched";
-        src = kernel.src;
+        inherit (kernel) src;
         nativeBuildInputs = kernel.moduleBuildDependencies ++ extraBuildInputs;
         patches = [ ./at24-suppress-regulator-warning.patch ];
         buildPhase = ''
@@ -64,7 +74,8 @@
           cp drivers/misc/eeprom/at24.ko $out/lib/modules/${kernel.modDirVersion}/extra/
         '';
       };
-    in {
+    in
+    {
       _class = "nixos";
       options.myModules.hardware.macbook = {
         patches.enable = lib.mkEnableOption "MacBook kernel patches (AppleSMC fixes, AT24 warning suppression)";
@@ -75,10 +86,26 @@
             default = true;
             description = "mbpfan daemon for MacBook fan control";
           };
-          lowTemp = lib.mkOption { type = lib.types.int; default = 45; description = "Temperature to start ramping fan (Celsius)"; };
-          highTemp = lib.mkOption { type = lib.types.int; default = 65; description = "Temperature for high fan speed (Celsius)"; };
-          maxTemp = lib.mkOption { type = lib.types.int; default = 80; description = "Maximum temperature before full fan (Celsius)"; };
-          pollingInterval = lib.mkOption { type = lib.types.int; default = 1; description = "Fan polling interval in seconds"; };
+          lowTemp = lib.mkOption {
+            type = lib.types.int;
+            default = 45;
+            description = "Temperature to start ramping fan (Celsius)";
+          };
+          highTemp = lib.mkOption {
+            type = lib.types.int;
+            default = 65;
+            description = "Temperature for high fan speed (Celsius)";
+          };
+          maxTemp = lib.mkOption {
+            type = lib.types.int;
+            default = 80;
+            description = "Maximum temperature before full fan (Celsius)";
+          };
+          pollingInterval = lib.mkOption {
+            type = lib.types.int;
+            default = 1;
+            description = "Fan polling interval in seconds";
+          };
         };
 
         touchpad = {
@@ -87,13 +114,25 @@
             default = true;
             description = "MacBook touchpad with natural scrolling and tap-to-click";
           };
-          naturalScrolling = lib.mkOption { type = lib.types.bool; default = true; description = "Natural (reverse) scrolling direction"; };
-          tapping = lib.mkOption { type = lib.types.bool; default = true; description = "Tap-to-click"; };
+          naturalScrolling = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = "Natural (reverse) scrolling direction";
+          };
+          tapping = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = "Tap-to-click";
+          };
         };
 
         keyboard = {
           fnMode = lib.mkOption {
-            type = lib.types.enum [ 0 1 2 ];
+            type = lib.types.enum [
+              0
+              1
+              2
+            ];
             default = 2;
             description = "Apple keyboard fn key behavior (0=disabled, 1=press fn for media, 2=press fn for F-keys)";
           };
@@ -108,8 +147,14 @@
       config = lib.mkMerge [
         # Kernel patches
         (lib.mkIf cfg.patches.enable {
-          boot.extraModulePackages = [ applesmc-patched at24-patched ];
-          boot.kernelModules = [ "applesmc" "at24" ];
+          boot.extraModulePackages = [
+            applesmc-patched
+            at24-patched
+          ];
+          boot.kernelModules = [
+            "applesmc"
+            "at24"
+          ];
         })
 
         # Fan control
@@ -131,8 +176,8 @@
           services.libinput = {
             enable = true;
             touchpad = {
-              naturalScrolling = cfg.touchpad.naturalScrolling;
-              tapping = cfg.touchpad.tapping;
+              inherit (cfg.touchpad) naturalScrolling;
+              inherit (cfg.touchpad) tapping;
               clickMethod = "clickfinger";
               disableWhileTyping = true;
             };

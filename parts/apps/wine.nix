@@ -1,13 +1,30 @@
-{ inputs, ... }: {
-  flake.nixosModules.apps-wine = { config, lib, pkgs, ... }:
+{ inputs, ... }:
+{
+  flake.nixosModules.apps-wine =
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
       wineCfg = config.myModules.programs.wine;
       bottlesCfg = config.myModules.programs.bottles;
-    in {
+    in
+    {
       _class = "nixos";
       options.myModules.programs.wine = {
         enable = lib.mkEnableOption "Wine installation";
-        variant = lib.mkOption { type = lib.types.enum [ "stable" "staging" "stableFull" "stagingFull" ]; default = "stagingFull"; description = "Wine variant (staging has more patches, Full includes all optional deps)"; };
+        variant = lib.mkOption {
+          type = lib.types.enum [
+            "stable"
+            "staging"
+            "stableFull"
+            "stagingFull"
+          ];
+          default = "stagingFull";
+          description = "Wine variant (staging has more patches, Full includes all optional deps)";
+        };
       };
       options.myModules.programs.bottles.enable = lib.mkEnableOption "Bottles installation";
 

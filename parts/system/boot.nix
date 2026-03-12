@@ -1,15 +1,26 @@
-{ inputs, ... }: {
-  flake.nixosModules.system-boot = { config, lib, pkgs, ... }:
+{ inputs, ... }:
+{
+  flake.nixosModules.system-boot =
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
       cfg = config.myModules.system.boot;
-      hostName = config.networking.hostName;
-    in {
+    in
+    {
       _class = "nixos";
       options.myModules.system.boot = {
         enable = lib.mkEnableOption "Boot configuration";
 
         loader = lib.mkOption {
-          type = lib.types.enum [ "systemd-boot" "grub" "none" ];
+          type = lib.types.enum [
+            "systemd-boot"
+            "grub"
+            "none"
+          ];
           default = "systemd-boot";
           description = "Bootloader to use";
         };
@@ -51,7 +62,9 @@
         boot.initrd.systemd.enable = cfg.initrd.enable;
 
         # Systemd-boot
-        boot.loader.systemd-boot.enable = lib.mkIf (cfg.loader == "systemd-boot" && !cfg.secureBoot.enable) true;
+        boot.loader.systemd-boot.enable = lib.mkIf (
+          cfg.loader == "systemd-boot" && !cfg.secureBoot.enable
+        ) true;
         boot.loader.systemd-boot.configurationLimit = 10;
         boot.loader.efi.canTouchEfiVariables = true;
         boot.loader.timeout = 5;

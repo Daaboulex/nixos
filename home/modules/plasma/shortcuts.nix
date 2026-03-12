@@ -74,6 +74,12 @@
       kwin."Window Quick Tile Right" = "Meta+Right";
       kwin."Window Quick Tile Top" = "Meta+Up";
 
+      # ---- Move Window to Tile (respects custom tile layouts from Meta+T) ----
+      kwin."Move Window to the Tile on the Left" = "Meta+Alt+Left";
+      kwin."Move Window to the Tile on the Right" = "Meta+Alt+Right";
+      kwin."Move Window to the Tile Above" = "Meta+Alt+Up";
+      kwin."Move Window to the Tile Below" = "Meta+Alt+Down";
+
       # ---- Fluid Tile Script Shortcuts ----
       kwin."Fluid tile | Toggle window to blocklist" = "Meta+F"; # Toggle active window tiling on/off
       kwin."Fluid tile | Change tile layout" = "Meta+Alt+F"; # Cycle through tile layouts

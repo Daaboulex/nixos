@@ -146,19 +146,29 @@
   # ============================================================================
   # Outputs - System configurations and overlays
   # ============================================================================
-  outputs = inputs@{ flake-parts, ... }:
+  outputs =
+    inputs@{ flake-parts, ... }:
     flake-parts.lib.mkFlake { inherit inputs; } {
       systems = [ "x86_64-linux" ];
       imports = [ ./parts/flake-module.nix ];
-      
-      perSystem = { config, self', inputs', pkgs, system, ... }: {
-        _module.args.pkgs = import inputs.nixpkgs {
-          inherit system;
-          overlays = [
-            inputs.portmaster.overlays.default
-          ];
-          config.allowUnfree = true;
+
+      perSystem =
+        {
+          config,
+          self',
+          inputs',
+          pkgs,
+          system,
+          ...
+        }:
+        {
+          _module.args.pkgs = import inputs.nixpkgs {
+            inherit system;
+            overlays = [
+              inputs.portmaster.overlays.default
+            ];
+            config.allowUnfree = true;
+          };
         };
-      };
     };
 }

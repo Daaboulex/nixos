@@ -15,7 +15,7 @@ set -uo pipefail
 
 FLAKE_DIR="${FLAKE_DIR:-$(cd "$(dirname "$0")/.." && pwd)}"
 VERBOSE=0
-[[ "${1:-}" == "--verbose" ]] && VERBOSE=1
+[[ ${1:-} == "--verbose" ]] && VERBOSE=1
 
 # Colors
 RED='\033[0;31m'
@@ -29,16 +29,16 @@ TESTS_PASSED=0
 TESTS_FAILED=0
 
 pass() {
-  (( TESTS_PASSED++ ))
-  (( TESTS_RUN++ ))
+  ((TESTS_PASSED++))
+  ((TESTS_RUN++))
   echo -e "  ${GREEN}PASS${NC}  $1"
 }
 
 fail() {
-  (( TESTS_FAILED++ ))
-  (( TESTS_RUN++ ))
+  ((TESTS_FAILED++))
+  ((TESTS_RUN++))
   echo -e "  ${RED}FAIL${NC}  $1"
-  [[ -n "${2:-}" ]] && echo -e "        ${RED}$2${NC}"
+  [[ -n ${2:-} ]] && echo -e "        ${RED}$2${NC}"
 }
 
 section() {
@@ -78,7 +78,7 @@ section "Config Discovery (nix eval nixosConfigurations)"
 CONFIGS_JSON=$(nix --extra-experimental-features 'nix-command flakes' \
   eval "$FLAKE_DIR#nixosConfigurations" --apply 'x: builtins.attrNames x' --json 2>/dev/null || echo "")
 
-if [[ -n "$CONFIGS_JSON" && "$CONFIGS_JSON" != "[]" ]]; then
+if [[ -n $CONFIGS_JSON && $CONFIGS_JSON != "[]" ]]; then
   pass "nixosConfigurations discovered: $CONFIGS_JSON"
 else
   fail "No nixosConfigurations found"
@@ -101,7 +101,7 @@ for name in "${CONFIG_NAMES[@]}"; do
   if EVAL_OUTPUT=$(nix --extra-experimental-features 'nix-command flakes' \
     eval "$FLAKE_DIR#nixosConfigurations.$name.config.system.build.toplevel.drvPath" 2>&1); then
     pass "$name evaluates successfully"
-    (( VERBOSE )) && echo "        drv: $EVAL_OUTPUT"
+    ((VERBOSE)) && echo "        drv: $EVAL_OUTPUT"
   else
     fail "$name evaluation failed" "$(echo "$EVAL_OUTPUT" | tail -3)"
   fi
@@ -111,7 +111,7 @@ for name in "${CONFIG_NAMES[@]}"; do
     eval "$FLAKE_DIR#nixosConfigurations.$name.config.specialisation" \
     --apply 'x: builtins.attrNames x' --json 2>/dev/null || echo "[]")
 
-  if [[ "$SPECS_JSON" != "[]" ]]; then
+  if [[ $SPECS_JSON != "[]" ]]; then
     SPEC_COUNT=$(echo "$SPECS_JSON" | jq 'length')
     pass "$name has $SPEC_COUNT specialisation(s): $SPECS_JSON"
 
@@ -122,7 +122,7 @@ for name in "${CONFIG_NAMES[@]}"; do
       if SPEC_OUTPUT=$(nix --extra-experimental-features 'nix-command flakes' \
         eval "$FLAKE_DIR#nixosConfigurations.$name.config.specialisation.$spec.configuration.system.build.toplevel.drvPath" 2>&1); then
         pass "$name + $spec evaluates successfully"
-        (( VERBOSE )) && echo "        drv: $SPEC_OUTPUT"
+        ((VERBOSE)) && echo "        drv: $SPEC_OUTPUT"
       else
         fail "$name + $spec evaluation failed" "$(echo "$SPEC_OUTPUT" | tail -3)"
       fi
@@ -140,7 +140,7 @@ for name in "${CONFIG_NAMES[@]}"; do
   # Check hostname matches config name
   HN=$(nix --extra-experimental-features 'nix-command flakes' \
     eval "$FLAKE_DIR#nixosConfigurations.$name.config.networking.hostName" --raw 2>/dev/null || echo "")
-  if [[ "$HN" == "$name" ]]; then
+  if [[ $HN == "$name" ]]; then
     pass "$name: networking.hostName = \"$HN\" (matches config name)"
   else
     fail "$name: networking.hostName = \"$HN\" (expected \"$name\")"
@@ -149,7 +149,7 @@ for name in "${CONFIG_NAMES[@]}"; do
   # Check stateVersion is set
   SV=$(nix --extra-experimental-features 'nix-command flakes' \
     eval "$FLAKE_DIR#nixosConfigurations.$name.config.system.stateVersion" --raw 2>/dev/null || echo "")
-  if [[ -n "$SV" ]]; then
+  if [[ -n $SV ]]; then
     pass "$name: system.stateVersion = \"$SV\""
   else
     fail "$name: system.stateVersion not set"
@@ -158,7 +158,7 @@ for name in "${CONFIG_NAMES[@]}"; do
   # Check kernel variant
   KV=$(nix --extra-experimental-features 'nix-command flakes' \
     eval "$FLAKE_DIR#nixosConfigurations.$name.config.myModules.kernel.variant" --raw 2>/dev/null || echo "")
-  if [[ -n "$KV" ]]; then
+  if [[ -n $KV ]]; then
     pass "$name: kernel.variant = \"$KV\""
   else
     fail "$name: kernel.variant not set"
@@ -173,7 +173,7 @@ section "nrb Flag Parsing (syntax checks)"
 # This ensures the test stays in sync even when the zsh module changes.
 ZSH_FILE="$FLAKE_DIR/home/modules/zsh/default.nix"
 
-if [[ ! -f "$ZSH_FILE" ]]; then
+if [[ ! -f $ZSH_FILE ]]; then
   fail "Zsh module not found at $ZSH_FILE"
 else
   pass "Zsh module found"
@@ -207,7 +207,7 @@ else
 
   # Verify help text lists all flags (the --help|-h case block)
   HELP_BLOCK=$(sed -n '/--help|-h)/,/return 0/p' "$ZSH_FILE" || true)
-  if [[ -n "$HELP_BLOCK" ]]; then
+  if [[ -n $HELP_BLOCK ]]; then
     local_missing=0
     for flag in "${NRB_FLAGS[@]}"; do
       if ! echo "$HELP_BLOCK" | grep -q -- "$flag"; then
@@ -224,10 +224,10 @@ else
 
   # Verify each standalone nrb-* function is referenced from nrb (delegation)
   for func in "${NRB_FUNCS[@]}"; do
-    [[ "$func" == "nrb" ]] && continue
+    [[ $func == "nrb" ]] && continue
     # Check if nrb() calls this function somewhere
-    if grep -qP "^\s*$func" "$ZSH_FILE" | head -1 && \
-       [[ $(grep -c "$func" "$ZSH_FILE") -ge 2 ]]; then
+    if grep -qP "^\s*$func" "$ZSH_FILE" | head -1 &&
+      [[ $(grep -c "$func" "$ZSH_FILE") -ge 2 ]]; then
       pass "nrb delegates to $func"
     else
       # At minimum the function is defined and callable standalone — still OK
@@ -242,7 +242,7 @@ section "Documentation Checks"
 
 # Check OPTIONS.md exists
 if [[ -f "$FLAKE_DIR/docs/OPTIONS.md" ]]; then
-  OPT_LINES=$(wc -l < "$FLAKE_DIR/docs/OPTIONS.md")
+  OPT_LINES=$(wc -l <"$FLAKE_DIR/docs/OPTIONS.md")
   pass "docs/OPTIONS.md exists ($OPT_LINES lines)"
 else
   fail "docs/OPTIONS.md missing"
@@ -250,7 +250,7 @@ fi
 
 # Check installation.md exists
 if [[ -f "$FLAKE_DIR/docs/installation.md" ]]; then
-  INST_LINES=$(wc -l < "$FLAKE_DIR/docs/installation.md")
+  INST_LINES=$(wc -l <"$FLAKE_DIR/docs/installation.md")
   pass "docs/installation.md exists ($INST_LINES lines)"
 else
   fail "docs/installation.md missing"
@@ -266,7 +266,7 @@ fi
 # Check no options with missing descriptions
 if [[ -f "$FLAKE_DIR/docs/OPTIONS.md" ]]; then
   MISSING=$(grep -c "No description" "$FLAKE_DIR/docs/OPTIONS.md" || true)
-  if [[ "$MISSING" -eq 0 ]]; then
+  if [[ $MISSING -eq 0 ]]; then
     pass "All options have descriptions (0 missing)"
   else
     fail "$MISSING option(s) missing descriptions in OPTIONS.md"
@@ -312,7 +312,7 @@ echo ""
 echo -e "${CYAN}========================================${NC}"
 echo -e "  Tests run:    $TESTS_RUN"
 echo -e "  ${GREEN}Passed:      $TESTS_PASSED${NC}"
-if (( TESTS_FAILED > 0 )); then
+if ((TESTS_FAILED > 0)); then
   echo -e "  ${RED}Failed:      $TESTS_FAILED${NC}"
 else
   echo -e "  Failed:      0"

@@ -1,8 +1,16 @@
-{ inputs, ... }: {
-  flake.nixosModules.system-nix = { config, lib, pkgs, ... }:
+{ inputs, ... }:
+{
+  flake.nixosModules.system-nix =
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
       cfg = config.myModules.system.nix;
-    in {
+    in
+    {
       _class = "nixos";
       options.myModules.system.nix = {
         enable = lib.mkEnableOption "Nix daemon configuration and settings";
@@ -10,7 +18,10 @@
 
       config = lib.mkIf cfg.enable {
         nix.settings = {
-          experimental-features = [ "nix-command" "flakes" ];
+          experimental-features = [
+            "nix-command"
+            "flakes"
+          ];
           auto-optimise-store = true;
           keep-outputs = true;
           keep-derivations = true;
@@ -20,7 +31,10 @@
           # disk streaming (slower but safe). Keep conservative for low-RAM systems.
           download-buffer-size = lib.mkDefault (2 * 1024 * 1024 * 1024); # 2 GiB
           sandbox = true;
-          trusted-users = [ "root" "@wheel" ];
+          trusted-users = [
+            "root"
+            "@wheel"
+          ];
           substituters = [
             "https://cache.nixos.org"
             "https://nix-community.cachix.org"

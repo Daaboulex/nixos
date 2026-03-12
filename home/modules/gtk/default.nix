@@ -1,4 +1,9 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 {
   # ============================================================================
@@ -18,7 +23,7 @@
       name = "breeze_cursors";
       package = pkgs.kdePackages.breeze;
     };
-    gtk2.force = true;  # Force overwrite, prevent backup collisions
+    gtk2.force = true; # Force overwrite, prevent backup collisions
     gtk3.extraConfig = {
       gtk-application-prefer-dark-theme = true;
     };

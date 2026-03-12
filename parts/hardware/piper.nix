@@ -1,10 +1,19 @@
-{ inputs, ... }: {
-  flake.nixosModules.hardware-piper = { config, lib, pkgs, ... }:
+{ inputs, ... }:
+{
+  flake.nixosModules.hardware-piper =
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
       cfg = config.myModules.hardware.piper;
-    in {
+    in
+    {
       _class = "nixos";
-      options.myModules.hardware.piper.enable = lib.mkEnableOption "Piper mouse configuration tool and ratbagd service";
+      options.myModules.hardware.piper.enable =
+        lib.mkEnableOption "Piper mouse configuration tool and ratbagd service";
 
       config = lib.mkIf cfg.enable {
         services.ratbagd.enable = true;

@@ -27,11 +27,19 @@
 #   #   myModules.system.impermanence.enable = true;
 #
 # ─────────────────────────────────────────────────────────────────────────────
-{ inputs, ... }: {
-  flake.nixosModules.system-impermanence = { config, lib, pkgs, ... }:
+{ inputs, ... }:
+{
+  flake.nixosModules.system-impermanence =
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
       cfg = config.myModules.system.impermanence;
-    in {
+    in
+    {
       _class = "nixos";
       options.myModules.system.impermanence = {
         enable = lib.mkEnableOption "Impermanence (erase root on every boot)";
@@ -112,7 +120,11 @@
         fileSystems.${cfg.persistPath} = {
           device = "/dev/mapper/${cfg.luksDevice}";
           fsType = "btrfs";
-          options = [ "subvol=@persist" "compress=zstd" "noatime" ];
+          options = [
+            "subvol=@persist"
+            "compress=zstd"
+            "noatime"
+          ];
           neededForBoot = true;
         };
 
@@ -133,14 +145,25 @@
             "/var/lib/NetworkManager"
             "/var/lib/portmaster"
             "/var/lib/upower"
-            { directory = "/var/lib/sops-nix"; mode = "0700"; }
-            { directory = "/var/lib/sbctl"; mode = "0700"; }
-            { directory = "/etc/NetworkManager/system-connections"; mode = "0700"; }
+            {
+              directory = "/var/lib/sops-nix";
+              mode = "0700";
+            }
+            {
+              directory = "/var/lib/sbctl";
+              mode = "0700";
+            }
+            {
+              directory = "/etc/NetworkManager/system-connections";
+              mode = "0700";
+            }
             "/etc/ssh"
-          ] ++ cfg.extraDirectories;
+          ]
+          ++ cfg.extraDirectories;
           files = [
             "/etc/machine-id"
-          ] ++ cfg.extraFiles;
+          ]
+          ++ cfg.extraFiles;
         };
       };
     };

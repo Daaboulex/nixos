@@ -1,12 +1,23 @@
-{ inputs, ... }: {
-  flake.nixosModules.tools-iommu = { config, lib, pkgs, ... }:
+{ inputs, ... }:
+{
+  flake.nixosModules.tools-iommu =
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
       cfg = config.myModules.tools;
 
       # list-iommu-groups — Show IOMMU group assignments
       list-iommu-groups = pkgs.writeShellApplication {
         name = "list-iommu-groups";
-        runtimeInputs = [ pkgs.bash pkgs.coreutils pkgs.pciutils ];
+        runtimeInputs = [
+          pkgs.bash
+          pkgs.coreutils
+          pkgs.pciutils
+        ];
         text = ''
           set -euo pipefail
           echo "=== IOMMU Groups ==="
@@ -20,7 +31,8 @@
           done
         '';
       };
-    in {
+    in
+    {
       _class = "nixos";
       options.myModules.tools.iommu = lib.mkEnableOption "IOMMU group listing tool";
 

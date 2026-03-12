@@ -1,8 +1,16 @@
-{ inputs, ... }: {
-  flake.nixosModules.desktop-flatpak = { config, lib, pkgs, ... }:
+{ inputs, ... }:
+{
+  flake.nixosModules.desktop-flatpak =
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
       cfg = config.myModules.desktop.flatpak;
-    in {
+    in
+    {
       _class = "nixos";
       options.myModules.desktop.flatpak.enable = lib.mkEnableOption "Flatpak support";
 

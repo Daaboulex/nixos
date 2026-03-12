@@ -1,5 +1,12 @@
-{ inputs, ... }: {
-  flake.nixosModules.apps-arkenfox = { config, lib, pkgs, ... }:
+{ inputs, ... }:
+{
+  flake.nixosModules.apps-arkenfox =
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
       cfg = config.myModules.security.arkenfox;
       downloadScript = pkgs.writeScriptBin "arkenfox-download" ''
@@ -23,13 +30,25 @@
         if [ ! -f "$USER_OVERRIDES_PATH" ]; then echo "" > "$USER_OVERRIDES_PATH"; fi
         exit 0
       '';
-    in {
+    in
+    {
       _class = "nixos";
       options.myModules.security.arkenfox = {
         enable = lib.mkEnableOption "Arkenfox Firefox security configuration";
-        targetDir = lib.mkOption { type = lib.types.str; description = "Target directory for Firefox profile"; };
-        user = lib.mkOption { type = lib.types.str; default = config.myModules.primaryUser; description = "User to run the service as"; };
-        group = lib.mkOption { type = lib.types.str; default = "users"; description = "Group to run the service as"; };
+        targetDir = lib.mkOption {
+          type = lib.types.str;
+          description = "Target directory for Firefox profile";
+        };
+        user = lib.mkOption {
+          type = lib.types.str;
+          default = config.myModules.primaryUser;
+          description = "User to run the service as";
+        };
+        group = lib.mkOption {
+          type = lib.types.str;
+          default = "users";
+          description = "Group to run the service as";
+        };
       };
 
       config = lib.mkIf cfg.enable {
@@ -37,7 +56,11 @@
           description = "Download Arkenfox user.js for Flatpak Firefox";
           after = [ "network-online.target" ];
           wants = [ "network-online.target" ];
-          path = [ pkgs.curl pkgs.coreutils pkgs.bash ];
+          path = [
+            pkgs.curl
+            pkgs.coreutils
+            pkgs.bash
+          ];
           unitConfig.ConditionPathIsDirectory = cfg.targetDir;
           serviceConfig = {
             Type = "oneshot";

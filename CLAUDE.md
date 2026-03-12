@@ -242,13 +242,16 @@ See `/deploy` skill for the configured workflow.
   - **Infrastructure**: `/update-input`, `/repos`, `/compare-hosts`, `/new-host`, `/impermanence`
 - **No hardcoded values in generic modules**: usernames, paths, hardware IDs, and host-specific settings must be options with `lib.mkDefault` or set in host configs. Gate vendor-specific config behind `(config.myModules.hardware.*.enable or false)`.
 - **Current option paths** (canonical reference — update this when paths change):
-  - `myModules.system.{boot,kernel,nix,users,security,filesystems,packages,services,ssh,sops,impermanence}` — packages has `enable` gate + sub-options (`base`, `dev`, `media`, `mobile`, `editors`, `hardware`, `diagnostics`, `monitoring` default `true`; `benchmarking` defaults `false`)
-  - `myModules.hardware.{core,cpu.amd,cpu.intel,gpu.amd,gpu.intel,gpu.nvidia,graphics,audio,networking,bluetooth,performance,power,macbook,yeetmouse,goxlr,piper,streamcontroller,duckyOneXMini}`
+  - `myModules.system.{boot,kernel,nix,users,filesystems,packages,services,impermanence}` — packages has `enable` gate + sub-options (`base`, `dev`, `media`, `mobile`, `editors`, `hardware`, `diagnostics`, `monitoring` default `true`; `benchmarking` defaults `false`)
+  - `myModules.security.{system,ssh,sops,arkenfox,portmaster}` — ssh/sops/arkenfox/portmaster live under security, NOT system or programs
+  - `myModules.hardware.{core,cpu.amd,cpu.intel,graphics,graphics.amd,graphics.intel,graphics.nvidia,audio,networking,bluetooth,performance,power,macbook,yeetmouse,debuggingProbes,piper,streamcontroller,duckyOneXMini}` — GPU options are under `graphics.*`, NOT `gpu.*`; `graphics.openCL.rusticlDrivers` is assembled from vendor modules
+  - `myModules.audio.goxlr` — NOT under hardware despite file location
   - `myModules.desktop.{kde,displays,flatpak}`
   - `myModules.gaming.{enable,eden,nxSaveSync,...}` — uses `withSystem` for per-system inputs
   - `myModules.development.{enable,claudeCode,saleae}` — NOT `development.tools`
   - `myModules.tools.{sysdiag,iommu}` — bare booleans, NOT `.enable` nested
-  - `myModules.programs.{arkenfox,portmaster,tidalcycles,wine}`
+  - `myModules.programs.{wine,bottles}` — wine and bottles only; arkenfox/portmaster are under security
+  - `myModules.music.tidalcycles` — NOT under programs
   - `myModules.cachyos.settings`, `myModules.kernel.*`, `myModules.primaryUser`
 
 ### AI Agent & Versioning Best Practices
@@ -269,9 +272,10 @@ When modifying any file under `home/modules/` or `home/hosts/`, follow this chec
 
 1. **Generic vs host-specific**: settings that differ per machine (panel height, launchers, display layout) go in `home/hosts/<hostname>/default.nix` using `lib.mkForce` or plain values. Generic modules use `lib.mkDefault`.
 2. **Plasma panel rules**:
-   - Panel properties (height, floating, location) are set in the panel config AND enforced at login by a `desktopScript` (`fix-floating`, `runAlways = true`).
-   - The `cleanPanelViews` activation hook only runs when plasmashell is NOT active (guarded by `pgrep`). Never modify `plasmashellrc` while plasmashell is running — it causes SIGSEGV crashes.
-   - Panel hash files (`last_run_desktop_script_panels`) are deleted on activation to force panel recreation at next login.
+   - Panel config (height, floating, widgets) is set declaratively via `programs.plasma.panels` — plasma-manager generates a JS script that recreates panels only when the config hash changes.
+   - **NO `fix-floating` desktopScript** — removed because `runAlways = true` scripts cause panel recreation every boot.
+   - **NO `cleanPanelViews` activation hook** — removed (was stripping plasmashellrc, no longer needed).
+   - **NEVER delete `last_run_desktop_script_panels`** — forces panel recreation while plasmashell runs (SIGSEGV).
    - After panel changes, verify with: `qdbus org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript 'panels().forEach(function(p){print("floating=" + p.floating + " height=" + p.height)})'`
 3. **Activation hooks**: use `lib.hm.dag.entryBefore [ "reloadSystemd" ]`. Be aware these run during `nrb` while the desktop may be active.
 4. **KWin scripts**: packaged inline in the plasma module `let` block. Update `rev` + set `sha256 = ""` + rebuild for new hash.

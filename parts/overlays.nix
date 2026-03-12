@@ -1,5 +1,6 @@
-{ inputs, ... }: {
-  flake.overlays.default = final: prev: {
+{ inputs, ... }:
+{
+  flake.overlays.default = _final: prev: {
     # ReShade shaders for vkBasalt (includes Vibrance, LUT, color grading)
     reshade-shaders = prev.stdenvNoCC.mkDerivation {
       pname = "reshade-shaders";

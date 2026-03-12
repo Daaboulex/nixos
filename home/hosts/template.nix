@@ -1,4 +1,9 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 {
   # ============================================================================
@@ -16,7 +21,7 @@
   # programs.git.extraConfig = {
   #   # ...
   # };
-  
+
   # Example: Monitor configuration (Hyprland/Sway/KDE)
   # ...
 }

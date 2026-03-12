@@ -1,28 +1,38 @@
 # Display arrangement, toggle scripts, tiling activation, and systemd services.
 # All config is derived from osConfig.myModules.desktop.displays (NixOS module).
-{ config, pkgs, lib, osConfig, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  osConfig,
+  ...
+}:
 
 let
   cfg = osConfig.myModules.desktop.displays;
 
   # Guard: all monitor-derived values are only evaluated when displays are enabled.
   # The let bindings must not access cfg.monitors when enable = false.
-  hasMonitors = cfg.enable && cfg.monitors != {};
+  hasMonitors = cfg.enable && cfg.monitors != { };
 
   # Convert millihertz to kscreen-doctor refresh rate (rounded integer, e.g. 239757 → "240")
   # kscreen-doctor only accepts integer Hz and does fuzzy matching
   mhzToRefresh = mhz: toString ((mhz + 500) / 1000);
 
   # Rotation → kscreen-doctor rotation argument
-  rotationToKscreen = r: {
-    normal = "none";
-    right = "right";
-    left = "left";
-    inverted = "inverted";
-  }.${r};
+  rotationToKscreen =
+    r:
+    {
+      normal = "none";
+      right = "right";
+      left = "left";
+      inverted = "inverted";
+    }
+    .${r};
 
   # All monitors sorted by priority (safe: only evaluated when hasMonitors is true via mkIf)
-  sortedMonitors = if hasMonitors then lib.sort (a: b: a.priority < b.priority) (lib.attrValues cfg.monitors) else [];
+  sortedMonitors =
+    if hasMonitors then lib.sort (a: b: a.priority < b.priority) (lib.attrValues cfg.monitors) else [ ];
 
   # Enabled monitors (for display-arrange)
   enabledMonitors = builtins.filter (m: m.enabled) sortedMonitors;
@@ -39,19 +49,23 @@ let
   allConnectors = m: [ m.connector ] ++ m.alternateConnectors;
 
   # All UUIDs for a monitor (primary + alternates)
-  allUuids = m: (if m.uuid != null then [ m.uuid ] else []) ++ m.alternateUuids;
+  allUuids = m: (if m.uuid != null then [ m.uuid ] else [ ]) ++ m.alternateUuids;
 
   # Generate kscreen-doctor commands for a single monitor
-  monitorArrangeCmd = m:
+  monitorArrangeCmd =
+    m:
     let
       refreshStr = mhzToRefresh m.mode.refreshRate;
       modeStr = "${toString m.mode.width}x${toString m.mode.height}@${refreshStr}";
-    in ''
+    in
+    ''
       # ${m.connector}: priority ${toString m.priority}
       kscreen-doctor \
         output.${m.connector}.enable \
         output.${m.connector}.mode.${modeStr} \
-        ${lib.optionalString (m.rotation != "normal") "output.${m.connector}.rotation.${rotationToKscreen m.rotation} \\"}
+        ${lib.optionalString (
+          m.rotation != "normal"
+        ) "output.${m.connector}.rotation.${rotationToKscreen m.rotation} \\"}
         output.${m.connector}.position.${toString m.position.x},${toString m.position.y} \
         output.${m.connector}.priority.${toString m.priority} \
         2>/dev/null || true
@@ -68,7 +82,8 @@ let
   );
 
   # Build toggle script for a monitor (supports multiple connectors)
-  mkToggleScript = m:
+  mkToggleScript =
+    m:
     let
       refreshStr = mhzToRefresh m.mode.refreshRate;
       modeStr = "${toString m.mode.width}x${toString m.mode.height}@${refreshStr}";
@@ -77,22 +92,28 @@ let
 
       # Reposition commands when toggling ON
       repositionOn = lib.concatStringsSep " \\\n          " (
-        lib.mapAttrsToList (conn: pos:
-          "\"output.${conn}.position.${toString pos.x},${toString pos.y}\""
+        lib.mapAttrsToList (
+          conn: pos: "\"output.${conn}.position.${toString pos.x},${toString pos.y}\""
         ) m.toggle.repositions
       );
       # Default positions (from monitor definitions) when toggling OFF
       repositionOff = lib.concatStringsSep " \\\n          " (
-        builtins.map (om:
-          "\"output.${om.connector}.position.${toString om.position.x},${toString om.position.y}\""
+        builtins.map (
+          om: "\"output.${om.connector}.position.${toString om.position.x},${toString om.position.y}\""
         ) (builtins.filter (om: builtins.hasAttr om.connector m.toggle.repositions) sortedMonitors)
       );
-    in pkgs.writeShellScriptBin m.toggle.scriptName ''
+    in
+    pkgs.writeShellScriptBin m.toggle.scriptName ''
       # Ensure Wayland session env is set (needed when invoked from StreamController/StreamDeck)
       export XDG_RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
       export WAYLAND_DISPLAY="''${WAYLAND_DISPLAY:-wayland-0}"
       export DBUS_SESSION_BUS_ADDRESS="''${DBUS_SESSION_BUS_ADDRESS:-unix:path=$XDG_RUNTIME_DIR/bus}"
-      export PATH="${lib.makeBinPath [ pkgs.kdePackages.qttools pkgs.jq ]}''${PATH:+:$PATH}"
+      export PATH="${
+        lib.makeBinPath [
+          pkgs.kdePackages.qttools
+          pkgs.jq
+        ]
+      }''${PATH:+:$PATH}"
 
       KWIN="org.kde.KWin"
 
@@ -157,48 +178,51 @@ let
     '';
 
   # Tiling activation script — writes layouts for ALL UUIDs (primary + alternates)
-  tilingActivation = let
-    kwc = "${pkgs.kdePackages.kconfig}/bin/kwriteconfig6";
-    sed = "${pkgs.gnused}/bin/sed";
+  tilingActivation =
+    let
+      kwc = "${pkgs.kdePackages.kconfig}/bin/kwriteconfig6";
+      sed = "${pkgs.gnused}/bin/sed";
 
-    # Write tile layout for each UUID of each monitor
-    tileCommands = lib.concatMapStrings (m:
-      lib.concatMapStrings (uuid: ''
-        $KWC --file "$KWINRC" \
-          --group Tiling --group Desktop_1 --group "${uuid}" \
-          --key tiles '${m.tiling.layout}'
-        $KWC --file "$KWINRC" \
-          --group Tiling --group Desktop_1 --group "${uuid}" \
-          --key padding ${toString m.tiling.padding}
-      '') (allUuids m)
-    ) tilingMonitors;
+      # Write tile layout for each UUID of each monitor
+      tileCommands = lib.concatMapStrings (
+        m:
+        lib.concatMapStrings (uuid: ''
+          $KWC --file "$KWINRC" \
+            --group Tiling --group Desktop_1 --group "${uuid}" \
+            --key tiles '${m.tiling.layout}'
+          $KWC --file "$KWINRC" \
+            --group Tiling --group Desktop_1 --group "${uuid}" \
+            --key padding ${toString m.tiling.padding}
+        '') (allUuids m)
+      ) tilingMonitors;
 
-    # Purge phantom UUIDs
-    phantomPurge = lib.concatMapStrings (uuid: ''
-      $SED -i '/${uuid}/,/^$/d' "$KWINRC" 2>/dev/null || true
-    '') (if cfg.enable then cfg.phantomUuids else []);
-  in ''
-    KWINRC="$HOME/.config/kwinrc"
-    KWC="${kwc}"
-    SED="${sed}"
+      # Purge phantom UUIDs
+      phantomPurge = lib.concatMapStrings (uuid: ''
+        $SED -i '/${uuid}/,/^$/d' "$KWINRC" 2>/dev/null || true
+      '') (if cfg.enable then cfg.phantomUuids else [ ]);
+    in
+    ''
+      KWINRC="$HOME/.config/kwinrc"
+      KWC="${kwc}"
+      SED="${sed}"
 
-    # ── Purge ALL stale Tiling entries (plasma-manager ][  escaping bug) ──
-    $SED -i '/Tiling.*\\\\x5d\\\\x5b/,/^$/d' "$KWINRC" 2>/dev/null || true
-    $SED -i '/Tiling.*x5d.*x5b/,/^$/d' "$KWINRC" 2>/dev/null || true
-    $SED -i '/^\[Tiling\]\[[^D]/,/^$/d' "$KWINRC" 2>/dev/null || true
-    $SED -i '/^\[Tiling\]\[Desktop_1\]\[\]$/,/^$/d' "$KWINRC" 2>/dev/null || true
+      # ── Purge ALL stale Tiling entries (plasma-manager ][  escaping bug) ──
+      $SED -i '/Tiling.*\\\\x5d\\\\x5b/,/^$/d' "$KWINRC" 2>/dev/null || true
+      $SED -i '/Tiling.*x5d.*x5b/,/^$/d' "$KWINRC" 2>/dev/null || true
+      $SED -i '/^\[Tiling\]\[[^D]/,/^$/d' "$KWINRC" 2>/dev/null || true
+      $SED -i '/^\[Tiling\]\[Desktop_1\]\[\]$/,/^$/d' "$KWINRC" 2>/dev/null || true
 
-    # ── Write per-monitor tile layouts (all UUIDs) ──
-    ${tileCommands}
-    # ── Purge phantom UUIDs ──
-    ${phantomPurge}
-  '';
+      # ── Write per-monitor tile layouts (all UUIDs) ──
+      ${tileCommands}
+      # ── Purge phantom UUIDs ──
+      ${phantomPurge}
+    '';
 
-in lib.mkIf cfg.enable {
+in
+lib.mkIf cfg.enable {
 
   # Packages: display-arrange + toggle scripts
-  home.packages = [ displayArrangeScript ]
-    ++ builtins.map mkToggleScript toggleMonitors;
+  home.packages = [ displayArrangeScript ] ++ builtins.map mkToggleScript toggleMonitors;
 
   # Tiling activation (runs on Home Manager switch)
   home.activation.configureTiling = lib.hm.dag.entryAfter [ "writeBoundary" ] tilingActivation;

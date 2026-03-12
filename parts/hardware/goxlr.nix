@@ -1,16 +1,23 @@
-{ inputs, ... }: {
-  flake.nixosModules.hardware-goxlr = { config, lib, pkgs, ... }:
+{ inputs, ... }:
+{
+  flake.nixosModules.hardware-goxlr =
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
       cfg = config.myModules.audio.goxlr;
       deviceName = if cfg.isMini then "GoXLRMini" else "GoXLR";
 
       fixedAlsaUcm = pkgs.alsa-ucm-conf.overrideAttrs (old: {
-        postPatch = lib.concatStringsSep "\n" ([
+        postPatch = lib.concatStringsSep "\n" [
           (old.postPatch or "")
           "target_file=\"ucm2/USB-Audio/GoXLR/GoXLR-HiFi.conf\""
           "if [ -f \"$target_file\" ]; then ${pkgs.gnused}/bin/sed -i 's/HWChannels 23/HWChannels 21/g' \"$target_file\"; fi"
-        ]);
-        nativeBuildInputs = (old.nativeBuildInputs or []) ++ [ pkgs.gnused ];
+        ];
+        nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ pkgs.gnused ];
       });
 
       flatEqFilters = "filters = []";
@@ -61,13 +68,25 @@
         }
       '';
 
-      enabledModules = lib.concatStringsSep "\n" (lib.filter (x: x != "") [
-        (lib.optionalString cfg.eq.channels.system.enable (mkEqModule "System" cfg.eq.channels.system.sink cfg.eq.channels.system.eq))
-        (lib.optionalString cfg.eq.channels.game.enable (mkEqModule "Game" cfg.eq.channels.game.sink cfg.eq.channels.game.eq))
-        (lib.optionalString cfg.eq.channels.chat.enable (mkEqModule "Chat" cfg.eq.channels.chat.sink cfg.eq.channels.chat.eq))
-        (lib.optionalString cfg.eq.channels.music.enable (mkEqModule "Music" cfg.eq.channels.music.sink cfg.eq.channels.music.eq))
-        (lib.optionalString cfg.eq.channels.sample.enable (mkEqModule "Sample" cfg.eq.channels.sample.sink cfg.eq.channels.sample.eq))
-      ]);
+      enabledModules = lib.concatStringsSep "\n" (
+        lib.filter (x: x != "") [
+          (lib.optionalString cfg.eq.channels.system.enable (
+            mkEqModule "System" cfg.eq.channels.system.sink cfg.eq.channels.system.eq
+          ))
+          (lib.optionalString cfg.eq.channels.game.enable (
+            mkEqModule "Game" cfg.eq.channels.game.sink cfg.eq.channels.game.eq
+          ))
+          (lib.optionalString cfg.eq.channels.chat.enable (
+            mkEqModule "Chat" cfg.eq.channels.chat.sink cfg.eq.channels.chat.eq
+          ))
+          (lib.optionalString cfg.eq.channels.music.enable (
+            mkEqModule "Music" cfg.eq.channels.music.sink cfg.eq.channels.music.eq
+          ))
+          (lib.optionalString cfg.eq.channels.sample.enable (
+            mkEqModule "Sample" cfg.eq.channels.sample.sink cfg.eq.channels.sample.eq
+          ))
+        ]
+      );
 
       # DeepFilterNet3 LADSPA denoiser with highpass pre-filter
       # Two-stage chain: HPF removes sub-bass keyboard rumble, then DF3 does neural suppression
@@ -122,28 +141,118 @@
           }
         }
       '';
-    in {
+    in
+    {
       _class = "nixos";
       options.myModules.audio.goxlr = {
         enable = lib.mkEnableOption "GoXLR Mini support";
-        isMini = lib.mkOption { type = lib.types.bool; default = true; description = "Apply GoXLR Mini UCM patch"; };
-        utility.enable = lib.mkOption { type = lib.types.bool; default = true; description = "goxlr-utility daemon"; };
-        installProfiles = lib.mkOption { type = lib.types.bool; default = true; description = "Install custom GoXLR UCM profiles"; };
+        isMini = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Apply GoXLR Mini UCM patch";
+        };
+        utility.enable = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "goxlr-utility daemon";
+        };
+        installProfiles = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Install custom GoXLR UCM profiles";
+        };
         eq = {
           enable = lib.mkEnableOption "PipeWire parametric EQ for GoXLR channels";
           presets = lib.mkOption {
             type = lib.types.attrsOf lib.types.str;
             readOnly = true;
-            default = { flat = flatEqFilters; dt990pro = dt990proEqFilters; };
+            default = {
+              flat = flatEqFilters;
+              dt990pro = dt990proEqFilters;
+            };
             description = "Built-in EQ presets (read-only). Use as values for channel eq options.";
           };
-          clearStreamProperties = lib.mkOption { type = lib.types.bool; default = false; description = "Clear PipeWire stream properties before applying EQ filters"; };
+          clearStreamProperties = lib.mkOption {
+            type = lib.types.bool;
+            default = false;
+            description = "Clear PipeWire stream properties before applying EQ filters";
+          };
           channels = {
-            system = { enable = lib.mkEnableOption "EQ for System channel" // { default = true; }; sink = lib.mkOption { type = lib.types.str; default = "alsa_output.usb-TC-Helicon_${deviceName}-00.HiFi__Speaker__sink"; description = "PipeWire sink node name for System channel"; }; eq = lib.mkOption { type = lib.types.str; default = dt990proEqFilters; description = "PipeWire filter-chain EQ filter definition for System channel"; }; };
-            game = { enable = lib.mkEnableOption "EQ for Game channel" // { default = true; }; sink = lib.mkOption { type = lib.types.str; default = "alsa_output.usb-TC-Helicon_${deviceName}-00.HiFi__Line1__sink"; description = "PipeWire sink node name for Game channel"; }; eq = lib.mkOption { type = lib.types.str; default = dt990proEqFilters; description = "PipeWire filter-chain EQ filter definition for Game channel"; }; };
-            chat = { enable = lib.mkEnableOption "EQ for Chat channel" // { default = true; }; sink = lib.mkOption { type = lib.types.str; default = "alsa_output.usb-TC-Helicon_${deviceName}-00.HiFi__Headphones__sink"; description = "PipeWire sink node name for Chat channel"; }; eq = lib.mkOption { type = lib.types.str; default = dt990proEqFilters; description = "PipeWire filter-chain EQ filter definition for Chat channel"; }; };
-            music = { enable = lib.mkEnableOption "EQ for Music channel" // { default = true; }; sink = lib.mkOption { type = lib.types.str; default = "alsa_output.usb-TC-Helicon_${deviceName}-00.HiFi__Line2__sink"; description = "PipeWire sink node name for Music channel"; }; eq = lib.mkOption { type = lib.types.str; default = dt990proEqFilters; description = "PipeWire filter-chain EQ filter definition for Music channel"; }; };
-            sample = { enable = lib.mkEnableOption "EQ for Sample channel" // { default = true; }; sink = lib.mkOption { type = lib.types.str; default = "alsa_output.usb-TC-Helicon_${deviceName}-00.HiFi__Line3__sink"; description = "PipeWire sink node name for Sample channel"; }; eq = lib.mkOption { type = lib.types.str; default = dt990proEqFilters; description = "PipeWire filter-chain EQ filter definition for Sample channel"; }; };
+            system = {
+              enable = lib.mkEnableOption "EQ for System channel" // {
+                default = true;
+              };
+              sink = lib.mkOption {
+                type = lib.types.str;
+                default = "alsa_output.usb-TC-Helicon_${deviceName}-00.HiFi__Speaker__sink";
+                description = "PipeWire sink node name for System channel";
+              };
+              eq = lib.mkOption {
+                type = lib.types.str;
+                default = dt990proEqFilters;
+                description = "PipeWire filter-chain EQ filter definition for System channel";
+              };
+            };
+            game = {
+              enable = lib.mkEnableOption "EQ for Game channel" // {
+                default = true;
+              };
+              sink = lib.mkOption {
+                type = lib.types.str;
+                default = "alsa_output.usb-TC-Helicon_${deviceName}-00.HiFi__Line1__sink";
+                description = "PipeWire sink node name for Game channel";
+              };
+              eq = lib.mkOption {
+                type = lib.types.str;
+                default = dt990proEqFilters;
+                description = "PipeWire filter-chain EQ filter definition for Game channel";
+              };
+            };
+            chat = {
+              enable = lib.mkEnableOption "EQ for Chat channel" // {
+                default = true;
+              };
+              sink = lib.mkOption {
+                type = lib.types.str;
+                default = "alsa_output.usb-TC-Helicon_${deviceName}-00.HiFi__Headphones__sink";
+                description = "PipeWire sink node name for Chat channel";
+              };
+              eq = lib.mkOption {
+                type = lib.types.str;
+                default = dt990proEqFilters;
+                description = "PipeWire filter-chain EQ filter definition for Chat channel";
+              };
+            };
+            music = {
+              enable = lib.mkEnableOption "EQ for Music channel" // {
+                default = true;
+              };
+              sink = lib.mkOption {
+                type = lib.types.str;
+                default = "alsa_output.usb-TC-Helicon_${deviceName}-00.HiFi__Line2__sink";
+                description = "PipeWire sink node name for Music channel";
+              };
+              eq = lib.mkOption {
+                type = lib.types.str;
+                default = dt990proEqFilters;
+                description = "PipeWire filter-chain EQ filter definition for Music channel";
+              };
+            };
+            sample = {
+              enable = lib.mkEnableOption "EQ for Sample channel" // {
+                default = true;
+              };
+              sink = lib.mkOption {
+                type = lib.types.str;
+                default = "alsa_output.usb-TC-Helicon_${deviceName}-00.HiFi__Line3__sink";
+                description = "PipeWire sink node name for Sample channel";
+              };
+              eq = lib.mkOption {
+                type = lib.types.str;
+                default = dt990proEqFilters;
+                description = "PipeWire filter-chain EQ filter definition for Sample channel";
+              };
+            };
           };
         };
         toggle = {
@@ -211,18 +320,25 @@
 
       config = lib.mkIf cfg.enable {
         system.replaceDependencies.replacements = lib.mkIf cfg.isMini [
-          { original = pkgs.alsa-ucm-conf; replacement = fixedAlsaUcm; }
+          {
+            original = pkgs.alsa-ucm-conf;
+            replacement = fixedAlsaUcm;
+          }
         ];
 
         environment.etc = lib.mkIf (cfg.enable && cfg.installProfiles) {
-          "alsa/ucm2/GoXLR/GoXLR.conf".text = ''SectionUseCase."HiFi" { File "HiFi.conf" Comment "Default" }'';
+          "alsa/ucm2/GoXLR/GoXLR.conf".text =
+            ''SectionUseCase."HiFi" { File "HiFi.conf" Comment "Default" }'';
           "alsa/ucm2/GoXLR/HiFi.conf".text = ''
             SectionVerb { EnableSequence [ cset "name='Mic Playback Switch' off" cset "name='Line In Playback Switch' off" cset "name='Headphones Playback Switch' on" cset "name='Sampler Playback Switch' on" ] Value { TQ "HiFi" } }
             SectionDevice."Headphones" { Comment "Headphones" EnableSequence [ cset "name='Headphones Playback Switch' on" ] DisableSequence [ cset "name='Headphones Playback Switch' off" ] Value { PlaybackPCM "hw:GoXLR,0" JackControl "Headphones Jack" } }
           '';
         };
 
-        services.goxlr-utility = lib.mkIf cfg.utility.enable { enable = true; autoStart.xdg = true; };
+        services.goxlr-utility = lib.mkIf cfg.utility.enable {
+          enable = true;
+          autoStart.xdg = true;
+        };
 
         environment.systemPackages = lib.mkIf cfg.toggle.enable [
           (pkgs.writeShellScriptBin "goxlr-toggle" ''
@@ -276,7 +392,10 @@
           description = "Clear WirePlumber stream-properties";
           wantedBy = [ "graphical-session.target" ];
           before = [ "wireplumber.service" ];
-          serviceConfig = { Type = "oneshot"; ExecStart = "${pkgs.coreutils}/bin/rm -f %h/.local/state/wireplumber/stream-properties"; };
+          serviceConfig = {
+            Type = "oneshot";
+            ExecStart = "${pkgs.coreutils}/bin/rm -f %h/.local/state/wireplumber/stream-properties";
+          };
         };
       };
     };

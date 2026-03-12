@@ -1,4 +1,9 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 {
   # ============================================================================
@@ -39,8 +44,8 @@
     };
 
     "konsolerc"."Notification Messages" = {
-      CloseAllEmptyTabs = lib.mkDefault true;         # Don't ask when closing empty tabs
-      CloseAllTabs = lib.mkDefault true;              # Don't ask when closing all tabs
+      CloseAllEmptyTabs = lib.mkDefault true; # Don't ask when closing empty tabs
+      CloseAllTabs = lib.mkDefault true; # Don't ask when closing all tabs
     };
 
     "konsolerc"."TabBar" = {

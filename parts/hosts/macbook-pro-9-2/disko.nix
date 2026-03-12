@@ -4,7 +4,7 @@
 #
 # For new installations: disko --mode disko ./disko.nix
 # Then: nixos-install --flake .#macbook-pro-9-2
-{ ... }: {
+_: {
   disko.devices = {
     disk.main = {
       type = "disk";
@@ -20,7 +20,10 @@
               type = "filesystem";
               format = "vfat";
               mountpoint = "/boot";
-              mountOptions = [ "fmask=0077" "dmask=0077" ];
+              mountOptions = [
+                "fmask=0077"
+                "dmask=0077"
+              ];
             };
           };
           luks = {
@@ -30,39 +33,83 @@
               name = "cryptroot";
               content = {
                 type = "btrfs";
-                extraArgs = [ "-f" "-L" "nixos" ];
+                extraArgs = [
+                  "-f"
+                  "-L"
+                  "nixos"
+                ];
                 subvolumes = {
                   "@" = {
                     mountpoint = "/";
-                    mountOptions = [ "compress=zstd" "noatime" "ssd" "discard=async" ];
+                    mountOptions = [
+                      "compress=zstd"
+                      "noatime"
+                      "ssd"
+                      "discard=async"
+                    ];
                   };
                   "@home" = {
                     mountpoint = "/home";
-                    mountOptions = [ "compress=zstd" "noatime" "ssd" "discard=async" ];
+                    mountOptions = [
+                      "compress=zstd"
+                      "noatime"
+                      "ssd"
+                      "discard=async"
+                    ];
                   };
                   "@nix" = {
                     mountpoint = "/nix";
-                    mountOptions = [ "compress=zstd" "noatime" "ssd" "discard=async" ];
+                    mountOptions = [
+                      "compress=zstd"
+                      "noatime"
+                      "ssd"
+                      "discard=async"
+                    ];
                   };
                   "@log" = {
                     mountpoint = "/var/log";
-                    mountOptions = [ "compress=zstd" "noatime" "ssd" "discard=async" ];
+                    mountOptions = [
+                      "compress=zstd"
+                      "noatime"
+                      "ssd"
+                      "discard=async"
+                    ];
                   };
                   "@cache" = {
                     mountpoint = "/var/cache";
-                    mountOptions = [ "compress=zstd" "noatime" "ssd" "discard=async" ];
+                    mountOptions = [
+                      "compress=zstd"
+                      "noatime"
+                      "ssd"
+                      "discard=async"
+                    ];
                   };
                   "@tmp" = {
                     mountpoint = "/tmp";
-                    mountOptions = [ "compress=zstd" "noatime" "ssd" "discard=async" ];
+                    mountOptions = [
+                      "compress=zstd"
+                      "noatime"
+                      "ssd"
+                      "discard=async"
+                    ];
                   };
                   "@snapshots" = {
                     mountpoint = "/.snapshots";
-                    mountOptions = [ "compress=zstd" "noatime" "ssd" "discard=async" ];
+                    mountOptions = [
+                      "compress=zstd"
+                      "noatime"
+                      "ssd"
+                      "discard=async"
+                    ];
                   };
                   "@persist" = {
                     mountpoint = "/persist";
-                    mountOptions = [ "compress=zstd" "noatime" "ssd" "discard=async" ];
+                    mountOptions = [
+                      "compress=zstd"
+                      "noatime"
+                      "ssd"
+                      "discard=async"
+                    ];
                   };
                 };
               };

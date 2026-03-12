@@ -1,8 +1,16 @@
-{ inputs, ... }: {
-  flake.nixosModules.hardware-cpu-intel = { config, lib, pkgs, ... }:
+{ inputs, ... }:
+{
+  flake.nixosModules.hardware-cpu-intel =
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
       cfg = config.myModules.hardware.cpu.intel;
-    in {
+    in
+    {
       _class = "nixos";
       options.myModules.hardware.cpu.intel = {
         enable = lib.mkEnableOption "Intel CPU optimizations";
@@ -14,14 +22,24 @@
             description = "Intel P-State driver for modern power management";
           };
           mode = lib.mkOption {
-            type = lib.types.enum [ "active" "passive" "no_hwp" ];
+            type = lib.types.enum [
+              "active"
+              "passive"
+              "no_hwp"
+            ];
             default = "active";
             description = "Intel P-State mode (active recommended for Haswell+)";
           };
         };
 
         governor = lib.mkOption {
-          type = lib.types.enum [ "performance" "powersave" "schedutil" "ondemand" "conservative" ];
+          type = lib.types.enum [
+            "performance"
+            "powersave"
+            "schedutil"
+            "ondemand"
+            "conservative"
+          ];
           default = "powersave";
           description = "CPU frequency governor (powersave recommended for laptops with P-State)";
         };
@@ -52,7 +70,10 @@
       config = lib.mkIf cfg.enable {
         boot.kernelParams = lib.concatLists [
           (lib.optionals cfg.pstate.enable [ "intel_pstate=${cfg.pstate.mode}" ])
-          (lib.optionals cfg.iommu.enable [ "intel_iommu=on" "iommu=pt" ])
+          (lib.optionals cfg.iommu.enable [
+            "intel_iommu=on"
+            "iommu=pt"
+          ])
           (lib.optionals (!cfg.iommu.enable) [ "intel_iommu=off" ])
         ];
 

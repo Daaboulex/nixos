@@ -1,6 +1,11 @@
 # Plasma Input Devices & KRunner
 # Keyboard, mouse, touchpad, and KRunner settings
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 {
   programs.plasma = {

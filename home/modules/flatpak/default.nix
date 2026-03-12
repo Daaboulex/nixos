@@ -2,7 +2,13 @@
 #
 # Shared Flatpak configuration. Host-specific packages are in home/hosts/<hostname>/default.nix
 #
-{ config, pkgs, lib, inputs, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  inputs,
+  ...
+}:
 
 {
   imports = [ inputs.nix-flatpak.homeManagerModules.nix-flatpak ];
@@ -11,10 +17,12 @@
     enable = true;
 
     # Add Flathub remote
-    remotes = lib.mkOptionDefault [{
-      name = "flathub";
-      location = "https://dl.flathub.org/repo/flathub.flatpakrepo";
-    }];
+    remotes = lib.mkOptionDefault [
+      {
+        name = "flathub";
+        location = "https://dl.flathub.org/repo/flathub.flatpakrepo";
+      }
+    ];
 
     # Auto-update apps daily
     update.onActivation = false;
@@ -25,7 +33,10 @@
     overrides = {
       global = {
         # Force Wayland by default but keep audio working
-        Context.sockets = ["wayland" "pulseaudio"];
+        Context.sockets = [
+          "wayland"
+          "pulseaudio"
+        ];
 
         # Theming environment variables (override per-host if using a different theme)
         Environment = lib.mkDefault {

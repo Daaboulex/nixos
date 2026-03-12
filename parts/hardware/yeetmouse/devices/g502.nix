@@ -8,7 +8,12 @@
 # The HWDB entries are critical: without forcing flat profile, libinput applies
 # its own acceleration on top of YeetMouse's custom curve, making the mouse
 # feel faster than Windows with identical Raw Accel settings.
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 with lib;
 

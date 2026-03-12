@@ -1,4 +1,9 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 let
   # Derive hostname and username from system configuration
@@ -20,8 +25,8 @@ in
     # User-specific configuration
     users.${username} = {
       imports = [
-        ./modules                   # Modularized configuration
-        ./hosts/${hostname}         # Host-specific user configuration
+        ./modules # Modularized configuration
+        ./hosts/${hostname} # Host-specific user configuration
       ];
     };
   };

@@ -1,8 +1,16 @@
-{ inputs, ... }: {
-  flake.nixosModules.apps-portmaster = { config, lib, pkgs, ... }:
+{ inputs, ... }:
+{
+  flake.nixosModules.apps-portmaster =
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
       cfg = config.myModules.security.portmaster;
-    in {
+    in
+    {
       _class = "nixos";
       # Thin wrapper: map myModules namespace → services.portmaster
       options.myModules.security.portmaster = {
@@ -28,10 +36,10 @@
       config = lib.mkIf cfg.enable {
         services.portmaster = {
           enable = true;
-          autostart = cfg.autostart;
+          inherit (cfg) autostart;
           notifier.enable = cfg.notifier;
-          settings = cfg.settings;
-          extraArgs = cfg.extraArgs;
+          inherit (cfg) settings;
+          inherit (cfg) extraArgs;
         };
       };
     };

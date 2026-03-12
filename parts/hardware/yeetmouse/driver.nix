@@ -1,4 +1,9 @@
-{ pkgs, config, lib, ... }:
+{
+  pkgs,
+  config,
+  lib,
+  ...
+}:
 
 with lib;
 let
@@ -6,7 +11,6 @@ let
 
   degToRad = x: x * 0.017453292;
   floatRange = lower: upper: types.addCheck types.float (x: x >= lower && x <= upper);
-      apply = x: if x != null then x else 0.0;
 
   parameterBasePath = "/sys/module/yeetmouse/parameters";
 
@@ -135,7 +139,7 @@ let
           value = toString params.outputOffset;
           param = "Midpoint";
         }
-                {
+        {
           value = toString params.useSmoothing;
           param = "useSmoothing";
         }
@@ -416,55 +420,60 @@ let
       ];
     };
 
-    lut = let
-      tuple = ts: mkOptionType {
-        name = "tuple";
-        merge = mergeOneOption;
-        check = xs: all id (zipListsWith (t: x: t.check x) ts xs);
-        description = "tuple of" + concatMapStrings (t: " (${t.description})") ts;
-      };
-      lutVec = tuple [
-        ((floatRange 0.0 100.0) // { description = "Input speed (x)"; })
-        ((floatRange 0.0 100.0) // { description = "Output speed ratio (y)"; })
-      ];
-    in mkOption {
-      description = ''
-        Acceleration mode following a custom curve.
-        The curve is specified using individual `[x, y]` points.
-        See [RawAccel: Lookup Table](https://github.com/RawAccelOfficial/rawaccel/blob/5b39bb6/doc/Guide.md#look-up-table)
-        The acceleration mode for custom curves is represented as a LUT as well. Use the Yeetmouse GUI to convert bezier curves to a LUT.
-      '';
-      type = types.submodule {
-        options = {
-          data = mkOption {
-            type = types.listOf lutVec;
-            default = [];
-            apply = ls: map (t: "${toString t[0]},${toString t[1]}") ls;
-            description = "Lookup Table data (a list of `[x, y]` points)";
+    lut =
+      let
+        tuple =
+          ts:
+          mkOptionType {
+            name = "tuple";
+            merge = mergeOneOption;
+            check = xs: all id (zipListsWith (t: x: t.check x) ts xs);
+            description = "tuple of" + concatMapStrings (t: " (${t.description})") ts;
+          };
+        lutVec = tuple [
+          ((floatRange 0.0 100.0) // { description = "Input speed (x)"; })
+          ((floatRange 0.0 100.0) // { description = "Output speed ratio (y)"; })
+        ];
+      in
+      mkOption {
+        description = ''
+          Acceleration mode following a custom curve.
+          The curve is specified using individual `[x, y]` points.
+          See [RawAccel: Lookup Table](https://github.com/RawAccelOfficial/rawaccel/blob/5b39bb6/doc/Guide.md#look-up-table)
+          The acceleration mode for custom curves is represented as a LUT as well. Use the Yeetmouse GUI to convert bezier curves to a LUT.
+        '';
+        type = types.submodule {
+          options = {
+            data = mkOption {
+              type = types.listOf lutVec;
+              default = [ ];
+              apply = ls: map (t: "${toString t [ 0 ]},${toString t [ 1 ]}") ls;
+              description = "Lookup Table data (a list of `[x, y]` points)";
+            };
           };
         };
+        apply = params: [
+          {
+            value = "8";
+            param = "AccelerationMode";
+          }
+          {
+            value = concatStringsSep ";" params.data;
+            param = "LutDataBuf";
+          }
+          {
+            value = length params.data;
+            param = "LutSize";
+          }
+        ];
       };
-      apply = params: [
-        {
-          value = "8";
-          param = "AccelerationMode";
-        }
-        {
-          value = concatStringsSep ";" params.data;
-          param = "LutDataBuf";
-        }
-        {
-          value = length params.data;
-          param = "LutSize";
-        }
-      ];
-    };
   };
 
   yeetmouse = pkgs.yeetmouse.override {
-    kernel = config.boot.kernelPackages.kernel;
+    inherit (config.boot.kernelPackages) kernel;
   };
-in {
+in
+{
   options.hardware.yeetmouse = {
     enable = mkOption {
       type = types.bool;
@@ -472,36 +481,38 @@ in {
       description = "Enable yeetmouse kernel module to add configurable mouse acceleration";
     };
 
-    sensitivity = let
-      sensitivityValue = floatRange 0.01 10.0;
-      anisotropyValue = types.submodule {
-        description = "Anisotropic sensitivity, separating X and Y movement";
-        options = {
-          x = mkOption {
-            type = sensitivityValue;
-            description = "Horizontal sensitivity";
-          };
-          y = mkOption {
-            type = sensitivityValue;
-            description = "Vertical sensitivity";
+    sensitivity =
+      let
+        sensitivityValue = floatRange 0.01 10.0;
+        anisotropyValue = types.submodule {
+          description = "Anisotropic sensitivity, separating X and Y movement";
+          options = {
+            x = mkOption {
+              type = sensitivityValue;
+              description = "Horizontal sensitivity";
+            };
+            y = mkOption {
+              type = sensitivityValue;
+              description = "Vertical sensitivity";
+            };
           };
         };
+      in
+      mkOption {
+        type = types.either sensitivityValue anisotropyValue;
+        default = 1.0;
+        description = "Mouse base sensitivity";
+        apply = sens: [
+          {
+            value = if isAttrs sens then toString sens.x else toString sens;
+            param = "Sensitivity";
+          }
+          {
+            value = toString (if isAttrs sens then sens.y / sens.x else 1.0);
+            param = "RatioYX";
+          }
+        ];
       };
-    in mkOption {
-      type = types.either sensitivityValue anisotropyValue;
-      default = 1.0;
-      description = "Mouse base sensitivity";
-      apply = sens: [
-        {
-          value = if isAttrs sens then toString sens.x else toString sens;
-          param = "Sensitivity";
-        }
-        {
-          value = toString (if isAttrs sens then sens.y / sens.x else 1.0);
-          param = "RatioYX";
-        }
-      ];
-    };
 
     inputCap = mkOption {
       type = types.nullOr (floatRange 0.0 200.0);
@@ -569,8 +580,9 @@ in {
         linear = { };
       };
       description = "Acceleration mode to apply and their parameters";
-      apply = params: []
-        ++ (optionals (params ? linear) params.linear)
+      apply =
+        params:
+        (optionals (params ? linear) params.linear)
         ++ (optionals (params ? power) params.power)
         ++ (optionals (params ? classic) params.classic)
         ++ (optionals (params ? motivity) params.motivity)
@@ -587,21 +599,30 @@ in {
     boot.extraModulePackages = [ yeetmouse ];
     environment.systemPackages = [ yeetmouse ];
     services.udev = {
-      extraRules = let
-        echo = "${pkgs.coreutils}/bin/echo";
-        yeetmouseConfig = let
-          globalParams = [ cfg.inputCap cfg.outputCap cfg.offset cfg.preScale ];
-          params = globalParams ++ cfg.sensitivity ++ cfg.rotation ++ cfg.mode;
-          paramToString = entry: ''
-            ${echo} "${entry.value}" > "${parameterBasePath}/${entry.param}"
-          '';
-        in pkgs.writeShellScriptBin "yeetmouseConfig" ''
-          ${concatMapStrings (s: (paramToString s) + "\n") params}
-          ${echo} "1" > /sys/module/yeetmouse/parameters/update
+      extraRules =
+        let
+          echo = "${pkgs.coreutils}/bin/echo";
+          yeetmouseConfig =
+            let
+              globalParams = [
+                cfg.inputCap
+                cfg.outputCap
+                cfg.offset
+                cfg.preScale
+              ];
+              params = globalParams ++ cfg.sensitivity ++ cfg.rotation ++ cfg.mode;
+              paramToString = entry: ''
+                ${echo} "${entry.value}" > "${parameterBasePath}/${entry.param}"
+              '';
+            in
+            pkgs.writeShellScriptBin "yeetmouseConfig" ''
+              ${concatMapStrings (s: (paramToString s) + "\n") params}
+              ${echo} "1" > /sys/module/yeetmouse/parameters/update
+            '';
+        in
+        ''
+          SUBSYSTEMS=="usb|input|hid", ATTRS{bInterfaceClass}=="03", ATTRS{bInterfaceSubClass}=="01", ATTRS{bInterfaceProtocol}=="02", ATTRS{bInterfaceNumber}=="00", RUN+="${yeetmouseConfig}/bin/yeetmouseConfig"
         '';
-      in ''
-        SUBSYSTEMS=="usb|input|hid", ATTRS{bInterfaceClass}=="03", ATTRS{bInterfaceSubClass}=="01", ATTRS{bInterfaceProtocol}=="02", ATTRS{bInterfaceNumber}=="00", RUN+="${yeetmouseConfig}/bin/yeetmouseConfig"
-      '';
     };
   };
 }

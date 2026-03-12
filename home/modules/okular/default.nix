@@ -1,4 +1,9 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 {
   # ============================================================================
@@ -14,7 +19,7 @@
   # ============================================================================
   programs.plasma.configFile = {
     "okularpartrc"."Main View" = {
-      ShowLeftPanel = lib.mkDefault false;            # Maximise reading area
+      ShowLeftPanel = lib.mkDefault false; # Maximise reading area
     };
 
     "okularrc"."General" = {

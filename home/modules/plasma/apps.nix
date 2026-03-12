@@ -1,6 +1,12 @@
 # Plasma App Configuration
 # configFile entries for KDE apps without their own standalone module
-{ config, pkgs, lib, osConfig, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  osConfig,
+  ...
+}:
 
 {
   programs.plasma.configFile = {
@@ -29,7 +35,7 @@
     };
 
     "kded5rc"."Module-device_automounter" = {
-      autoload = lib.mkDefault false;       # Don't auto-mount removable devices (security)
+      autoload = lib.mkDefault false; # Don't auto-mount removable devices (security)
     };
 
     # ---- Activity Manager ----
@@ -39,15 +45,15 @@
 
     # ---- Klipper (Clipboard) ----
     "klipperrc"."General" = {
-      KeepClipboardContents = lib.mkDefault false;  # Clear clipboard on logout/poweroff (safety)
+      KeepClipboardContents = lib.mkDefault false; # Clear clipboard on logout/poweroff (safety)
       MaxClipItems = lib.mkDefault 25;
       PreventEmptyClipboard = lib.mkDefault true;
-      SyncClipboards = lib.mkDefault true;          # Selection ↔ clipboard sync
+      SyncClipboards = lib.mkDefault true; # Selection ↔ clipboard sync
     };
 
     # ---- Dolphin (File Manager) ----
     "dolphinrc"."MainWindow" = {
-      MenuBar = lib.mkDefault "Disabled";           # Use hamburger menu instead
+      MenuBar = lib.mkDefault "Disabled"; # Use hamburger menu instead
     };
 
     "dolphinrc"."KFileDialog Settings" = {
@@ -57,22 +63,26 @@
 
     # ---- Baloo (File Indexing) ----
     # Override per-host if different exclusion lists are needed
-    "baloofilerc"."General" = let
-      home = config.home.homeDirectory;
-    in {
-      "first run" = false;
-      "exclude folders" = lib.mkDefault (lib.concatStringsSep "," [
-        "${home}/.cache"
-        "${home}/.local/share/Steam"
-        "${home}/.local/share/lutris"
-        "${home}/.wine"
-        "${home}/.npm"
-        "${home}/.cargo"
-        "${home}/.rustup"
-        "/tmp"
-        "/nix"
-      ]);
-    };
+    "baloofilerc"."General" =
+      let
+        home = config.home.homeDirectory;
+      in
+      {
+        "first run" = false;
+        "exclude folders" = lib.mkDefault (
+          lib.concatStringsSep "," [
+            "${home}/.cache"
+            "${home}/.local/share/Steam"
+            "${home}/.local/share/lutris"
+            "${home}/.wine"
+            "${home}/.npm"
+            "${home}/.cargo"
+            "${home}/.rustup"
+            "/tmp"
+            "/nix"
+          ]
+        );
+      };
 
     # ---- KWallet ----
     "kwalletrc"."Wallet" = {
@@ -82,12 +92,12 @@
     # ---- KIO ----
     "kiorc"."Confirmations" = {
       ConfirmEmptyTrash = lib.mkDefault true;
-      ConfirmDelete = lib.mkDefault true;           # Confirm permanent delete (Shift+Del)
+      ConfirmDelete = lib.mkDefault true; # Confirm permanent delete (Shift+Del)
     };
 
     # ---- Notifications ----
     "plasmanotifyrc"."DoNotDisturb" = {
-      WhenScreensMirrored = lib.mkDefault true;     # Auto-DND when screen mirroring (presentations)
+      WhenScreensMirrored = lib.mkDefault true; # Auto-DND when screen mirroring (presentations)
     };
 
     # ---- Gwenview (Image Viewer) ----

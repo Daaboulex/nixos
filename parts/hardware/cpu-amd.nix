@@ -1,8 +1,16 @@
-{ inputs, ... }: {
-  flake.nixosModules.hardware-cpu-amd = { config, lib, pkgs, ... }:
+{ inputs, ... }:
+{
+  flake.nixosModules.hardware-cpu-amd =
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
       cfg = config.myModules.hardware.cpu.amd;
-    in {
+    in
+    {
       _class = "nixos";
       options.myModules.hardware.cpu.amd = {
         enable = lib.mkEnableOption "AMD CPU optimizations";
@@ -14,7 +22,11 @@
             description = "AMD P-State driver for modern power management";
           };
           mode = lib.mkOption {
-            type = lib.types.enum [ "active" "passive" "guided" ];
+            type = lib.types.enum [
+              "active"
+              "passive"
+              "guided"
+            ];
             default = "active";
             description = "AMD P-State mode (active recommended for Zen 3+)";
           };
@@ -35,7 +47,10 @@
             description = "AMD 3D V-Cache optimizer (for dual-CCD X3D processors like 9950X3D/9900X3D)";
           };
           mode = lib.mkOption {
-            type = lib.types.enum [ "cache" "frequency" ];
+            type = lib.types.enum [
+              "cache"
+              "frequency"
+            ];
             default = "cache";
             description = ''
               3D V-Cache scheduling preference:

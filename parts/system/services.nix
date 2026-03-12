@@ -1,8 +1,16 @@
-{ inputs, ... }: {
-  flake.nixosModules.system-services = { config, lib, pkgs, ... }:
+{ inputs, ... }:
+{
+  flake.nixosModules.system-services =
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
       cfg = config.myModules.system.services;
-    in {
+    in
+    {
       _class = "nixos";
       options.myModules.system.services = {
         enable = lib.mkEnableOption "Common system services";
@@ -72,24 +80,29 @@
             enable = true;
             browsing = true;
             defaultShared = false;
-            drivers = [ pkgs.gutenprint pkgs.gutenprintBin ];
+            drivers = [
+              pkgs.gutenprint
+              pkgs.gutenprintBin
+            ];
           };
 
           libinput.enable = true;
 
           fstrim = lib.mkIf cfg.fstrim.enable {
             enable = true;
-            interval = cfg.fstrim.interval;
+            inherit (cfg.fstrim) interval;
           };
 
           earlyoom = lib.mkIf cfg.earlyoom.enable {
             enable = true;
-            freeMemThreshold = cfg.earlyoom.freeMemThreshold;
-            freeSwapThreshold = cfg.earlyoom.freeSwapThreshold;
+            inherit (cfg.earlyoom) freeMemThreshold;
+            inherit (cfg.earlyoom) freeSwapThreshold;
             enableNotifications = true;
             extraArgs = [
-              "--prefer" "^(Web Content|Isolated Web|firefox|chromium|steam|gamescope)$"
-              "--avoid" "^(sshd|systemd|Xorg|Xwayland|kwin|plasmashell|pipewire|wireplumber)$"
+              "--prefer"
+              "^(Web Content|Isolated Web|firefox|chromium|steam|gamescope)$"
+              "--avoid"
+              "^(sshd|systemd|Xorg|Xwayland|kwin|plasmashell|pipewire|wireplumber)$"
             ];
           };
 

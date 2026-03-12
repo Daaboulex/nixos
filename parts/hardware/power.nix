@@ -1,13 +1,25 @@
-{ inputs, ... }: {
-  flake.nixosModules.hardware-power = { config, lib, pkgs, ... }:
+{ inputs, ... }:
+{
+  flake.nixosModules.hardware-power =
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
       cfg = config.myModules.hardware.power;
-    in {
+    in
+    {
       _class = "nixos";
       options.myModules.hardware.power = {
         enable = lib.mkEnableOption "Power management configuration";
         profile = lib.mkOption {
-          type = lib.types.enum [ "performance" "balanced" "powersave" ];
+          type = lib.types.enum [
+            "performance"
+            "balanced"
+            "powersave"
+          ];
           default = "balanced";
           description = "Power profile to apply";
         };
@@ -44,7 +56,10 @@
           };
         };
 
-        environment.systemPackages = lib.mkIf cfg.laptop [ pkgs.powertop pkgs.acpi ];
+        environment.systemPackages = lib.mkIf cfg.laptop [
+          pkgs.powertop
+          pkgs.acpi
+        ];
       };
     };
 }

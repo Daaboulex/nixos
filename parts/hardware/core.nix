@@ -1,8 +1,16 @@
-{ inputs, ... }: {
-  flake.nixosModules.hardware-core = { config, lib, pkgs, ... }:
+{ inputs, ... }:
+{
+  flake.nixosModules.hardware-core =
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
       cfg = config.myModules.hardware.core;
-    in {
+    in
+    {
       _class = "nixos";
       options.myModules.hardware.core = {
         enable = lib.mkEnableOption "Core hardware configuration (firmware, microcode, sensors)";

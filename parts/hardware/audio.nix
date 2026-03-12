@@ -1,8 +1,16 @@
-{ inputs, ... }: {
-  flake.nixosModules.hardware-audio = { config, lib, pkgs, ... }:
+{ inputs, ... }:
+{
+  flake.nixosModules.hardware-audio =
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
       cfg = config.myModules.hardware.audio;
-    in {
+    in
+    {
       _class = "nixos";
       options.myModules.hardware.audio = {
         enable = lib.mkEnableOption "Audio configuration with PipeWire";
@@ -17,7 +25,10 @@
       config = lib.mkIf cfg.enable {
         services.pipewire = {
           enable = true;
-          alsa = { enable = true; support32Bit = true; };
+          alsa = {
+            enable = true;
+            support32Bit = true;
+          };
           pulse.enable = true;
           jack.enable = true;
           audio.enable = true;
@@ -33,18 +44,26 @@
           };
 
           extraConfig."pipewire-pulse" = {
-            "stream.properties" = { "resample.quality" = 10; };
+            "stream.properties" = {
+              "resample.quality" = 10;
+            };
           };
         };
 
-        environment.systemPackages = with pkgs; [
-          pulsemixer
-          qpwgraph
-        ] ++ lib.optionals cfg.easyeffects.enable [
-          easyeffects
-        ];
+        environment.systemPackages =
+          with pkgs;
+          [
+            pulsemixer
+            qpwgraph
+          ]
+          ++ lib.optionals cfg.easyeffects.enable [
+            easyeffects
+          ];
 
-        users.users.${config.myModules.primaryUser}.extraGroups = [ "audio" "video" ];
+        users.users.${config.myModules.primaryUser}.extraGroups = [
+          "audio"
+          "video"
+        ];
       };
     };
 }

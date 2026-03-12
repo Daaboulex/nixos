@@ -1,6 +1,11 @@
 # Plasma Appearance & Session
 # Workspace theme, KDE globals, window decorations, session restore
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 {
   programs.plasma = {
@@ -66,7 +71,7 @@
       general.askForConfirmationOnLogout = lib.mkDefault true;
       sessionRestore = {
         restoreOpenApplicationsOnLogin = lib.mkDefault "onLastLogout";
-        excludeApplications = lib.mkDefault [];
+        excludeApplications = lib.mkDefault [ ];
       };
     };
 

@@ -298,7 +298,7 @@ Auto-generated scripts from `myModules.desktop.displays` monitor definitions:
 
 ### Custom Scripts (`parts/apps/tools/`)
 
-- **sysdiag** (585 lines) — comprehensive NixOS system diagnostics: CPU, GPU, memory, storage, network, services, kernel, scheduler, display, errors. Auto-detects AMD/Intel/NVIDIA hardware and shows hardware-specific metrics (P-State, GPU clocks, NVMe temps, scx status).
+- **sysdiag** (591 lines) — comprehensive NixOS system diagnostics: CPU, GPU, memory, storage, network, services, kernel, scheduler, display, errors. Auto-detects AMD/Intel/NVIDIA hardware and shows hardware-specific metrics (P-State, GPU clocks, NVMe temps, scx status).
 - **list-iommu-groups** — lists IOMMU groups for GPU passthrough planning.
 
 
@@ -403,13 +403,12 @@ Options: `myModules.gaming.*` — see [docs/OPTIONS.md](docs/OPTIONS.md) for all
 |--------|--------------|-------------|
 | `apps-gaming` | `myModules.gaming` | Steam, Proton, GameMode, vkBasalt overlay, MangoHud/MangoJuice, emulators, RADV tuning |
 | `apps-wine` | `myModules.programs.wine` | Wine variants + Bottles |
-| `tools-sysdiag` | `myModules.tools.sysdiag` | Comprehensive NixOS system diagnostics |
-| `tools-iommu` | `myModules.tools.iommu` | IOMMU group listing |
-
 | `apps-development` | `myModules.development` | Build tools, Claude Code, Saleae Logic |
 | `apps-arkenfox` | `myModules.security.arkenfox` | Arkenfox auto-download + Flatpak Firefox support |
 | `apps-portmaster` | `myModules.security.portmaster` | Portmaster firewall + system tray notifier |
 | `apps-tidalcycles` | `myModules.music.tidalcycles` | TidalCycles live coding + SuperDirt |
+| `tools-sysdiag` | `myModules.tools.sysdiag` | Comprehensive NixOS system diagnostics |
+| `tools-iommu` | `myModules.tools.iommu` | IOMMU group listing |
 
 ### Home Manager Modules
 
@@ -438,7 +437,7 @@ Options: `myModules.gaming.*` — see [docs/OPTIONS.md](docs/OPTIONS.md) for all
 | `flatpak` | Flatpak apps + Wayland/theme overrides |
 | `displays` | display-arrange, toggle scripts, tiling activation, wake service |
 
-For full option details with types and defaults, see [docs/OPTIONS.md](docs/OPTIONS.md) (auto-generated, 233 options across 13 categories).
+For full option details with types and defaults, see [docs/OPTIONS.md](docs/OPTIONS.md) (auto-generated, 235 options across 13 categories).
 
 ## Installing on a New System
 
@@ -920,4 +919,4 @@ The pipeline: `scripts/generate-docs.nix` evaluates the `ryzen-9950x3d` NixOS co
 
 `scripts/test-shell-functions.sh` validates all configurations (including specialisations), verifies nrb flags and functions match the zsh source, and checks documentation completeness. It auto-extracts flags and function names from the zsh module, so it stays in sync without manual updates.
 
-See [docs/OPTIONS.md](docs/OPTIONS.md) for the full reference (233 options across 13 categories).
+See [docs/OPTIONS.md](docs/OPTIONS.md) for the full reference (235 options across 13 categories).

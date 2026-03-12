@@ -1,8 +1,16 @@
-{ inputs, ... }: {
-  flake.nixosModules.system-users = { config, lib, pkgs, ... }:
+{ inputs, ... }:
+{
+  flake.nixosModules.system-users =
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
       cfg = config.myModules.system.users;
-    in {
+    in
+    {
       _class = "nixos";
       options.myModules.system.users = {
         enable = lib.mkEnableOption "User configuration";
@@ -18,21 +26,28 @@
         programs.zsh.enable = true;
 
         users.groups = {
-          networkmanager = {};
-          wheel = {};
-          video = {};
-          input = {};
-          disk = {};
-          bluetooth = {};
-          dialout = {};
-          i2c = {};
+          networkmanager = { };
+          wheel = { };
+          video = { };
+          input = { };
+          disk = { };
+          bluetooth = { };
+          dialout = { };
+          i2c = { };
         };
 
         users.users.${config.myModules.primaryUser} = {
           isNormalUser = true;
           description = config.myModules.primaryUser;
           extraGroups = [
-            "networkmanager" "wheel" "video" "input" "disk" "bluetooth" "dialout" "i2c"
+            "networkmanager"
+            "wheel"
+            "video"
+            "input"
+            "disk"
+            "bluetooth"
+            "dialout"
+            "i2c"
           ];
           shell = pkgs.zsh;
         };

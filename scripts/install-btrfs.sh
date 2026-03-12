@@ -40,13 +40,13 @@ trap cleanup EXIT
 # ── Parse swap size to MiB ──
 parse_swap_mib() {
   local size="$1"
-  if [[ "$size" =~ ^([0-9]+)[Gg]$ ]]; then
-    echo "$(( BASH_REMATCH[1] * 1024 ))"
-  elif [[ "$size" =~ ^([0-9]+)[Mm]$ ]]; then
+  if [[ $size =~ ^([0-9]+)[Gg]$ ]]; then
+    echo "$((BASH_REMATCH[1] * 1024))"
+  elif [[ $size =~ ^([0-9]+)[Mm]$ ]]; then
     echo "${BASH_REMATCH[1]}"
-  elif [[ "$size" =~ ^([0-9]+)$ ]]; then
+  elif [[ $size =~ ^([0-9]+)$ ]]; then
     # No suffix — assume GiB
-    echo "$(( size * 1024 ))"
+    echo "$((size * 1024))"
   else
     echo "ERROR: Invalid swap size '$size'. Use format: 4G, 2048M, or 4" >&2
     return 1
@@ -63,25 +63,43 @@ HOSTNAME=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --no-encrypt)  ENCRYPT=false; shift ;;
-    --swap)        SWAP_SIZE="$2"; shift 2 ;;
-    --flake)       FLAKE_PATH="$2"; shift 2 ;;
-    --no-install)  DO_INSTALL=false; shift ;;
-    -h|--help)
-      echo "Usage: sudo bash $0 [options] /dev/sdX <hostname>"
-      echo ""
-      echo "Options:"
-      echo "  --no-encrypt     Skip LUKS encryption"
-      echo "  --swap <size>    Create a swap partition (e.g. --swap 4G, --swap 2048M)"
-      echo "  --flake <path>   Path to flake directory (default: auto-detect)"
-      echo "  --no-install     Partition and mount only, skip nixos-install"
-      echo ""
-      echo "Requires UEFI boot mode (creates GPT + EFI System Partition)."
-      echo "The host config must use systemd-boot or Lanzaboote."
-      exit 0
-      ;;
-    /dev/*)        DISK="$1"; shift ;;
-    *)             HOSTNAME="$1"; shift ;;
+  --no-encrypt)
+    ENCRYPT=false
+    shift
+    ;;
+  --swap)
+    SWAP_SIZE="$2"
+    shift 2
+    ;;
+  --flake)
+    FLAKE_PATH="$2"
+    shift 2
+    ;;
+  --no-install)
+    DO_INSTALL=false
+    shift
+    ;;
+  -h | --help)
+    echo "Usage: sudo bash $0 [options] /dev/sdX <hostname>"
+    echo ""
+    echo "Options:"
+    echo "  --no-encrypt     Skip LUKS encryption"
+    echo "  --swap <size>    Create a swap partition (e.g. --swap 4G, --swap 2048M)"
+    echo "  --flake <path>   Path to flake directory (default: auto-detect)"
+    echo "  --no-install     Partition and mount only, skip nixos-install"
+    echo ""
+    echo "Requires UEFI boot mode (creates GPT + EFI System Partition)."
+    echo "The host config must use systemd-boot or Lanzaboote."
+    exit 0
+    ;;
+  /dev/*)
+    DISK="$1"
+    shift
+    ;;
+  *)
+    HOSTNAME="$1"
+    shift
+    ;;
   esac
 done
 
@@ -91,7 +109,7 @@ if [ -z "$DISK" ] || [ -z "$HOSTNAME" ]; then
   echo ""
   echo "========== ALL DISKS AND THEIR CONTENTS =========="
   echo ""
-  lsblk -o NAME,SIZE,TYPE,FSTYPE,LABEL,MOUNTPOINT,MODEL -e 7 2>/dev/null || \
+  lsblk -o NAME,SIZE,TYPE,FSTYPE,LABEL,MOUNTPOINT,MODEL -e 7 2>/dev/null ||
     lsblk -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT -e 7
   echo ""
   echo "==================================================="
@@ -120,7 +138,7 @@ if [ ! -d /sys/firmware/efi ]; then
   echo "This script creates a GPT + EFI partition layout that requires UEFI."
   echo "If your target system uses legacy BIOS, this layout will not boot."
   echo ""
-  read -p "Continue anyway? (y/N): " confirm_bios
+  read -rp "Continue anyway? (y/N): " confirm_bios
   if [ "$confirm_bios" != "y" ] && [ "$confirm_bios" != "Y" ]; then
     echo "Aborted."
     exit 1
@@ -169,8 +187,8 @@ if [ -r "/sys/block/$DISK_BASE/device/model" ]; then
   DISK_MODEL="$(cat "/sys/block/$DISK_BASE/device/model" | xargs)" || true
 fi
 DISK_SIZE="$(lsblk -dn -o SIZE "$DISK" 2>/dev/null || echo "unknown")"
-DISK_SERIAL="$(cat "/sys/block/$DISK_BASE/device/serial" 2>/dev/null | xargs 2>/dev/null || \
-               udevadm info --query=property "$DISK" 2>/dev/null | grep ID_SERIAL_SHORT | cut -d= -f2 || echo "unknown")"
+DISK_SERIAL="$(cat "/sys/block/$DISK_BASE/device/serial" 2>/dev/null | xargs 2>/dev/null ||
+  udevadm info --query=property "$DISK" 2>/dev/null | grep ID_SERIAL_SHORT | cut -d= -f2 || echo "unknown")"
 
 IS_SSD=false
 if [ "$(cat "/sys/block/$DISK_BASE/queue/rotational" 2>/dev/null)" = "0" ]; then
@@ -179,11 +197,11 @@ fi
 
 # ── Minimum disk size check ──
 DISK_SIZE_BYTES=$(lsblk -dn -o SIZE -b "$DISK" 2>/dev/null || echo "0")
-DISK_SIZE_GB=$(( DISK_SIZE_BYTES / 1000000000 ))
+DISK_SIZE_GB=$((DISK_SIZE_BYTES / 1000000000))
 if [ "$DISK_SIZE_GB" -lt 20 ]; then
   echo "WARNING: Target disk is very small (${DISK_SIZE_GB} GB)."
   echo "NixOS typically requires at least 20 GB."
-  read -p "Continue anyway? (y/N): " confirm_size
+  read -rp "Continue anyway? (y/N): " confirm_size
   if [ "$confirm_size" != "y" ] && [ "$confirm_size" != "Y" ]; then
     echo "Aborted."
     exit 1
@@ -191,7 +209,7 @@ if [ "$DISK_SIZE_GB" -lt 20 ]; then
 fi
 
 # Determine partition naming (NVMe, eMMC, loop use 'p' separator)
-if [[ "$DISK" == *nvme* ]] || [[ "$DISK" == *mmcblk* ]] || [[ "$DISK" == *loop* ]]; then
+if [[ $DISK == *nvme* ]] || [[ $DISK == *mmcblk* ]] || [[ $DISK == *loop* ]]; then
   PARTP="${DISK}p"
 else
   PARTP="${DISK}"
@@ -203,7 +221,7 @@ fi
 echo ""
 echo "========== ALL DISKS ON THIS SYSTEM =========="
 echo ""
-lsblk -o NAME,SIZE,TYPE,FSTYPE,LABEL,MOUNTPOINT,MODEL -e 7 2>/dev/null || \
+lsblk -o NAME,SIZE,TYPE,FSTYPE,LABEL,MOUNTPOINT,MODEL -e 7 2>/dev/null ||
   lsblk -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT -e 7
 echo ""
 echo "================================================"
@@ -215,7 +233,7 @@ echo ""
 echo "  Model:   $DISK_MODEL"
 echo "  Serial:  $DISK_SERIAL"
 echo "  Size:    $DISK_SIZE"
-echo "  Type:    $( $IS_SSD && echo "SSD" || echo "HDD")"
+echo "  Type:    $($IS_SSD && echo "SSD" || echo "HDD")"
 echo ""
 echo "  Current contents:"
 if lsblk "$DISK" -o NAME,SIZE,TYPE,FSTYPE,LABEL,MOUNTPOINT 2>/dev/null | tail -n +2 | grep -q .; then
@@ -267,18 +285,18 @@ echo "========== INSTALLATION PLAN =========="
 echo ""
 echo "  Target:        $DISK ($DISK_MODEL, $DISK_SIZE)"
 echo "  Hostname:      $HOSTNAME"
-echo "  Encryption:    $( $ENCRYPT && echo "LUKS2" || echo "none")"
+echo "  Encryption:    $($ENCRYPT && echo "LUKS2" || echo "none")"
 echo "  Swap:          ${SWAP_SIZE:-none}"
-echo "  Filesystem:    BTRFS (compress=zstd, noatime$( $IS_SSD && echo ", ssd, discard=async"))"
+echo "  Filesystem:    BTRFS (compress=zstd, noatime$($IS_SSD && echo ", ssd, discard=async"))"
 echo "  Subvolumes:    @, @home, @nix, @log, @cache, @tmp, @snapshots"
 echo "  Flake config:  $FLAKE_PATH#$HOSTNAME"
 echo ""
 echo "  Partition layout:"
 echo "    ${EFI_PART}  512M   EFI System Partition (FAT32)"
 if [ -n "$SWAP_SIZE" ]; then
-  echo "    ${SWAP_PART}  ${SWAP_SIZE}  Swap$( $ENCRYPT && echo " (LUKS encrypted)")"
+  echo "    ${SWAP_PART}  ${SWAP_SIZE}  Swap$($ENCRYPT && echo " (LUKS encrypted)")"
 fi
-echo "    ${ROOT_PART}  rest   BTRFS root$( $ENCRYPT && echo " (LUKS encrypted)")"
+echo "    ${ROOT_PART}  rest   BTRFS root$($ENCRYPT && echo " (LUKS encrypted)")"
 echo ""
 echo "========================================"
 echo ""
@@ -286,7 +304,7 @@ echo ""
 # ── First confirmation ──
 echo "ALL DATA ON $DISK ($DISK_MODEL) WILL BE PERMANENTLY DESTROYED."
 echo ""
-read -p "Type the FULL device path to confirm (e.g. $DISK): " confirm_disk
+read -rp "Type the FULL device path to confirm (e.g. $DISK): " confirm_disk
 if [ "$confirm_disk" != "$DISK" ]; then
   echo "Device path does not match. Aborted."
   exit 1
@@ -296,7 +314,7 @@ fi
 if $HAS_OS; then
   echo ""
   echo "This disk has existing OS partitions. Are you ABSOLUTELY sure?"
-  read -p "Type 'ERASE' in capitals to proceed: " confirm_erase
+  read -rp "Type 'ERASE' in capitals to proceed: " confirm_erase
   if [ "$confirm_erase" != "ERASE" ]; then
     echo "Aborted."
     exit 1
@@ -312,9 +330,9 @@ PAST_POINT_OF_NO_RETURN=true
 echo ""
 echo ">> Cleaning up existing mounts on $DISK..."
 for mp in $(findmnt -rn -o TARGET -S "$DISK" 2>/dev/null || true) \
-          $(findmnt -rn -o TARGET -S "${PARTP}1" 2>/dev/null || true) \
-          $(findmnt -rn -o TARGET -S "${PARTP}2" 2>/dev/null || true) \
-          $(findmnt -rn -o TARGET -S "${PARTP}3" 2>/dev/null || true); do
+  $(findmnt -rn -o TARGET -S "${PARTP}1" 2>/dev/null || true) \
+  $(findmnt -rn -o TARGET -S "${PARTP}2" 2>/dev/null || true) \
+  $(findmnt -rn -o TARGET -S "${PARTP}3" 2>/dev/null || true); do
   umount -l "$mp" 2>/dev/null || true
 done
 umount -R /mnt 2>/dev/null || true
@@ -337,7 +355,7 @@ parted "$DISK" -- mkpart ESP fat32 1MiB 512MiB
 parted "$DISK" -- set 1 esp on
 
 if [ -n "$SWAP_SIZE_MIB" ]; then
-  SWAP_END_MIB=$(( SWAP_SIZE_MIB + 512 ))
+  SWAP_END_MIB=$((SWAP_SIZE_MIB + 512))
   parted "$DISK" -- mkpart swap linux-swap 512MiB "${SWAP_END_MIB}MiB"
   parted "$DISK" -- mkpart primary "${SWAP_END_MIB}MiB" 100%
 else
@@ -351,7 +369,7 @@ partprobe "$DISK" 2>/dev/null || true
 udevadm settle 2>/dev/null || true
 
 # Poll for partition device nodes (handles slow USB/network storage)
-for i in $(seq 1 30); do
+for _i in $(seq 1 30); do
   if [ -b "$EFI_PART" ] && [ -b "$ROOT_PART" ]; then
     break
   fi
@@ -425,14 +443,14 @@ if $IS_SSD; then
   BTRFS_OPTS="$BTRFS_OPTS,ssd,discard=async"
 fi
 
-mount -o "subvol=@,$BTRFS_OPTS"           "$BTRFS_DEV" /mnt
+mount -o "subvol=@,$BTRFS_OPTS" "$BTRFS_DEV" /mnt
 mkdir -p /mnt/{home,nix,var/log,var/cache,tmp,boot,.snapshots}
-mount -o "subvol=@home,$BTRFS_OPTS"        "$BTRFS_DEV" /mnt/home
-mount -o "subvol=@nix,$BTRFS_OPTS"         "$BTRFS_DEV" /mnt/nix
-mount -o "subvol=@log,$BTRFS_OPTS"         "$BTRFS_DEV" /mnt/var/log
-mount -o "subvol=@cache,$BTRFS_OPTS"       "$BTRFS_DEV" /mnt/var/cache
-mount -o "subvol=@tmp,$BTRFS_OPTS"         "$BTRFS_DEV" /mnt/tmp
-mount -o "subvol=@snapshots,$BTRFS_OPTS"   "$BTRFS_DEV" /mnt/.snapshots
+mount -o "subvol=@home,$BTRFS_OPTS" "$BTRFS_DEV" /mnt/home
+mount -o "subvol=@nix,$BTRFS_OPTS" "$BTRFS_DEV" /mnt/nix
+mount -o "subvol=@log,$BTRFS_OPTS" "$BTRFS_DEV" /mnt/var/log
+mount -o "subvol=@cache,$BTRFS_OPTS" "$BTRFS_DEV" /mnt/var/cache
+mount -o "subvol=@tmp,$BTRFS_OPTS" "$BTRFS_DEV" /mnt/tmp
+mount -o "subvol=@snapshots,$BTRFS_OPTS" "$BTRFS_DEV" /mnt/.snapshots
 mount "$EFI_PART" /mnt/boot
 
 echo ">> Generating hardware-configuration.nix..."

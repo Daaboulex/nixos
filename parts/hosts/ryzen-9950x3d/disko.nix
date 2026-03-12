@@ -6,7 +6,7 @@
 #
 # Note: NTFS data drives (Windows SSD, HDD) are NOT managed by disko —
 # they remain in hardware-configuration.nix as automounted volumes.
-{ ... }: {
+_: {
   disko.devices = {
     disk.main = {
       type = "disk";
@@ -22,7 +22,10 @@
               type = "filesystem";
               format = "vfat";
               mountpoint = "/boot";
-              mountOptions = [ "fmask=0077" "dmask=0077" ];
+              mountOptions = [
+                "fmask=0077"
+                "dmask=0077"
+              ];
             };
           };
           luks = {
@@ -32,39 +35,67 @@
               name = "cryptroot";
               content = {
                 type = "btrfs";
-                extraArgs = [ "-f" "-L" "nixos" ];
+                extraArgs = [
+                  "-f"
+                  "-L"
+                  "nixos"
+                ];
                 subvolumes = {
                   "@" = {
                     mountpoint = "/";
-                    mountOptions = [ "compress=zstd" "noatime" ];
+                    mountOptions = [
+                      "compress=zstd"
+                      "noatime"
+                    ];
                   };
                   "@home" = {
                     mountpoint = "/home";
-                    mountOptions = [ "compress=zstd" "noatime" ];
+                    mountOptions = [
+                      "compress=zstd"
+                      "noatime"
+                    ];
                   };
                   "@nix" = {
                     mountpoint = "/nix";
-                    mountOptions = [ "compress=zstd" "noatime" ];
+                    mountOptions = [
+                      "compress=zstd"
+                      "noatime"
+                    ];
                   };
                   "@log" = {
                     mountpoint = "/var/log";
-                    mountOptions = [ "compress=zstd" "noatime" ];
+                    mountOptions = [
+                      "compress=zstd"
+                      "noatime"
+                    ];
                   };
                   "@cache" = {
                     mountpoint = "/var/cache";
-                    mountOptions = [ "compress=zstd" "noatime" ];
+                    mountOptions = [
+                      "compress=zstd"
+                      "noatime"
+                    ];
                   };
                   "@tmp" = {
                     mountpoint = "/var/tmp";
-                    mountOptions = [ "compress=zstd" "noatime" ];
+                    mountOptions = [
+                      "compress=zstd"
+                      "noatime"
+                    ];
                   };
                   "@snapshots" = {
                     mountpoint = "/.snapshots";
-                    mountOptions = [ "compress=zstd" "noatime" ];
+                    mountOptions = [
+                      "compress=zstd"
+                      "noatime"
+                    ];
                   };
                   "@persist" = {
                     mountpoint = "/persist";
-                    mountOptions = [ "compress=zstd" "noatime" ];
+                    mountOptions = [
+                      "compress=zstd"
+                      "noatime"
+                    ];
                   };
                 };
               };

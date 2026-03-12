@@ -1,8 +1,16 @@
-{ inputs, ... }: {
-  flake.nixosModules.apps-development = { config, lib, pkgs, ... }:
+{ inputs, ... }:
+{
+  flake.nixosModules.apps-development =
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
       cfg = config.myModules.development;
-    in {
+    in
+    {
       _class = "nixos";
       options.myModules.development = {
         enable = lib.mkEnableOption "Development tools (compilers, build systems, AI assistants)";

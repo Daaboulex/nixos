@@ -1,4 +1,9 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 {
   # ============================================================================
@@ -63,7 +68,7 @@
     # ============================================================================
     # Zsh Initialization & Custom Functions
     # ============================================================================
-   initContent = ''
+    initContent = ''
       # Zsh options
       setopt HIST_REDUCE_BLANKS
       setopt HIST_VERIFY
