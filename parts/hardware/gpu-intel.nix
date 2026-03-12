@@ -1,8 +1,16 @@
-{ inputs, ... }: {
-  flake.nixosModules.hardware-gpu-intel = { config, lib, pkgs, ... }:
+{ inputs, ... }:
+{
+  flake.nixosModules.hardware-gpu-intel =
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
       cfg = config.myModules.hardware.graphics.intel;
-    in {
+    in
+    {
       _class = "nixos";
       options.myModules.hardware.graphics.intel = {
         enable = lib.mkEnableOption "Intel Graphics (i915) configuration";
@@ -26,9 +34,18 @@
             description = "Display C-states (DC) — deeper power saving states";
           };
         };
+
+        openCL = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "OpenCL support via RustiCL (Mesa) iris driver";
+        };
       };
 
       config = lib.mkIf cfg.enable {
+        # Contribute iris to the shared RustiCL driver list in graphics.nix
+        myModules.hardware.graphics.openCL.rusticlDrivers = lib.mkIf cfg.openCL [ "iris" ];
+
         boot.kernelParams = lib.mkMerge [
           (lib.mkIf cfg.kernelParams.enablePsr [ "i915.enable_psr=1" ])
           (lib.mkIf cfg.kernelParams.enableFbc [ "i915.enable_fbc=1" ])

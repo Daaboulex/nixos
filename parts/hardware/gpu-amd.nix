@@ -68,6 +68,12 @@
           default = false;
           description = "Disable HDCP (amdgpu.dc_hdcp_enable=0) — fixes handshake bugs on RDNA 4";
         };
+
+        openCL = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "OpenCL support via RustiCL (Mesa) radeonsi driver";
+        };
       };
 
       config = lib.mkIf cfg.enable {
@@ -108,18 +114,18 @@
           };
         };
 
-        environment.sessionVariables = {
-          # RustiCL doesn't auto-enable radeonsi yet — required for OpenCL on AMD GPUs
-          RUSTICL_ENABLE = "radeonsi";
-        }
-        // lib.optionalAttrs (cfg.vulkanDeviceId != null) {
-          # Force Vulkan device selection on dual-AMD systems (iGPU + dGPU)
-          MESA_VK_DEVICE_SELECT = cfg.vulkanDeviceId;
-        }
-        // lib.optionalAttrs (cfg.vulkanDeviceName != null) {
-          DXVK_FILTER_DEVICE_NAME = cfg.vulkanDeviceName;
-          VKD3D_FILTER_DEVICE_NAME = cfg.vulkanDeviceName;
-        };
+        # Contribute radeonsi to the shared RustiCL driver list in graphics.nix
+        myModules.hardware.graphics.openCL.rusticlDrivers = lib.mkIf cfg.openCL [ "radeonsi" ];
+
+        # Force Vulkan device selection on dual-AMD systems (iGPU + dGPU)
+        environment.sessionVariables =
+          lib.optionalAttrs (cfg.vulkanDeviceId != null) {
+            MESA_VK_DEVICE_SELECT = cfg.vulkanDeviceId;
+          }
+          // lib.optionalAttrs (cfg.vulkanDeviceName != null) {
+            DXVK_FILTER_DEVICE_NAME = cfg.vulkanDeviceName;
+            VKD3D_FILTER_DEVICE_NAME = cfg.vulkanDeviceName;
+          };
 
         hardware.enableRedistributableFirmware = true;
       };

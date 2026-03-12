@@ -31,6 +31,22 @@
           default = true;
           description = "32-bit graphics support";
         };
+        openCL = {
+          rusticlDrivers = lib.mkOption {
+            type = lib.types.listOf lib.types.str;
+            default = [ ];
+            example = [
+              "radeonsi"
+              "iris"
+            ];
+            description = ''
+              Gallium drivers to enable in RustiCL (Mesa's OpenCL implementation).
+              GPU vendor modules append their driver automatically when their openCL
+              option is enabled. Set by gpu-amd (radeonsi) and gpu-intel (iris).
+              Assembled into RUSTICL_ENABLE session variable as a comma-separated list.
+            '';
+          };
+        };
         mesaGit = {
           enable = lib.mkEnableOption "mesa-git (bleeding-edge) instead of nixpkgs mesa";
           drivers = lib.mkOption {
@@ -82,6 +98,9 @@
             hardware.graphics.package = lib.mkForce mesaPkg;
             hardware.graphics.package32 = lib.mkIf cfg.enable32Bit (lib.mkForce mesaPkg32);
             hardware.graphics.extraPackages = [ mesaPkg.opencl ];
+          })
+          (lib.mkIf (cfg.openCL.rusticlDrivers != [ ]) {
+            environment.sessionVariables.RUSTICL_ENABLE = lib.concatStringsSep "," cfg.openCL.rusticlDrivers;
           })
         ]
       );

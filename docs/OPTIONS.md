@@ -1,6 +1,6 @@
 # NixOS Custom Modules Documentation
 
-> Auto-generated from `myModules` option definitions. 233 options across 13 categories.
+> Auto-generated from `myModules` option definitions. 235 options across 13 categories.
 >
 > Regenerate: `bash scripts/update-docs.sh`
 
@@ -11,7 +11,7 @@
 - [DESKTOP](#desktop-8-options) (8 options)
 - [DEVELOPMENT](#development-3-options) (3 options)
 - [GAMING](#gaming-33-options) (33 options)
-- [HARDWARE](#hardware-54-options) (54 options)
+- [HARDWARE](#hardware-56-options) (56 options)
 - [KERNEL](#kernel-14-options) (14 options)
 - [MUSIC](#music-2-options) (2 options)
 - [PRIMARYUSER](#primaryuser-1-options) (1 options)
@@ -694,7 +694,7 @@
 
 
 
-## HARDWARE (54 options)
+## HARDWARE (56 options)
 
 #### `myModules.hardware.audio.easyeffects.enable`
 
@@ -875,6 +875,13 @@ Requires BIOS CPPC option set to "Driver".
 - **Default**: `true`
 
 
+#### `myModules.hardware.graphics.amd.openCL`
+
+**Description**: OpenCL support via RustiCL (Mesa) radeonsi driver
+- **Type**: `boolean`
+- **Default**: `true`
+
+
 #### `myModules.hardware.graphics.amd.rdna4Fixes`
 
 **Description**: Apply RDNA 4 (GFX12) stability kernel params: disable scatter-gather display and GFX OFF
@@ -927,6 +934,17 @@ An empty list (default) builds all drivers.
 **Description**: Whether to enable mesa-git (bleeding-edge) instead of nixpkgs mesa.
 - **Type**: `boolean`
 - **Default**: `false`
+
+
+#### `myModules.hardware.graphics.openCL.rusticlDrivers`
+
+**Description**: Gallium drivers to enable in RustiCL (Mesa's OpenCL implementation).
+GPU vendor modules append their driver automatically when their openCL
+option is enabled. Set by gpu-amd (radeonsi) and gpu-intel (iris).
+Assembled into RUSTICL_ENABLE session variable as a comma-separated list.
+
+- **Type**: `list of string`
+- **Default**: `[]`
 
 
 #### `myModules.hardware.networking.enable`
