@@ -1,6 +1,6 @@
 #
 # Generates a NixOS host config template showing all myModules options
-# with their types and defaults, structured by category.
+# with their types and defaults, structured by namespace and sub-group.
 #
 # Usage: nix-build scripts/generate-host-template.nix --no-out-link
 #
@@ -30,7 +30,6 @@ let
               description = v.description or "";
               default = v.default or null;
               typeName = v.type.description or "unknown";
-              isEnable = k == "enable";
             }
           ]
         else if lib.isAttrs v then
@@ -42,21 +41,7 @@ let
 
   allOptions = findOptions "" options;
 
-  # Group by top-level namespace
-  groupByNamespace =
-    opts:
-    builtins.groupBy (
-      opt:
-      let
-        parts = lib.splitString "." opt.path;
-      in
-      builtins.elemAt parts 0
-    ) opts;
-
-  grouped = groupByNamespace allOptions;
-  namespaces = builtins.sort (a: b: a < b) (builtins.attrNames grouped);
-
-  # Format a default value for display in Nix code
+  # Format a default value — skip multiline strings, keep it concise
   formatDefault =
     val:
     if val == null then
@@ -68,42 +53,88 @@ let
     else if builtins.isFloat val then
       toString val
     else if builtins.isString val then
-      ''"${val}"''
+      if builtins.stringLength val > 60 || lib.hasInfix "\n" val then "\"...\"" else ''"${val}"''
     else if builtins.isList val then
-      let
-        json = builtins.toJSON val;
-      in
-      if builtins.stringLength json > 80 then "[ ... ]" else json
+      if val == [ ] then "[ ]" else "[ ... ]"
     else
       "<complex>";
 
-  # Format a single option as a Nix comment + assignment
+  # Check if a default is too complex to show inline
+  isSimpleDefault =
+    val:
+    if val == null then
+      true
+    else if builtins.isBool val then
+      true
+    else if builtins.isInt val then
+      true
+    else if builtins.isFloat val then
+      true
+    else if builtins.isString val then
+      builtins.stringLength val <= 60 && !(lib.hasInfix "\n" val)
+    else if builtins.isList val then
+      val == [ ]
+    else
+      false;
+
+  # Group by 2-level namespace (e.g., "system.boot", "hardware.cpu")
+  getSubNamespace =
+    path:
+    let
+      parts = lib.splitString "." path;
+      len = builtins.length parts;
+    in
+    if len >= 2 then
+      "${builtins.elemAt parts 0}.${builtins.elemAt parts 1}"
+    else
+      builtins.elemAt parts 0;
+
+  groupedBySubNs = builtins.groupBy (opt: getSubNamespace opt.path) allOptions;
+  subNamespaces = builtins.sort (a: b: a < b) (builtins.attrNames groupedBySubNs);
+
+  # Format a single option line
   formatOption =
     opt:
     let
-      indent = "    ";
-      # Build the path segments after the namespace
-      segments = lib.splitString "." opt.path;
-      name = lib.last segments;
+      parts = lib.splitString "." opt.path;
+      # Show the leaf name (last segment) for context
+      # Show path relative to the sub-namespace (drop first 2 segments)
+      relParts = lib.drop 2 parts;
+      relPath = lib.concatStringsSep "." relParts;
+      displayPath = if relPath == "" then opt.path else relPath;
       defaultStr = formatDefault opt.default;
+      simple = isSimpleDefault opt.default;
       typeStr = opt.typeName;
-      descStr = if opt.description != "" then " — ${opt.description}" else "";
+      descShort =
+        if builtins.stringLength opt.description > 80 then
+          builtins.substring 0 77 opt.description + "..."
+        else
+          opt.description;
     in
-    "${indent}# ${name}: ${typeStr}${descStr}\n${indent}# ${name} = ${defaultStr};";
+    if simple then
+      "    # ${displayPath} = ${defaultStr};  # ${typeStr} — ${descShort}"
+    else
+      "    # ${displayPath} = ...;  # ${typeStr} — ${descShort}";
 
-  # Group options by their sub-path (e.g., system.boot, system.packages)
-  formatNamespace =
+  # Format a sub-namespace section
+  formatSubNamespace =
     ns:
     let
-      opts = grouped.${ns};
+      opts = groupedBySubNs.${ns};
       count = builtins.length opts;
-      lines = map formatOption opts;
+      # Only show enable options and simple scalar options (skip complex nested ones like EQ)
+      simpleOpts = builtins.filter (opt: isSimpleDefault opt.default) opts;
+      complexCount = count - builtins.length simpleOpts;
+      lines = map formatOption simpleOpts;
+      complexNote =
+        if complexCount > 0 then
+          "\n    # ... and ${toString complexCount} more options with complex defaults (see docs/OPTIONS.md)"
+        else
+          "";
     in
     ''
-      # --------------------------------------------------------------------------
-      # ${ns} (${toString count} options)
-      # --------------------------------------------------------------------------
-      ${lib.concatStringsSep "\n" lines}
+      # --- ${ns} (${toString count} options) ---
+      ${lib.concatStringsSep "\n" lines}${complexNote}
     '';
 
   header = ''
@@ -111,12 +142,13 @@ let
     # NixOS Host Configuration Template
     # ==========================================================================
     # Auto-generated from myModules option definitions.
-    # ${toString (builtins.length allOptions)} options across ${toString (builtins.length namespaces)} namespaces.
+    # ${toString (builtins.length allOptions)} options across ${toString (builtins.length subNamespaces)} groups.
     #
     # Usage: copy this file to parts/hosts/<hostname>/default.nix and uncomment
     # the options you want to set. Options left commented use their module defaults.
     #
-    # Regenerate: nix-build scripts/generate-host-template.nix --no-out-link
+    # For full option details with complex defaults, see docs/OPTIONS.md
+    # Regenerate: bash scripts/update-docs.sh
     # ==========================================================================
     {
       config,
@@ -143,7 +175,7 @@ let
     }
   '';
 
-  body = lib.concatStringsSep "\n" (map formatNamespace namespaces);
+  body = lib.concatStringsSep "\n" (map formatSubNamespace subNamespaces);
 
 in
 pkgs.writeText "host-template.nix" (header + body + footer)
