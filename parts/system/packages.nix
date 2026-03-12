@@ -154,6 +154,7 @@
             environment.systemPackages = with pkgs; [
               sysbench
               stress-ng
+              memtest_vulkan
             ];
           })
         ]
