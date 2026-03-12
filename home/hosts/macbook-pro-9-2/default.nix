@@ -17,22 +17,44 @@
   };
 
   # ============================================================================
-  # Home Manager Module Toggles
+  # Home Manager Module Toggles — Exhaustive Reference
   # ============================================================================
-  # All HM modules auto-discover from home/modules/. These control per-host overrides.
+  # All HM modules auto-discover from home/modules/. Every toggle listed here
+  # for reference. Options using their module default are marked # (default).
 
-  # Development & editors
+  # Core tools
+  programs.bat.enable = true; # (default) — syntax-highlighted cat
+  programs.fzf.enable = true; # (default) — fuzzy finder
+  programs.zoxide.enable = true; # (default) — smart cd
+  programs.direnv.enable = true; # (default) — auto-load envrc
+  programs.starship.enable = true; # (default) — modern prompt
+  programs.zsh.enable = true; # (default) — shell config
+  programs.git.enable = true; # (default) — git + lfs
+
+  # Editors & viewers
+  programs.vscode.enable = true;
+  programs.kate.enable = true; # (default) — KDE text editor
+  programs.konsole.enable = true; # (default) — KDE terminal
+  programs.okular.enable = true; # (default) — PDF viewer
+
+  # System monitors
   programs.btop.enable = true;
   programs.htop.enable = true; # Lightweight alternative for 2C/4T hardware
-  programs.vscode.enable = true;
-  programs.kate.enable = true; # KDE text editor
-  programs.konsole.enable = true; # KDE terminal
-  programs.okular.enable = true; # PDF viewer
+
+  # KDE apps — disabled
   programs.ghostwriter.enable = false; # Markdown editor — not using
   programs.elisa.enable = false; # KDE music player — not using (Spotify via Flatpak)
 
+  # Desktop
+  programs.plasma.enable = true; # (default) — KDE Plasma settings
+  gtk.enable = true; # (default) — GTK theme
+  xdg.enable = true; # (default) — XDG directories
+
   # Audio
   services.easyeffects.enable = false; # No audio processing needed
+
+  # Flatpak
+  services.flatpak.enable = true; # (default) — declarative Flatpak management
 
   # ============================================================================
   # Host-Specific KDE/Plasma Settings

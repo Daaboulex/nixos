@@ -119,6 +119,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # CoolerControl - Fan/cooling device management (v4.0.1)
+    coolercontrol = {
+      url = "github:Daaboulex/coolercontrol-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # treefmt-nix - Unified code formatting via flake-parts
     treefmt-nix = {
       url = "github:numtide/treefmt-nix";

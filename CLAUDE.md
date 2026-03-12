@@ -219,7 +219,7 @@ See `/deploy` skill for the configured workflow.
 - `allowUnfree = true` is set globally
 - System targets `x86_64-linux` only
 - **Documentation maintenance**: every code change must update ALL affected documentation. Specifically:
-  - **`docs/OPTIONS.md`**: regenerate via `bash scripts/update-docs.sh` when adding/modifying module options or new modules. Every option must have a `description` string. Note that VM tests and treefmt checks also appear in `nix flake check` output.
+  - **`docs/OPTIONS.md`**, **`docs/host-template.nix`**, **`docs/hm-host-template.nix`**: regenerate via `bash scripts/update-docs.sh` when adding/modifying module options or new modules. Every option must have a `description` string. The script also regenerates host config templates showing all options with types and defaults.
   - **`README.md`**: update module reference tables when module structure changes (new modules, renamed modules, new categories). Update option counts, overlay tables, and feature descriptions when capabilities change.
   - **`docs/installation.md`**: update when changing the install script, partition layout, post-install steps, or host configurations.
   - **`docs/secure-boot.md`**: update when changing Lanzaboote, sbctl, or Secure Boot configuration.
@@ -242,7 +242,7 @@ See `/deploy` skill for the configured workflow.
   - **Infrastructure**: `/update-input`, `/repos`, `/compare-hosts`, `/new-host`, `/impermanence`
 - **No hardcoded values in generic modules**: usernames, paths, hardware IDs, and host-specific settings must be options with `lib.mkDefault` or set in host configs. Gate vendor-specific config behind `(config.myModules.hardware.*.enable or false)`.
 - **Current option paths** (canonical reference — update this when paths change):
-  - `myModules.system.{boot,kernel,nix,users,filesystems,packages,services,impermanence}` — packages has `enable` gate + sub-options (`base`, `dev`, `media`, `mobile`, `editors`, `hardware`, `diagnostics`, `monitoring` default `true`; `benchmarking` defaults `false`)
+  - `myModules.system.{boot,kernel,nix,users,filesystems,packages,services,impermanence}` — packages has `enable` gate + sub-options (`base`, `networking`, `android`, `ios`, `dev`, `media`, `editors`, `hardware`, `diagnostics`, `monitoring` default `true`; `benchmarking` defaults `false`)
   - `myModules.security.{system,ssh,sops,arkenfox,portmaster}` — ssh/sops/arkenfox/portmaster live under security, NOT system or programs
   - `myModules.hardware.{core,cpu.amd,cpu.intel,graphics,graphics.amd,graphics.intel,graphics.nvidia,audio,networking,bluetooth,performance,power,macbook,yeetmouse,debuggingProbes,piper,streamcontroller,duckyOneXMini}` — GPU options are under `graphics.*`, NOT `gpu.*`; `graphics.openCL.rusticlDrivers` is assembled from vendor modules
   - `myModules.audio.goxlr` — NOT under hardware despite file location

@@ -11,38 +11,72 @@
   ];
 
   # ============================================================================
-  # MyModules Configuration
+  # MyModules Configuration — Exhaustive Reference
+  # ============================================================================
+  # Every myModules option is listed explicitly, even defaults, so this file
+  # serves as a display config showing all available knobs for this host.
+  # Options using their module default are marked with # (default).
   # ============================================================================
   myModules = {
-    # ------ System ------
+
+    # --------------------------------------------------------------------------
+    # Primary User
+    # --------------------------------------------------------------------------
+    # primaryUser = "user"; # (default)
+
+    # --------------------------------------------------------------------------
+    # System
+    # --------------------------------------------------------------------------
     system = {
       nix.enable = true;
       users.enable = true;
+
       services = {
         enable = true;
-        printing = true; # MacBook often used with printers
-        fstrim.enable = true; # Periodic SSD TRIM (2x SSDs)
-        earlyoom = {
-          enable = true; # Kill memory hogs before system freezes (16GB laptop)
-          freeMemThreshold = 5; # Kill when <5% free RAM
-          freeSwapThreshold = 10;
+        printing = true; # (default) — MacBook often used with printers
+        fstrim = {
+          enable = true; # (default)
+          interval = "weekly"; # (default)
         };
+        earlyoom = {
+          enable = true; # (default)
+          freeMemThreshold = 5; # (default) — kill when <5% free RAM (16GB laptop)
+          freeSwapThreshold = 10; # (default)
+        };
+        acpid = true; # (default) — ACPI event daemon (lid close, power button)
+        upower = true; # (default) — battery monitoring
         geoclue = true; # Night light location
         usbmuxd = true; # iOS device support
-        acpid = true; # ACPI event daemon (lid close, power button)
-        upower = true; # Battery monitoring
       };
+
       filesystems = {
         enable = true;
-        enableAll = true;
+        enableAll = true; # (default) — enables all filesystem categories below
+        enableLinux = true; # (default)
+        enableWindows = true; # (default)
+        enableMac = true; # (default)
+        enableOptical = true; # (default)
+        enableLegacy = false; # (default)
       };
+
       packages = {
         enable = true;
+        base = true; # (default) — wget, curl, jq, tree, zip, etc.
+        networking = true; # (default) — samba, cifs-utils, iproute2
+        android = true; # (default) — adb, fastboot
+        ios = true; # (default) — libimobiledevice, ifuse
+        dev = true; # (default) — nil, sherlock
+        media = true; # (default) — ffmpeg
+        editors = true; # (default) — vim, nano
+        hardware = true; # (default) — pciutils, usbutils, lshw, etc.
+        diagnostics = true; # (default) — inxi, ethtool, powertop, etc.
+        monitoring = true; # (default) — GPU monitoring (Intel-conditional)
         benchmarking = false; # Skip stress tests on old laptop hardware
       };
+
       boot = {
         enable = true;
-        loader = "systemd-boot";
+        loader = "systemd-boot"; # (default)
         # No Secure Boot on MacBook Pro 9,2 (2012 firmware doesn't support custom keys)
         secureBoot.enable = false;
         plymouth.enable = true;
@@ -53,7 +87,9 @@
       impermanence.enable = false;
     };
 
-    # ------ Security ------
+    # --------------------------------------------------------------------------
+    # Security
+    # --------------------------------------------------------------------------
     security = {
       system = {
         enable = true;
@@ -73,7 +109,7 @@
       sops.enable = true;
       portmaster = {
         enable = true;
-        notifier = true; # System tray icon
+        notifier = true; # (default) — system tray icon
         autostart = true; # Start on boot
       };
       arkenfox = {
@@ -83,10 +119,16 @@
       };
     };
 
-    # ------ Hardware ------
+    # --------------------------------------------------------------------------
+    # Hardware
+    # --------------------------------------------------------------------------
     hardware = {
       core.enable = true;
-      networking.enable = true;
+      networking = {
+        enable = true;
+        # openPorts = []; # (default)
+        # openPortRanges = []; # (default)
+      };
       audio = {
         enable = true;
         pipewire.lowLatency = true;
@@ -98,6 +140,7 @@
       };
       graphics = {
         enable = true;
+        enable32Bit = true; # (default)
         intel = {
           enable = true;
           kernelParams = {
@@ -105,21 +148,25 @@
             enableFbc = true; # Frame Buffer Compression for power saving
             enableDc = false; # Display C-states unstable on Ivy Bridge
           };
+          openCL = true; # (default) — RustiCL iris driver
         };
-        enable32Bit = true;
+        # AMD GPU: not imported on this host (see flake-module.nix)
+        # NVIDIA GPU: not imported on this host (see flake-module.nix)
+        # openCL.rusticlDrivers assembled automatically from GPU modules
         mesaGit.enable = false; # Standard mesa is fine for HD4000
       };
       cpu.intel = {
         enable = true;
         pstate = {
-          enable = true;
-          mode = "active";
+          enable = true; # (default)
+          mode = "active"; # (default)
         };
         governor = "powersave"; # P-State powersave is efficient for Ivy Bridge
-        kvm.enable = true; # Virtualization (VT-x)
-        updateMicrocode = true; # Keep microcode current
+        kvm.enable = true; # (default) — virtualization (VT-x)
+        updateMicrocode = true; # (default)
         iommu.enable = false; # No VT-d passthrough needed
       };
+      # AMD CPU: not imported on this host (see flake-module.nix)
       macbook = {
         patches.enable = lib.mkDefault false; # Disabled — specialisations override; see note below
         # Specialisation priority: this must be mkDefault so specialisations can set false
@@ -127,15 +174,15 @@
         # xanmod/cachyos variants have different contexts that may not match.
         fan = {
           enable = true;
-          lowTemp = 45; # Start ramping fan at 45°C
-          highTemp = 65; # High fan speed at 65°C
+          lowTemp = 45; # Start ramping fan at 45 C
+          highTemp = 65; # High fan speed at 65 C
           maxTemp = 80; # Maximum temperature
           pollingInterval = 1; # Check every second
         };
         touchpad = {
           enable = true;
-          naturalScrolling = true;
-          tapping = true; # Tap-to-click
+          naturalScrolling = true; # (default)
+          tapping = true; # (default) — tap-to-click
         };
         keyboard = {
           fnMode = 2; # Press fn for F-keys (default: media keys)
@@ -151,16 +198,20 @@
       };
       power = {
         enable = true;
-        profile = "balanced"; # Balanced power profile
+        profile = "balanced"; # (default)
         laptop = true; # Enable TLP for laptop power management
       };
+      # YeetMouse, GoXLR, Piper, StreamController, Ducky, DebugProbes:
+      # not imported on this host (see flake-module.nix)
     };
 
-    # ------ Kernel ------
+    # --------------------------------------------------------------------------
+    # Kernel
+    # --------------------------------------------------------------------------
     kernel = {
       enable = true;
       variant = lib.mkDefault "default"; # Specialisations override to xanmod/cachyos
-      channel = "latest"; # Latest stable kernel
+      channel = "latest"; # (default)
       mArch = "x86-64-v2"; # Ivy Bridge (SSE4.2, no AVX2)
       extraParams = [
         "vt.global_cursor_default=0" # Hide kernel text cursor
@@ -171,14 +222,48 @@
       # cachyos sub-options only used when specialisation sets variant = "cachyos"
     };
 
-    # ------ Desktop ------
+    # --------------------------------------------------------------------------
+    # Desktop
+    # --------------------------------------------------------------------------
     desktop = {
-      kde.enable = true;
+      kde = {
+        enable = true;
+        xkbLayout = "us"; # (default)
+        xkbVariant = ""; # (default)
+        ddcBrightness = false; # (default)
+      };
       flatpak.enable = true;
       # No displays module config — laptop uses built-in display only
     };
 
-    # ------ Programs ------
+    # --------------------------------------------------------------------------
+    # Music
+    # --------------------------------------------------------------------------
+    music.tidalcycles = {
+      enable = true;
+      autostartSuperDirt = false;
+    };
+
+    # --------------------------------------------------------------------------
+    # Development
+    # --------------------------------------------------------------------------
+    development = {
+      enable = true;
+      claudeCode = true;
+      saleae = false; # No Saleae hardware on laptop
+    };
+
+    # --------------------------------------------------------------------------
+    # Tools
+    # --------------------------------------------------------------------------
+    tools = {
+      sysdiag = true;
+      iommu = false; # No IOMMU passthrough on this machine
+    };
+
+    # --------------------------------------------------------------------------
+    # Programs
+    # --------------------------------------------------------------------------
     programs = {
       wine = {
         enable = true;
@@ -187,32 +272,29 @@
       bottles.enable = false; # Not needed on laptop
     };
 
-    # ------ Music ------
-    music.tidalcycles = {
-      enable = true;
-      autostartSuperDirt = false;
-    };
-
-    # ------ Development ------
-    development = {
-      enable = true;
-      claudeCode = true;
-      saleae = false; # No Saleae hardware on laptop
-    };
-
-    # ------ Tools ------
-    tools = {
-      sysdiag = true;
-      iommu = false; # No IOMMU passthrough on this machine
-    };
-
-    # ------ CachyOS Settings ------
+    # --------------------------------------------------------------------------
+    # CachyOS Settings
+    # --------------------------------------------------------------------------
     cachyos.settings = {
       enable = true;
-      # All sub-options default to true. Override what doesn't apply:
+      zram.enable = true; # (default)
+      ioSchedulers.enable = true; # (default)
+      audio.enable = true; # (default)
+      storage.enable = true; # (default)
+      thp.enable = true; # (default)
+      systemd.enable = true; # (default)
+      timesyncd.enable = true; # (default)
+      networkManager.enable = true; # (default)
+      ntsync.enable = true; # (default)
+      debuginfod.enable = true; # (default)
+      coredump.enable = true; # (default)
+      nvidia.enable = false; # (default) — no NVIDIA GPU
       amdgpuGcnCompat.enable = false; # Intel GPU, not AMD
-      nvidia.enable = false; # No Nvidia GPU
+      extraPerformance.enable = true; # (default)
     };
+
+    # Gaming: not imported on this host (see flake-module.nix)
+    # GoXLR: not imported on this host (see flake-module.nix)
   };
 
   # ============================================================================

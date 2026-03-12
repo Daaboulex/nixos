@@ -6,6 +6,11 @@
     treefmt = {
       projectRootFile = "flake.nix";
 
+      # Exclude auto-generated template files (contain raw option defaults, not valid Nix)
+      settings.global.excludes = [
+        "docs/*.example"
+      ];
+
       # Nix
       programs.nixfmt.enable = true;
       programs.deadnix = {

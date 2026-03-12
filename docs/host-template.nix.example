@@ -1,0 +1,639 @@
+# ==========================================================================
+# NixOS Host Configuration Template
+# ==========================================================================
+# Auto-generated from myModules option definitions.
+# 237 options across 13 namespaces.
+#
+# Usage: copy this file to parts/hosts/<hostname>/default.nix and uncomment
+# the options you want to set. Options left commented use their module defaults.
+#
+# Regenerate: nix-build scripts/generate-host-template.nix --no-out-link
+# ==========================================================================
+{
+  config,
+  pkgs,
+  inputs,
+  lib,
+  ...
+}:
+{
+  imports = [
+    ./hardware-configuration.nix
+  ];
+
+  myModules = {
+# --------------------------------------------------------------------------
+# audio (35 options)
+# --------------------------------------------------------------------------
+    # attenuationLimit: signed integer — Max noise attenuation in dB (0-100). 100 = no limit (official default). 6-12 = light, 18-24 = medium.
+    # attenuationLimit = 100;
+    # enable: boolean — Whether to enable DeepFilterNet3 neural noise suppression on chat mic.
+    # enable = false;
+    # maxDfThreshold: floating point number — Max DF processing threshold in dB (-15 to 35). Lower suppresses transient noise (claps, bumps). Below 10 risks affecting plosives.
+    # maxDfThreshold = 12.000000;
+    # maxErbThreshold: floating point number — Max ERB processing threshold in dB (-15 to 35). Lower reduces muffling on loud speech.
+    # maxErbThreshold = 20.000000;
+    # minProcessingBuffer: signed integer — Min processing buffer in frames (0-10). 0 = lowest latency.
+    # minProcessingBuffer = 0;
+    # minThreshold: floating point number — Min processing threshold in dB (-15 to 35).
+    # minThreshold = -15.000000;
+    # postFilterBeta: floating point number — Post-filter beta (0-0.05). 0 = disabled. DF3 is sufficient without it; higher values muffle voice.
+    # postFilterBeta = 0.000000;
+    # source: string — PipeWire node name of the raw microphone source
+    # source = "alsa_input.usb-TC-Helicon_GoXLR-00.HiFi__Headset__source";
+    # enable: boolean — Whether to enable GoXLR Mini support.
+    # enable = false;
+    # enable: boolean — Whether to enable EQ for Chat channel.
+    # enable = true;
+    # eq: string — PipeWire filter-chain EQ filter definition for Chat channel
+    # eq = "filters = [
+  { type = bq_highshelf, freq = 0, gain = -5.23, q = 1.0 },
+  { type = bq_lowshelf, freq = 105.0, gain = 5.7, q = 0.70 },
+  { type = bq_peaking, freq = 82.6, gain = -4.5, q = 0.67 },
+  { type = bq_peaking, freq = 200.8, gain = -1.1, q = 2.44 },
+  { type = bq_peaking, freq = 357.0, gain = 0.7, q = 3.56 },
+  { type = bq_peaking, freq = 630.6, gain = 2.0, q = 1.25 },
+  { type = bq_peaking, freq = 1038.8, gain = -1.4, q = 2.31 },
+  { type = bq_peaking, freq = 2254.9, gain = 1.7, q = 2.37 },
+  { type = bq_peaking, freq = 4629.2, gain = 4.7, q = 4.14 },
+  { type = bq_peaking, freq = 6291.1, gain = -2.4, q = 4.64 },
+  { type = bq_highshelf, freq = 10000.0, gain = -5.2, q = 0.70 },
+  { type = bq_lowshelf, freq = 100.0, gain = 1.0, q = 1.0 },
+]
+";
+    # sink: string — PipeWire sink node name for Chat channel
+    # sink = "alsa_output.usb-TC-Helicon_GoXLR-00.HiFi__Headphones__sink";
+    # enable: boolean — Whether to enable EQ for Game channel.
+    # enable = true;
+    # eq: string — PipeWire filter-chain EQ filter definition for Game channel
+    # eq = "filters = [
+  { type = bq_highshelf, freq = 0, gain = -5.23, q = 1.0 },
+  { type = bq_lowshelf, freq = 105.0, gain = 5.7, q = 0.70 },
+  { type = bq_peaking, freq = 82.6, gain = -4.5, q = 0.67 },
+  { type = bq_peaking, freq = 200.8, gain = -1.1, q = 2.44 },
+  { type = bq_peaking, freq = 357.0, gain = 0.7, q = 3.56 },
+  { type = bq_peaking, freq = 630.6, gain = 2.0, q = 1.25 },
+  { type = bq_peaking, freq = 1038.8, gain = -1.4, q = 2.31 },
+  { type = bq_peaking, freq = 2254.9, gain = 1.7, q = 2.37 },
+  { type = bq_peaking, freq = 4629.2, gain = 4.7, q = 4.14 },
+  { type = bq_peaking, freq = 6291.1, gain = -2.4, q = 4.64 },
+  { type = bq_highshelf, freq = 10000.0, gain = -5.2, q = 0.70 },
+  { type = bq_lowshelf, freq = 100.0, gain = 1.0, q = 1.0 },
+]
+";
+    # sink: string — PipeWire sink node name for Game channel
+    # sink = "alsa_output.usb-TC-Helicon_GoXLR-00.HiFi__Line1__sink";
+    # enable: boolean — Whether to enable EQ for Music channel.
+    # enable = true;
+    # eq: string — PipeWire filter-chain EQ filter definition for Music channel
+    # eq = "filters = [
+  { type = bq_highshelf, freq = 0, gain = -5.23, q = 1.0 },
+  { type = bq_lowshelf, freq = 105.0, gain = 5.7, q = 0.70 },
+  { type = bq_peaking, freq = 82.6, gain = -4.5, q = 0.67 },
+  { type = bq_peaking, freq = 200.8, gain = -1.1, q = 2.44 },
+  { type = bq_peaking, freq = 357.0, gain = 0.7, q = 3.56 },
+  { type = bq_peaking, freq = 630.6, gain = 2.0, q = 1.25 },
+  { type = bq_peaking, freq = 1038.8, gain = -1.4, q = 2.31 },
+  { type = bq_peaking, freq = 2254.9, gain = 1.7, q = 2.37 },
+  { type = bq_peaking, freq = 4629.2, gain = 4.7, q = 4.14 },
+  { type = bq_peaking, freq = 6291.1, gain = -2.4, q = 4.64 },
+  { type = bq_highshelf, freq = 10000.0, gain = -5.2, q = 0.70 },
+  { type = bq_lowshelf, freq = 100.0, gain = 1.0, q = 1.0 },
+]
+";
+    # sink: string — PipeWire sink node name for Music channel
+    # sink = "alsa_output.usb-TC-Helicon_GoXLR-00.HiFi__Line2__sink";
+    # enable: boolean — Whether to enable EQ for Sample channel.
+    # enable = true;
+    # eq: string — PipeWire filter-chain EQ filter definition for Sample channel
+    # eq = "filters = [
+  { type = bq_highshelf, freq = 0, gain = -5.23, q = 1.0 },
+  { type = bq_lowshelf, freq = 105.0, gain = 5.7, q = 0.70 },
+  { type = bq_peaking, freq = 82.6, gain = -4.5, q = 0.67 },
+  { type = bq_peaking, freq = 200.8, gain = -1.1, q = 2.44 },
+  { type = bq_peaking, freq = 357.0, gain = 0.7, q = 3.56 },
+  { type = bq_peaking, freq = 630.6, gain = 2.0, q = 1.25 },
+  { type = bq_peaking, freq = 1038.8, gain = -1.4, q = 2.31 },
+  { type = bq_peaking, freq = 2254.9, gain = 1.7, q = 2.37 },
+  { type = bq_peaking, freq = 4629.2, gain = 4.7, q = 4.14 },
+  { type = bq_peaking, freq = 6291.1, gain = -2.4, q = 4.64 },
+  { type = bq_highshelf, freq = 10000.0, gain = -5.2, q = 0.70 },
+  { type = bq_lowshelf, freq = 100.0, gain = 1.0, q = 1.0 },
+]
+";
+    # sink: string — PipeWire sink node name for Sample channel
+    # sink = "alsa_output.usb-TC-Helicon_GoXLR-00.HiFi__Line3__sink";
+    # enable: boolean — Whether to enable EQ for System channel.
+    # enable = true;
+    # eq: string — PipeWire filter-chain EQ filter definition for System channel
+    # eq = "filters = [
+  { type = bq_highshelf, freq = 0, gain = -5.23, q = 1.0 },
+  { type = bq_lowshelf, freq = 105.0, gain = 5.7, q = 0.70 },
+  { type = bq_peaking, freq = 82.6, gain = -4.5, q = 0.67 },
+  { type = bq_peaking, freq = 200.8, gain = -1.1, q = 2.44 },
+  { type = bq_peaking, freq = 357.0, gain = 0.7, q = 3.56 },
+  { type = bq_peaking, freq = 630.6, gain = 2.0, q = 1.25 },
+  { type = bq_peaking, freq = 1038.8, gain = -1.4, q = 2.31 },
+  { type = bq_peaking, freq = 2254.9, gain = 1.7, q = 2.37 },
+  { type = bq_peaking, freq = 4629.2, gain = 4.7, q = 4.14 },
+  { type = bq_peaking, freq = 6291.1, gain = -2.4, q = 4.64 },
+  { type = bq_highshelf, freq = 10000.0, gain = -5.2, q = 0.70 },
+  { type = bq_lowshelf, freq = 100.0, gain = 1.0, q = 1.0 },
+]
+";
+    # sink: string — PipeWire sink node name for System channel
+    # sink = "alsa_output.usb-TC-Helicon_GoXLR-00.HiFi__Speaker__sink";
+    # clearStreamProperties: boolean — Clear PipeWire stream properties before applying EQ filters
+    # clearStreamProperties = false;
+    # enable: boolean — Whether to enable PipeWire parametric EQ for GoXLR channels.
+    # enable = false;
+    # presets: attribute set of string — Built-in EQ presets (read-only). Use as values for channel eq options.
+    # presets = <complex>;
+    # installProfiles: boolean — Install custom GoXLR UCM profiles
+    # installProfiles = true;
+    # isMini: boolean — Apply GoXLR Mini UCM patch
+    # isMini = true;
+    # activeMicProfile: string — Microphone profile to load when waking (active state)
+    # activeMicProfile = "Default";
+    # activeProfile: string — Device profile to load when waking (active state)
+    # activeProfile = "Default";
+    # enable: boolean — Whether to enable goxlr-toggle script for switching between active and sleep profiles.
+    # enable = false;
+    # sleepMicProfile: string — Microphone profile to load when sleeping
+    # sleepMicProfile = "Sleep";
+    # sleepProfile: string — Device profile to load when sleeping
+    # sleepProfile = "Sleep";
+    # enable: boolean — goxlr-utility daemon
+    # enable = true;
+
+# --------------------------------------------------------------------------
+# cachyos (15 options)
+# --------------------------------------------------------------------------
+    # enable: boolean — Whether to enable CachyOS amdgpuGcnCompat.
+    # enable = false;
+    # enable: boolean — Whether to enable CachyOS audio.
+    # enable = true;
+    # enable: boolean — Whether to enable CachyOS coredump.
+    # enable = true;
+    # enable: boolean — Whether to enable CachyOS debuginfod.
+    # enable = true;
+    # enable: boolean — Whether to enable CachyOS system optimizations (upstream-matched settings).
+    # enable = false;
+    # enable: boolean — Whether to enable Extra performance sysctls: BBR, cake, tcp_fastopen, buffer sizes, max_map_count, compaction, sched_autogroup.
+    # enable = true;
+    # enable: boolean — Whether to enable CachyOS ioSchedulers.
+    # enable = true;
+    # enable: boolean — Whether to enable CachyOS networkManager.
+    # enable = true;
+    # enable: boolean — Whether to enable CachyOS ntsync.
+    # enable = true;
+    # enable: boolean — Whether to enable CachyOS nvidia.
+    # enable = false;
+    # enable: boolean — Whether to enable CachyOS storage.
+    # enable = true;
+    # enable: boolean — Whether to enable CachyOS systemd.
+    # enable = true;
+    # enable: boolean — Whether to enable CachyOS thp.
+    # enable = true;
+    # enable: boolean — Whether to enable CachyOS timesyncd.
+    # enable = true;
+    # enable: boolean — Whether to enable CachyOS zram.
+    # enable = true;
+
+# --------------------------------------------------------------------------
+# desktop (8 options)
+# --------------------------------------------------------------------------
+    # enable: boolean — Whether to enable declarative display configuration.
+    # enable = false;
+    # monitors: lazy attribute set of (submodule) — Monitor definitions
+    # monitors = <complex>;
+    # phantomUuids: list of string — Stale monitor UUIDs to purge from tiling config
+    # phantomUuids = [];
+    # enable: boolean — Whether to enable Flatpak support.
+    # enable = false;
+    # ddcBrightness: boolean — i2c for PowerDevil DDC brightness control
+    # ddcBrightness = false;
+    # enable: boolean — Whether to enable KDE Plasma Desktop Environment.
+    # enable = false;
+    # xkbLayout: string — XKB keyboard layout (e.g. 'us', 'de', 'us,de')
+    # xkbLayout = "us";
+    # xkbVariant: string — XKB keyboard variant
+    # xkbVariant = "";
+
+# --------------------------------------------------------------------------
+# development (3 options)
+# --------------------------------------------------------------------------
+    # claudeCode: boolean — Whether to enable Claude Code AI assistant.
+    # claudeCode = false;
+    # enable: boolean — Whether to enable Development tools (compilers, build systems, AI assistants).
+    # enable = false;
+    # saleae: boolean — Whether to enable Saleae Logic analyzer and udev rules.
+    # saleae = false;
+
+# --------------------------------------------------------------------------
+# gaming (33 options)
+# --------------------------------------------------------------------------
+    # enable: boolean — Azahar
+    # enable = false;
+    # enable: boolean — Eden
+    # enable = false;
+    # enable: boolean — Whether to enable Gaming optimizations and software.
+    # enable = false;
+    # desiredgov: string — CPU governor to set when a game starts (performance = aggressive EPP hint on amd_pstate)
+    # desiredgov = "performance";
+    # gpuPerformanceLevel: null or one of "auto", "low", "high" — AMDGPU power_dpm_force_performance_level (null = don't set, auto = driver decides, high = max clocks)
+    # gpuPerformanceLevel = null;
+    # ioprio: string — IO priority for game processes (off = disabled to avoid ananicy-cpp conflict, or 0-7)
+    # ioprio = "off";
+    # pinCores: string — Pin game to specific cores (yes = auto-detect, or core list like 0-7,16-23, no = disabled)
+    # pinCores = "no";
+    # renice: signed integer — Renice priority for gamemode-managed processes (0 = disabled, avoids conflict with ananicy-cpp)
+    # renice = 0;
+    # default: null or one of "cache", "frequency" — X3D V-Cache CCD mode when not gaming (restored on exit)
+    # default = null;
+    # desired: null or one of "cache", "frequency" — X3D V-Cache CCD mode when gaming (cache = prefer V-Cache CCD, frequency = prefer high-clock CCD)
+    # desired = null;
+    # enable: boolean — Gamescope
+    # enable = true;
+    # gpuDevice: signed integer — GPU device index for gamemode optimizations (0 = first GPU)
+    # gpuDevice = 0;
+    # enable: boolean — Heroic Games Launcher
+    # enable = true;
+    # enable: boolean — lsfg-vk Vulkan frame generation (requires Lossless Scaling)
+    # enable = false;
+    # enable: boolean — MangoHud
+    # enable = true;
+    # enable: boolean — NX-Save-Sync
+    # enable = false;
+    # enable: boolean — OCCT stability test
+    # enable = false;
+    # cachyos: boolean — CachyOS optimized packages
+    # cachyos = true;
+    # performance: boolean — Performance packages
+    # performance = true;
+    # enable: boolean — Prism Launcher for Minecraft
+    # enable = false;
+    # enable: boolean — Whether to enable ProtonPlus for managing Proton versions.
+    # enable = false;
+    # perftest: string — RADV_PERFTEST flags for AMD Vulkan driver (comma-separated)
+    # perftest = "gpl,nggc";
+    # enable: boolean — Ryubing
+    # enable = false;
+    # enable: boolean — Steam
+    # enable = true;
+    # gamescope: boolean — Gamescope session for Steam
+    # gamescope = true;
+    # autoApply: boolean — Auto-apply parameter changes without clicking Apply
+    # autoApply = true;
+    # casSharpness: string — Default CAS sharpness (0.0 = subtle, 1.0 = maximum)
+    # casSharpness = "0.4";
+    # effects: string — Default colon-separated effect chain (cas, smaa, fxaa, Vibrance, LiftGammaGain, Tonemap, etc.)
+    # effects = "cas";
+    # enable: boolean — vkBasalt overlay — Vulkan post-processing with in-game UI
+    # enable = true;
+    # enableOnLaunch: boolean — Effects enabled automatically when a game launches
+    # enableOnLaunch = true;
+    # extraConfig: strings concatenated with "\n" — Extra lines for system config (ReShade shader parameters like Vibrance, LiftGammaGain values)
+    # extraConfig = "";
+    # overlayKey: string — Key to open the overlay UI in-game
+    # overlayKey = "F1";
+    # toggleKey: string — Key to toggle effects on/off in-game
+    # toggleKey = "Home";
+
+# --------------------------------------------------------------------------
+# hardware (56 options)
+# --------------------------------------------------------------------------
+    # enable: boolean — Install EasyEffects audio effects processor
+    # enable = false;
+    # enable: boolean — Whether to enable Audio configuration with PipeWire.
+    # enable = false;
+    # lowLatency: boolean — Whether to enable Low latency configuration (48kHz, 128 samples).
+    # lowLatency = false;
+    # enable: boolean — Whether to enable Bluetooth configuration.
+    # enable = false;
+    # powerOnBoot: boolean — Power on Bluetooth controller on boot
+    # powerOnBoot = false;
+    # enable: boolean — Whether to enable Core hardware configuration (firmware, microcode, sensors).
+    # enable = false;
+    # enable: boolean — Whether to enable AMD CPU optimizations.
+    # enable = false;
+    # enable: boolean — KVM-AMD virtualization support
+    # enable = true;
+    # enable: boolean — AMD Preferred Core technology
+    # enable = true;
+    # enable: boolean — AMD P-State driver for modern power management
+    # enable = true;
+    # mode: one of "active", "passive", "guided" — AMD P-State mode (active recommended for Zen 3+)
+    # mode = "active";
+    # updateMicrocode: boolean — Update AMD CPU microcode
+    # updateMicrocode = true;
+    # enable: boolean — AMD 3D V-Cache optimizer (for dual-CCD X3D processors like 9950X3D/9900X3D)
+    # enable = false;
+    # mode: one of "cache", "frequency" — 3D V-Cache scheduling preference:
+- "cache": prefer CCD with larger L3 cache (gaming, cache-sensitive workloads)
+- "frequency": prefer CCD with higher clocks (productivity, compilation)
+Requires BIOS CPPC option set to "Driver".
+
+    # mode = "cache";
+    # enable: boolean — Whether to enable Embedded debugging probes (LPC-Link2, ESP32) udev rules.
+    # enable = false;
+    # product: string — USB product ID for the keyboard board HID interface
+    # product = "001d";
+    # enable: boolean — Whether to enable Ducky One X Mini keyboard HID access (udev rules for VIA/Vial).
+    # enable = false;
+    # product: string — USB product ID for the keyboard MCU HID interface
+    # product = "0021";
+    # vendor: string — USB vendor ID for the Ducky keyboard
+    # vendor = "3233";
+    # disableHDCP: boolean — Disable HDCP (amdgpu.dc_hdcp_enable=0) — fixes handshake bugs on RDNA 4
+    # disableHDCP = false;
+    # drmDebug: boolean — DRM debug logging (drm.debug=0x1e) for diagnosing display black screens
+    # drmDebug = false;
+    # enable: boolean — Whether to enable AMD Graphics configuration.
+    # enable = false;
+    # enablePPFeatureMask: boolean — Full AMD GPU power management features (ppfeaturemask=0xffffffff)
+    # enablePPFeatureMask = true;
+    # enable: boolean — Load amdgpu in initrd (required for Plymouth)
+    # enable = true;
+    # enable: boolean — LACT daemon for AMD GPU control/overclocking
+    # enable = true;
+    # openCL: boolean — OpenCL support via RustiCL (Mesa) radeonsi driver
+    # openCL = true;
+    # rdna4Fixes: boolean — Apply RDNA 4 (GFX12) stability kernel params: disable scatter-gather display and GFX OFF
+    # rdna4Fixes = true;
+    # vulkanDeviceId: null or string — Vulkan device vendor:device ID for MESA_VK_DEVICE_SELECT (forces discrete GPU on dual-AMD systems)
+    # vulkanDeviceId = null;
+    # vulkanDeviceName: null or string — Vulkan device name substring for DXVK_FILTER_DEVICE_NAME and VKD3D_FILTER_DEVICE_NAME (forces dGPU for translated DX9-12 games)
+    # vulkanDeviceName = null;
+    # enable: boolean — Whether to enable Graphics support.
+    # enable = false;
+    # enable32Bit: boolean — 32-bit graphics support
+    # enable32Bit = true;
+    # drivers: list of (one of "amd", "intel", "nvidia") — GPU vendors to compile drivers for. Only the selected vendor drivers
+plus common essentials (llvmpipe, zink, virgl, swrast) are built.
+
+Use multiple entries for multi-GPU setups (e.g. Intel iGPU + NVIDIA dGPU).
+An empty list (default) builds all drivers.
+
+    # drivers = [];
+    # enable: boolean — Whether to enable mesa-git (bleeding-edge) instead of nixpkgs mesa.
+    # enable = false;
+    # rusticlDrivers: list of string — Gallium drivers to enable in RustiCL (Mesa's OpenCL implementation).
+GPU vendor modules append their driver automatically when their openCL
+option is enabled. Set by gpu-amd (radeonsi) and gpu-intel (iris).
+Assembled into RUSTICL_ENABLE session variable as a comma-separated list.
+
+    # rusticlDrivers = [];
+    # enable: boolean — Whether to enable Networking configuration.
+    # enable = false;
+    # nameservers: list of string — DNS nameservers (default: Quad9)
+    # nameservers = ["9.9.9.9","149.112.112.112","2620:fe::fe","2620:fe::9"];
+    # openPortRanges: list of (attribute set) — List of TCP port ranges to open (e.g. [{ from = 1000; to = 2000; }])
+    # openPortRanges = [];
+    # openPorts: list of signed integer — List of TCP ports to open
+    # openPorts = [];
+    # ananicy: boolean — Ananicy-cpp process prioritization
+    # ananicy = true;
+    # enable: boolean — Whether to enable Performance tuning and optimization.
+    # enable = false;
+    # governor: string — CPU frequency governor
+    # governor = "powersave";
+    # irqbalance: boolean — IRQ balancing across CPU cores
+    # irqbalance = true;
+    # enable: boolean — Whether to enable Sched-ext (scx) userspace CPU schedulers.
+    # enable = false;
+    # extraArgs: list of string — Extra arguments passed to the scheduler
+    # extraArgs = [];
+    # scheduler: one of "scx_lavd", "scx_bpfland", "scx_cosmos", "scx_rusty", "scx_rustland", "scx_flash", "scx_p2dq", "scx_beerland", "scx_mitosis", "scx_tickless", "scx_central", "scx_nest", "scx_layered" — Which SCX scheduler to run
+    # scheduler = "scx_lavd";
+    # enable: boolean — Whether to enable Piper mouse configuration tool and ratbagd service.
+    # enable = false;
+    # enable: boolean — Whether to enable Power management configuration.
+    # enable = false;
+    # laptop: boolean — Whether to enable Laptop power optimizations (TLP).
+    # laptop = false;
+    # profile: one of "performance", "balanced", "powersave" — Power profile to apply
+    # profile = "balanced";
+    # enable: boolean — Whether to enable StreamController (Elgato Stream Deck).
+    # enable = false;
+    # dpi: signed integer — Mouse DPI setting (reported to libinput via HWDB)
+    # dpi = 1600;
+    # enable: boolean — Whether to enable Libinput flat acceleration profile for Logitech G502 (Wired/Wireless).
+    # enable = false;
+    # pollingRate: signed integer — Mouse polling rate in Hz (reported to libinput via HWDB)
+    # pollingRate = 1000;
+    # wiredProductId: string — USB product ID for the wired G502 (check with lsusb)
+    # wiredProductId = "c08d";
+    # wirelessProductId: string — USB product ID for the Lightspeed Receiver
+    # wirelessProductId = "c539";
+    # enable: boolean — Whether to enable YeetMouse input driver.
+    # enable = false;
+
+# --------------------------------------------------------------------------
+# kernel (14 options)
+# --------------------------------------------------------------------------
+    # bbr3: null or boolean — BBR3 TCP congestion control
+    # bbr3 = null;
+    # ccHarder: null or boolean — -O3 optimizations
+    # ccHarder = null;
+    # cpusched: null or string — CPU scheduler (e.g. bmq, bore, eevdf)
+    # cpusched = null;
+    # hugepage: null or string — Transparent Hugepage behavior (e.g. always, madvise)
+    # hugepage = null;
+    # hzTicks: null or string — Timer frequency (e.g. 1000, 500, 300)
+    # hzTicks = null;
+    # kcfi: null or boolean — KCFI (Kernel Control Flow Integrity)
+    # kcfi = null;
+    # performanceGovernor: null or boolean — Default to performance governor
+    # performanceGovernor = null;
+    # preemptType: null or string — Preemption model (e.g. full, voluntary)
+    # preemptType = null;
+    # tickrate: null or string — Tickless behavior (e.g. full, idle)
+    # tickrate = null;
+    # channel: one of "latest", "lts", "rc" — CachyOS kernel channel: latest (stable bleeding-edge), lts (long-term support), rc (release candidate)
+    # channel = "latest";
+    # enable: boolean — Whether to enable Custom kernel configuration.
+    # enable = false;
+    # extraParams: list of string — Extra kernel parameters
+    # extraParams = [];
+    # mArch: string — Microarchitecture for CachyOS kernel (x86-64-v3, x86-64-v4, ZEN4, ZEN5, etc.)
+    # mArch = "x86-64-v3";
+    # variant: one of "cachyos", "cachyos-lto", "cachyos-sched-ext", "zen", "xanmod", "default" — Kernel variant to use (cachyos, zen, xanmod, or NixOS default)
+    # variant = "default";
+
+# --------------------------------------------------------------------------
+# music (2 options)
+# --------------------------------------------------------------------------
+    # autostartSuperDirt: boolean — Auto-start SuperDirt (SuperCollider) as a systemd user service
+    # autostartSuperDirt = false;
+    # enable: boolean — Whether to enable TidalCycles and SuperDirt.
+    # enable = false;
+
+# --------------------------------------------------------------------------
+# primaryUser (1 options)
+# --------------------------------------------------------------------------
+    # primaryUser: string — Primary system username used across all modules
+    # primaryUser = "user";
+
+# --------------------------------------------------------------------------
+# programs (3 options)
+# --------------------------------------------------------------------------
+    # enable: boolean — Whether to enable Bottles installation.
+    # enable = false;
+    # enable: boolean — Whether to enable Wine installation.
+    # enable = false;
+    # variant: one of "stable", "staging", "stableFull", "stagingFull" — Wine variant (staging has more patches, Full includes all optional deps)
+    # variant = "stagingFull";
+
+# --------------------------------------------------------------------------
+# security (17 options)
+# --------------------------------------------------------------------------
+    # enable: boolean — Whether to enable Arkenfox Firefox security configuration.
+    # enable = false;
+    # group: string — Group to run the service as
+    # group = "users";
+    # targetDir: string — Target directory for Firefox profile
+    # targetDir = null;
+    # user: string — User to run the service as
+    # user = "user";
+    # autostart: boolean — Whether portmaster.service starts automatically on boot. When false, the service is installed but must be started manually with `sudo systemctl start portmaster`.
+    # autostart = true;
+    # enable: boolean — Whether to enable Portmaster privacy firewall.
+    # enable = false;
+    # extraArgs: list of string — Extra command-line arguments for portmaster-core
+    # extraArgs = [];
+    # notifier: boolean — Whether to enable Portmaster system tray notifier (autostart).
+    # notifier = false;
+    # settings: attribute set — Portmaster settings passed to portmaster-core
+    # settings = <complex>;
+    # ageKeyFile: string — Path to the age key file
+    # ageKeyFile = "/var/lib/sops-nix/key.txt";
+    # defaultSopsFile: absolute path — Default sops file
+    # defaultSopsFile = <complex>;
+    # enable: boolean — Whether to enable sops-nix secret management.
+    # enable = false;
+    # enable: boolean — Whether to enable Secure SSH server configuration.
+    # enable = false;
+    # fail2banIgnoreIPs: list of string — IP ranges to never ban (add your LAN/VPN subnets)
+    # fail2banIgnoreIPs = ["127.0.0.1/8","::1/128"];
+    # trustedKeys: list of string — List of trusted SSH public keys
+    # trustedKeys = [];
+    # enable: boolean — Whether to enable System-wide security hardening.
+    # enable = false;
+    # enable: boolean — Firejail sandboxing
+    # enable = false;
+
+# --------------------------------------------------------------------------
+# system (48 options)
+# --------------------------------------------------------------------------
+    # consoleMode: null or string — Console resolution mode (max, keep, or specific like 1920x1080)
+    # consoleMode = "max";
+    # enable: boolean — Whether to enable Boot configuration.
+    # enable = false;
+    # enable: boolean — Systemd initrd for Plymouth
+    # enable = true;
+    # loader: one of "systemd-boot", "grub", "none" — Bootloader to use
+    # loader = "systemd-boot";
+    # enable: boolean — Whether to enable Plymouth boot splash.
+    # enable = false;
+    # theme: string — Plymouth theme to use
+    # theme = "bgrt";
+    # enable: boolean — Whether to enable Lanzaboote secure boot.
+    # enable = false;
+    # pkiBundle: absolute path — Path to PKI bundle
+    # pkiBundle = "/var/lib/sbctl";
+    # enable: boolean — Whether to enable Universal filesystem support.
+    # enable = false;
+    # enableAll: boolean — All filesystem categories (overrides individual toggles)
+    # enableAll = true;
+    # enableLegacy: boolean — Legacy filesystems (ReiserFS)
+    # enableLegacy = false;
+    # enableLinux: boolean — Linux filesystems (ext4, btrfs, xfs, f2fs)
+    # enableLinux = true;
+    # enableMac: boolean — macOS filesystems (HFS+)
+    # enableMac = true;
+    # enableOptical: boolean — Optical disc filesystems (ISO 9660, UDF)
+    # enableOptical = true;
+    # enableWindows: boolean — Windows filesystems (NTFS, exFAT, FAT32)
+    # enableWindows = true;
+    # enable: boolean — Whether to enable Impermanence (erase root on every boot).
+    # enable = false;
+    # extraDirectories: list of (string or (attribute set)) — Extra system directories to persist
+    # extraDirectories = [];
+    # extraFiles: list of string — Extra system files to persist
+    # extraFiles = [];
+    # luksDevice: string — LUKS device mapper name (e.g. cryptroot)
+    # luksDevice = "cryptroot";
+    # persistPath: absolute path — Mountpoint for the persistent BTRFS subvolume
+    # persistPath = "/persist";
+    # blankSnapshot: string — Name of the read-only blank root snapshot
+    # blankSnapshot = "@root-blank";
+    # enable: boolean — Enable initrd rollback service that erases root on every boot
+    # enable = true;
+    # rootSubvolume: string — Name of the root BTRFS subvolume
+    # rootSubvolume = "@";
+    # enable: boolean — Whether to enable Nix daemon configuration and settings.
+    # enable = false;
+    # android: boolean — Android device connectivity (adb, fastboot)
+    # android = true;
+    # base: boolean — Base system utilities (wget, curl, jq, tree, zip, etc.)
+    # base = true;
+    # benchmarking: boolean — Benchmarking and stress-testing tools
+    # benchmarking = false;
+    # dev: boolean — Developer CLI tools (nil, sherlock)
+    # dev = true;
+    # diagnostics: boolean — System diagnostics tools
+    # diagnostics = true;
+    # editors: boolean — Terminal text editors (vim, nano)
+    # editors = true;
+    # enable: boolean — Whether to enable System packages.
+    # enable = false;
+    # hardware: boolean — Hardware inspection and monitoring tools
+    # hardware = true;
+    # ios: boolean — iOS device connectivity (libimobiledevice, ifuse)
+    # ios = true;
+    # media: boolean — Media processing tools (ffmpeg)
+    # media = true;
+    # monitoring: boolean — GPU and system monitoring tools
+    # monitoring = true;
+    # networking: boolean — Network filesystem and tools (samba, cifs-utils, iproute2)
+    # networking = true;
+    # acpid: boolean — ACPI event daemon
+    # acpid = true;
+    # enable: boolean — Early OOM killer (prevents system freezes)
+    # enable = true;
+    # freeMemThreshold: signed integer — Minimum free memory percentage before killing
+    # freeMemThreshold = 5;
+    # freeSwapThreshold: signed integer — Minimum free swap percentage before killing
+    # freeSwapThreshold = 10;
+    # enable: boolean — Whether to enable Common system services.
+    # enable = false;
+    # enable: boolean — Periodic SSD TRIM
+    # enable = true;
+    # interval: string — How often to run fstrim
+    # interval = "weekly";
+    # geoclue: boolean — GeoClue2 location service
+    # geoclue = false;
+    # printing: boolean — Printing support (CUPS)
+    # printing = true;
+    # upower: boolean — UPower (battery/power monitoring)
+    # upower = true;
+    # usbmuxd: boolean — USB multiplexing daemon (iOS device support)
+    # usbmuxd = false;
+    # enable: boolean — Whether to enable User configuration.
+    # enable = false;
+
+# --------------------------------------------------------------------------
+# tools (2 options)
+# --------------------------------------------------------------------------
+    # iommu: boolean — Whether to enable IOMMU group listing tool.
+    # iommu = false;
+    # sysdiag: boolean — Whether to enable sysdiag system diagnostics.
+    # sysdiag = false;
+  };
+
+  # System basics (edit these for your host)
+  system.stateVersion = "26.05";
+  networking.hostName = "<hostname>";
+  time.timeZone = "Europe/Berlin";
+}

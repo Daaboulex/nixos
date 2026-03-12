@@ -65,6 +65,7 @@
             inputs.portmaster.nixosModules.default
             inputs.cachyos-settings-nix.nixosModules.default
             inputs.impermanence.nixosModules.impermanence
+            # CoolerControl: overlay provides 4.0.1 packages, nixpkgs module handles the rest
           ];
         }
       )
@@ -104,6 +105,7 @@
           inputs.lsfg-vk.overlays.default
           inputs.vkbasalt-overlay.overlays.default
           inputs.mesa-git-nix.overlays.default
+          inputs.coolercontrol.overlays.default
         ];
       }
     ];

@@ -8,37 +8,60 @@ in
 
 {
   # ============================================================================
-  # Ryzen 9950X3D Host Configuration
+  # Ryzen 9950X3D Home Manager Host Configuration — Exhaustive Reference
+  # ============================================================================
+  # Every HM module toggle is listed explicitly so this file serves as a
+  # display config. Options using their module default are marked # (default).
   # ============================================================================
 
-  # Git credentials
+  # --------------------------------------------------------------------------
+  # Git credentials (per-host)
+  # --------------------------------------------------------------------------
   programs.git.settings.user = {
     name = "Daaboulex";
     email = "39669593+Daaboulex@users.noreply.github.com";
   };
 
-  # ============================================================================
+  # --------------------------------------------------------------------------
   # Home Manager Module Toggles
-  # ============================================================================
-  # All HM modules auto-discover from home/modules/. These control per-host overrides.
-  # Modules without explicit enable here use their module defaults (most default true).
+  # --------------------------------------------------------------------------
+  # Core tools
+  programs.bat.enable = true; # (default) — syntax-highlighted cat
+  programs.fzf.enable = true; # (default) — fuzzy finder
+  programs.zoxide.enable = true; # (default) — smart cd
+  programs.direnv.enable = true; # (default) — auto-load envrc
+  programs.starship.enable = true; # (default) — modern prompt
+  programs.zsh.enable = true; # (default) — shell config
+  programs.git.enable = true; # (default) — git + lfs
 
-  # Development & editors
+  # Editors & viewers
+  programs.vscode.enable = true;
+  programs.kate.enable = true; # (default) — KDE text editor
+  programs.konsole.enable = true; # (default) — KDE terminal
+  programs.okular.enable = true; # (default) — PDF viewer
+
+  # System monitors
   programs.btop.enable = true;
   programs.htop.enable = false; # Redundant with btop on powerful hardware
-  programs.vscode.enable = true;
-  programs.kate.enable = true; # KDE text editor (default in module)
-  programs.konsole.enable = true; # KDE terminal (default in module)
-  programs.okular.enable = true; # PDF viewer (default in module)
+
+  # KDE apps — disabled
   programs.ghostwriter.enable = false; # Markdown editor — not using
   programs.elisa.enable = false; # KDE music player — not using (Spotify via Flatpak)
+
+  # Desktop
+  programs.plasma.enable = true; # (default) — KDE Plasma settings
+  gtk.enable = true; # (default) — GTK theme
+  xdg.enable = true; # (default) — XDG directories
 
   # Audio
   services.easyeffects.enable = false; # GoXLR handles all audio processing
 
-  # ============================================================================
+  # Flatpak
+  services.flatpak.enable = true; # (default) — declarative Flatpak management
+
+  # --------------------------------------------------------------------------
   # Host-Specific Plasma Settings
-  # ============================================================================
+  # --------------------------------------------------------------------------
 
   # Logitech G502 — disable acceleration (handled by yeetmouse)
   # Three device IDs: yeetmouse virtual (407f), wired (c08d), wireless receiver (c539)
@@ -124,9 +147,9 @@ in
     show_cpu_watts = lib.mkDefault true;
   };
 
-  # ============================================================================
+  # --------------------------------------------------------------------------
   # Flatpak Packages (host-specific)
-  # ============================================================================
+  # --------------------------------------------------------------------------
   services.flatpak.packages = [
     "com.calibre_ebook.calibre"
     "com.github.tenderowl.frog"
@@ -165,9 +188,9 @@ in
     };
   };
 
-  # ============================================================================
+  # --------------------------------------------------------------------------
   # SSH Client Configuration (for remote deployment to MacBook)
-  # ============================================================================
+  # --------------------------------------------------------------------------
   programs.ssh = {
     enable = true;
     enableDefaultConfig = false;

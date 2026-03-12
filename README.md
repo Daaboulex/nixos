@@ -155,6 +155,8 @@ home/
 scripts/
 ├── install-btrfs.sh                   # Automated BTRFS+LUKS install script
 ├── generate-docs.nix                  # Auto-generates docs/OPTIONS.md
+├── generate-host-template.nix         # Auto-generates NixOS host config template
+├── generate-hm-template.nix           # Auto-generates Home Manager host config template
 ├── test-shell-functions.sh            # Validate all configs, flags, functions, and docs
 └── update-docs.sh                     # Wrapper to run doc generation
 docs/
@@ -236,6 +238,7 @@ External packages enter via overlays stacked in the host's `flake-module.nix`. C
 | `lsfg-vk.overlays.default` | Vulkan frame generation |
 | `vkbasalt-overlay.overlays.default` | vkBasalt overlay (Vulkan post-processing with in-game UI) |
 | `mesa-git-nix.overlays.default` | Bleeding-edge Mesa builds |
+| `coolercontrol.overlays.default` | CoolerControl 4.0.1 fan/cooling management |
 
 To add a new overlay: add the flake input in `flake.nix`, then add `inputs.<name>.overlays.default` to the host's overlay list.
 
@@ -437,7 +440,7 @@ Options: `myModules.gaming.*` — see [docs/OPTIONS.md](docs/OPTIONS.md) for all
 | `flatpak` | Flatpak apps + Wayland/theme overrides |
 | `displays` | display-arrange, toggle scripts, tiling activation, wake service |
 
-For full option details with types and defaults, see [docs/OPTIONS.md](docs/OPTIONS.md) (auto-generated, 235 options across 13 categories).
+For full option details with types and defaults, see [docs/OPTIONS.md](docs/OPTIONS.md) (auto-generated, 237 options across 13 categories).
 
 ## Installing on a New System
 
@@ -649,7 +652,7 @@ Create `parts/hosts/<hostname>/` with three files:
       users.enable = true;
       services.enable = true;
       filesystems = { enable = true; enableAll = true; };
-      packages = { base = true; dev = true; editors = true; };
+      packages = { enable = true; base = true; networking = true; android = true; ios = true; };
       boot = { enable = true; loader = "systemd-boot"; };
     };
     hardware = {
@@ -915,8 +918,8 @@ bash scripts/test-shell-functions.sh  # Validate all configs, flags, functions, 
 2. **Post-switch** — regenerates in background after every `nrb` switch
 3. **Manual** — `bash scripts/update-docs.sh`
 
-The pipeline: `scripts/generate-docs.nix` evaluates the `ryzen-9950x3d` NixOS configuration, extracts all `myModules.*` options (types, defaults, descriptions), groups them by category, and produces a Markdown file with table of contents. `scripts/update-docs.sh` is a wrapper that runs the Nix build and copies the result to `docs/OPTIONS.md`.
+The pipeline: `scripts/generate-docs.nix` evaluates the `ryzen-9950x3d` NixOS configuration, extracts all `myModules.*` options (types, defaults, descriptions), groups them by category, and produces a Markdown file with table of contents. `scripts/generate-host-template.nix` and `scripts/generate-hm-template.nix` produce NixOS and Home Manager host config templates showing all options with their types and defaults. `scripts/update-docs.sh` runs all three generators and copies results to `docs/`.
 
 `scripts/test-shell-functions.sh` validates all configurations (including specialisations), verifies nrb flags and functions match the zsh source, and checks documentation completeness. It auto-extracts flags and function names from the zsh module, so it stays in sync without manual updates.
 
-See [docs/OPTIONS.md](docs/OPTIONS.md) for the full reference (235 options across 13 categories).
+See [docs/OPTIONS.md](docs/OPTIONS.md) for the full reference (237 options across 13 categories).

@@ -7,21 +7,28 @@
 
 {
   # ============================================================================
-  # Host-Specific Home Configuration
+  # Host-Specific Home Configuration Template
   # ============================================================================
-  # This file contains home-manager settings specific to this host.
-  # Shared settings are in home/common.nix.
+  # Copy to home/hosts/<hostname>/default.nix and customise.
+  # For a comprehensive reference of all toggles, see home/hosts/ryzen-9950x3d/
+  # or generate a template: nix-build scripts/generate-hm-template.nix --no-out-link
 
-  # Example: Host-specific packages
-  # home.packages = with pkgs; [
-  #   # ...
+  # Git credentials (required)
+  programs.git.settings.user = {
+    name = "<username>";
+    email = "<email>";
+  };
+
+  # Module toggles — override defaults per host
+  # programs.btop.enable = true;
+  # programs.htop.enable = false;
+  # programs.vscode.enable = true;
+  # programs.ghostwriter.enable = false;
+  # programs.elisa.enable = false;
+  # services.easyeffects.enable = false;
+
+  # Flatpak packages
+  # services.flatpak.packages = [
+  #   "org.example.App"
   # ];
-
-  # Example: Host-specific git config
-  # programs.git.extraConfig = {
-  #   # ...
-  # };
-
-  # Example: Monitor configuration (Hyprland/Sway/KDE)
-  # ...
 }

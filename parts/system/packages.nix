@@ -17,7 +17,22 @@
         base = lib.mkOption {
           type = lib.types.bool;
           default = true;
-          description = "Base system utilities (wget, curl, jq, etc.)";
+          description = "Base system utilities (wget, curl, jq, tree, zip, etc.)";
+        };
+        networking = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Network filesystem and tools (samba, cifs-utils, iproute2)";
+        };
+        android = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Android device connectivity (adb, fastboot)";
+        };
+        ios = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "iOS device connectivity (libimobiledevice, ifuse)";
         };
         dev = lib.mkOption {
           type = lib.types.bool;
@@ -28,11 +43,6 @@
           type = lib.types.bool;
           default = true;
           description = "Media processing tools (ffmpeg)";
-        };
-        mobile = lib.mkOption {
-          type = lib.types.bool;
-          default = true;
-          description = "Mobile device connectivity (iOS)";
         };
         editors = lib.mkOption {
           type = lib.types.bool;
@@ -78,9 +88,6 @@
               nix-output-monitor
               comma
               sbctl
-              samba
-              cifs-utils
-              iproute2
               libblockdev
               fastfetch
               libinput
@@ -92,7 +99,22 @@
               coreutils
               testdisk
               gparted
-              android-tools
+            ];
+          })
+          (lib.mkIf cfg.networking {
+            environment.systemPackages = with pkgs; [
+              samba
+              cifs-utils
+              iproute2
+            ];
+          })
+          (lib.mkIf cfg.android {
+            environment.systemPackages = [ pkgs.android-tools ];
+          })
+          (lib.mkIf cfg.ios {
+            environment.systemPackages = with pkgs; [
+              libimobiledevice
+              ifuse
             ];
           })
           (lib.mkIf cfg.dev {
@@ -103,12 +125,6 @@
             ];
           })
           (lib.mkIf cfg.media { environment.systemPackages = [ pkgs.ffmpeg ]; })
-          (lib.mkIf cfg.mobile {
-            environment.systemPackages = with pkgs; [
-              libimobiledevice
-              ifuse
-            ];
-          })
           (lib.mkIf cfg.editors {
             environment.systemPackages = with pkgs; [
               vim

@@ -11,29 +11,98 @@
   ];
 
   # ============================================================================
-  # MyModules Configuration
+  # MyModules Configuration — Exhaustive Reference
+  # ============================================================================
+  # Every myModules option is listed explicitly, even defaults, so this file
+  # serves as a display config showing all available knobs. Options using their
+  # module default are marked with # (default).
   # ============================================================================
   myModules = {
+
+    # --------------------------------------------------------------------------
+    # Primary User
+    # --------------------------------------------------------------------------
+    # primaryUser = "user"; # (default)
+
+    # --------------------------------------------------------------------------
+    # System
+    # --------------------------------------------------------------------------
     system = {
-      nix = {
-        enable = true;
-      };
+      nix.enable = true;
       users.enable = true;
+
       services = {
         enable = true;
+        printing = true; # (default)
+        fstrim = {
+          enable = true; # (default)
+          interval = "weekly"; # (default)
+        };
+        earlyoom = {
+          enable = true; # (default)
+          freeMemThreshold = 5; # (default)
+          freeSwapThreshold = 10; # (default)
+        };
+        acpid = true; # (default)
+        upower = true; # (default)
         geoclue = true; # Night light location
         usbmuxd = true; # iOS device support
       };
+
       filesystems = {
         enable = true;
-        enableAll = true;
+        enableAll = true; # (default) — enables all filesystem categories below
+        enableLinux = true; # (default)
+        enableWindows = true; # (default)
+        enableMac = true; # (default)
+        enableOptical = true; # (default)
+        enableLegacy = false; # (default)
       };
+
       packages = {
         enable = true;
+        base = true; # (default) — wget, curl, jq, tree, zip, etc.
+        networking = true; # (default) — samba, cifs-utils, iproute2
+        android = true; # (default) — adb, fastboot
+        ios = true; # (default) — libimobiledevice, ifuse
+        dev = true; # (default) — nil, sherlock
+        media = true; # (default) — ffmpeg
+        editors = true; # (default) — vim, nano
+        hardware = true; # (default) — pciutils, usbutils, lshw, etc.
+        diagnostics = true; # (default) — inxi, ethtool, powertop, etc.
+        monitoring = true; # (default) — lact, radeontop (AMD-conditional)
         benchmarking = true; # Off by default — enable for stress-testing workstation
+      };
+
+      boot = {
+        enable = true;
+        loader = "systemd-boot"; # (default)
+        secureBoot = {
+          enable = true;
+          # pkiBundle = "/var/lib/sbctl"; # (default)
+        };
+        plymouth = {
+          enable = true;
+          # theme uses module default
+        };
+        initrd.enable = true; # Systemd initrd (faster boot, needed for impermanence rollback)
+        # consoleMode uses module default
+      };
+
+      # Impermanence — disabled until @persist + @root-blank subvolumes are created
+      # See docs/installation.md for setup steps
+      impermanence = {
+        enable = false;
+        # persistPath = "/persist"; # (default)
+        # luksDevice = "cryptroot"; # (default)
+        # rollback.enable = true; # (default)
+        # rollback.blankSnapshot = "@root-blank"; # (default)
       };
     };
 
+    # --------------------------------------------------------------------------
+    # Security
+    # --------------------------------------------------------------------------
     security = {
       system = {
         enable = true;
@@ -65,13 +134,21 @@
       };
     };
 
+    # --------------------------------------------------------------------------
+    # Hardware
+    # --------------------------------------------------------------------------
     hardware = {
       core.enable = true;
-      networking.enable = true;
+      networking = {
+        enable = true;
+        # openPorts = []; # (default)
+        # openPortRanges = []; # (default)
+        # nameservers use module default
+      };
       audio = {
         enable = true;
         pipewire.lowLatency = true;
-
+        easyeffects.enable = false; # GoXLR handles all audio processing
       };
       bluetooth = {
         enable = true;
@@ -79,6 +156,7 @@
       };
       graphics = {
         enable = true;
+        enable32Bit = true; # (default)
         amd = {
           enable = true;
           vulkanDeviceId = "1002:7550"; # RX 9070 XT — force dGPU for Vulkan on dual-AMD systems
@@ -89,8 +167,11 @@
           rdna4Fixes = true; # RDNA 4 stability kernel params
           drmDebug = false; # Was destroying ALL boot logs (~800 msg/sec overflows kmsg ring buffer)
           disableHDCP = false; # HDCP enabled (was disabled for RDNA 4 handshake debugging)
+          openCL = true; # (default) — RustiCL radeonsi driver
         };
-        enable32Bit = true;
+        # Intel GPU: not imported on this host (see flake-module.nix)
+        # NVIDIA GPU: not imported on this host (see flake-module.nix)
+        # openCL.rusticlDrivers assembled automatically from GPU modules
         mesaGit = {
           enable = true; # Bleeding-edge Mesa from git main (RDNA 4 optimizations)
           drivers = [ "amd" ]; # Only compile AMD drivers (radeonsi, RADV) + essentials
@@ -98,11 +179,19 @@
       };
       cpu.amd = {
         enable = true; # AMD CPU optimizations (pstate, prefcore, kvm, microcode)
+        pstate = {
+          enable = true; # (default)
+          mode = "active"; # (default)
+        };
+        prefcore.enable = true; # (default)
         x3dVcache = {
           enable = true; # Dual-CCD 3D V-Cache optimizer (works at CPPC firmware level — scheduler-independent)
           mode = "cache"; # Prefer CCD0 (96MB 3D V-Cache) for gaming
         };
+        kvm.enable = true; # (default) — KVM virtualization
+        updateMicrocode = true; # (default)
       };
+      # Intel CPU: not imported on this host (see flake-module.nix)
       performance = {
         enable = true;
         # amd_pstate active + "powersave" governor: CPU still boosts to max under load.
@@ -133,6 +222,7 @@
         profile = "balanced"; # Profile label only — actual governor set by performance module ("powersave")
         laptop = false; # Not a laptop — no TLP
       };
+      # MacBook: not imported on this host (see flake-module.nix)
       yeetmouse = {
         enable = true;
         devices.g502 = {
@@ -143,38 +233,52 @@
       duckyOneXMini.enable = true;
       debuggingProbes.enable = true;
       piper.enable = true;
-      streamcontroller = {
-        enable = true;
-      };
+      streamcontroller.enable = true;
     };
 
-    system.boot = {
+    # --------------------------------------------------------------------------
+    # Kernel
+    # --------------------------------------------------------------------------
+    kernel = {
       enable = true;
-      loader = "systemd-boot";
-      secureBoot = {
-        enable = true;
-        # pkiBundle uses default /var/lib/sbctl
+      variant = "cachyos-lto";
+      # channel = "latest"; # (default)
+      mArch = "ZEN5"; # Zen 5 (9950X3D) supports x86-64-v4, use ZEN4 for specific tuning
+      extraParams = [
+        # loglevel=0 removed — Plymouth/Lanzaboote appends loglevel=4 which overrides it
+        "vt.global_cursor_default=0"
+        "iommu=pt"
+        "nowatchdog"
+        "acpi_enforce_resources=lax"
+        "pci=realloc"
+        "usbcore.autosuspend=-1" # Disable USB autosuspend (fixes xhci_hcd suspend timeout)
+        "split_lock_detect=off" # Prevents perf drops in games using split-lock instructions
+        "nvme_core.default_ps_max_latency_us=0" # Disable NVMe power state transitions (prevents micro-stutters)
+        "tsc=reliable" # Pin TSC as clocksource — Zen 5 has invariant TSC
+      ];
+      cachyos = {
+        cpusched = "bore"; # BORE compiled into kernel as fallback; scx_lavd overlays it via BPF when loaded
+        bbr3 = true;
+        hzTicks = "1000";
+        kcfi = false;
+        performanceGovernor = false; # powersave governor via P-State active mode is correct for Zen 5
+        tickrate = "full";
+        preemptType = "full";
+        ccHarder = true;
+        hugepage = "always";
       };
-      plymouth = {
-        enable = true;
-        # theme uses module default
-      };
-      initrd.enable = true; # Systemd initrd (faster boot, needed for impermanence rollback)
-      # consoleMode uses module default
     };
 
-    # Impermanence — disabled until @persist + @root-blank subvolumes are created
-    # See docs/installation.md for setup steps
-    system.impermanence = {
-      enable = false;
-      # persistPath = "/persist";
-      # luksDevice = "cryptroot";
-      # rollback.enable = true;
-      # rollback.blankSnapshot = "@root-blank";
-    };
-
+    # --------------------------------------------------------------------------
+    # Desktop
+    # --------------------------------------------------------------------------
     desktop = {
-      kde.enable = true;
+      kde = {
+        enable = true;
+        xkbLayout = "us"; # (default)
+        xkbVariant = ""; # (default)
+        ddcBrightness = true; # DDC/CI brightness control via i2c-dev (PowerDevil)
+      };
       flatpak.enable = true;
       displays = {
         enable = true;
@@ -252,6 +356,9 @@
       };
     };
 
+    # --------------------------------------------------------------------------
+    # Music
+    # --------------------------------------------------------------------------
     music = {
       tidalcycles = {
         enable = true;
@@ -259,10 +366,17 @@
       };
     };
 
+    # --------------------------------------------------------------------------
+    # Audio (GoXLR)
+    # --------------------------------------------------------------------------
     audio.goxlr = {
       enable = true;
+      isMini = false; # (default) — full-size GoXLR
+      utility.enable = true; # (default)
+      installProfiles = true; # (default)
       eq = {
         enable = true;
+        clearStreamProperties = true; # (default)
         channels = {
           system.eq = config.myModules.audio.goxlr.eq.presets.dt990pro;
           game.eq = config.myModules.audio.goxlr.eq.presets.dt990pro;
@@ -286,17 +400,26 @@
       };
     };
 
+    # --------------------------------------------------------------------------
+    # Development
+    # --------------------------------------------------------------------------
     development = {
       enable = true;
       claudeCode = true;
       saleae = true;
     };
 
+    # --------------------------------------------------------------------------
+    # Tools
+    # --------------------------------------------------------------------------
     tools = {
       sysdiag = true;
       iommu = true;
     };
 
+    # --------------------------------------------------------------------------
+    # Programs
+    # --------------------------------------------------------------------------
     programs = {
       wine = {
         enable = true;
@@ -305,33 +428,25 @@
       bottles.enable = true;
     };
 
-    kernel = {
+    # --------------------------------------------------------------------------
+    # CachyOS Settings
+    # --------------------------------------------------------------------------
+    cachyos.settings = {
       enable = true;
-      variant = "cachyos-lto";
-      mArch = "ZEN5"; # Zen 5 (9950X3D) supports x86-64-v4, use ZEN4 for specific tuning
-      extraParams = [
-        # loglevel=0 removed — Plymouth/Lanzaboote appends loglevel=4 which overrides it
-        "vt.global_cursor_default=0"
-        "iommu=pt"
-        "nowatchdog"
-        "acpi_enforce_resources=lax"
-        "pci=realloc"
-        "usbcore.autosuspend=-1" # Disable USB autosuspend (fixes xhci_hcd suspend timeout)
-        "split_lock_detect=off" # Prevents perf drops in games using split-lock instructions
-        "nvme_core.default_ps_max_latency_us=0" # Disable NVMe power state transitions (prevents micro-stutters)
-        "tsc=reliable" # Pin TSC as clocksource — Zen 5 has invariant TSC
-      ];
-      cachyos = {
-        cpusched = "bore"; # BORE compiled into kernel as fallback; scx_lavd overlays it via BPF when loaded
-        bbr3 = true;
-        hzTicks = "1000";
-        kcfi = false;
-        performanceGovernor = false; # powersave governor via P-State active mode is correct for Zen 5
-        tickrate = "full";
-        preemptType = "full";
-        ccHarder = true;
-        hugepage = "always";
-      };
+      zram.enable = true; # (default)
+      ioSchedulers.enable = true; # (default)
+      audio.enable = true; # (default)
+      storage.enable = true; # (default)
+      thp.enable = true; # (default)
+      systemd.enable = true; # (default)
+      timesyncd.enable = true; # (default)
+      networkManager.enable = true; # (default)
+      ntsync.enable = true; # (default)
+      debuginfod.enable = true; # (default)
+      coredump.enable = true; # (default)
+      nvidia.enable = false; # (default) — no NVIDIA GPU
+      amdgpuGcnCompat.enable = false; # Not needed for RX 9070 XT (RDNA 4)
+      extraPerformance.enable = true; # (default)
     };
   };
 
@@ -341,13 +456,20 @@
   myModules.gaming = {
     enable = true;
     steam = {
-      enable = true;
-      gamescope = true;
+      enable = true; # (default)
+      gamescope = true; # (default)
     };
     protonplus.enable = true;
-    heroic.enable = true;
+    heroic.enable = true; # (default)
     gamescope.enable = false; # Standalone gamescope — use Steam's built-in instead
     mangohud.enable = false; # MangoHud — disabled, use vkBasalt overlay instead
+    ryubing.enable = true; # Nintendo Switch emulator (Ryujinx fork)
+    eden.enable = true; # Nintendo Switch emulator (community fork)
+    azahar.enable = true; # 3DS emulator (Citra fork)
+    nxSaveSync.enable = false; # Switch save sync tool
+    occt.enable = true; # Stability Test & Benchmark
+    lsfgVk.enable = true; # Vulkan frame generation (Lossless Scaling)
+    prismlauncher.enable = true; # Minecraft Launcher
     gpuDevice = 1; # RX 9070 XT = card1 (gpu1 in btop)
     gamemode = {
       renice = 0; # Disabled — ananicy-cpp handles process priorities globally
@@ -362,26 +484,22 @@
     };
     radv.perftest = ""; # No extra RADV_PERFTEST flags needed on RDNA 4
     packages = {
-      performance = true;
-      cachyos = true;
+      performance = true; # (default)
+      cachyos = true; # (default)
     };
-    ryubing.enable = true; # Nintendo Switch emulator (Ryujinx fork)
-    eden.enable = true; # Nintendo Switch emulator (community fork)
-    azahar.enable = true; # 3DS emulator (Citra fork)
-    nxSaveSync.enable = false; # Switch save sync tool
-    occt.enable = true; # Stability Test & Benchmark
-    lsfgVk.enable = true; # Vulkan frame generation (Lossless Scaling)
-    prismlauncher.enable = true; # Minecraft Launcher
     # vkBasalt overlay: CAS sharpening + Vibrance + subtle color grading
     # Safe post-processing — no memory injection, no anti-cheat risk
     # Enable per-game: vkbasalt-run %command% (or ENABLE_VKBASALT=1)
     # In-game: F1 opens overlay UI, Home toggles effects
     # Per-game configs are managed live through the overlay UI
     vkbasalt = {
-      enable = true; # vkBasalt Vulkan post-processing overlay
+      enable = true; # (default)
       toggleKey = "Pause";
+      overlayKey = "F1"; # (default)
       effects = "cas:Vibrance:LiftGammaGain";
       casSharpness = "0.5";
+      enableOnLaunch = true; # (default)
+      autoApply = true; # (default)
       extraConfig = ''
         # Vibrance — saturation boost (like VibranceGUI on Windows)
         Vibrance = 0.35
@@ -395,14 +513,9 @@
   };
 
   # ============================================================================
-  # CachyOS Settings
+  # CoolerControl — Fan/cooling device management
   # ============================================================================
-  myModules.cachyos.settings = {
-    enable = true;
-    # All sub-options default to true except GPU-specific ones.
-    # Only override what differs from defaults:
-    amdgpuGcnCompat.enable = false; # Not needed for RX 9070 XT (RDNA 4)
-  };
+  programs.coolercontrol.enable = true;
 
   # ============================================================================
   # System & Localization
@@ -441,12 +554,6 @@
       "eeepc_wmi" # ASUS Eee PC WMI — loaded via ASUS WMI chain, not needed
     ];
   };
-
-  # ============================================================================
-  # CPU Governor - now handled by cpu/amd.nix (schedutil default)
-  # ============================================================================
-
-  # power-profiles-daemon is disabled by myModules.hardware.power
 
   # ============================================================================
   # YeetMouse Acceleration Settings

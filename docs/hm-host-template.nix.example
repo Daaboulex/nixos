@@ -1,0 +1,110 @@
+# ==========================================================================
+# Home Manager Host Configuration Template
+# ==========================================================================
+# Auto-generated reference of all HM module toggles and per-host settings.
+# Copy to home/hosts/<hostname>/default.nix and customise.
+#
+# HM modules are auto-imported from home/modules/. Most default to enabled.
+# This file only needs host-specific overrides and per-host data.
+# ==========================================================================
+{
+  config,
+  lib,
+  ...
+}:
+{
+  # ========================================================================
+  # Git credentials (required per-host)
+  # ========================================================================
+  programs.git.settings.user = {
+    name = "<username>";
+    email = "<email>";
+  };
+
+  # ========================================================================
+  # Module Enable Toggles
+  # ========================================================================
+  # Core tools (all default true)
+  programs.bat.enable = true; # syntax-highlighted cat
+  programs.fzf.enable = true; # fuzzy finder (Ctrl+R, Ctrl+T, Alt+C)
+  programs.zoxide.enable = true; # smart cd (z command)
+  programs.direnv.enable = true; # auto-load .envrc per directory
+  programs.starship.enable = true; # modern shell prompt
+  programs.zsh.enable = true; # zsh config + nrb function
+  programs.git.enable = true; # git + lfs
+
+  # Editors & viewers
+  programs.vscode.enable = true; # VSCodium
+  programs.kate.enable = true; # KDE text editor
+  programs.konsole.enable = true; # KDE terminal
+  programs.okular.enable = true; # PDF viewer
+
+  # System monitors (pick one)
+  programs.btop.enable = true; # modern system monitor
+  programs.htop.enable = false; # classic system monitor
+
+  # KDE apps
+  programs.ghostwriter.enable = false; # Markdown editor
+  programs.elisa.enable = false; # KDE music player
+
+  # Desktop environment
+  programs.plasma.enable = true; # KDE Plasma settings
+  gtk.enable = true; # GTK theme
+  xdg.enable = true; # XDG directories
+
+  # Audio
+  services.easyeffects.enable = false; # PipeWire audio effects
+
+  # Flatpak
+  services.flatpak.enable = true; # declarative Flatpak management
+
+  # ========================================================================
+  # Plasma — Per-Host Settings
+  # ========================================================================
+
+  # Mouse devices (hardware-specific — get IDs from libinput debug-events)
+  # programs.plasma.input.mice = [
+  #   {
+  #     name = "Mouse Name";
+  #     vendorId = "xxxx";
+  #     productId = "xxxx";
+  #     acceleration = 0;
+  #     accelerationProfile = "none";
+  #   }
+  # ];
+
+  # Screen locking
+  programs.plasma.kscreenlocker = {
+    autoLock = true; # auto-lock after timeout
+    lockOnResume = true; # lock on suspend resume
+  };
+
+  # Panel layout (override with lib.mkForce for host-specific launchers)
+  # programs.plasma.panels = lib.mkForce [ ... ];
+
+  # btop GPU layout (adjust shown_boxes for your GPU count)
+  # programs.btop.settings = {
+  #   shown_boxes = lib.mkForce "cpu mem proc";
+  # };
+
+  # ========================================================================
+  # Flatpak Packages (host-specific)
+  # ========================================================================
+  # services.flatpak.packages = [
+  #   "org.example.App"
+  # ];
+
+  # ========================================================================
+  # SSH Client (host-specific)
+  # ========================================================================
+  # programs.ssh = {
+  #   enable = true;
+  #   matchBlocks = {
+  #     "alias" = {
+  #       hostname = "host.local";
+  #       user = "user";
+  #       identityFile = "~/.ssh/id_ed25519";
+  #     };
+  #   };
+  # };
+}

@@ -1,6 +1,6 @@
 # NixOS Custom Modules Documentation
 
-> Auto-generated from `myModules` option definitions. 235 options across 13 categories.
+> Auto-generated from `myModules` option definitions. 237 options across 13 categories.
 >
 > Regenerate: `bash scripts/update-docs.sh`
 
@@ -17,7 +17,7 @@
 - [PRIMARYUSER](#primaryuser-1-options) (1 options)
 - [PROGRAMS](#programs-3-options) (3 options)
 - [SECURITY](#security-17-options) (17 options)
-- [SYSTEM](#system-46-options) (46 options)
+- [SYSTEM](#system-48-options) (48 options)
 - [TOOLS](#tools-2-options) (2 options)
 
 ---
@@ -76,7 +76,7 @@
 
 **Description**: PipeWire node name of the raw microphone source
 - **Type**: `string`
-- **Default**: `"alsa_input.usb-TC-Helicon_GoXLRMini-00.HiFi__Headset__source"`
+- **Default**: `"alsa_input.usb-TC-Helicon_GoXLR-00.HiFi__Headset__source"`
 
 
 #### `myModules.audio.goxlr.enable`
@@ -104,7 +104,7 @@
 
 **Description**: PipeWire sink node name for Chat channel
 - **Type**: `string`
-- **Default**: `"alsa_output.usb-TC-Helicon_GoXLRMini-00.HiFi__Headphones__sink"`
+- **Default**: `"alsa_output.usb-TC-Helicon_GoXLR-00.HiFi__Headphones__sink"`
 
 
 #### `myModules.audio.goxlr.eq.channels.game.enable`
@@ -125,7 +125,7 @@
 
 **Description**: PipeWire sink node name for Game channel
 - **Type**: `string`
-- **Default**: `"alsa_output.usb-TC-Helicon_GoXLRMini-00.HiFi__Line1__sink"`
+- **Default**: `"alsa_output.usb-TC-Helicon_GoXLR-00.HiFi__Line1__sink"`
 
 
 #### `myModules.audio.goxlr.eq.channels.music.enable`
@@ -146,7 +146,7 @@
 
 **Description**: PipeWire sink node name for Music channel
 - **Type**: `string`
-- **Default**: `"alsa_output.usb-TC-Helicon_GoXLRMini-00.HiFi__Line2__sink"`
+- **Default**: `"alsa_output.usb-TC-Helicon_GoXLR-00.HiFi__Line2__sink"`
 
 
 #### `myModules.audio.goxlr.eq.channels.sample.enable`
@@ -167,7 +167,7 @@
 
 **Description**: PipeWire sink node name for Sample channel
 - **Type**: `string`
-- **Default**: `"alsa_output.usb-TC-Helicon_GoXLRMini-00.HiFi__Line3__sink"`
+- **Default**: `"alsa_output.usb-TC-Helicon_GoXLR-00.HiFi__Line3__sink"`
 
 
 #### `myModules.audio.goxlr.eq.channels.system.enable`
@@ -188,7 +188,7 @@
 
 **Description**: PipeWire sink node name for System channel
 - **Type**: `string`
-- **Default**: `"alsa_output.usb-TC-Helicon_GoXLRMini-00.HiFi__Speaker__sink"`
+- **Default**: `"alsa_output.usb-TC-Helicon_GoXLR-00.HiFi__Speaker__sink"`
 
 
 #### `myModules.audio.goxlr.eq.clearStreamProperties`
@@ -1376,7 +1376,7 @@ Assembled into RUSTICL_ENABLE session variable as a comma-separated list.
 
 
 
-## SYSTEM (46 options)
+## SYSTEM (48 options)
 
 #### `myModules.system.boot.consoleMode`
 
@@ -1546,9 +1546,16 @@ Assembled into RUSTICL_ENABLE session variable as a comma-separated list.
 - **Default**: `false`
 
 
+#### `myModules.system.packages.android`
+
+**Description**: Android device connectivity (adb, fastboot)
+- **Type**: `boolean`
+- **Default**: `true`
+
+
 #### `myModules.system.packages.base`
 
-**Description**: Base system utilities (wget, curl, jq, etc.)
+**Description**: Base system utilities (wget, curl, jq, tree, zip, etc.)
 - **Type**: `boolean`
 - **Default**: `true`
 
@@ -1595,6 +1602,13 @@ Assembled into RUSTICL_ENABLE session variable as a comma-separated list.
 - **Default**: `true`
 
 
+#### `myModules.system.packages.ios`
+
+**Description**: iOS device connectivity (libimobiledevice, ifuse)
+- **Type**: `boolean`
+- **Default**: `true`
+
+
 #### `myModules.system.packages.media`
 
 **Description**: Media processing tools (ffmpeg)
@@ -1602,16 +1616,16 @@ Assembled into RUSTICL_ENABLE session variable as a comma-separated list.
 - **Default**: `true`
 
 
-#### `myModules.system.packages.mobile`
+#### `myModules.system.packages.monitoring`
 
-**Description**: Mobile device connectivity (iOS)
+**Description**: GPU and system monitoring tools
 - **Type**: `boolean`
 - **Default**: `true`
 
 
-#### `myModules.system.packages.monitoring`
+#### `myModules.system.packages.networking`
 
-**Description**: GPU and system monitoring tools
+**Description**: Network filesystem and tools (samba, cifs-utils, iproute2)
 - **Type**: `boolean`
 - **Default**: `true`
 

@@ -94,6 +94,26 @@
         "type": "github"
       }
     },
+    "coolercontrol": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1773332118,
+        "narHash": "sha256-mlt2uTQiKjw3q80Mk2lhIvtejcSZj2BiXXB4kK92RMw=",
+        "owner": "Daaboulex",
+        "repo": "coolercontrol-nix",
+        "rev": "572420f04c206b7b99c0abd6c977d059d7024266",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Daaboulex",
+        "repo": "coolercontrol-nix",
+        "type": "github"
+      }
+    },
     "crane": {
       "locked": {
         "lastModified": 1771796463,
@@ -670,11 +690,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1773326695,
-        "narHash": "sha256-tRgMPcHJbPv5/T+Hqq8wUI7up7IFGbT3qMiOcQ4WE0s=",
+        "lastModified": 1773327248,
+        "narHash": "sha256-m1oHKp9W5CV1353s7u+SArV17P+Qyw2cm8jlZfuaHVQ=",
         "owner": "daaboulex",
         "repo": "OCCT-nix",
-        "rev": "fed9b443f19805f124f5cee556e153edf915dac3",
+        "rev": "c8c92992167336e046d0c242828ecc0669f0bd3d",
         "type": "github"
       },
       "original": {
@@ -754,6 +774,7 @@
         "antigravity": "antigravity",
         "cachyos-settings-nix": "cachyos-settings-nix",
         "claude-code": "claude-code",
+        "coolercontrol": "coolercontrol",
         "disko": "disko",
         "eden": "eden",
         "flake-parts": "flake-parts",
