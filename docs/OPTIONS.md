@@ -1,6 +1,6 @@
 # NixOS Custom Modules Documentation
 
-> Auto-generated from `myModules` option definitions. 265 options across 13 categories.
+> Auto-generated from `myModules` option definitions. 269 options across 13 categories.
 >
 > Regenerate: `bash scripts/update-docs.sh`
 
@@ -9,7 +9,7 @@
 - [COOLERCONTROL](#coolercontrol-2-options) (2 options)
 - [DESKTOP](#desktop-8-options) (8 options)
 - [DEVELOPMENT](#development-4-options) (4 options)
-- [DIAGNOSTICS](#diagnostics-7-options) (7 options)
+- [DIAGNOSTICS](#diagnostics-11-options) (11 options)
 - [GAMING](#gaming-37-options) (37 options)
 - [GOXLR](#goxlr-35-options) (35 options)
 - [HARDWARE](#hardware-43-options) (43 options)
@@ -128,7 +128,21 @@
 
 
 
-## DIAGNOSTICS (7 options)
+## DIAGNOSTICS (11 options)
+
+#### `myModules.diagnostics.corecycler.coretemp`
+
+**Description**: Whether to load the in-tree coretemp module for Intel CPU temperature monitoring.
+- **Type**: `boolean`
+- **Default**: `false`
+
+
+#### `myModules.diagnostics.corecycler.cpuid`
+
+**Description**: Whether to load the in-tree cpuid module for /dev/cpu/*/cpuid access.
+- **Type**: `boolean`
+- **Default**: `false`
+
 
 #### `myModules.diagnostics.corecycler.deviceAccess`
 
@@ -144,9 +158,23 @@
 - **Default**: `false`
 
 
+#### `myModules.diagnostics.corecycler.it87`
+
+**Description**: Whether to load the out-of-tree it87 module for ITE Super I/O chips (Vcore, fans, temps). Common on Gigabyte. 38+ chips.
+- **Type**: `boolean`
+- **Default**: `false`
+
+
+#### `myModules.diagnostics.corecycler.nct6775`
+
+**Description**: Whether to load the in-tree nct6775 module for Nuvoton Super I/O chips (Vcore, fans, temps). Common on ASUS, MSI, ASRock.
+- **Type**: `boolean`
+- **Default**: `false`
+
+
 #### `myModules.diagnostics.corecycler.ryzenSmu`
 
-**Description**: Whether to load the ryzen_smu kernel module for Curve Optimizer read/write via SMU
+**Description**: Whether to load the ryzen_smu kernel module for Curve Optimizer read/write via SMU. Supports Zen 1–5.
 - **Type**: `boolean`
 - **Default**: `true`
 
@@ -160,7 +188,7 @@
 
 #### `myModules.diagnostics.corecycler.zenpower`
 
-**Description**: Whether to use zenpower3 instead of k10temp for Vcore/Vsoc voltage monitoring via SVI2. Replaces k10temp (blacklisted).
+**Description**: Whether to use zenpower5 instead of k10temp for AMD CPU monitoring (temps, SVI2 voltage, RAPL power). Replaces k10temp. Zen 1–5.
 - **Type**: `boolean`
 - **Default**: `false`
 
