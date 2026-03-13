@@ -194,11 +194,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1773410464,
-        "narHash": "sha256-FzkXbPBaov/rAcn0K7pL7FfymD68ycspKhVvkosVkEM=",
+        "lastModified": 1773413049,
+        "narHash": "sha256-edtjYBd81Se8FWox37CdNQxtZN0NlBSIPwyxWdbmOfk=",
         "owner": "daaboulex",
         "repo": "eden-nix",
-        "rev": "4bbb85e69231a16d48aba84bcd04e6a5cee35745",
+        "rev": "1dcc4f3818230ddc50de1dd9c218b83099f41ba9",
         "type": "github"
       },
       "original": {
@@ -553,11 +553,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1773415887,
-        "narHash": "sha256-oZdM3V+XCJWDr4m5tN/YyexgYMFasLe9c9MdJ/sL0XM=",
+        "lastModified": 1773418886,
+        "narHash": "sha256-t1fVrmhsZz8r+UkxZ6a7CFkLnCvyAUqCR32ZkFn6RSs=",
         "owner": "Daaboulex",
         "repo": "linux-corecycler",
-        "rev": "c08dab34365165e390d8b1c1c078c1cfb0b47d40",
+        "rev": "18257f9e7562ac895d5c7c4f5644769d10fd0ded",
         "type": "github"
       },
       "original": {
@@ -1093,11 +1093,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1773409454,
-        "narHash": "sha256-pe0oYs6ZkRpSeWZU3NuSkF0wLzb/YCzXdzxMK/L1VSc=",
+        "lastModified": 1773418428,
+        "narHash": "sha256-UuWCfWekHnexO25NjuH2O7FbjlKa+0g6DDgObxnIMTo=",
         "owner": "Daaboulex",
         "repo": "vkBasalt_overlay_wayland",
-        "rev": "861805c37f21da9cefcbb6c7e8b0dac48189cedb",
+        "rev": "81b43880c84e0141d20346609f50c6590632661b",
         "type": "github"
       },
       "original": {
