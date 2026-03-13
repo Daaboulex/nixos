@@ -1,6 +1,6 @@
 # NixOS Custom Modules Documentation
 
-> Auto-generated from `myModules` option definitions. 267 options across 13 categories.
+> Auto-generated from `myModules` option definitions. 276 options across 13 categories.
 >
 > Regenerate: `bash scripts/update-docs.sh`
 
@@ -8,17 +8,17 @@
 
 - [COOLERCONTROL](#coolercontrol-2-options) (2 options)
 - [DESKTOP](#desktop-8-options) (8 options)
-- [DEVELOPMENT](#development-4-options) (4 options)
+- [DEVELOPMENT](#development-5-options) (5 options)
 - [DIAGNOSTICS](#diagnostics-5-options) (5 options)
 - [GAMING](#gaming-37-options) (37 options)
 - [GOXLR](#goxlr-35-options) (35 options)
-- [HARDWARE](#hardware-47-options) (47 options)
+- [HARDWARE](#hardware-48-options) (48 options)
 - [INPUT](#input-12-options) (12 options)
 - [PRIMARYUSER](#primaryuser-1-options) (1 options)
 - [SECURITY](#security-17-options) (17 options)
 - [SYSTEM](#system-77-options) (77 options)
 - [TIDALCYCLES](#tidalcycles-2-options) (2 options)
-- [VFIO](#vfio-20-options) (20 options)
+- [VFIO](#vfio-27-options) (27 options)
 
 ---
 ## COOLERCONTROL (2 options)
@@ -97,7 +97,7 @@
 
 
 
-## DEVELOPMENT (4 options)
+## DEVELOPMENT (5 options)
 
 #### `myModules.development.claudeCode`
 
@@ -116,6 +116,13 @@
 #### `myModules.development.enable`
 
 **Description**: Whether to enable Development tools (compilers, build systems, AI assistants).
+- **Type**: `boolean`
+- **Default**: `false`
+
+
+#### `myModules.development.openviking`
+
+**Description**: Whether to enable OpenViking context database for AI agents.
 - **Type**: `boolean`
 - **Default**: `false`
 
@@ -676,7 +683,7 @@
 
 
 
-## HARDWARE (47 options)
+## HARDWARE (48 options)
 
 #### `myModules.hardware.audio.easyeffects.enable`
 
@@ -716,6 +723,13 @@
 #### `myModules.hardware.core.enable`
 
 **Description**: Whether to enable Core hardware configuration (firmware, microcode, sensors).
+- **Type**: `boolean`
+- **Default**: `false`
+
+
+#### `myModules.hardware.core.msr`
+
+**Description**: Load the msr kernel module for x86 Model-Specific Register access. Required for APERF/MPERF clock stretch detection and RAPL energy counters. Used by CPU stability testers, power monitors, and tuning tools.
 - **Type**: `boolean`
 - **Default**: `false`
 
@@ -1799,7 +1813,14 @@ Assembled into RUSTICL_ENABLE session variable as a comma-separated list.
 
 
 
-## VFIO (20 options)
+## VFIO (27 options)
+
+#### `myModules.vfio.anancyOverride`
+
+**Description**: Override CachyOS ananicy-cpp rules for QEMU. Default rules classify QEMU as Heavy_CPU (nice=9, ionice=7) which deprioritizes VM performance. This adds custom rules that give QEMU and libvirt high priority instead.
+- **Type**: `boolean`
+- **Default**: `true`
+
 
 #### `myModules.vfio.bindMethod`
 
@@ -1871,6 +1892,20 @@ Assembled into RUSTICL_ENABLE session variable as a comma-separated list.
 - **Default**: `64`
 
 
+#### `myModules.vfio.machineType`
+
+**Description**: QEMU machine type for VM definitions
+- **Type**: `string`
+- **Default**: `"pc-q35-10.0"`
+
+
+#### `myModules.vfio.sessionGpuDevices`
+
+**Description**: DRM device paths for KWIN_DRM_DEVICES. First device becomes the primary render GPU — set your iGPU first for safe GPU passthrough. null = KWin auto-detects (unsafe for passthrough).
+- **Type**: `null or (list of string)`
+- **Default**: `null`
+
+
 #### `myModules.vfio.staticPciIds`
 
 **Description**: PCI vendor:device IDs for static vfio-pci binding (e.g. ["1002:7550" "1002:ab40"])
@@ -1890,6 +1925,13 @@ Assembled into RUSTICL_ENABLE session variable as a comma-separated list.
 **Description**: MAC address OUI prefix (default: ASUS)
 - **Type**: `string`
 - **Default**: `"04:42:1a"`
+
+
+#### `myModules.vfio.stealth.maxCState`
+
+**Description**: Maximum CPU C-state (1 = C1, ~1us wake latency — good stealth/power trade-off). Lower = lower latency but higher power.
+- **Type**: `signed integer`
+- **Default**: `1`
 
 
 #### `myModules.vfio.stealth.smbios.biosVendor`
@@ -1927,11 +1969,32 @@ Assembled into RUSTICL_ENABLE session variable as a comma-separated list.
 - **Default**: `"System Serial Number"`
 
 
+#### `myModules.vfio.stealth.smbios.socketPrefix`
+
+**Description**: SMBIOS Type 4 socket prefix (e.g. AM5, AM4, LGA1700)
+- **Type**: `string`
+- **Default**: `"AM5"`
+
+
 #### `myModules.vfio.stealth.spoofMac`
 
 **Description**: Generate realistic MAC addresses with a real vendor OUI prefix
 - **Type**: `boolean`
 - **Default**: `true`
+
+
+#### `myModules.vfio.stopScxOnVm`
+
+**Description**: Stop the scx scheduler service while a VM with pinned vCPUs is running. With CPU pinning, the sched-ext scheduler competing over pinned cores can add overhead. The BORE fallback scheduler handles pinned threads well. Restarted on VM stop.
+- **Type**: `boolean`
+- **Default**: `false`
+
+
+#### `myModules.vfio.vmDiskPath`
+
+**Description**: Directory for VM disk images and state files
+- **Type**: `string`
+- **Default**: `"/var/lib/vfio"`
 
 
 #### `myModules.vfio.vms`

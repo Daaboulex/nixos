@@ -86,6 +86,10 @@
         home-manager.useGlobalPkgs = true;
         home-manager.useUserPackages = true;
         home-manager.extraSpecialArgs = { inherit inputs; };
+        home-manager.sharedModules = [
+          inputs.goxlr-hm-nix.homeManagerModules.default
+          inputs.streamcontroller-nix.homeManagerModules.default
+        ];
       }
 
       # External modules
@@ -115,6 +119,7 @@
           inputs.vkbasalt-overlay.overlays.default
           inputs.mesa-git-nix.overlays.default
           inputs.coolercontrol.overlays.default
+          inputs.openviking.overlays.default
         ];
       }
     ];

@@ -168,7 +168,10 @@
     # Hardware
     # --------------------------------------------------------------------------
     hardware = {
-      core.enable = true;
+      core = {
+        enable = true;
+        msr = true; # MSR access — needed by CoreCyclerLx (clock stretch, RAPL)
+      };
       networking = {
         enable = true;
         # openPorts = []; # (default)
@@ -413,6 +416,7 @@
     development = {
       enable = true;
       claudeCode = true;
+      openviking = true;
       saleae = true;
       debuggingProbes.enable = true;
     };
@@ -426,7 +430,8 @@
       corecycler = {
         enable = true; # CoreCyclerLx — per-core CPU stability tester + PBO Curve Optimizer tuner
         unfreeBackends = true; # Include mprime (unfree) alongside stress-ng
-        # Kernel modules (ryzen_smu, zenpower, nct6775) are in hardware.cpu.amd and hardware.sensors
+        # Kernel modules (ryzen_smu, zenpower, nct6775) in hardware.cpu.amd + hardware.sensors
+        # MSR module in hardware.core.msr
       };
     };
 
@@ -436,6 +441,15 @@
     vfio = {
       enable = true;
       bindMethod = "dynamic"; # Libvirt hooks bind/unbind on VM start/stop
+      # KWin GPU device order: iGPU first (primary render), dGPU second (output-only).
+      # When the dGPU is passed through, KWin survives because its primary render
+      # device (iGPU) remains. Monitors on the dGPU go to the VM; iGPU display stays.
+      # card0 = iGPU (Zen 5 Granite Ridge, motherboard HDMI-A-3)
+      # card1 = dGPU (RX 9070 XT, DP-1/DP-2/HDMI-A-1)
+      sessionGpuDevices = [
+        "/dev/dri/card0"
+        "/dev/dri/card1"
+      ];
       stealth = {
         enable = true; # Patched QEMU + KVM RDTSC spoofing
         smbios = {
@@ -492,11 +506,20 @@
             22
             23
           ];
+          # Pin QEMU emulator threads to CCD1 (host cores, not VM cores)
+          emulatorPin = "8-9";
+          # Pin IO thread to dedicated CCD1 core
+          iothreadPin = "10";
         };
         # NVMe passthrough: Windows NVMe controller at 05:00.0 (IOMMU Group 19, isolated)
         # Windows sees its real Samsung 9100 PRO — existing install boots directly
         pciPassthrough = [ "0000:05:00.0" ]; # Samsung 9100 PRO 2TB (Windows NVMe)
+        # Unmount the Windows partition before NVMe passthrough, remount after VM stops
+        mountsToUnmount = [ "/mnt/Windows SSD" ];
         gpu = {
+          # Testing mode: emulated QXL/SPICE via virt-manager (safe, no GPU passthrough)
+          # Production: switch to "passthrough" — hook verifies iGPU display before unbinding
+          mode = "emulated";
           pciAddress = "0000:03:00.0"; # RX 9070 XT VGA (IOMMU Group 16)
           audioAddress = "0000:03:00.1"; # RX 9070 XT Audio (IOMMU Group 17)
         };

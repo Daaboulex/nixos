@@ -102,7 +102,7 @@ Modules are organized into two kinds:
 **Grouped modules** live in directories when they form a natural family with shared concern:
 - `parts/system/` — boot, kernel, nix daemon, users, filesystems, packages, services, impermanence, cachyos-settings (`system-cachyos`)
 - `parts/security/` — hardening, ssh, sops, arkenfox, portmaster
-- `parts/hardware/` — kernel drivers & firmware ONLY: cpu (amd/intel), gpu (amd/intel/nvidia), graphics, audio, networking, bluetooth, performance, power
+- `parts/hardware/` — kernel drivers & firmware ONLY: cpu (amd/intel), gpu (amd/intel/nvidia), graphics, audio, networking, bluetooth, sensors, performance, power
 - `parts/desktop/` — kde, displays, flatpak
 - `parts/input/` — piper, yeetmouse, ducky-one-x-mini, streamcontroller
 - `parts/diagnostics/` — sysdiag, iommu, corecycler
@@ -160,7 +160,7 @@ Home Manager is integrated as a NixOS module (not standalone).
 
 ### Overlays
 
-External overlays are stacked in the host's `flake-module.nix`. The ryzen host has 12 overlays (cachyos-kernel, tidalcycles, antigravity, nx-save-sync, portmaster, occt-nix, claude-code, mesa-git, lsfg-vk, vkbasalt-overlay, coolercontrol, plus `self.overlays.default`). The macbook has a smaller subset. Custom overlays go in `parts/overlays.nix`.
+External overlays are stacked in the host's `flake-module.nix`. The ryzen host has 13 overlays (cachyos-kernel, tidalcycles, antigravity, nx-save-sync, portmaster, occt-nix, claude-code, mesa-git, lsfg-vk, vkbasalt-overlay, coolercontrol, openviking, plus `self.overlays.default`). The macbook has a smaller subset. Custom overlays go in `parts/overlays.nix`.
 
 ### External Package Repos
 
@@ -173,6 +173,7 @@ The user's personal NixOS package repositories live at `repos/` (sibling to `par
 - `repos/OCCT-nix` — OCCT hardware stress test
 - `repos/coolercontrol-nix` — CoolerControl fan/cooling management (v4.0.1, overlay replaces nixpkgs 3.x)
 - `repos/linux-corecycler` — Per-core CPU stability tester + PBO Curve Optimizer tuner (Qt6 GUI, no overlay — direct package input)
+- `repos/openviking-nix` — OpenViking agent-native context database (Python + Rust + Go + C++, overlay + NixOS module)
 
 When modifying these packages, edit the files in `repos/<name>/`, commit and push there, then `nix flake update <input-name>` in the main flake to pull the changes. Do **not** commit `repos/` contents into the main NixOS flake repo.
 
@@ -286,7 +287,7 @@ See `/deploy` skill for the configured workflow.
 - **No hardcoded values in generic modules**: usernames, paths, hardware IDs, and host-specific settings must be options with `lib.mkDefault` or set in host configs. Gate vendor-specific config behind `(config.myModules.hardware.*.enable or false)`.
 - **Current option paths** (canonical reference — update this when paths change):
   - **Grouped**: `myModules.system.{boot,kernel,nix,users,filesystems,packages,services,impermanence,cachyos}`, `myModules.security.{hardening,ssh,sops,arkenfox,portmaster}`, `myModules.hardware.{core,cpu.amd,cpu.intel,graphics,gpu.amd,gpu.intel,gpu.nvidia,audio,networking,bluetooth,sensors,performance,power}`, `myModules.desktop.{kde,displays,flatpak}`, `myModules.input.{piper,yeetmouse,duckyOneXMini,streamcontroller}`, `myModules.diagnostics.{sysdiag,iommu,corecycler}`, `myModules.primaryUser`
-  - **Standalone**: `myModules.gaming.*`, `myModules.gaming.wine.*`, `myModules.gaming.wine.bottles.enable`, `myModules.development.{enable,claudeCode,saleae,debuggingProbes}`, `myModules.goxlr.*`, `myModules.coolercontrol.{enable,autostart}`, `myModules.macbook.*`, `myModules.tidalcycles.*`, `myModules.vfio.*`
+  - **Standalone**: `myModules.gaming.*`, `myModules.gaming.wine.*`, `myModules.gaming.wine.bottles.enable`, `myModules.development.{enable,claudeCode,openviking,saleae,debuggingProbes}`, `myModules.goxlr.*`, `myModules.coolercontrol.{enable,autostart}`, `myModules.macbook.*`, `myModules.tidalcycles.*`, `myModules.vfio.*`
   - GPU options are under `hardware.graphics.*` for the shared graphics module; vendor-specific GPU modules are under `hardware.gpu.*` (e.g., `gpu.amd`, `gpu.intel`, `gpu.nvidia`)
 
 ### AI Agent & Versioning Best Practices

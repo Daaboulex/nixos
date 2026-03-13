@@ -89,6 +89,10 @@ parts/
 │   ├── audio.nix                      # PipeWire / PulseAudio configuration
 │   ├── networking.nix                 # Network drivers, DNS, firewall
 │   ├── bluetooth.nix                  # Bluetooth daemon + profiles
+│   ├── sensors.nix                     # Motherboard Super I/O sensors (NCT67xx, IT87xx)
+│   ├── it87.nix                        # Out-of-tree ITE IT87xx kernel module derivation
+│   ├── zenpower.nix                    # Out-of-tree zenpower5 kernel module derivation
+│   ├── ryzen-smu.nix                   # Out-of-tree ryzen_smu kernel module derivation
 │   ├── performance.nix                # CPU governor, ananicy-cpp, IRQ balance, scx
 │   └── power.nix                      # TLP power management (laptop + desktop)
 ├── desktop/                           # Desktop environment modules
@@ -112,12 +116,11 @@ parts/
 ├── diagnostics/                       # Diagnostic modules (myModules.diagnostics.*)
 │   ├── sysdiag.nix                    # Comprehensive NixOS system diagnostics
 │   ├── iommu.nix                      # IOMMU group listing
-│   ├── corecycler.nix                 # Per-core CPU stability + PBO CO tuner
-│   └── zenpower.nix                   # zenpower3 kernel module (SVI2 voltage monitoring)
+│   └── corecycler.nix                 # Per-core CPU stability + PBO CO tuner
 ├── goxlr.nix                         # GoXLR audio mixer, EQ, denoise (myModules.goxlr)
 ├── coolercontrol.nix                  # CoolerControl fan/cooling management (myModules.coolercontrol)
 ├── gaming.nix                         # Steam, Proton, emulators, gamemode (myModules.gaming)
-├── development.nix                    # Build tools, Claude Code, Saleae (myModules.development)
+├── development.nix                    # Build tools, Claude Code, OpenViking, Saleae (myModules.development)
 ├── wine.nix                           # Wine variants + Bottles (myModules.gaming.wine)
 ├── tidalcycles.nix                    # Live coding music environment (myModules.tidalcycles)
 ├── debugging-probes.nix               # Embedded debug probes udev rules (myModules.development.debuggingProbes)
@@ -248,6 +251,7 @@ External packages enter via overlays stacked in the host's `flake-module.nix`. C
 | `vkbasalt-overlay.overlays.default` | vkBasalt overlay (Vulkan post-processing with in-game UI) |
 | `mesa-git-nix.overlays.default` | Bleeding-edge Mesa builds |
 | `coolercontrol.overlays.default` | CoolerControl 4.0.1 fan/cooling management |
+| `openviking.overlays.default` | OpenViking agent-native context database |
 
 To add a new overlay: add the flake input in `flake.nix`, then add `inputs.<name>.overlays.default` to the host's overlay list.
 
@@ -412,7 +416,7 @@ Options: `myModules.gaming.*` — see [docs/OPTIONS.md](docs/OPTIONS.md) for all
 | Module | Option Prefix | Description |
 |--------|--------------|-------------|
 | `hardware-core` | `myModules.hardware.core` | Firmware, fwupd, drive temp sensors |
-| `hardware-cpu-amd` | `myModules.hardware.cpu.amd` | AMD P-State, Prefcore, 3D V-Cache, KVM, microcode |
+| `hardware-cpu-amd` | `myModules.hardware.cpu.amd` | AMD P-State, Prefcore, 3D V-Cache, KVM, microcode, zenpower5, ryzen_smu |
 | `hardware-cpu-intel` | `myModules.hardware.cpu.intel` | Intel P-State, EPP, KVM, thermald, microcode |
 | `hardware-gpu-amd` | `myModules.hardware.gpu.amd` | AMDGPU driver, DRM params, RDNA 4 fixes |
 | `hardware-gpu-intel` | `myModules.hardware.gpu.intel` | i915 driver, media acceleration |
@@ -422,6 +426,7 @@ Options: `myModules.gaming.*` — see [docs/OPTIONS.md](docs/OPTIONS.md) for all
 | `hardware-networking` | `myModules.hardware.networking` | Network drivers, DNS nameservers, firewall |
 | `hardware-bluetooth` | `myModules.hardware.bluetooth` | Bluetooth daemon and profiles |
 | `hardware-performance` | `myModules.hardware.performance` | CPU governor, ananicy-cpp, IRQ balance, scx schedulers |
+| `hardware-sensors` | `myModules.hardware.sensors` | Motherboard Super I/O sensors — Nuvoton NCT67xx (in-tree), ITE IT87xx (out-of-tree, 38+ chips) |
 | `hardware-power` | `myModules.hardware.power` | Power profiles, TLP laptop power management |
 
 ### Desktop Modules
@@ -447,7 +452,7 @@ Options: `myModules.gaming.*` — see [docs/OPTIONS.md](docs/OPTIONS.md) for all
 |--------|--------------|-------------|
 | `diagnostics-sysdiag` | `myModules.diagnostics.sysdiag` | Comprehensive NixOS system diagnostics |
 | `diagnostics-iommu` | `myModules.diagnostics.iommu` | IOMMU group listing |
-| `diagnostics-corecycler` | `myModules.diagnostics.corecycler` | Per-core CPU stability tester + PBO CO tuner, group-based device access, ryzen_smu, zenpower5 Zen 5 temps |
+| `diagnostics-corecycler` | `myModules.diagnostics.corecycler` | Per-core CPU stability tester + PBO CO tuner, group-based device access |
 
 ### Standalone Modules
 
@@ -458,7 +463,7 @@ Options: `myModules.gaming.*` — see [docs/OPTIONS.md](docs/OPTIONS.md) for all
 | `coolercontrol` | `myModules.coolercontrol` | CoolerControl fan/cooling management (overlay v4.0.1) |
 | `gaming` | `myModules.gaming` | Steam, Proton, GameMode, vkBasalt overlay (15 shader collections), MangoHud, emulators, RADV tuning |
 | `gaming-wine` | `myModules.gaming.wine` | Wine variants + Bottles (`gaming.wine.bottles.enable`) |
-| `development` | `myModules.development` | Build tools, Claude Code, Saleae Logic |
+| `development` | `myModules.development` | Build tools, Claude Code, OpenViking, Saleae Logic |
 | `development-debugging-probes` | `myModules.development.debuggingProbes` | Embedded debug probes (LPC-Link2, ESP32) udev rules |
 | `tidalcycles` | `myModules.tidalcycles` | TidalCycles live coding + SuperDirt |
 | `vfio` | `myModules.vfio` | VFIO GPU passthrough, stealth QEMU, Looking Glass, per-VM definitions, CPU identity spoofing |
@@ -883,6 +888,7 @@ sudo sbctl enroll-keys --microsoft
 | `vkbasalt-overlay` | vkBasalt Vulkan post-processing overlay |
 | `coolercontrol` | CoolerControl 4.0.1 fan/cooling management (overlay) |
 | `linux-corecycler` | Per-core CPU stability tester + PBO Curve Optimizer tuner |
+| `openviking` | OpenViking agent-native context database (Python + Rust + Go + C++) |
 | `NixVirt` | Declarative libvirt domain management (VFIO VMs) |
 | `treefmt-nix` | Unified code formatting via flake-parts |
 | `git-hooks-nix` | Pre-commit hooks via flake-parts |

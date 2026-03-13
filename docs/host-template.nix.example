@@ -2,7 +2,7 @@
 # NixOS Host Configuration Template
 # ==========================================================================
 # Auto-generated from myModules option definitions.
-# 267 options across 77 groups.
+# 276 options across 83 groups.
 #
 # Usage: copy this file to parts/hosts/<hostname>/default.nix and uncomment
 # the options you want to set. Options left commented use their module defaults.
@@ -51,6 +51,9 @@
 
 # --- development.enable (1 options) ---
     # development.enable = false;  # boolean — Whether to enable Development tools (compilers, build systems, AI assistants).
+
+# --- development.openviking (1 options) ---
+    # development.openviking = false;  # boolean — Whether to enable OpenViking context database for AI agents.
 
 # --- development.saleae (1 options) ---
     # development.saleae = false;  # boolean — Whether to enable Saleae Logic analyzer and udev rules.
@@ -194,8 +197,9 @@
     # enable = false;  # boolean — Whether to enable Bluetooth configuration.
     # powerOnBoot = false;  # boolean — Power on Bluetooth controller on boot
 
-# --- hardware.core (1 options) ---
+# --- hardware.core (2 options) ---
     # enable = false;  # boolean — Whether to enable Core hardware configuration (firmware, microcode, sensors).
+    # msr = false;  # boolean — Load the msr kernel module for x86 Model-Specific Register access. Required f...
 
 # --- hardware.cpu (10 options) ---
     # amd.enable = false;  # boolean — Whether to enable AMD CPU optimizations.
@@ -406,6 +410,9 @@ GPU vend...
 # --- tidalcycles.enable (1 options) ---
     # tidalcycles.enable = false;  # boolean — Whether to enable TidalCycles and SuperDirt.
 
+# --- vfio.anancyOverride (1 options) ---
+    # vfio.anancyOverride = true;  # boolean — Override CachyOS ananicy-cpp rules for QEMU. Default rules classify QEMU as H...
+
 # --- vfio.bindMethod (1 options) ---
     # vfio.bindMethod = "dynamic";  # one of "static", "dynamic" — static = vfio-pci.ids kernel param (GPU always captured at boot); dynamic = l...
 
@@ -426,18 +433,32 @@ GPU vend...
     # enable = true;  # boolean — KVMFR shared memory for Looking Glass frame relay
     # memoryMB = 64;  # signed integer — KVMFR shared memory size in MB (32=1440p SDR, 64=4K SDR, 128=4K HDR)
 
+# --- vfio.machineType (1 options) ---
+    # vfio.machineType = "pc-q35-10.0";  # string — QEMU machine type for VM definitions
+
+# --- vfio.sessionGpuDevices (1 options) ---
+    # vfio.sessionGpuDevices = null;  # null or (list of string) — DRM device paths for KWIN_DRM_DEVICES. First device becomes the primary rende...
+
 # --- vfio.staticPciIds (1 options) ---
     # vfio.staticPciIds = [ ];  # list of string — PCI vendor:device IDs for static vfio-pci binding (e.g. ["1002:7550" "1002:ab...
 
-# --- vfio.stealth (8 options) ---
+# --- vfio.stealth (10 options) ---
     # enable = true;  # boolean — Build patched QEMU with anti-detection + KVM kernel patches for RDTSC spoofing
     # macPrefix = "04:42:1a";  # string — MAC address OUI prefix (default: ASUS)
+    # maxCState = 1;  # signed integer — Maximum CPU C-state (1 = C1, ~1us wake latency — good stealth/power trade-o...
     # smbios.biosVendor = "American Megatrends Inc.";  # string — SMBIOS BIOS vendor
     # smbios.biosVersion = "2101";  # string — SMBIOS BIOS version
     # smbios.manufacturer = "ASUSTeK COMPUTER INC.";  # string — SMBIOS system manufacturer
     # smbios.product = "ROG CROSSHAIR X870E HERO";  # string — SMBIOS product name
     # smbios.serial = "System Serial Number";  # string — SMBIOS system serial number
+    # smbios.socketPrefix = "AM5";  # string — SMBIOS Type 4 socket prefix (e.g. AM5, AM4, LGA1700)
     # spoofMac = true;  # boolean — Generate realistic MAC addresses with a real vendor OUI prefix
+
+# --- vfio.stopScxOnVm (1 options) ---
+    # vfio.stopScxOnVm = false;  # boolean — Stop the scx scheduler service while a VM with pinned vCPUs is running. With ...
+
+# --- vfio.vmDiskPath (1 options) ---
+    # vfio.vmDiskPath = "/var/lib/vfio";  # string — Directory for VM disk images and state files
 
 # --- vfio.vms (1 options) ---
 

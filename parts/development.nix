@@ -15,6 +15,7 @@
       options.myModules.development = {
         enable = lib.mkEnableOption "Development tools (compilers, build systems, AI assistants)";
         claudeCode = lib.mkEnableOption "Claude Code AI assistant";
+        openviking = lib.mkEnableOption "OpenViking context database for AI agents";
         saleae = lib.mkEnableOption "Saleae Logic analyzer and udev rules";
       };
 
@@ -47,6 +48,10 @@
 
         (lib.mkIf cfg.claudeCode {
           environment.systemPackages = [ pkgs.claude-code ];
+        })
+
+        (lib.mkIf cfg.openviking {
+          environment.systemPackages = [ pkgs.openviking ];
         })
 
         (lib.mkIf cfg.saleae {

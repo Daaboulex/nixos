@@ -125,9 +125,27 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # StreamController - Elgato Stream Deck control with CLI and declarative config
+    streamcontroller-nix = {
+      url = "github:Daaboulex/streamcontroller-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # GoXLR Utility HM module - Declarative mixer configuration
+    goxlr-hm-nix = {
+      url = "github:Daaboulex/goxlr-hm-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # CoolerControl - Fan/cooling device management (v4.0.1)
     coolercontrol = {
       url = "github:Daaboulex/coolercontrol-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # OpenViking - Agent-native context database for AI agents
+    openviking = {
+      url = "github:Daaboulex/openviking-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
