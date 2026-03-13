@@ -1021,8 +1021,24 @@
             # dconf settings for virt-manager (auto-connect, console settings)
             programs.dconf.enable = true;
 
-            # Default NAT network
+            # Default NAT network — ensure it's started and set to autostart
             networking.firewall.trustedInterfaces = [ "virbr0" ];
+
+            systemd.services.libvirt-default-network = {
+              description = "Ensure libvirt default NAT network is active";
+              after = [ "libvirtd.service" ];
+              requires = [ "libvirtd.service" ];
+              wantedBy = [ "multi-user.target" ];
+              serviceConfig = {
+                Type = "oneshot";
+                RemainAfterExit = true;
+              };
+              # Start the default network if it exists but isn't active, and enable autostart
+              script = ''
+                ${pkgs.libvirt}/bin/virsh net-start default 2>/dev/null || true
+                ${pkgs.libvirt}/bin/virsh net-autostart default 2>/dev/null || true
+              '';
+            };
 
             # Never auto-start or auto-resume VMs — only manual launch via virt-manager
             systemd.services.libvirt-guests.serviceConfig = {
