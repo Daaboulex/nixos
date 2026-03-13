@@ -8,7 +8,7 @@
     {
       checks = {
         # Verify nix daemon starts with flakes enabled and GC configured
-        vm-nix-settings = pkgs.nixosTest {
+        vm-nix-settings = pkgs.testers.nixosTest {
           name = "nix-settings";
           nodes.machine = {
             imports = [
@@ -27,7 +27,7 @@
         };
 
         # Verify user creation, groups, and zsh shell
-        vm-users = pkgs.nixosTest {
+        vm-users = pkgs.testers.nixosTest {
           name = "users";
           nodes.machine = {
             imports = [
@@ -46,7 +46,7 @@
         };
 
         # Verify SSH hardening and fail2ban
-        vm-ssh = pkgs.nixosTest {
+        vm-ssh = pkgs.testers.nixosTest {
           name = "ssh";
           nodes.machine = {
             imports = [
@@ -71,7 +71,7 @@
         };
 
         # Verify NetworkManager starts
-        vm-networking = pkgs.nixosTest {
+        vm-networking = pkgs.testers.nixosTest {
           name = "networking";
           nodes.machine = {
             imports = [
