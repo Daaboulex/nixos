@@ -1,6 +1,6 @@
 # NixOS Custom Modules Documentation
 
-> Auto-generated from `myModules` option definitions. 269 options across 13 categories.
+> Auto-generated from `myModules` option definitions. 267 options across 13 categories.
 >
 > Regenerate: `bash scripts/update-docs.sh`
 
@@ -9,10 +9,10 @@
 - [COOLERCONTROL](#coolercontrol-2-options) (2 options)
 - [DESKTOP](#desktop-8-options) (8 options)
 - [DEVELOPMENT](#development-4-options) (4 options)
-- [DIAGNOSTICS](#diagnostics-11-options) (11 options)
+- [DIAGNOSTICS](#diagnostics-5-options) (5 options)
 - [GAMING](#gaming-37-options) (37 options)
 - [GOXLR](#goxlr-35-options) (35 options)
-- [HARDWARE](#hardware-43-options) (43 options)
+- [HARDWARE](#hardware-47-options) (47 options)
 - [INPUT](#input-12-options) (12 options)
 - [PRIMARYUSER](#primaryuser-1-options) (1 options)
 - [SECURITY](#security-17-options) (17 options)
@@ -128,25 +128,11 @@
 
 
 
-## DIAGNOSTICS (11 options)
-
-#### `myModules.diagnostics.corecycler.coretemp`
-
-**Description**: Whether to load the in-tree coretemp module for Intel CPU temperature monitoring.
-- **Type**: `boolean`
-- **Default**: `false`
-
-
-#### `myModules.diagnostics.corecycler.cpuid`
-
-**Description**: Whether to load the in-tree cpuid module for /dev/cpu/*/cpuid access.
-- **Type**: `boolean`
-- **Default**: `false`
-
+## DIAGNOSTICS (5 options)
 
 #### `myModules.diagnostics.corecycler.deviceAccess`
 
-**Description**: Whether to grant primaryUser access to MSR devices and SMU sysfs via a dedicated group and udev rules. No sudo required.
+**Description**: Whether to grant primaryUser access to MSR devices and SMU sysfs via a dedicated group and udev rules. No sudo required for monitoring and CO access.
 - **Type**: `boolean`
 - **Default**: `true`
 
@@ -158,37 +144,9 @@
 - **Default**: `false`
 
 
-#### `myModules.diagnostics.corecycler.it87`
-
-**Description**: Whether to load the out-of-tree it87 module for ITE Super I/O chips (Vcore, fans, temps). Common on Gigabyte. 38+ chips.
-- **Type**: `boolean`
-- **Default**: `false`
-
-
-#### `myModules.diagnostics.corecycler.nct6775`
-
-**Description**: Whether to load the in-tree nct6775 module for Nuvoton Super I/O chips (Vcore, fans, temps). Common on ASUS, MSI, ASRock.
-- **Type**: `boolean`
-- **Default**: `false`
-
-
-#### `myModules.diagnostics.corecycler.ryzenSmu`
-
-**Description**: Whether to load the ryzen_smu kernel module for Curve Optimizer read/write via SMU. Supports Zen 1–5.
-- **Type**: `boolean`
-- **Default**: `true`
-
-
 #### `myModules.diagnostics.corecycler.unfreeBackends`
 
 **Description**: Whether to include unfree backends (mprime). When false, only FOSS backends (stress-ng) are bundled.
-- **Type**: `boolean`
-- **Default**: `false`
-
-
-#### `myModules.diagnostics.corecycler.zenpower`
-
-**Description**: Whether to use zenpower5 instead of k10temp for AMD CPU monitoring (temps, SVI2 voltage, RAPL power). Replaces k10temp. Zen 1–5.
 - **Type**: `boolean`
 - **Default**: `false`
 
@@ -718,7 +676,7 @@
 
 
 
-## HARDWARE (43 options)
+## HARDWARE (47 options)
 
 #### `myModules.hardware.audio.easyeffects.enable`
 
@@ -797,6 +755,13 @@
 - **Default**: `"active"`
 
 
+#### `myModules.hardware.cpu.amd.ryzenSmu`
+
+**Description**: Load the ryzen_smu kernel module (amkillam fork) for AMD SMU access. Required for Curve Optimizer read/write, PBO limits, boost override. Zen 1 through Zen 5.
+- **Type**: `boolean`
+- **Default**: `false`
+
+
 #### `myModules.hardware.cpu.amd.updateMicrocode`
 
 **Description**: Update AMD CPU microcode
@@ -820,6 +785,13 @@ Requires BIOS CPPC option set to "Driver".
 
 - **Type**: `one of "cache", "frequency"`
 - **Default**: `"cache"`
+
+
+#### `myModules.hardware.cpu.amd.zenpower`
+
+**Description**: Load zenpower5 instead of k10temp for AMD CPU monitoring. Provides Tctl/Tdie/Tccd temps, SVI2 voltage/current (Zen 1-4), and RAPL package power. Replaces k10temp (blacklisted). Zen 1 through Zen 5.
+- **Type**: `boolean`
+- **Default**: `false`
 
 
 #### `myModules.hardware.gpu.amd.disableHDCP`
@@ -1032,6 +1004,20 @@ Assembled into RUSTICL_ENABLE session variable as a comma-separated list.
 **Description**: Power profile to apply
 - **Type**: `one of "performance", "balanced", "powersave"`
 - **Default**: `"balanced"`
+
+
+#### `myModules.hardware.sensors.it87`
+
+**Description**: Load the out-of-tree it87 module (frankcrawford fork) for ITE Super I/O chips. Provides motherboard Vcore, fan speeds, and temperatures. Common on Gigabyte boards. Supports 38+ chip models.
+- **Type**: `boolean`
+- **Default**: `false`
+
+
+#### `myModules.hardware.sensors.nct6775`
+
+**Description**: Load the in-tree nct6775 module for Nuvoton Super I/O chips. Provides motherboard Vcore (in0), fan speeds, and temperatures. Common on ASUS, MSI, ASRock boards.
+- **Type**: `boolean`
+- **Default**: `false`
 
 
 

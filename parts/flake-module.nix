@@ -34,6 +34,7 @@
     ./hardware/audio.nix
     ./hardware/networking.nix
     ./hardware/bluetooth.nix
+    ./hardware/sensors.nix
     ./hardware/performance.nix
     ./hardware/power.nix
 

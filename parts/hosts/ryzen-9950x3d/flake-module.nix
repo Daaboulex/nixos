@@ -36,6 +36,7 @@
             inputs.self.nixosModules.hardware-audio
             inputs.self.nixosModules.hardware-networking
             inputs.self.nixosModules.hardware-bluetooth
+            inputs.self.nixosModules.hardware-sensors
             inputs.self.nixosModules.hardware-performance
             inputs.self.nixosModules.hardware-power
 

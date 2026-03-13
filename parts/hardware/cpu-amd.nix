@@ -9,6 +9,12 @@
     }:
     let
       cfg = config.myModules.hardware.cpu.amd;
+      zenpowerPkg = pkgs.callPackage ./zenpower.nix {
+        inherit (config.boot.kernelPackages) kernel;
+      };
+      ryzenSmuPkg = pkgs.callPackage ./ryzen-smu.nix {
+        inherit (config.boot.kernelPackages) kernel;
+      };
     in
     {
       _class = "nixos";
@@ -74,6 +80,20 @@
           default = true;
           description = "Update AMD CPU microcode";
         };
+
+        # --- Monitoring & SMU kernel modules ---
+
+        zenpower = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = "Load zenpower5 instead of k10temp for AMD CPU monitoring. Provides Tctl/Tdie/Tccd temps, SVI2 voltage/current (Zen 1-4), and RAPL package power. Replaces k10temp (blacklisted). Zen 1 through Zen 5.";
+        };
+
+        ryzenSmu = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = "Load the ryzen_smu kernel module (amkillam fork) for AMD SMU access. Required for Curve Optimizer read/write, PBO limits, boost override. Zen 1 through Zen 5.";
+        };
       };
 
       config = lib.mkIf cfg.enable {
@@ -83,10 +103,20 @@
         ];
 
         boot.kernelModules = lib.concatLists [
-          [ "k10temp" ]
+          # k10temp is the default AMD temp driver — zenpower replaces it
+          (lib.optionals (!cfg.zenpower) [ "k10temp" ])
+          (lib.optionals cfg.zenpower [ "zenpower" ])
+          (lib.optionals cfg.ryzenSmu [ "ryzen_smu" ])
           (lib.optionals cfg.kvm.enable [ "kvm-amd" ])
           (lib.optionals cfg.x3dVcache.enable [ "amd_3d_vcache" ])
         ];
+
+        # Out-of-tree kernel modules — custom derivations with Clang/LTO support
+        boot.extraModulePackages =
+          lib.optional cfg.zenpower zenpowerPkg ++ lib.optional cfg.ryzenSmu ryzenSmuPkg;
+
+        # zenpower and k10temp conflict — they use the same PCI device
+        boot.blacklistedKernelModules = lib.mkIf cfg.zenpower [ "k10temp" ];
 
         # Set 3D V-Cache mode via module parameter — the driver's own x3d_mode param
         # sets the initial mode at load time, no sysfs write needed

@@ -2,7 +2,7 @@
 # NixOS Host Configuration Template
 # ==========================================================================
 # Auto-generated from myModules option definitions.
-# 263 options across 76 groups.
+# 267 options across 77 groups.
 #
 # Usage: copy this file to parts/hosts/<hostname>/default.nix and uncomment
 # the options you want to set. Options left commented use their module defaults.
@@ -55,11 +55,10 @@
 # --- development.saleae (1 options) ---
     # development.saleae = false;  # boolean — Whether to enable Saleae Logic analyzer and udev rules.
 
-# --- diagnostics.corecycler (4 options) ---
+# --- diagnostics.corecycler (3 options) ---
+    # deviceAccess = true;  # boolean — Whether to grant primaryUser access to MSR devices and SMU sysfs via a dedica...
     # enable = false;  # boolean — Whether to enable CoreCyclerLx per-core CPU stability tester and PBO Curve Op...
-    # ryzenSmu = true;  # boolean — Whether to load the ryzen_smu kernel module for Curve Optimizer read/write vi...
     # unfreeBackends = false;  # boolean — Whether to include unfree backends (mprime). When false, only FOSS backends (...
-    # zenpower = false;  # boolean — Whether to use zenpower3 instead of k10temp for Vcore/Vsoc voltage monitoring...
 
 # --- diagnostics.iommu (1 options) ---
     # enable = false;  # boolean — Whether to enable IOMMU group listing tool.
@@ -126,7 +125,7 @@
     # enable = true;  # boolean — Steam
     # gamescope = true;  # boolean — Gamescope session for Steam
 
-# --- gaming.vkbasalt (8 options) ---
+# --- gaming.vkbasalt (9 options) ---
     # autoApply = true;  # boolean — Auto-apply parameter changes without clicking Apply
     # casSharpness = "0.4";  # string — Default CAS sharpness (0.0 = subtle, 1.0 = maximum)
     # effects = "cas";  # string — Default colon-separated effect chain (cas, smaa, fxaa, Vibrance, LiftGammaGai...
@@ -135,6 +134,7 @@
     # extraConfig = "";  # strings concatenated with "\n" — Extra lines for system config (ReShade shader parameters like Vibrance, LiftG...
     # overlayKey = "F1";  # string — Key to open the overlay UI in-game
     # toggleKey = "Home";  # string — Key to toggle effects on/off in-game
+    # ... and 1 more options with complex defaults (see docs/OPTIONS.md)
 
 # --- gaming.wine (3 options) ---
     # bottles.enable = false;  # boolean — Whether to enable Bottles installation.
@@ -197,16 +197,18 @@
 # --- hardware.core (1 options) ---
     # enable = false;  # boolean — Whether to enable Core hardware configuration (firmware, microcode, sensors).
 
-# --- hardware.cpu (8 options) ---
+# --- hardware.cpu (10 options) ---
     # amd.enable = false;  # boolean — Whether to enable AMD CPU optimizations.
     # amd.kvm.enable = true;  # boolean — KVM-AMD virtualization support
     # amd.prefcore.enable = true;  # boolean — AMD Preferred Core technology
     # amd.pstate.enable = true;  # boolean — AMD P-State driver for modern power management
     # amd.pstate.mode = "active";  # one of "active", "passive", "guided" — AMD P-State mode (active recommended for Zen 3+)
+    # amd.ryzenSmu = false;  # boolean — Load the ryzen_smu kernel module (amkillam fork) for AMD SMU access. Required...
     # amd.updateMicrocode = true;  # boolean — Update AMD CPU microcode
     # amd.x3dVcache.enable = false;  # boolean — AMD 3D V-Cache optimizer (for dual-CCD X3D processors like 9950X3D/9900X3D)
     # amd.x3dVcache.mode = "cache";  # one of "cache", "frequency" — 3D V-Cache scheduling preference:
 - "cache": prefer CCD with larger L3 cache ...
+    # amd.zenpower = false;  # boolean — Load zenpower5 instead of k10temp for AMD CPU monitoring. Provides Tctl/Tdie/...
 
 # --- hardware.gpu (10 options) ---
     # amd.disableHDCP = false;  # boolean — Disable HDCP (amdgpu.dc_hdcp_enable=0) — fixes handshake bugs on RDNA 4
@@ -248,6 +250,10 @@ GPU vend...
     # enable = false;  # boolean — Whether to enable Power management configuration.
     # laptop = false;  # boolean — Whether to enable Laptop power optimizations (TLP).
     # profile = "balanced";  # one of "performance", "balanced", "powersave" — Power profile to apply
+
+# --- hardware.sensors (2 options) ---
+    # it87 = false;  # boolean — Load the out-of-tree it87 module (frankcrawford fork) for ITE Super I/O chips...
+    # nct6775 = false;  # boolean — Load the in-tree nct6775 module for Nuvoton Super I/O chips. Provides motherb...
 
 # --- input.duckyOneXMini (4 options) ---
     # board.product = "001d";  # string — USB product ID for the keyboard board HID interface

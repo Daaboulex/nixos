@@ -220,6 +220,12 @@
         };
         kvm.enable = true; # (default) — KVM virtualization
         updateMicrocode = true; # (default)
+        zenpower = true; # zenpower5 — Zen 5 Granite Ridge temps + RAPL power (replaces k10temp)
+        ryzenSmu = true; # SMU access for runtime CO read/write, PBO limits, boost override
+      };
+      sensors = {
+        nct6775 = true; # Nuvoton NCT6799 Super I/O — motherboard Vcore, fan speeds, temperatures
+        # it87 = false; # (default) — ITE Super I/O for Gigabyte boards
       };
       # Intel CPU: not imported on this host (see flake-module.nix)
       performance = {
@@ -420,8 +426,7 @@
       corecycler = {
         enable = true; # CoreCyclerLx — per-core CPU stability tester + PBO Curve Optimizer tuner
         unfreeBackends = true; # Include mprime (unfree) alongside stress-ng
-        ryzenSmu = true; # Load ryzen_smu for runtime CO read/write via SMU
-        zenpower = true; # zenpower5 — Zen 5 Granite Ridge temps + RAPL power (replaces k10temp)
+        # Kernel modules (ryzen_smu, zenpower, nct6775) are in hardware.cpu.amd and hardware.sensors
       };
     };
 
@@ -621,7 +626,8 @@
   # ============================================================================
   boot = {
     # Note: btrfs already handled by filesystems.nix (enableAll)
-    # Note: AMD kernel modules (amdgpu, kvm-amd, k10temp) in cpu-amd.nix / gpu-amd.nix
+    # Note: AMD kernel modules (amdgpu, kvm-amd, zenpower/k10temp, ryzen_smu) in cpu-amd.nix / gpu-amd.nix
+    # Note: Super I/O (nct6775/it87) in hardware.sensors
     #
     # NCT6799 Super I/O fan header mapping (ASUS ROG Crosshair X870E Hero):
     #   fan1 / pwm1  = CPU_FAN   → Arctic Liquid Freezer III radiator fans (~1036 RPM)
@@ -632,7 +638,6 @@
     #   fan6 / pwm6  = CHA_FAN4  → Empty
     #   fan7 / pwm7  = W_PUMP+   → Arctic Liquid Freezer III pump (~2789 RPM, always full)
     #   (VRM contact frame fan is SATA-powered — not visible to hwmon)
-    kernelModules = [ "nct6775" ]; # Nuvoton NCT6799 Super I/O — exposes motherboard fan/temp/voltage sensors
     loader.timeout = lib.mkForce 10;
     blacklistedKernelModules = [
       "acpi_pad" # Forces CPU idle states — counterproductive on performance desktop
