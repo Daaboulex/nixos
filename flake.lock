@@ -553,11 +553,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1773369447,
-        "narHash": "sha256-XzTKiSJyUCIx578tEHVgC9ALV+w2ziJUqQuRiq+sX2k=",
+        "lastModified": 1773415887,
+        "narHash": "sha256-oZdM3V+XCJWDr4m5tN/YyexgYMFasLe9c9MdJ/sL0XM=",
         "owner": "Daaboulex",
         "repo": "linux-corecycler",
-        "rev": "cce6547c0f5ad8c482b757cd565a176503bc5425",
+        "rev": "c08dab34365165e390d8b1c1c078c1cfb0b47d40",
         "type": "github"
       },
       "original": {
