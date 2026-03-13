@@ -8,7 +8,7 @@
       ...
     }:
     let
-      cfg = config.myModules.hardware.graphics.nvidia;
+      cfg = config.myModules.hardware.gpu.nvidia;
       mkPkg =
         mode:
         if mode == "beta" then
@@ -18,7 +18,7 @@
     in
     {
       _class = "nixos";
-      options.myModules.hardware.graphics.nvidia = {
+      options.myModules.hardware.gpu.nvidia = {
         enable = lib.mkEnableOption "Nvidia Graphics configuration";
         profile = {
           mode = lib.mkOption {

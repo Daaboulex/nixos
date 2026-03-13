@@ -8,11 +8,11 @@
       ...
     }:
     let
-      cfg = config.myModules.hardware.graphics.intel;
+      cfg = config.myModules.hardware.gpu.intel;
     in
     {
       _class = "nixos";
-      options.myModules.hardware.graphics.intel = {
+      options.myModules.hardware.gpu.intel = {
         enable = lib.mkEnableOption "Intel Graphics (i915) configuration";
 
         kernelParams = {

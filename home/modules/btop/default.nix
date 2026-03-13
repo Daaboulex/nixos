@@ -7,7 +7,25 @@
 }:
 
 let
-  hasAmdGpu = osConfig.myModules.hardware.graphics.amd.enable or false;
+  hasAmdGpu = osConfig.myModules.hardware.gpu.amd.enable or false;
+  btopBase = pkgs.btop.override {
+    rocmSupport = hasAmdGpu;
+  };
+  # btop uses dlopen("librocm_smi64.so") at runtime for AMD GPU monitoring.
+  # RUNPATH only covers linked deps, not dlopen — wrap with LD_LIBRARY_PATH.
+  btopWrapped =
+    if hasAmdGpu then
+      pkgs.symlinkJoin {
+        name = "btop-rocm-wrapped";
+        paths = [ btopBase ];
+        nativeBuildInputs = [ pkgs.makeWrapper ];
+        postBuild = ''
+          wrapProgram $out/bin/btop \
+            --prefix LD_LIBRARY_PATH : "${pkgs.rocmPackages.rocm-smi}/lib"
+        '';
+      }
+    else
+      btopBase;
 in
 {
   # ============================================================================
@@ -15,11 +33,7 @@ in
   # ============================================================================
   # NOTE: enable is set per-host in home/hosts/<hostname>.nix
   # AMD GPU detection requires rocm-smi (btop dlopen's librocm_smi64.so)
-  programs.btop.package = lib.mkDefault (
-    pkgs.btop.override {
-      rocmSupport = hasAmdGpu;
-    }
-  );
+  programs.btop.package = lib.mkDefault btopWrapped;
   programs.btop.settings = {
     # -- Appearance --
     color_theme = lib.mkDefault "tokyo-night";

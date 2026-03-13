@@ -8,11 +8,11 @@
       ...
     }:
     let
-      cfg = config.myModules.hardware.graphics.amd;
+      cfg = config.myModules.hardware.gpu.amd;
     in
     {
       _class = "nixos";
-      options.myModules.hardware.graphics.amd = {
+      options.myModules.hardware.gpu.amd = {
         enable = lib.mkEnableOption "AMD Graphics configuration";
 
         vulkanDeviceId = lib.mkOption {

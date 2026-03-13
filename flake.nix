@@ -153,6 +153,18 @@
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # NixVirt - Declarative libvirt VM management
+    NixVirt = {
+      url = "github:AshleyYakeley/NixVirt/v0.6.0";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # Hypervisor-Phantom - QEMU anti-detection and KVM stealth patches
+    hypervisor-phantom = {
+      url = "github:Scrut1ny/Hypervisor-Phantom";
+      flake = false;
+    };
   };
 
   # ============================================================================

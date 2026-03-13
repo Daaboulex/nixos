@@ -34,6 +34,7 @@
           idleTimeout = lib.mkDefault 600; # DPMS off after 10 minutes
         };
         powerProfile = lib.mkDefault "balanced";
+        powerButtonAction = lib.mkDefault "showLogoutScreen"; # Trigger KDE logout dialog (saves session)
       };
     };
   };

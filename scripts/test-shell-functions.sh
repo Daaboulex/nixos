@@ -157,7 +157,7 @@ for name in "${CONFIG_NAMES[@]}"; do
 
   # Check kernel variant
   KV=$(nix --extra-experimental-features 'nix-command flakes' \
-    eval "$FLAKE_DIR#nixosConfigurations.$name.config.myModules.kernel.variant" --raw 2>/dev/null || echo "")
+    eval "$FLAKE_DIR#nixosConfigurations.$name.config.myModules.system.kernel.variant" --raw 2>/dev/null || echo "")
   if [[ -n $KV ]]; then
     pass "$name: kernel.variant = \"$KV\""
   else

@@ -50,6 +50,25 @@
           ];
         };
 
+        # Read GitHub token from gh CLI to avoid API rate limits during flake updates.
+        # File is populated by activation script below.
+        nix.extraOptions = lib.mkIf (builtins.pathExists "/etc/nix/github-token") ''
+          !include /etc/nix/github-token
+        '';
+
+        # Populate /etc/nix/github-token from gh CLI at activation time
+        system.activationScripts.nix-github-token = {
+          text = ''
+            if command -v gh >/dev/null 2>&1; then
+              token=$(gh auth token 2>/dev/null || true)
+              if [ -n "$token" ]; then
+                echo "access-tokens = github.com=$token" > /etc/nix/github-token
+                chmod 600 /etc/nix/github-token
+              fi
+            fi
+          '';
+        };
+
         nix.gc = {
           automatic = true;
           dates = "weekly";

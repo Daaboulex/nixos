@@ -161,7 +161,7 @@
           (lib.mkIf cfg.monitoring {
             environment.systemPackages =
               with pkgs;
-              lib.optionals (config.myModules.hardware.graphics.amd.enable or false) [
+              lib.optionals (config.myModules.hardware.gpu.amd.enable or false) [
                 lact
                 radeontop
               ];
@@ -171,7 +171,6 @@
               sysbench
               stress-ng
               memtest_vulkan
-              linux-corecycler
             ];
           })
         ]

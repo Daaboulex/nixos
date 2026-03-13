@@ -1,153 +1,26 @@
 # NixOS Custom Modules Documentation
 
-> Auto-generated from `myModules` option definitions. 241 options across 22 categories.
+> Auto-generated from `myModules` option definitions. 265 options across 13 categories.
 >
 > Regenerate: `bash scripts/update-docs.sh`
 
 ## Table of Contents
 
-- [BOTTLES](#bottles-1-options) (1 options)
-- [CACHYOS](#cachyos-15-options) (15 options)
 - [COOLERCONTROL](#coolercontrol-2-options) (2 options)
-- [CORECYCLER](#corecycler-2-options) (2 options)
-- [DEBUGGINGPROBES](#debuggingprobes-1-options) (1 options)
 - [DESKTOP](#desktop-8-options) (8 options)
-- [DEVELOPMENT](#development-3-options) (3 options)
-- [DUCKYONEXMINI](#duckyonexmini-4-options) (4 options)
-- [GAMING](#gaming-33-options) (33 options)
+- [DEVELOPMENT](#development-4-options) (4 options)
+- [DIAGNOSTICS](#diagnostics-7-options) (7 options)
+- [GAMING](#gaming-37-options) (37 options)
 - [GOXLR](#goxlr-35-options) (35 options)
 - [HARDWARE](#hardware-43-options) (43 options)
-- [IOMMU](#iommu-1-options) (1 options)
-- [KERNEL](#kernel-14-options) (14 options)
-- [PIPER](#piper-1-options) (1 options)
+- [INPUT](#input-12-options) (12 options)
 - [PRIMARYUSER](#primaryuser-1-options) (1 options)
 - [SECURITY](#security-17-options) (17 options)
-- [STREAMCONTROLLER](#streamcontroller-1-options) (1 options)
-- [SYSDIAG](#sysdiag-1-options) (1 options)
-- [SYSTEM](#system-48-options) (48 options)
+- [SYSTEM](#system-77-options) (77 options)
 - [TIDALCYCLES](#tidalcycles-2-options) (2 options)
-- [WINE](#wine-2-options) (2 options)
-- [YEETMOUSE](#yeetmouse-6-options) (6 options)
+- [VFIO](#vfio-20-options) (20 options)
 
 ---
-## BOTTLES (1 options)
-
-#### `myModules.bottles.enable`
-
-**Description**: Whether to enable Bottles installation.
-- **Type**: `boolean`
-- **Default**: `false`
-
-
-
-## CACHYOS (15 options)
-
-#### `myModules.cachyos.settings.amdgpuGcnCompat.enable`
-
-**Description**: Whether to enable CachyOS amdgpuGcnCompat.
-- **Type**: `boolean`
-- **Default**: `false`
-
-
-#### `myModules.cachyos.settings.audio.enable`
-
-**Description**: Whether to enable CachyOS audio.
-- **Type**: `boolean`
-- **Default**: `true`
-
-
-#### `myModules.cachyos.settings.coredump.enable`
-
-**Description**: Whether to enable CachyOS coredump.
-- **Type**: `boolean`
-- **Default**: `true`
-
-
-#### `myModules.cachyos.settings.debuginfod.enable`
-
-**Description**: Whether to enable CachyOS debuginfod.
-- **Type**: `boolean`
-- **Default**: `true`
-
-
-#### `myModules.cachyos.settings.enable`
-
-**Description**: Whether to enable CachyOS system optimizations (upstream-matched settings).
-- **Type**: `boolean`
-- **Default**: `false`
-
-
-#### `myModules.cachyos.settings.extraPerformance.enable`
-
-**Description**: Whether to enable Extra performance sysctls: BBR, cake, tcp_fastopen, buffer sizes, max_map_count, compaction, sched_autogroup.
-- **Type**: `boolean`
-- **Default**: `true`
-
-
-#### `myModules.cachyos.settings.ioSchedulers.enable`
-
-**Description**: Whether to enable CachyOS ioSchedulers.
-- **Type**: `boolean`
-- **Default**: `true`
-
-
-#### `myModules.cachyos.settings.networkManager.enable`
-
-**Description**: Whether to enable CachyOS networkManager.
-- **Type**: `boolean`
-- **Default**: `true`
-
-
-#### `myModules.cachyos.settings.ntsync.enable`
-
-**Description**: Whether to enable CachyOS ntsync.
-- **Type**: `boolean`
-- **Default**: `true`
-
-
-#### `myModules.cachyos.settings.nvidia.enable`
-
-**Description**: Whether to enable CachyOS nvidia.
-- **Type**: `boolean`
-- **Default**: `false`
-
-
-#### `myModules.cachyos.settings.storage.enable`
-
-**Description**: Whether to enable CachyOS storage.
-- **Type**: `boolean`
-- **Default**: `true`
-
-
-#### `myModules.cachyos.settings.systemd.enable`
-
-**Description**: Whether to enable CachyOS systemd.
-- **Type**: `boolean`
-- **Default**: `true`
-
-
-#### `myModules.cachyos.settings.thp.enable`
-
-**Description**: Whether to enable CachyOS thp.
-- **Type**: `boolean`
-- **Default**: `true`
-
-
-#### `myModules.cachyos.settings.timesyncd.enable`
-
-**Description**: Whether to enable CachyOS timesyncd.
-- **Type**: `boolean`
-- **Default**: `true`
-
-
-#### `myModules.cachyos.settings.zram.enable`
-
-**Description**: Whether to enable CachyOS zram.
-- **Type**: `boolean`
-- **Default**: `true`
-
-
-
 ## COOLERCONTROL (2 options)
 
 #### `myModules.coolercontrol.autostart`
@@ -160,33 +33,6 @@
 #### `myModules.coolercontrol.enable`
 
 **Description**: Whether to enable CoolerControl fan and cooling device management.
-- **Type**: `boolean`
-- **Default**: `false`
-
-
-
-## CORECYCLER (2 options)
-
-#### `myModules.corecycler.enable`
-
-**Description**: Whether to enable Linux CoreCycler per-core CPU stability tester and PBO Curve Optimizer tuner.
-- **Type**: `boolean`
-- **Default**: `false`
-
-
-#### `myModules.corecycler.ryzenSmu`
-
-**Description**: Whether to load the ryzen_smu kernel module for Curve Optimizer read/write via SMU
-- **Type**: `boolean`
-- **Default**: `true`
-
-
-
-## DEBUGGINGPROBES (1 options)
-
-#### `myModules.debuggingProbes.enable`
-
-**Description**: Whether to enable Embedded debugging probes (LPC-Link2, ESP32) udev rules.
 - **Type**: `boolean`
 - **Default**: `false`
 
@@ -251,11 +97,18 @@
 
 
 
-## DEVELOPMENT (3 options)
+## DEVELOPMENT (4 options)
 
 #### `myModules.development.claudeCode`
 
 **Description**: Whether to enable Claude Code AI assistant.
+- **Type**: `boolean`
+- **Default**: `false`
+
+
+#### `myModules.development.debuggingProbes.enable`
+
+**Description**: Whether to enable Embedded debugging probes (LPC-Link2, ESP32) udev rules.
 - **Type**: `boolean`
 - **Default**: `false`
 
@@ -275,38 +128,59 @@
 
 
 
-## DUCKYONEXMINI (4 options)
+## DIAGNOSTICS (7 options)
 
-#### `myModules.duckyOneXMini.board.product`
+#### `myModules.diagnostics.corecycler.deviceAccess`
 
-**Description**: USB product ID for the keyboard board HID interface
-- **Type**: `string`
-- **Default**: `"001d"`
+**Description**: Whether to grant primaryUser access to MSR devices and SMU sysfs via a dedicated group and udev rules. No sudo required.
+- **Type**: `boolean`
+- **Default**: `true`
 
 
-#### `myModules.duckyOneXMini.enable`
+#### `myModules.diagnostics.corecycler.enable`
 
-**Description**: Whether to enable Ducky One X Mini keyboard HID access (udev rules for VIA/Vial).
+**Description**: Whether to enable CoreCyclerLx per-core CPU stability tester and PBO Curve Optimizer tuner.
 - **Type**: `boolean`
 - **Default**: `false`
 
 
-#### `myModules.duckyOneXMini.mcu.product`
+#### `myModules.diagnostics.corecycler.ryzenSmu`
 
-**Description**: USB product ID for the keyboard MCU HID interface
-- **Type**: `string`
-- **Default**: `"0021"`
-
-
-#### `myModules.duckyOneXMini.vendor`
-
-**Description**: USB vendor ID for the Ducky keyboard
-- **Type**: `string`
-- **Default**: `"3233"`
+**Description**: Whether to load the ryzen_smu kernel module for Curve Optimizer read/write via SMU
+- **Type**: `boolean`
+- **Default**: `true`
 
 
+#### `myModules.diagnostics.corecycler.unfreeBackends`
 
-## GAMING (33 options)
+**Description**: Whether to include unfree backends (mprime). When false, only FOSS backends (stress-ng) are bundled.
+- **Type**: `boolean`
+- **Default**: `false`
+
+
+#### `myModules.diagnostics.corecycler.zenpower`
+
+**Description**: Whether to use zenpower3 instead of k10temp for Vcore/Vsoc voltage monitoring via SVI2. Replaces k10temp (blacklisted).
+- **Type**: `boolean`
+- **Default**: `false`
+
+
+#### `myModules.diagnostics.iommu.enable`
+
+**Description**: Whether to enable IOMMU group listing tool.
+- **Type**: `boolean`
+- **Default**: `false`
+
+
+#### `myModules.diagnostics.sysdiag.enable`
+
+**Description**: Whether to enable sysdiag system diagnostics.
+- **Type**: `boolean`
+- **Default**: `false`
+
+
+
+## GAMING (37 options)
 
 #### `myModules.gaming.azahar.enable`
 
@@ -532,11 +406,39 @@
 - **Default**: `"F1"`
 
 
+#### `myModules.gaming.vkbasalt.shaderPackages`
+
+**Description**: Shader packages providing share/reshade/{Shaders,Textures} — combined into vkBasalt shader/texture paths
+- **Type**: `list of package`
+- **Default**: `["/nix/store/sgq7q1nzn5lsyxvg0vsyqv36m8963dg7-reshade-shaders-crosire-unstable","/nix/store/aivmnjw20kv65lpd3kqy7y677...`
+
+
 #### `myModules.gaming.vkbasalt.toggleKey`
 
 **Description**: Key to toggle effects on/off in-game
 - **Type**: `string`
 - **Default**: `"Home"`
+
+
+#### `myModules.gaming.wine.bottles.enable`
+
+**Description**: Whether to enable Bottles installation.
+- **Type**: `boolean`
+- **Default**: `false`
+
+
+#### `myModules.gaming.wine.enable`
+
+**Description**: Whether to enable Wine installation.
+- **Type**: `boolean`
+- **Default**: `false`
+
+
+#### `myModules.gaming.wine.variant`
+
+**Description**: Wine variant (staging has more patches, Full includes all optional deps)
+- **Type**: `one of "stable", "staging", "stableFull", "stagingFull"`
+- **Default**: `"stagingFull"`
 
 
 
@@ -892,70 +794,70 @@ Requires BIOS CPPC option set to "Driver".
 - **Default**: `"cache"`
 
 
-#### `myModules.hardware.graphics.amd.disableHDCP`
+#### `myModules.hardware.gpu.amd.disableHDCP`
 
 **Description**: Disable HDCP (amdgpu.dc_hdcp_enable=0) — fixes handshake bugs on RDNA 4
 - **Type**: `boolean`
 - **Default**: `false`
 
 
-#### `myModules.hardware.graphics.amd.drmDebug`
+#### `myModules.hardware.gpu.amd.drmDebug`
 
 **Description**: DRM debug logging (drm.debug=0x1e) for diagnosing display black screens
 - **Type**: `boolean`
 - **Default**: `false`
 
 
-#### `myModules.hardware.graphics.amd.enable`
+#### `myModules.hardware.gpu.amd.enable`
 
 **Description**: Whether to enable AMD Graphics configuration.
 - **Type**: `boolean`
 - **Default**: `false`
 
 
-#### `myModules.hardware.graphics.amd.enablePPFeatureMask`
+#### `myModules.hardware.gpu.amd.enablePPFeatureMask`
 
 **Description**: Full AMD GPU power management features (ppfeaturemask=0xffffffff)
 - **Type**: `boolean`
 - **Default**: `true`
 
 
-#### `myModules.hardware.graphics.amd.initrd.enable`
+#### `myModules.hardware.gpu.amd.initrd.enable`
 
 **Description**: Load amdgpu in initrd (required for Plymouth)
 - **Type**: `boolean`
 - **Default**: `true`
 
 
-#### `myModules.hardware.graphics.amd.lact.enable`
+#### `myModules.hardware.gpu.amd.lact.enable`
 
 **Description**: LACT daemon for AMD GPU control/overclocking
 - **Type**: `boolean`
 - **Default**: `true`
 
 
-#### `myModules.hardware.graphics.amd.openCL`
+#### `myModules.hardware.gpu.amd.openCL`
 
 **Description**: OpenCL support via RustiCL (Mesa) radeonsi driver
 - **Type**: `boolean`
 - **Default**: `true`
 
 
-#### `myModules.hardware.graphics.amd.rdna4Fixes`
+#### `myModules.hardware.gpu.amd.rdna4Fixes`
 
 **Description**: Apply RDNA 4 (GFX12) stability kernel params: disable scatter-gather display and GFX OFF
 - **Type**: `boolean`
 - **Default**: `true`
 
 
-#### `myModules.hardware.graphics.amd.vulkanDeviceId`
+#### `myModules.hardware.gpu.amd.vulkanDeviceId`
 
 **Description**: Vulkan device vendor:device ID for MESA_VK_DEVICE_SELECT (forces discrete GPU on dual-AMD systems)
 - **Type**: `null or string`
 - **Default**: `null`
 
 
-#### `myModules.hardware.graphics.amd.vulkanDeviceName`
+#### `myModules.hardware.gpu.amd.vulkanDeviceName`
 
 **Description**: Vulkan device name substring for DXVK_FILTER_DEVICE_NAME and VKD3D_FILTER_DEVICE_NAME (forces dGPU for translated DX9-12 games)
 - **Type**: `null or string`
@@ -1105,122 +1007,88 @@ Assembled into RUSTICL_ENABLE session variable as a comma-separated list.
 
 
 
-## IOMMU (1 options)
+## INPUT (12 options)
 
-#### `myModules.iommu`
+#### `myModules.input.duckyOneXMini.board.product`
 
-**Description**: Whether to enable IOMMU group listing tool.
-- **Type**: `boolean`
-- **Default**: `false`
-
-
-
-## KERNEL (14 options)
-
-#### `myModules.kernel.cachyos.bbr3`
-
-**Description**: BBR3 TCP congestion control
-- **Type**: `null or boolean`
-- **Default**: `null`
-
-
-#### `myModules.kernel.cachyos.ccHarder`
-
-**Description**: -O3 optimizations
-- **Type**: `null or boolean`
-- **Default**: `null`
-
-
-#### `myModules.kernel.cachyos.cpusched`
-
-**Description**: CPU scheduler (e.g. bmq, bore, eevdf)
-- **Type**: `null or string`
-- **Default**: `null`
-
-
-#### `myModules.kernel.cachyos.hugepage`
-
-**Description**: Transparent Hugepage behavior (e.g. always, madvise)
-- **Type**: `null or string`
-- **Default**: `null`
-
-
-#### `myModules.kernel.cachyos.hzTicks`
-
-**Description**: Timer frequency (e.g. 1000, 500, 300)
-- **Type**: `null or string`
-- **Default**: `null`
-
-
-#### `myModules.kernel.cachyos.kcfi`
-
-**Description**: KCFI (Kernel Control Flow Integrity)
-- **Type**: `null or boolean`
-- **Default**: `null`
-
-
-#### `myModules.kernel.cachyos.performanceGovernor`
-
-**Description**: Default to performance governor
-- **Type**: `null or boolean`
-- **Default**: `null`
-
-
-#### `myModules.kernel.cachyos.preemptType`
-
-**Description**: Preemption model (e.g. full, voluntary)
-- **Type**: `null or string`
-- **Default**: `null`
-
-
-#### `myModules.kernel.cachyos.tickrate`
-
-**Description**: Tickless behavior (e.g. full, idle)
-- **Type**: `null or string`
-- **Default**: `null`
-
-
-#### `myModules.kernel.channel`
-
-**Description**: CachyOS kernel channel: latest (stable bleeding-edge), lts (long-term support), rc (release candidate)
-- **Type**: `one of "latest", "lts", "rc"`
-- **Default**: `"latest"`
-
-
-#### `myModules.kernel.enable`
-
-**Description**: Whether to enable Custom kernel configuration.
-- **Type**: `boolean`
-- **Default**: `false`
-
-
-#### `myModules.kernel.extraParams`
-
-**Description**: Extra kernel parameters
-- **Type**: `list of string`
-- **Default**: `[]`
-
-
-#### `myModules.kernel.mArch`
-
-**Description**: Microarchitecture for CachyOS kernel (x86-64-v3, x86-64-v4, ZEN4, ZEN5, etc.)
+**Description**: USB product ID for the keyboard board HID interface
 - **Type**: `string`
-- **Default**: `"x86-64-v3"`
+- **Default**: `"001d"`
 
 
-#### `myModules.kernel.variant`
+#### `myModules.input.duckyOneXMini.enable`
 
-**Description**: Kernel variant to use (cachyos, zen, xanmod, or NixOS default)
-- **Type**: `one of "cachyos", "cachyos-lto", "cachyos-sched-ext", "zen", "xanmod", "default"`
-- **Default**: `"default"`
+**Description**: Whether to enable Ducky One X Mini keyboard HID access (udev rules for VIA/Vial).
+- **Type**: `boolean`
+- **Default**: `false`
 
 
+#### `myModules.input.duckyOneXMini.mcu.product`
 
-## PIPER (1 options)
+**Description**: USB product ID for the keyboard MCU HID interface
+- **Type**: `string`
+- **Default**: `"0021"`
 
-#### `myModules.piper.enable`
+
+#### `myModules.input.duckyOneXMini.vendor`
+
+**Description**: USB vendor ID for the Ducky keyboard
+- **Type**: `string`
+- **Default**: `"3233"`
+
+
+#### `myModules.input.piper.enable`
 
 **Description**: Whether to enable Piper mouse configuration tool and ratbagd service.
+- **Type**: `boolean`
+- **Default**: `false`
+
+
+#### `myModules.input.streamcontroller.enable`
+
+**Description**: Whether to enable StreamController (Elgato Stream Deck).
+- **Type**: `boolean`
+- **Default**: `false`
+
+
+#### `myModules.input.yeetmouse.devices.g502.dpi`
+
+**Description**: Mouse DPI setting (reported to libinput via HWDB)
+- **Type**: `signed integer`
+- **Default**: `1600`
+
+
+#### `myModules.input.yeetmouse.devices.g502.enable`
+
+**Description**: Whether to enable Libinput flat acceleration profile for Logitech G502 (Wired/Wireless).
+- **Type**: `boolean`
+- **Default**: `false`
+
+
+#### `myModules.input.yeetmouse.devices.g502.pollingRate`
+
+**Description**: Mouse polling rate in Hz (reported to libinput via HWDB)
+- **Type**: `signed integer`
+- **Default**: `1000`
+
+
+#### `myModules.input.yeetmouse.devices.g502.wiredProductId`
+
+**Description**: USB product ID for the wired G502 (check with lsusb)
+- **Type**: `string`
+- **Default**: `"c08d"`
+
+
+#### `myModules.input.yeetmouse.devices.g502.wirelessProductId`
+
+**Description**: USB product ID for the Lightspeed Receiver
+- **Type**: `string`
+- **Default**: `"c539"`
+
+
+#### `myModules.input.yeetmouse.enable`
+
+**Description**: Whether to enable YeetMouse input driver.
 - **Type**: `boolean`
 - **Default**: `false`
 
@@ -1264,6 +1132,20 @@ Assembled into RUSTICL_ENABLE session variable as a comma-separated list.
 **Description**: User to run the service as
 - **Type**: `string`
 - **Default**: `"user"`
+
+
+#### `myModules.security.hardening.enable`
+
+**Description**: Whether to enable System-wide security hardening.
+- **Type**: `boolean`
+- **Default**: `false`
+
+
+#### `myModules.security.hardening.firejail.enable`
+
+**Description**: Firejail sandboxing
+- **Type**: `boolean`
+- **Default**: `false`
 
 
 #### `myModules.security.portmaster.autostart`
@@ -1343,42 +1225,8 @@ Assembled into RUSTICL_ENABLE session variable as a comma-separated list.
 - **Default**: `[]`
 
 
-#### `myModules.security.system.enable`
 
-**Description**: Whether to enable System-wide security hardening.
-- **Type**: `boolean`
-- **Default**: `false`
-
-
-#### `myModules.security.system.firejail.enable`
-
-**Description**: Firejail sandboxing
-- **Type**: `boolean`
-- **Default**: `false`
-
-
-
-## STREAMCONTROLLER (1 options)
-
-#### `myModules.streamcontroller.enable`
-
-**Description**: Whether to enable StreamController (Elgato Stream Deck).
-- **Type**: `boolean`
-- **Default**: `false`
-
-
-
-## SYSDIAG (1 options)
-
-#### `myModules.sysdiag`
-
-**Description**: Whether to enable sysdiag system diagnostics.
-- **Type**: `boolean`
-- **Default**: `false`
-
-
-
-## SYSTEM (48 options)
+## SYSTEM (77 options)
 
 #### `myModules.system.boot.consoleMode`
 
@@ -1434,6 +1282,111 @@ Assembled into RUSTICL_ENABLE session variable as a comma-separated list.
 **Description**: Path to PKI bundle
 - **Type**: `absolute path`
 - **Default**: `"/var/lib/sbctl"`
+
+
+#### `myModules.system.cachyos.amdgpuGcnCompat.enable`
+
+**Description**: Whether to enable CachyOS amdgpuGcnCompat.
+- **Type**: `boolean`
+- **Default**: `false`
+
+
+#### `myModules.system.cachyos.audio.enable`
+
+**Description**: Whether to enable CachyOS audio.
+- **Type**: `boolean`
+- **Default**: `true`
+
+
+#### `myModules.system.cachyos.coredump.enable`
+
+**Description**: Whether to enable CachyOS coredump.
+- **Type**: `boolean`
+- **Default**: `true`
+
+
+#### `myModules.system.cachyos.debuginfod.enable`
+
+**Description**: Whether to enable CachyOS debuginfod.
+- **Type**: `boolean`
+- **Default**: `true`
+
+
+#### `myModules.system.cachyos.enable`
+
+**Description**: Whether to enable CachyOS system optimizations (upstream-matched settings).
+- **Type**: `boolean`
+- **Default**: `false`
+
+
+#### `myModules.system.cachyos.extraPerformance.enable`
+
+**Description**: Whether to enable Extra performance sysctls: BBR, cake, tcp_fastopen, buffer sizes, max_map_count, compaction, sched_autogroup.
+- **Type**: `boolean`
+- **Default**: `true`
+
+
+#### `myModules.system.cachyos.ioSchedulers.enable`
+
+**Description**: Whether to enable CachyOS ioSchedulers.
+- **Type**: `boolean`
+- **Default**: `true`
+
+
+#### `myModules.system.cachyos.networkManager.enable`
+
+**Description**: Whether to enable CachyOS networkManager.
+- **Type**: `boolean`
+- **Default**: `true`
+
+
+#### `myModules.system.cachyos.ntsync.enable`
+
+**Description**: Whether to enable CachyOS ntsync.
+- **Type**: `boolean`
+- **Default**: `true`
+
+
+#### `myModules.system.cachyos.nvidia.enable`
+
+**Description**: Whether to enable CachyOS nvidia.
+- **Type**: `boolean`
+- **Default**: `false`
+
+
+#### `myModules.system.cachyos.storage.enable`
+
+**Description**: Whether to enable CachyOS storage.
+- **Type**: `boolean`
+- **Default**: `true`
+
+
+#### `myModules.system.cachyos.systemd.enable`
+
+**Description**: Whether to enable CachyOS systemd.
+- **Type**: `boolean`
+- **Default**: `true`
+
+
+#### `myModules.system.cachyos.thp.enable`
+
+**Description**: Whether to enable CachyOS thp.
+- **Type**: `boolean`
+- **Default**: `true`
+
+
+#### `myModules.system.cachyos.timesyncd.enable`
+
+**Description**: Whether to enable CachyOS timesyncd.
+- **Type**: `boolean`
+- **Default**: `true`
+
+
+#### `myModules.system.cachyos.zram.enable`
+
+**Description**: Whether to enable CachyOS zram.
+- **Type**: `boolean`
+- **Default**: `true`
 
 
 #### `myModules.system.filesystems.enable`
@@ -1539,6 +1492,104 @@ Assembled into RUSTICL_ENABLE session variable as a comma-separated list.
 **Description**: Name of the root BTRFS subvolume
 - **Type**: `string`
 - **Default**: `"@"`
+
+
+#### `myModules.system.kernel.cachyos.bbr3`
+
+**Description**: BBR3 TCP congestion control
+- **Type**: `null or boolean`
+- **Default**: `null`
+
+
+#### `myModules.system.kernel.cachyos.ccHarder`
+
+**Description**: -O3 optimizations
+- **Type**: `null or boolean`
+- **Default**: `null`
+
+
+#### `myModules.system.kernel.cachyos.cpusched`
+
+**Description**: CPU scheduler (e.g. bmq, bore, eevdf)
+- **Type**: `null or string`
+- **Default**: `null`
+
+
+#### `myModules.system.kernel.cachyos.hugepage`
+
+**Description**: Transparent Hugepage behavior (e.g. always, madvise)
+- **Type**: `null or string`
+- **Default**: `null`
+
+
+#### `myModules.system.kernel.cachyos.hzTicks`
+
+**Description**: Timer frequency (e.g. 1000, 500, 300)
+- **Type**: `null or string`
+- **Default**: `null`
+
+
+#### `myModules.system.kernel.cachyos.kcfi`
+
+**Description**: KCFI (Kernel Control Flow Integrity)
+- **Type**: `null or boolean`
+- **Default**: `null`
+
+
+#### `myModules.system.kernel.cachyos.performanceGovernor`
+
+**Description**: Default to performance governor
+- **Type**: `null or boolean`
+- **Default**: `null`
+
+
+#### `myModules.system.kernel.cachyos.preemptType`
+
+**Description**: Preemption model (e.g. full, voluntary)
+- **Type**: `null or string`
+- **Default**: `null`
+
+
+#### `myModules.system.kernel.cachyos.tickrate`
+
+**Description**: Tickless behavior (e.g. full, idle)
+- **Type**: `null or string`
+- **Default**: `null`
+
+
+#### `myModules.system.kernel.channel`
+
+**Description**: CachyOS kernel channel: latest (stable bleeding-edge), lts (long-term support), rc (release candidate)
+- **Type**: `one of "latest", "lts", "rc"`
+- **Default**: `"latest"`
+
+
+#### `myModules.system.kernel.enable`
+
+**Description**: Whether to enable Custom kernel configuration.
+- **Type**: `boolean`
+- **Default**: `false`
+
+
+#### `myModules.system.kernel.extraParams`
+
+**Description**: Extra kernel parameters
+- **Type**: `list of string`
+- **Default**: `[]`
+
+
+#### `myModules.system.kernel.mArch`
+
+**Description**: Microarchitecture for CachyOS kernel (x86-64-v3, x86-64-v4, ZEN4, ZEN5, etc.)
+- **Type**: `string`
+- **Default**: `"x86-64-v3"`
+
+
+#### `myModules.system.kernel.variant`
+
+**Description**: Kernel variant to use (cachyos, zen, xanmod, or NixOS default)
+- **Type**: `one of "cachyos", "cachyos-lto", "cachyos-sched-ext", "zen", "xanmod", "default"`
+- **Default**: `"default"`
 
 
 #### `myModules.system.nix.enable`
@@ -1734,64 +1785,145 @@ Assembled into RUSTICL_ENABLE session variable as a comma-separated list.
 
 
 
-## WINE (2 options)
+## VFIO (20 options)
 
-#### `myModules.wine.enable`
+#### `myModules.vfio.bindMethod`
 
-**Description**: Whether to enable Wine installation.
+**Description**: static = vfio-pci.ids kernel param (GPU always captured at boot); dynamic = libvirt hooks bind/unbind on VM start/stop
+- **Type**: `one of "static", "dynamic"`
+- **Default**: `"dynamic"`
+
+
+#### `myModules.vfio.enable`
+
+**Description**: Whether to enable VFIO GPU passthrough with stealth VM management.
 - **Type**: `boolean`
 - **Default**: `false`
 
 
-#### `myModules.wine.variant`
+#### `myModules.vfio.evdev.enable`
 
-**Description**: Wine variant (staging has more patches, Full includes all optional deps)
-- **Type**: `one of "stable", "staging", "stableFull", "stagingFull"`
-- **Default**: `"stagingFull"`
+**Description**: Evdev input passthrough for keyboard/mouse
+- **Type**: `boolean`
+- **Default**: `true`
 
 
+#### `myModules.vfio.evdev.keyboardPath`
 
-## YEETMOUSE (6 options)
+**Description**: Path to keyboard event device (e.g. /dev/input/by-id/...)
+- **Type**: `null or string`
+- **Default**: `null`
 
-#### `myModules.yeetmouse.devices.g502.dpi`
 
-**Description**: Mouse DPI setting (reported to libinput via HWDB)
+#### `myModules.vfio.evdev.mousePath`
+
+**Description**: Path to mouse event device (e.g. /dev/input/by-id/...)
+- **Type**: `null or string`
+- **Default**: `null`
+
+
+#### `myModules.vfio.hugepages.count`
+
+**Description**: Number of hugepages to allocate
 - **Type**: `signed integer`
-- **Default**: `1600`
+- **Default**: `8192`
 
 
-#### `myModules.yeetmouse.devices.g502.enable`
+#### `myModules.vfio.hugepages.enable`
 
-**Description**: Whether to enable Libinput flat acceleration profile for Logitech G502 (Wired/Wireless).
+**Description**: Static hugepage allocation for VM memory
 - **Type**: `boolean`
 - **Default**: `false`
 
 
-#### `myModules.yeetmouse.devices.g502.pollingRate`
+#### `myModules.vfio.hugepages.size`
 
-**Description**: Mouse polling rate in Hz (reported to libinput via HWDB)
+**Description**: Hugepage size (1G = fewer TLB misses, best for gaming VMs)
+- **Type**: `one of "2M", "1G"`
+- **Default**: `"2M"`
+
+
+#### `myModules.vfio.lookingGlass.enable`
+
+**Description**: KVMFR shared memory for Looking Glass frame relay
+- **Type**: `boolean`
+- **Default**: `true`
+
+
+#### `myModules.vfio.lookingGlass.memoryMB`
+
+**Description**: KVMFR shared memory size in MB (32=1440p SDR, 64=4K SDR, 128=4K HDR)
 - **Type**: `signed integer`
-- **Default**: `1000`
+- **Default**: `64`
 
 
-#### `myModules.yeetmouse.devices.g502.wiredProductId`
+#### `myModules.vfio.staticPciIds`
 
-**Description**: USB product ID for the wired G502 (check with lsusb)
-- **Type**: `string`
-- **Default**: `"c08d"`
-
-
-#### `myModules.yeetmouse.devices.g502.wirelessProductId`
-
-**Description**: USB product ID for the Lightspeed Receiver
-- **Type**: `string`
-- **Default**: `"c539"`
+**Description**: PCI vendor:device IDs for static vfio-pci binding (e.g. ["1002:7550" "1002:ab40"])
+- **Type**: `list of string`
+- **Default**: `[]`
 
 
-#### `myModules.yeetmouse.enable`
+#### `myModules.vfio.stealth.enable`
 
-**Description**: Whether to enable YeetMouse input driver.
+**Description**: Build patched QEMU with anti-detection + KVM kernel patches for RDTSC spoofing
 - **Type**: `boolean`
-- **Default**: `false`
+- **Default**: `true`
+
+
+#### `myModules.vfio.stealth.macPrefix`
+
+**Description**: MAC address OUI prefix (default: ASUS)
+- **Type**: `string`
+- **Default**: `"04:42:1a"`
+
+
+#### `myModules.vfio.stealth.smbios.biosVendor`
+
+**Description**: SMBIOS BIOS vendor
+- **Type**: `string`
+- **Default**: `"American Megatrends Inc."`
+
+
+#### `myModules.vfio.stealth.smbios.biosVersion`
+
+**Description**: SMBIOS BIOS version
+- **Type**: `string`
+- **Default**: `"2101"`
+
+
+#### `myModules.vfio.stealth.smbios.manufacturer`
+
+**Description**: SMBIOS system manufacturer
+- **Type**: `string`
+- **Default**: `"ASUSTeK COMPUTER INC."`
+
+
+#### `myModules.vfio.stealth.smbios.product`
+
+**Description**: SMBIOS product name
+- **Type**: `string`
+- **Default**: `"ROG CROSSHAIR X870E HERO"`
+
+
+#### `myModules.vfio.stealth.smbios.serial`
+
+**Description**: SMBIOS system serial number
+- **Type**: `string`
+- **Default**: `"System Serial Number"`
+
+
+#### `myModules.vfio.stealth.spoofMac`
+
+**Description**: Generate realistic MAC addresses with a real vendor OUI prefix
+- **Type**: `boolean`
+- **Default**: `true`
+
+
+#### `myModules.vfio.vms`
+
+**Description**: Per-VM definitions
+- **Type**: `lazy attribute set of (submodule)`
+- **Default**: `{}`
 
 

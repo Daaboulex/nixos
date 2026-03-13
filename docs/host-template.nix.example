@@ -2,7 +2,7 @@
 # NixOS Host Configuration Template
 # ==========================================================================
 # Auto-generated from myModules option definitions.
-# 241 options across 79 groups.
+# 263 options across 76 groups.
 #
 # Usage: copy this file to parts/hosts/<hostname>/default.nix and uncomment
 # the options you want to set. Options left commented use their module defaults.
@@ -23,40 +23,11 @@
   ];
 
   myModules = {
-# --- bottles.enable (1 options) ---
-    # bottles.enable = false;  # boolean — Whether to enable Bottles installation.
-
-# --- cachyos.settings (15 options) ---
-    # amdgpuGcnCompat.enable = false;  # boolean — Whether to enable CachyOS amdgpuGcnCompat.
-    # audio.enable = true;  # boolean — Whether to enable CachyOS audio.
-    # coredump.enable = true;  # boolean — Whether to enable CachyOS coredump.
-    # debuginfod.enable = true;  # boolean — Whether to enable CachyOS debuginfod.
-    # enable = false;  # boolean — Whether to enable CachyOS system optimizations (upstream-matched settings).
-    # extraPerformance.enable = true;  # boolean — Whether to enable Extra performance sysctls: BBR, cake, tcp_fastopen, buffer ...
-    # ioSchedulers.enable = true;  # boolean — Whether to enable CachyOS ioSchedulers.
-    # networkManager.enable = true;  # boolean — Whether to enable CachyOS networkManager.
-    # ntsync.enable = true;  # boolean — Whether to enable CachyOS ntsync.
-    # nvidia.enable = false;  # boolean — Whether to enable CachyOS nvidia.
-    # storage.enable = true;  # boolean — Whether to enable CachyOS storage.
-    # systemd.enable = true;  # boolean — Whether to enable CachyOS systemd.
-    # thp.enable = true;  # boolean — Whether to enable CachyOS thp.
-    # timesyncd.enable = true;  # boolean — Whether to enable CachyOS timesyncd.
-    # zram.enable = true;  # boolean — Whether to enable CachyOS zram.
-
 # --- coolercontrol.autostart (1 options) ---
     # coolercontrol.autostart = true;  # boolean — Whether to autostart the CoolerControl GUI at login via XDG autostart
 
 # --- coolercontrol.enable (1 options) ---
     # coolercontrol.enable = false;  # boolean — Whether to enable CoolerControl fan and cooling device management.
-
-# --- corecycler.enable (1 options) ---
-    # corecycler.enable = false;  # boolean — Whether to enable Linux CoreCycler per-core CPU stability tester and PBO Curv...
-
-# --- corecycler.ryzenSmu (1 options) ---
-    # corecycler.ryzenSmu = true;  # boolean — Whether to load the ryzen_smu kernel module for Curve Optimizer read/write vi...
-
-# --- debuggingProbes.enable (1 options) ---
-    # debuggingProbes.enable = false;  # boolean — Whether to enable Embedded debugging probes (LPC-Link2, ESP32) udev rules.
 
 # --- desktop.displays (3 options) ---
     # enable = false;  # boolean — Whether to enable declarative display configuration.
@@ -75,23 +46,26 @@
 # --- development.claudeCode (1 options) ---
     # development.claudeCode = false;  # boolean — Whether to enable Claude Code AI assistant.
 
+# --- development.debuggingProbes (1 options) ---
+    # enable = false;  # boolean — Whether to enable Embedded debugging probes (LPC-Link2, ESP32) udev rules.
+
 # --- development.enable (1 options) ---
     # development.enable = false;  # boolean — Whether to enable Development tools (compilers, build systems, AI assistants).
 
 # --- development.saleae (1 options) ---
     # development.saleae = false;  # boolean — Whether to enable Saleae Logic analyzer and udev rules.
 
-# --- duckyOneXMini.board (1 options) ---
-    # product = "001d";  # string — USB product ID for the keyboard board HID interface
+# --- diagnostics.corecycler (4 options) ---
+    # enable = false;  # boolean — Whether to enable CoreCyclerLx per-core CPU stability tester and PBO Curve Op...
+    # ryzenSmu = true;  # boolean — Whether to load the ryzen_smu kernel module for Curve Optimizer read/write vi...
+    # unfreeBackends = false;  # boolean — Whether to include unfree backends (mprime). When false, only FOSS backends (...
+    # zenpower = false;  # boolean — Whether to use zenpower3 instead of k10temp for Vcore/Vsoc voltage monitoring...
 
-# --- duckyOneXMini.enable (1 options) ---
-    # duckyOneXMini.enable = false;  # boolean — Whether to enable Ducky One X Mini keyboard HID access (udev rules for VIA/Vi...
+# --- diagnostics.iommu (1 options) ---
+    # enable = false;  # boolean — Whether to enable IOMMU group listing tool.
 
-# --- duckyOneXMini.mcu (1 options) ---
-    # product = "0021";  # string — USB product ID for the keyboard MCU HID interface
-
-# --- duckyOneXMini.vendor (1 options) ---
-    # duckyOneXMini.vendor = "3233";  # string — USB vendor ID for the Ducky keyboard
+# --- diagnostics.sysdiag (1 options) ---
+    # enable = false;  # boolean — Whether to enable sysdiag system diagnostics.
 
 # --- gaming.azahar (1 options) ---
     # enable = false;  # boolean — Azahar
@@ -162,6 +136,11 @@
     # overlayKey = "F1";  # string — Key to open the overlay UI in-game
     # toggleKey = "Home";  # string — Key to toggle effects on/off in-game
 
+# --- gaming.wine (3 options) ---
+    # bottles.enable = false;  # boolean — Whether to enable Bottles installation.
+    # enable = false;  # boolean — Whether to enable Wine installation.
+    # variant = "stagingFull";  # one of "stable", "staging", "stableFull", "stagingFull" — Wine variant (staging has more patches, Full includes all optional deps)
+
 # --- goxlr.denoise (8 options) ---
     # attenuationLimit = 100;  # signed integer — Max noise attenuation in dB (0-100). 100 = no limit (official default). 6-12 ...
     # enable = false;  # boolean — Whether to enable DeepFilterNet3 neural noise suppression on chat mic.
@@ -229,7 +208,7 @@
     # amd.x3dVcache.mode = "cache";  # one of "cache", "frequency" — 3D V-Cache scheduling preference:
 - "cache": prefer CCD with larger L3 cache ...
 
-# --- hardware.graphics (15 options) ---
+# --- hardware.gpu (10 options) ---
     # amd.disableHDCP = false;  # boolean — Disable HDCP (amdgpu.dc_hdcp_enable=0) — fixes handshake bugs on RDNA 4
     # amd.drmDebug = false;  # boolean — DRM debug logging (drm.debug=0x1e) for diagnosing display black screens
     # amd.enable = false;  # boolean — Whether to enable AMD Graphics configuration.
@@ -240,6 +219,8 @@
     # amd.rdna4Fixes = true;  # boolean — Apply RDNA 4 (GFX12) stability kernel params: disable scatter-gather display ...
     # amd.vulkanDeviceId = null;  # null or string — Vulkan device vendor:device ID for MESA_VK_DEVICE_SELECT (forces discrete GPU...
     # amd.vulkanDeviceName = null;  # null or string — Vulkan device name substring for DXVK_FILTER_DEVICE_NAME and VKD3D_FILTER_DEV...
+
+# --- hardware.graphics (5 options) ---
     # enable = false;  # boolean — Whether to enable Graphics support.
     # enable32Bit = true;  # boolean — 32-bit graphics support
     # mesaGit.drivers = [ ];  # list of (one of "amd", "intel", "nvidia") — GPU vendors to compile drivers for. Only the selected vendor drivers
@@ -268,37 +249,25 @@ GPU vend...
     # laptop = false;  # boolean — Whether to enable Laptop power optimizations (TLP).
     # profile = "balanced";  # one of "performance", "balanced", "powersave" — Power profile to apply
 
-# --- iommu (1 options) ---
-    # iommu = false;  # boolean — Whether to enable IOMMU group listing tool.
+# --- input.duckyOneXMini (4 options) ---
+    # board.product = "001d";  # string — USB product ID for the keyboard board HID interface
+    # enable = false;  # boolean — Whether to enable Ducky One X Mini keyboard HID access (udev rules for VIA/Vi...
+    # mcu.product = "0021";  # string — USB product ID for the keyboard MCU HID interface
+    # vendor = "3233";  # string — USB vendor ID for the Ducky keyboard
 
-# --- kernel.cachyos (9 options) ---
-    # bbr3 = null;  # null or boolean — BBR3 TCP congestion control
-    # ccHarder = null;  # null or boolean — -O3 optimizations
-    # cpusched = null;  # null or string — CPU scheduler (e.g. bmq, bore, eevdf)
-    # hugepage = null;  # null or string — Transparent Hugepage behavior (e.g. always, madvise)
-    # hzTicks = null;  # null or string — Timer frequency (e.g. 1000, 500, 300)
-    # kcfi = null;  # null or boolean — KCFI (Kernel Control Flow Integrity)
-    # performanceGovernor = null;  # null or boolean — Default to performance governor
-    # preemptType = null;  # null or string — Preemption model (e.g. full, voluntary)
-    # tickrate = null;  # null or string — Tickless behavior (e.g. full, idle)
+# --- input.piper (1 options) ---
+    # enable = false;  # boolean — Whether to enable Piper mouse configuration tool and ratbagd service.
 
-# --- kernel.channel (1 options) ---
-    # kernel.channel = "latest";  # one of "latest", "lts", "rc" — CachyOS kernel channel: latest (stable bleeding-edge), lts (long-term support...
+# --- input.streamcontroller (1 options) ---
+    # enable = false;  # boolean — Whether to enable StreamController (Elgato Stream Deck).
 
-# --- kernel.enable (1 options) ---
-    # kernel.enable = false;  # boolean — Whether to enable Custom kernel configuration.
-
-# --- kernel.extraParams (1 options) ---
-    # kernel.extraParams = [ ];  # list of string — Extra kernel parameters
-
-# --- kernel.mArch (1 options) ---
-    # kernel.mArch = "x86-64-v3";  # string — Microarchitecture for CachyOS kernel (x86-64-v3, x86-64-v4, ZEN4, ZEN5, etc.)
-
-# --- kernel.variant (1 options) ---
-    # kernel.variant = "default";  # one of "cachyos", "cachyos-lto", "cachyos-sched-ext", "zen", "xanmod", "default" — Kernel variant to use (cachyos, zen, xanmod, or NixOS default)
-
-# --- piper.enable (1 options) ---
-    # piper.enable = false;  # boolean — Whether to enable Piper mouse configuration tool and ratbagd service.
+# --- input.yeetmouse (6 options) ---
+    # devices.g502.dpi = 1600;  # signed integer — Mouse DPI setting (reported to libinput via HWDB)
+    # devices.g502.enable = false;  # boolean — Whether to enable Libinput flat acceleration profile for Logitech G502 (Wired...
+    # devices.g502.pollingRate = 1000;  # signed integer — Mouse polling rate in Hz (reported to libinput via HWDB)
+    # devices.g502.wiredProductId = "c08d";  # string — USB product ID for the wired G502 (check with lsusb)
+    # devices.g502.wirelessProductId = "c539";  # string — USB product ID for the Lightspeed Receiver
+    # enable = false;  # boolean — Whether to enable YeetMouse input driver.
 
 # --- primaryUser (1 options) ---
     # primaryUser = "user";  # string — Primary system username used across all modules
@@ -308,6 +277,10 @@ GPU vend...
     # group = "users";  # string — Group to run the service as
     # targetDir = null;  # string — Target directory for Firefox profile
     # user = "user";  # string — User to run the service as
+
+# --- security.hardening (2 options) ---
+    # enable = false;  # boolean — Whether to enable System-wide security hardening.
+    # firejail.enable = false;  # boolean — Firejail sandboxing
 
 # --- security.portmaster (5 options) ---
     # autostart = true;  # boolean — Whether portmaster.service starts automatically on boot. When false, the serv...
@@ -326,16 +299,6 @@ GPU vend...
     # trustedKeys = [ ];  # list of string — List of trusted SSH public keys
     # ... and 1 more options with complex defaults (see docs/OPTIONS.md)
 
-# --- security.system (2 options) ---
-    # enable = false;  # boolean — Whether to enable System-wide security hardening.
-    # firejail.enable = false;  # boolean — Firejail sandboxing
-
-# --- streamcontroller.enable (1 options) ---
-    # streamcontroller.enable = false;  # boolean — Whether to enable StreamController (Elgato Stream Deck).
-
-# --- sysdiag (1 options) ---
-    # sysdiag = false;  # boolean — Whether to enable sysdiag system diagnostics.
-
 # --- system.boot (8 options) ---
     # consoleMode = "max";  # null or string — Console resolution mode (max, keep, or specific like 1920x1080)
     # enable = false;  # boolean — Whether to enable Boot configuration.
@@ -345,6 +308,23 @@ GPU vend...
     # plymouth.theme = "bgrt";  # string — Plymouth theme to use
     # secureBoot.enable = false;  # boolean — Whether to enable Lanzaboote secure boot.
     # secureBoot.pkiBundle = "/var/lib/sbctl";  # absolute path — Path to PKI bundle
+
+# --- system.cachyos (15 options) ---
+    # amdgpuGcnCompat.enable = false;  # boolean — Whether to enable CachyOS amdgpuGcnCompat.
+    # audio.enable = true;  # boolean — Whether to enable CachyOS audio.
+    # coredump.enable = true;  # boolean — Whether to enable CachyOS coredump.
+    # debuginfod.enable = true;  # boolean — Whether to enable CachyOS debuginfod.
+    # enable = false;  # boolean — Whether to enable CachyOS system optimizations (upstream-matched settings).
+    # extraPerformance.enable = true;  # boolean — Whether to enable Extra performance sysctls: BBR, cake, tcp_fastopen, buffer ...
+    # ioSchedulers.enable = true;  # boolean — Whether to enable CachyOS ioSchedulers.
+    # networkManager.enable = true;  # boolean — Whether to enable CachyOS networkManager.
+    # ntsync.enable = true;  # boolean — Whether to enable CachyOS ntsync.
+    # nvidia.enable = false;  # boolean — Whether to enable CachyOS nvidia.
+    # storage.enable = true;  # boolean — Whether to enable CachyOS storage.
+    # systemd.enable = true;  # boolean — Whether to enable CachyOS systemd.
+    # thp.enable = true;  # boolean — Whether to enable CachyOS thp.
+    # timesyncd.enable = true;  # boolean — Whether to enable CachyOS timesyncd.
+    # zram.enable = true;  # boolean — Whether to enable CachyOS zram.
 
 # --- system.filesystems (7 options) ---
     # enable = false;  # boolean — Whether to enable Universal filesystem support.
@@ -364,6 +344,22 @@ GPU vend...
     # rollback.blankSnapshot = "@root-blank";  # string — Name of the read-only blank root snapshot
     # rollback.enable = true;  # boolean — Enable initrd rollback service that erases root on every boot
     # rollback.rootSubvolume = "@";  # string — Name of the root BTRFS subvolume
+
+# --- system.kernel (14 options) ---
+    # cachyos.bbr3 = null;  # null or boolean — BBR3 TCP congestion control
+    # cachyos.ccHarder = null;  # null or boolean — -O3 optimizations
+    # cachyos.cpusched = null;  # null or string — CPU scheduler (e.g. bmq, bore, eevdf)
+    # cachyos.hugepage = null;  # null or string — Transparent Hugepage behavior (e.g. always, madvise)
+    # cachyos.hzTicks = null;  # null or string — Timer frequency (e.g. 1000, 500, 300)
+    # cachyos.kcfi = null;  # null or boolean — KCFI (Kernel Control Flow Integrity)
+    # cachyos.performanceGovernor = null;  # null or boolean — Default to performance governor
+    # cachyos.preemptType = null;  # null or string — Preemption model (e.g. full, voluntary)
+    # cachyos.tickrate = null;  # null or string — Tickless behavior (e.g. full, idle)
+    # channel = "latest";  # one of "latest", "lts", "rc" — CachyOS kernel channel: latest (stable bleeding-edge), lts (long-term support...
+    # enable = false;  # boolean — Whether to enable Custom kernel configuration.
+    # extraParams = [ ];  # list of string — Extra kernel parameters
+    # mArch = "x86-64-v3";  # string — Microarchitecture for CachyOS kernel (x86-64-v3, x86-64-v4, ZEN4, ZEN5, etc.)
+    # variant = "default";  # one of "cachyos", "cachyos-lto", "cachyos-sched-ext", "zen", "xanmod", "default" — Kernel variant to use (cachyos, zen, xanmod, or NixOS default)
 
 # --- system.nix (1 options) ---
     # enable = false;  # boolean — Whether to enable Nix daemon configuration and settings.
@@ -404,21 +400,42 @@ GPU vend...
 # --- tidalcycles.enable (1 options) ---
     # tidalcycles.enable = false;  # boolean — Whether to enable TidalCycles and SuperDirt.
 
-# --- wine.enable (1 options) ---
-    # wine.enable = false;  # boolean — Whether to enable Wine installation.
+# --- vfio.bindMethod (1 options) ---
+    # vfio.bindMethod = "dynamic";  # one of "static", "dynamic" — static = vfio-pci.ids kernel param (GPU always captured at boot); dynamic = l...
 
-# --- wine.variant (1 options) ---
-    # wine.variant = "stagingFull";  # one of "stable", "staging", "stableFull", "stagingFull" — Wine variant (staging has more patches, Full includes all optional deps)
+# --- vfio.enable (1 options) ---
+    # vfio.enable = false;  # boolean — Whether to enable VFIO GPU passthrough with stealth VM management.
 
-# --- yeetmouse.devices (5 options) ---
-    # g502.dpi = 1600;  # signed integer — Mouse DPI setting (reported to libinput via HWDB)
-    # g502.enable = false;  # boolean — Whether to enable Libinput flat acceleration profile for Logitech G502 (Wired...
-    # g502.pollingRate = 1000;  # signed integer — Mouse polling rate in Hz (reported to libinput via HWDB)
-    # g502.wiredProductId = "c08d";  # string — USB product ID for the wired G502 (check with lsusb)
-    # g502.wirelessProductId = "c539";  # string — USB product ID for the Lightspeed Receiver
+# --- vfio.evdev (3 options) ---
+    # enable = true;  # boolean — Evdev input passthrough for keyboard/mouse
+    # keyboardPath = null;  # null or string — Path to keyboard event device (e.g. /dev/input/by-id/...)
+    # mousePath = null;  # null or string — Path to mouse event device (e.g. /dev/input/by-id/...)
 
-# --- yeetmouse.enable (1 options) ---
-    # yeetmouse.enable = false;  # boolean — Whether to enable YeetMouse input driver.
+# --- vfio.hugepages (3 options) ---
+    # count = 8192;  # signed integer — Number of hugepages to allocate
+    # enable = false;  # boolean — Static hugepage allocation for VM memory
+    # size = "2M";  # one of "2M", "1G" — Hugepage size (1G = fewer TLB misses, best for gaming VMs)
+
+# --- vfio.lookingGlass (2 options) ---
+    # enable = true;  # boolean — KVMFR shared memory for Looking Glass frame relay
+    # memoryMB = 64;  # signed integer — KVMFR shared memory size in MB (32=1440p SDR, 64=4K SDR, 128=4K HDR)
+
+# --- vfio.staticPciIds (1 options) ---
+    # vfio.staticPciIds = [ ];  # list of string — PCI vendor:device IDs for static vfio-pci binding (e.g. ["1002:7550" "1002:ab...
+
+# --- vfio.stealth (8 options) ---
+    # enable = true;  # boolean — Build patched QEMU with anti-detection + KVM kernel patches for RDTSC spoofing
+    # macPrefix = "04:42:1a";  # string — MAC address OUI prefix (default: ASUS)
+    # smbios.biosVendor = "American Megatrends Inc.";  # string — SMBIOS BIOS vendor
+    # smbios.biosVersion = "2101";  # string — SMBIOS BIOS version
+    # smbios.manufacturer = "ASUSTeK COMPUTER INC.";  # string — SMBIOS system manufacturer
+    # smbios.product = "ROG CROSSHAIR X870E HERO";  # string — SMBIOS product name
+    # smbios.serial = "System Serial Number";  # string — SMBIOS system serial number
+    # spoofMac = true;  # boolean — Generate realistic MAC addresses with a real vendor OUI prefix
+
+# --- vfio.vms (1 options) ---
+
+    # ... and 1 more options with complex defaults (see docs/OPTIONS.md)
   };
 
   # System basics (edit these for your host)

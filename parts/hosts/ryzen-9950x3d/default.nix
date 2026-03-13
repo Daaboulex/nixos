@@ -98,13 +98,43 @@
         # rollback.enable = true; # (default)
         # rollback.blankSnapshot = "@root-blank"; # (default)
       };
+
+      kernel = {
+        enable = true;
+        variant = "cachyos-lto";
+        # channel = "latest"; # (default)
+        mArch = "ZEN5"; # Zen 5 (9950X3D) supports x86-64-v4, use ZEN4 for specific tuning
+        extraParams = [
+          # loglevel=0 removed — Plymouth/Lanzaboote appends loglevel=4 which overrides it
+          "vt.global_cursor_default=0"
+          "iommu=pt"
+          "nowatchdog"
+          "acpi_enforce_resources=lax"
+          "pci=realloc"
+          "usbcore.autosuspend=-1" # Disable USB autosuspend (fixes xhci_hcd suspend timeout)
+          "split_lock_detect=off" # Prevents perf drops in games using split-lock instructions
+          "nvme_core.default_ps_max_latency_us=0" # Disable NVMe power state transitions (prevents micro-stutters)
+          "tsc=reliable" # Pin TSC as clocksource — Zen 5 has invariant TSC
+        ];
+        cachyos = {
+          cpusched = "bore"; # BORE compiled into kernel as fallback; scx_lavd overlays it via BPF when loaded
+          bbr3 = true;
+          hzTicks = "1000";
+          kcfi = false;
+          performanceGovernor = false; # powersave governor via P-State active mode is correct for Zen 5
+          tickrate = "full";
+          preemptType = "full";
+          ccHarder = true;
+          hugepage = "always";
+        };
+      };
     };
 
     # --------------------------------------------------------------------------
     # Security
     # --------------------------------------------------------------------------
     security = {
-      system = {
+      hardening = {
         enable = true;
         firejail.enable = false; # Not needed — Portmaster handles app isolation
       };
@@ -157,18 +187,6 @@
       graphics = {
         enable = true;
         enable32Bit = true; # (default)
-        amd = {
-          enable = true;
-          vulkanDeviceId = "1002:7550"; # RX 9070 XT — force dGPU for Vulkan on dual-AMD systems
-          vulkanDeviceName = "AMD Radeon RX 9070 XT"; # Substring match for DXVK/VKD3D device filter
-          lact.enable = true;
-          initrd.enable = true; # Load amdgpu early (faster display init)
-          enablePPFeatureMask = true; # Full power management feature flags
-          rdna4Fixes = true; # RDNA 4 stability kernel params
-          drmDebug = false; # Was destroying ALL boot logs (~800 msg/sec overflows kmsg ring buffer)
-          disableHDCP = false; # HDCP enabled (was disabled for RDNA 4 handshake debugging)
-          openCL = true; # (default) — RustiCL radeonsi driver
-        };
         # Intel GPU: not imported on this host (see flake-module.nix)
         # NVIDIA GPU: not imported on this host (see flake-module.nix)
         # openCL.rusticlDrivers assembled automatically from GPU modules
@@ -176,6 +194,18 @@
           enable = true; # Bleeding-edge Mesa from git main (RDNA 4 optimizations)
           drivers = [ "amd" ]; # Only compile AMD drivers (radeonsi, RADV) + essentials
         };
+      };
+      gpu.amd = {
+        enable = true;
+        vulkanDeviceId = "1002:7550"; # RX 9070 XT — force dGPU for Vulkan on dual-AMD systems
+        vulkanDeviceName = "AMD Radeon RX 9070 XT"; # Substring match for DXVK/VKD3D device filter
+        lact.enable = true;
+        initrd.enable = true; # Load amdgpu early (faster display init)
+        enablePPFeatureMask = true; # Full power management feature flags
+        rdna4Fixes = true; # RDNA 4 stability kernel params
+        drmDebug = false; # Was destroying ALL boot logs (~800 msg/sec overflows kmsg ring buffer)
+        disableHDCP = false; # HDCP enabled (was disabled for RDNA 4 handshake debugging)
+        openCL = true; # (default) — RustiCL radeonsi driver
       };
       cpu.amd = {
         enable = true; # AMD CPU optimizations (pstate, prefcore, kvm, microcode)
@@ -226,53 +256,21 @@
     };
 
     # --------------------------------------------------------------------------
-    # Standalone Modules
+    # Input
     # --------------------------------------------------------------------------
-    yeetmouse = {
-      enable = true;
-      devices.g502 = {
-        enable = true; # Libinput flat profile HWDB entries (prevents double acceleration)
-        # Acceleration parameters are set via hardware.yeetmouse below
+    input = {
+      yeetmouse = {
+        enable = true;
+        devices.g502 = {
+          enable = true; # Libinput flat profile HWDB entries (prevents double acceleration)
+          # Acceleration parameters are set via hardware.yeetmouse below
+        };
       };
+      duckyOneXMini.enable = true;
+      piper.enable = true;
+      streamcontroller.enable = true;
     };
-    duckyOneXMini.enable = true;
-    debuggingProbes.enable = true;
-    piper.enable = true;
-    streamcontroller.enable = true;
     coolercontrol.enable = true; # Fan/cooling device management (daemon + GUI)
-
-    # --------------------------------------------------------------------------
-    # Kernel
-    # --------------------------------------------------------------------------
-    kernel = {
-      enable = true;
-      variant = "cachyos-lto";
-      # channel = "latest"; # (default)
-      mArch = "ZEN5"; # Zen 5 (9950X3D) supports x86-64-v4, use ZEN4 for specific tuning
-      extraParams = [
-        # loglevel=0 removed — Plymouth/Lanzaboote appends loglevel=4 which overrides it
-        "vt.global_cursor_default=0"
-        "iommu=pt"
-        "nowatchdog"
-        "acpi_enforce_resources=lax"
-        "pci=realloc"
-        "usbcore.autosuspend=-1" # Disable USB autosuspend (fixes xhci_hcd suspend timeout)
-        "split_lock_detect=off" # Prevents perf drops in games using split-lock instructions
-        "nvme_core.default_ps_max_latency_us=0" # Disable NVMe power state transitions (prevents micro-stutters)
-        "tsc=reliable" # Pin TSC as clocksource — Zen 5 has invariant TSC
-      ];
-      cachyos = {
-        cpusched = "bore"; # BORE compiled into kernel as fallback; scx_lavd overlays it via BPF when loaded
-        bbr3 = true;
-        hzTicks = "1000";
-        kcfi = false;
-        performanceGovernor = false; # powersave governor via P-State active mode is correct for Zen 5
-        tickrate = "full";
-        preemptType = "full";
-        ccHarder = true;
-        hugepage = "always";
-      };
-    };
 
     # --------------------------------------------------------------------------
     # Desktop
@@ -410,27 +408,106 @@
       enable = true;
       claudeCode = true;
       saleae = true;
+      debuggingProbes.enable = true;
     };
 
     # --------------------------------------------------------------------------
-    # Tools & Programs
+    # Diagnostics
     # --------------------------------------------------------------------------
-    sysdiag = true;
-    iommu = true;
-    corecycler = {
-      enable = true; # Per-core CPU stability tester + PBO Curve Optimizer tuner
-      ryzenSmu = true; # Load ryzen_smu for runtime CO read/write via SMU
+    diagnostics = {
+      sysdiag.enable = true;
+      iommu.enable = true;
+      corecycler = {
+        enable = true; # CoreCyclerLx — per-core CPU stability tester + PBO Curve Optimizer tuner
+        unfreeBackends = true; # Include mprime (unfree) alongside stress-ng
+        ryzenSmu = true; # Load ryzen_smu for runtime CO read/write via SMU
+        zenpower = true; # zenpower5 — Zen 5 Granite Ridge temps + RAPL power (replaces k10temp)
+      };
     };
-    wine = {
+
+    # --------------------------------------------------------------------------
+    # VFIO — Stealth GPU Passthrough
+    # --------------------------------------------------------------------------
+    vfio = {
       enable = true;
-      variant = "staging";
+      bindMethod = "dynamic"; # Libvirt hooks bind/unbind on VM start/stop
+      stealth = {
+        enable = true; # Patched QEMU + KVM RDTSC spoofing
+        smbios = {
+          manufacturer = "ASUSTeK COMPUTER INC.";
+          product = "ROG CROSSHAIR X870E HERO";
+          biosVendor = "American Megatrends Inc.";
+          biosVersion = "2101";
+        };
+      };
+      lookingGlass = {
+        enable = true;
+        memoryMB = 32; # 1080p SDR (15MB/frame × 2 = 30MB, 32MB is next power of 2)
+      };
+      hugepages = {
+        enable = true;
+        count = 32; # 32 × 1GB = 32GB for VM (1GB pages = fewer TLB misses than 2MB)
+        size = "1G"; # 1GB hugepages for maximum gaming performance
+      };
+      evdev = {
+        enable = true;
+        keyboardPath = "/dev/input/by-id/usb-Ducky_Ducky_One_X_Mini_Wireless-event-kbd";
+        mousePath = "/dev/input/by-id/usb-Logitech_USB_Receiver-if02-event-mouse";
+        # Toggle host/guest: press both Ctrl keys simultaneously (grab_all=on)
+      };
+      # Windows 11 Gaming VM
+      # GPU passthrough: RX 9070 XT drives all 3 monitors (DP-1, DP-2, HDMI-A-1)
+      # When VM starts: all monitors on the 9070 XT switch to Windows automatically
+      # When VM stops: GPU returns to host, monitors show Linux again
+      # Host management while VM runs: SSH, or plug a monitor into motherboard HDMI-A-3 (iGPU)
+      # Looking Glass: view VM output on iGPU display without separate monitor
+      vms.win11 = {
+        uuid = "f298e20c-32ad-4921-87f0-164a211125c9";
+        memory.count = 32;
+        vcpu = {
+          count = 16;
+          # CCD0 (V-Cache, 96MB L3) — maximum gaming performance
+          # Physical cores 0-7 + SMT threads 16-23 share the 96MB L3 cache
+          # CCD1 (cores 8-15, 24-31) stays for host background tasks
+          pinning = [
+            0
+            1
+            2
+            3
+            4
+            5
+            6
+            7
+            16
+            17
+            18
+            19
+            20
+            21
+            22
+            23
+          ];
+        };
+        # NVMe passthrough: Windows NVMe controller at 05:00.0 (IOMMU Group 19, isolated)
+        # Windows sees its real Samsung 9100 PRO — existing install boots directly
+        pciPassthrough = [ "0000:05:00.0" ]; # Samsung 9100 PRO 2TB (Windows NVMe)
+        gpu = {
+          pciAddress = "0000:03:00.0"; # RX 9070 XT VGA (IOMMU Group 16)
+          audioAddress = "0000:03:00.1"; # RX 9070 XT Audio (IOMMU Group 17)
+        };
+        # CCD0 = 8c/16t with 96MB V-Cache → spoof as Ryzen 7 9850X3D
+        cpuIdentity = {
+          modelId = "AMD Ryzen 7 9850X3D 8-Core Processor";
+          maxSpeed = 5600; # 9850X3D boost clock
+          currentSpeed = 4700; # 9850X3D base clock
+        };
+      };
     };
-    bottles.enable = true;
 
     # --------------------------------------------------------------------------
     # CachyOS Settings
     # --------------------------------------------------------------------------
-    cachyos.settings = {
+    system.cachyos = {
       enable = true;
       zram.enable = true; # (default)
       ioSchedulers.enable = true; # (default)
@@ -508,6 +585,11 @@
         LiftGammaGainGamma = 1.0,1.0,1.0,0.98
         LiftGammaGainGain = 1.0,1.0,1.0,1.03
       '';
+    };
+    wine = {
+      enable = true;
+      variant = "staging";
+      bottles.enable = true;
     };
   };
 

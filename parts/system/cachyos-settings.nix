@@ -1,6 +1,6 @@
 { inputs, ... }:
 {
-  flake.nixosModules.cachyos-settings =
+  flake.nixosModules.system-cachyos =
     {
       config,
       lib,
@@ -8,7 +8,7 @@
       ...
     }:
     let
-      cfg = config.myModules.cachyos.settings;
+      cfg = config.myModules.system.cachyos;
 
       # All upstream sub-option names (passed through to cachyos.settings.*)
       upstreamToggles = [
@@ -45,7 +45,7 @@
       # ==================================================================
       # Options — myModules wrapper + extraPerformance (not upstream)
       # ==================================================================
-      options.myModules.cachyos.settings = {
+      options.myModules.system.cachyos = {
         enable = lib.mkEnableOption "CachyOS system optimizations (upstream-matched settings)";
 
         # Generate sub-option enables that mirror cachyos.settings.*

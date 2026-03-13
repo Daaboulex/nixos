@@ -8,11 +8,11 @@
       ...
     }:
     let
-      cfg = config.myModules.kernel;
+      cfg = config.myModules.system.kernel;
     in
     {
       _class = "nixos";
-      options.myModules.kernel = {
+      options.myModules.system.kernel = {
         enable = lib.mkEnableOption "Custom kernel configuration";
         variant = lib.mkOption {
           type = lib.types.enum [

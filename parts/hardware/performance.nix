@@ -60,7 +60,7 @@
       };
 
       config = lib.mkIf cfg.enable {
-        # ZRAM and sysctl tuning are handled by myModules.cachyos.settings
+        # ZRAM and sysctl tuning are handled by myModules.system.cachyos
         # This module only manages CPU governor and process priority (ananicy)
 
         powerManagement.cpuFreqGovernor = lib.mkDefault cfg.governor;

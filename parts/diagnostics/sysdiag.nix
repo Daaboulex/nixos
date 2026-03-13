@@ -1,6 +1,6 @@
 { inputs, ... }:
 {
-  flake.nixosModules.sysdiag =
+  flake.nixosModules.diagnostics-sysdiag =
     {
       config,
       lib,
@@ -8,15 +8,17 @@
       ...
     }:
     let
-      cfg = config.myModules;
-      scriptText = import ./sysdiag-script.nix { inherit pkgs; };
+      cfg = config.myModules.diagnostics.sysdiag;
+      scriptText = import ../sysdiag-script.nix { inherit pkgs; };
       sysdiag = pkgs.writeShellScriptBin "sysdiag" scriptText;
     in
     {
       _class = "nixos";
-      options.myModules.sysdiag = lib.mkEnableOption "sysdiag system diagnostics";
+      options.myModules.diagnostics.sysdiag = {
+        enable = lib.mkEnableOption "sysdiag system diagnostics";
+      };
 
-      config = lib.mkIf cfg.sysdiag {
+      config = lib.mkIf cfg.enable {
         environment.systemPackages = [ sysdiag ];
       };
     };

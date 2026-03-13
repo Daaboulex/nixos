@@ -1,6 +1,6 @@
 { inputs, ... }:
 {
-  flake.nixosModules.ducky-one-x-mini =
+  flake.nixosModules.input-ducky-one-x-mini =
     {
       config,
       lib,
@@ -8,11 +8,11 @@
       ...
     }:
     let
-      cfg = config.myModules.duckyOneXMini;
+      cfg = config.myModules.input.duckyOneXMini;
     in
     {
       _class = "nixos";
-      options.myModules.duckyOneXMini = {
+      options.myModules.input.duckyOneXMini = {
         enable = lib.mkEnableOption "Ducky One X Mini keyboard HID access (udev rules for VIA/Vial)";
 
         vendor = lib.mkOption {

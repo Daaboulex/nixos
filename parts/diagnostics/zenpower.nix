@@ -1,4 +1,6 @@
-# Zenpower3 kernel module — builds with gcc or clang depending on kernel toolchain.
+# Zenpower5 kernel module — fork with Zen 5 (Granite Ridge) support.
+# Provides Tctl/Tdie/Tccd temps + RAPL package power on Zen 5.
+# SVI3 voltage/current is NOT available on Zen 5 (undocumented register format).
 # CachyOS LTO kernels use clang, so out-of-tree modules must match.
 {
   lib,
@@ -22,16 +24,22 @@ let
 
   buildStdenv = if kernelUsesLLVM then llvmPackages_latest.stdenv else stdenv;
 in
-buildStdenv.mkDerivation rec {
+buildStdenv.mkDerivation {
   pname = "zenpower";
-  version = "unstable-2025-12-20";
+  version = "0.5.0-unstable-2026-03-13";
 
   src = fetchFromGitHub {
-    owner = "AliEmreSenel";
-    repo = "zenpower3";
-    rev = "dc4f1e2d2f5e26ad5b314497485419cb240e7134";
-    hash = "sha256-NvCBog1rAAjbhT9dMOjsmio6lVZ9h36XvOiE7znJdTo=";
+    owner = "mattkeenan";
+    repo = "zenpower5";
+    rev = "66871d8e59c3741e00de2eb1f61c3b64263ed10b";
+    hash = "sha256-g0zVTDi5owa6XfQN8vlFwGX+gpRIg+5q1F4EuxAk9Sk=";
   };
+
+  # Clang rejects GCC-specific -Wimplicit-fallthrough=3 (with -Werror).
+  # Replace with the clang-compatible form (no level suffix).
+  postPatch = lib.optionalString kernelUsesLLVM ''
+    substituteInPlace Makefile --replace-fail "-Wimplicit-fallthrough=3" "-Wimplicit-fallthrough"
+  '';
 
   hardeningDisable = [ "pic" ];
 
@@ -48,7 +56,7 @@ buildStdenv.mkDerivation rec {
     "LLVM=1"
     "CC=clang"
     "LD=ld.lld"
-    "KCFLAGS=-Wno-unused-command-line-argument"
+    "KCFLAGS=-Wno-unused-command-line-argument -Wno-unknown-warning-option"
   ];
 
   installPhase = ''
@@ -56,13 +64,9 @@ buildStdenv.mkDerivation rec {
   '';
 
   meta = {
-    inherit (src.meta) homepage;
-    description = "Linux kernel driver for reading temperature, voltage(SVI2), current(SVI2) and power(SVI2) for AMD Zen family CPUs";
+    homepage = "https://github.com/mattkeenan/zenpower5";
+    description = "AMD Zen family CPU sensors driver with Zen 5 support — temperature, SVI2 voltage/current (Zen 1-4), RAPL power";
     license = lib.licenses.gpl2Plus;
-    maintainers = with lib.maintainers; [
-      alexbakker
-      artturin
-    ];
     platforms = [ "x86_64-linux" ];
     broken = lib.versionOlder kernel.version "4.14";
   };

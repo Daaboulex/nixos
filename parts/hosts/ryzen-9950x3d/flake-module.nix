@@ -22,7 +22,7 @@
             inputs.self.nixosModules.system-packages
 
             # Security
-            inputs.self.nixosModules.security-system
+            inputs.self.nixosModules.security-hardening
             inputs.self.nixosModules.security-ssh
             inputs.self.nixosModules.security-sops
             inputs.self.nixosModules.security-arkenfox
@@ -44,28 +44,34 @@
             inputs.self.nixosModules.desktop-displays
             inputs.self.nixosModules.desktop-flatpak
 
+            # Input
+            inputs.self.nixosModules.input-yeetmouse
+            inputs.self.nixosModules.input-piper
+            inputs.self.nixosModules.input-streamcontroller
+            inputs.self.nixosModules.input-ducky-one-x-mini
+
+            # Diagnostics
+            inputs.self.nixosModules.diagnostics-sysdiag
+            inputs.self.nixosModules.diagnostics-iommu
+            inputs.self.nixosModules.diagnostics-corecycler
+
             # Standalone
-            inputs.self.nixosModules.yeetmouse
-            inputs.self.nixosModules.piper
-            inputs.self.nixosModules.streamcontroller
-            inputs.self.nixosModules.ducky-one-x-mini
-            inputs.self.nixosModules.debugging-probes
+            inputs.self.nixosModules.development-debugging-probes
             inputs.self.nixosModules.coolercontrol
             inputs.self.nixosModules.goxlr
             inputs.self.nixosModules.gaming
-            inputs.self.nixosModules.wine
+            inputs.self.nixosModules.gaming-wine
             inputs.self.nixosModules.tidalcycles
             inputs.self.nixosModules.development
-            inputs.self.nixosModules.sysdiag
-            inputs.self.nixosModules.iommu
-            inputs.self.nixosModules.corecycler
+            inputs.self.nixosModules.vfio
 
-            # CachyOS settings
-            inputs.self.nixosModules.cachyos-settings
+            # System (CachyOS)
+            inputs.self.nixosModules.system-cachyos
 
             # External modules
             inputs.portmaster.nixosModules.default
             inputs.cachyos-settings-nix.nixosModules.default
+            inputs.NixVirt.nixosModules.default
             inputs.impermanence.nixosModules.impermanence
             # CoolerControl: overlay provides 4.0.1 packages, nixpkgs module handles the rest
           ];

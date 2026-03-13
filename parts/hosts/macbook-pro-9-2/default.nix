@@ -91,7 +91,7 @@
     # Security
     # --------------------------------------------------------------------------
     security = {
-      system = {
+      hardening = {
         enable = true;
         firejail.enable = false; # Not needed — Portmaster handles app isolation
       };
@@ -141,19 +141,19 @@
       graphics = {
         enable = true;
         enable32Bit = true; # (default)
-        intel = {
-          enable = true;
-          kernelParams = {
-            enablePsr = false; # PSR causes flickering on MBP 2012
-            enableFbc = true; # Frame Buffer Compression for power saving
-            enableDc = false; # Display C-states unstable on Ivy Bridge
-          };
-          openCL = true; # (default) — RustiCL iris driver
-        };
         # AMD GPU: not imported on this host (see flake-module.nix)
         # NVIDIA GPU: not imported on this host (see flake-module.nix)
         # openCL.rusticlDrivers assembled automatically from GPU modules
         mesaGit.enable = false; # Standard mesa is fine for HD4000
+      };
+      gpu.intel = {
+        enable = true;
+        kernelParams = {
+          enablePsr = false; # PSR causes flickering on MBP 2012
+          enableFbc = true; # Frame Buffer Compression for power saving
+          enableDc = false; # Display C-states unstable on Ivy Bridge
+        };
+        openCL = true; # (default) — RustiCL iris driver
       };
       cpu.intel = {
         enable = true;
@@ -210,7 +210,7 @@
     # --------------------------------------------------------------------------
     # Kernel
     # --------------------------------------------------------------------------
-    kernel = {
+    system.kernel = {
       enable = true;
       variant = lib.mkDefault "default"; # Specialisations override to xanmod/cachyos
       channel = "latest"; # (default)
@@ -258,19 +258,21 @@
     # --------------------------------------------------------------------------
     # Tools & Programs
     # --------------------------------------------------------------------------
-    sysdiag = true;
-    iommu = false; # No IOMMU passthrough on this machine
+    diagnostics = {
+      sysdiag.enable = true;
+      iommu.enable = false; # No IOMMU passthrough on this machine
+    };
     # corecycler: not imported on this host (AMD PBO CO tuner — Intel laptop)
-    wine = {
+    gaming.wine = {
       enable = true;
       variant = "staging";
+      bottles.enable = false; # Not needed on laptop
     };
-    bottles.enable = false; # Not needed on laptop
 
     # --------------------------------------------------------------------------
     # CachyOS Settings
     # --------------------------------------------------------------------------
-    cachyos.settings = {
+    system.cachyos = {
       enable = true;
       zram.enable = true; # (default)
       ioSchedulers.enable = true; # (default)

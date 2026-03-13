@@ -1,6 +1,6 @@
 { inputs, ... }:
 {
-  flake.nixosModules.security-system =
+  flake.nixosModules.security-hardening =
     {
       config,
       lib,
@@ -8,11 +8,11 @@
       ...
     }:
     let
-      cfg = config.myModules.security.system;
+      cfg = config.myModules.security.hardening;
     in
     {
       _class = "nixos";
-      options.myModules.security.system = {
+      options.myModules.security.hardening = {
         enable = lib.mkEnableOption "System-wide security hardening";
         firejail.enable = lib.mkOption {
           type = lib.types.bool;
@@ -24,7 +24,7 @@
       config = lib.mkIf cfg.enable {
         security.rtkit.enable = true;
 
-        # @audio rtprio is handled by myModules.cachyos.settings (CachyOS upstream)
+        # @audio rtprio is handled by myModules.system.cachyos (CachyOS upstream)
         security.pam.loginLimits = [
           {
             domain = "@audio";

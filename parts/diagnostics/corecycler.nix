@@ -18,6 +18,9 @@
       zenpower = pkgs.callPackage ./zenpower.nix {
         inherit (config.boot.kernelPackages) kernel;
       };
+      ryzenSmuPkg = pkgs.callPackage ./ryzen-smu.nix {
+        inherit (config.boot.kernelPackages) kernel;
+      };
     in
     {
       _class = "nixos";
@@ -85,9 +88,10 @@
           "kernel.dmesg_restrict" = lib.mkDefault 0;
         };
 
-        # zenpower3 kernel module for SVI2 voltage monitoring — replaces k10temp
-        # Uses custom derivation that builds with clang for CachyOS LTO kernels
-        boot.extraModulePackages = lib.mkIf cfg.zenpower [ zenpower ];
+        # Out-of-tree kernel modules — custom derivations that build with
+        # clang for CachyOS LTO kernels, gcc otherwise
+        boot.extraModulePackages =
+          lib.optional cfg.ryzenSmu ryzenSmuPkg ++ lib.optional cfg.zenpower zenpower;
         boot.blacklistedKernelModules = lib.mkIf cfg.zenpower [ "k10temp" ];
       };
     };

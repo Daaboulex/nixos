@@ -256,5 +256,5 @@ Plymouth requires early KMS. Ensure your GPU driver is in the initrd:
 ```nix
 # This flake handles it automatically when both are enabled:
 myModules.system.boot.plymouth.enable = true;
-myModules.hardware.graphics.amd.enable = true;  # Loads amdgpu in initrd
+myModules.hardware.gpu.amd.enable = true;  # Loads amdgpu in initrd
 ```

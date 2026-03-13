@@ -285,6 +285,25 @@
               "0000:05:00.0"
             ];
           };
+          # CPU identity spoofing (per-VM — different VMs on different CCDs can spoof different CPUs)
+          cpuIdentity = {
+            modelId = lib.mkOption {
+              type = lib.types.nullOr lib.types.str;
+              default = null;
+              description = "CPUID brand string override (null = use real host CPU name). E.g. 'AMD Ryzen 7 9850X3D 8-Core Processor' for CCD0 V-Cache, 'AMD Ryzen 7 9700X 8-Core Processor' for CCD1";
+              example = "AMD Ryzen 7 9850X3D 8-Core Processor";
+            };
+            maxSpeed = lib.mkOption {
+              type = lib.types.int;
+              default = 5600;
+              description = "SMBIOS Type 4 max speed in MHz (boost clock of spoofed CPU)";
+            };
+            currentSpeed = lib.mkOption {
+              type = lib.types.int;
+              default = 4700;
+              description = "SMBIOS Type 4 current speed in MHz (base clock of spoofed CPU)";
+            };
+          };
           extraQemuArgs = lib.mkOption {
             type = lib.types.listOf lib.types.str;
             default = [ ];
@@ -493,7 +512,7 @@
               reset.state = true;
               vendor_id = {
                 state = true;
-                value = "AuthenticAMD";
+                value = "AMDisbetter!";
               };
               frequencies.state = true;
               reenlightenment.state = true;
@@ -740,8 +759,20 @@
           # QEMU command-line passthrough for stealth args and evdev
           qemu-commandline = {
             arg =
+              # CPUID brand string override — guest sees spoofed CPU model in /proc/cpuinfo
+              (lib.optionals (cfg.stealth.enable && vmCfg.cpuIdentity.modelId != null) [
+                { value = "-global"; }
+                { value = "cpu.model-id=${vmCfg.cpuIdentity.modelId}"; }
+              ])
+              # SMBIOS type 4 (processor) — matches spoofed CPU in dmidecode
+              ++ (lib.optionals (cfg.stealth.enable && vmCfg.cpuIdentity.modelId != null) [
+                { value = "-smbios"; }
+                {
+                  value = "type=4,sock_pfx=AM5,manufacturer=Advanced Micro Devices\\, Inc.,version=${vmCfg.cpuIdentity.modelId},max-speed=${toString vmCfg.cpuIdentity.maxSpeed},current-speed=${toString vmCfg.cpuIdentity.currentSpeed}";
+                }
+              ])
               # SMBIOS type 3 (chassis) — prevents empty WMI Win32_SystemEnclosure
-              (lib.optionals cfg.stealth.enable [
+              ++ (lib.optionals cfg.stealth.enable [
                 { value = "-smbios"; }
                 {
                   value = "type=3,manufacturer=${cfg.stealth.smbios.manufacturer},version=1.0,serial=Default string,asset=Default string,sku=Default string";

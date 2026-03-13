@@ -71,9 +71,9 @@ parts/
 │   ├── packages.nix                   # System-wide packages by category
 │   ├── filesystems.nix                # Filesystem support (Linux, Windows, Mac, etc.)
 │   ├── impermanence.nix              # Opt-in ephemeral root (BTRFS rollback)
-│   └── cachyos-settings.nix           # CachyOS system tuning (journald, sysctl, THP)
+│   └── cachyos.nix                    # CachyOS system tuning (journald, sysctl, THP)
 ├── security/                          # Security modules (myModules.security.*)
-│   ├── system.nix                     # Kernel hardening, PAM limits
+│   ├── hardening.nix                  # Kernel hardening, PAM limits
 │   ├── ssh.nix                        # SSH server, hardened ciphers, fail2ban
 │   ├── sops.nix                       # sops-nix secrets management
 │   ├── arkenfox.nix                   # Firefox/LibreWolf security hardening
@@ -99,25 +99,29 @@ parts/
 │   ├── default.nix                    # Fan control, touchpad, keyboard config
 │   ├── applesmc-comprehensive-fixes.patch  # AppleSMC race + null fixes
 │   └── at24-suppress-regulator-warning.patch  # EEPROM regulator fix
-├── yeetmouse/                         # Custom mouse acceleration driver (myModules.yeetmouse)
-│   ├── default.nix                    # Build overlay (LLVM detection, patches)
-│   ├── driver.nix                     # Kernel module + sysfs parameter definitions
-│   ├── package.nix                    # Package derivation
-│   └── devices/g502.nix              # Logitech G502 device-specific config + udev
+├── input/                             # Input device modules (myModules.input.*)
+│   ├── piper.nix                      # Piper mouse configuration GUI
+│   ├── streamcontroller.nix           # Stream Deck integration
+│   ├── ducky-one-x-mini.nix          # Ducky One X Mini keyboard (60% HID quirks)
+│   └── yeetmouse/                     # Custom mouse acceleration driver
+│       ├── default.nix                # Build overlay (LLVM detection, patches)
+│       ├── driver.nix                 # Kernel module + sysfs parameter definitions
+│       ├── package.nix                # Package derivation
+│       └── devices/g502.nix          # Logitech G502 device-specific config + udev
+├── sysdiag-script.nix                 # Sysdiag script derivation (imported by diagnostics/sysdiag.nix)
+├── diagnostics/                       # Diagnostic modules (myModules.diagnostics.*)
+│   ├── sysdiag.nix                    # Comprehensive NixOS system diagnostics
+│   ├── iommu.nix                      # IOMMU group listing
+│   ├── corecycler.nix                 # Per-core CPU stability + PBO CO tuner
+│   └── zenpower.nix                   # zenpower3 kernel module (SVI2 voltage monitoring)
 ├── goxlr.nix                         # GoXLR audio mixer, EQ, denoise (myModules.goxlr)
 ├── coolercontrol.nix                  # CoolerControl fan/cooling management (myModules.coolercontrol)
-├── piper.nix                          # Piper mouse configuration GUI (myModules.piper)
-├── streamcontroller.nix               # Stream Deck integration (myModules.streamcontroller)
-├── ducky-one-x-mini.nix              # Ducky One X Mini keyboard (myModules.duckyOneXMini)
-├── debugging-probes.nix              # Embedded debug probes udev (myModules.debuggingProbes)
 ├── gaming.nix                         # Steam, Proton, emulators, gamemode (myModules.gaming)
 ├── development.nix                    # Build tools, Claude Code, Saleae (myModules.development)
-├── wine.nix                           # Wine variants + Bottles (myModules.wine, myModules.bottles)
+├── wine.nix                           # Wine variants + Bottles (myModules.gaming.wine)
 ├── tidalcycles.nix                    # Live coding music environment (myModules.tidalcycles)
-├── sysdiag.nix                        # Comprehensive NixOS system diagnostics (myModules.sysdiag)
-├── sysdiag-script.nix                 # Sysdiag script derivation
-├── iommu.nix                          # IOMMU group listing (myModules.iommu)
-├── corecycler.nix                     # Per-core CPU stability + PBO CO tuner (myModules.corecycler)
+├── debugging-probes.nix               # Embedded debug probes udev rules (myModules.development.debuggingProbes)
+├── vfio.nix                           # VFIO GPU passthrough + stealth VM (myModules.vfio)
 └── hosts/
     ├── ryzen-9950x3d/                 # Desktop host (Zen 5, RDNA 4, CachyOS-LTO)
     │   ├── flake-module.nix           # nixosConfiguration + module imports + overlays
@@ -194,7 +198,7 @@ Every custom NixOS module follows this pattern:
 }
 ```
 
-Modules in organized directories use scoped exports and option paths (e.g., `hardware-gpu-amd` with `myModules.hardware.graphics.amd`). Standalone modules use flat exports and option paths (e.g., `gaming` with `myModules.gaming`). Hosts import only the modules they need.
+Modules in organized directories use scoped exports and option paths (e.g., `hardware-gpu-amd` with `myModules.hardware.gpu.amd`). Standalone modules use flat exports and option paths (e.g., `gaming` with `myModules.gaming`). Hosts import only the modules they need.
 
 ### Host Composition
 
@@ -232,7 +236,7 @@ External packages enter via overlays stacked in the host's `flake-module.nix`. C
 
 | Overlay | Source |
 |---------|--------|
-| `self.overlays.default` | Custom overlays from `parts/overlays.nix` (reshade-shaders) |
+| `self.overlays.default` | Custom overlays from `parts/overlays.nix` (qemu-stealth with unique hardware ID patching) |
 | `nix-cachyos-kernel.overlays.pinned` | CachyOS kernel packages |
 | `tidalcycles.overlays.default` | TidalCycles music packages |
 | `antigravity.overlays.default` | Antigravity IDE |
@@ -257,17 +261,17 @@ To add a new overlay: add the flake input in `flake.nix`, then add `inputs.<name
 
 This flake includes several custom-built packages, driver patches, and scripts that go beyond standard NixOS configuration.
 
-### YeetMouse Driver (`parts/yeetmouse/`)
+### YeetMouse Driver (`parts/input/yeetmouse/`)
 
 Custom mouse acceleration driver with 8 acceleration modes (linear, power, classic, motivity, synchronous, natural, jump, LUT). Includes:
 
 - **LLVM/Clang build detection** — automatically detects CachyOS LLVM kernels and uses `clang`/`ld.lld` for module compilation
 - **Kernel patches** — converts `printk()` calls to proper `KERN_INFO`/`KERN_ERR` levels
 - **GUI patches** — fixes hardcoded exponent slider limits (allows 0.00 for Jump mode), hides unnecessary root privilege warning
-- **Upstream parameter application** — the `driver.nix` module writes acceleration settings to sysfs via udev on any HID mouse connect. Configure parameters through `myModules.yeetmouse` options (sensitivity, mode, rotation, etc.)
+- **Upstream parameter application** — the `driver.nix` module writes acceleration settings to sysfs via udev on any HID mouse connect. Configure parameters through `myModules.input.yeetmouse` options (sensitivity, mode, rotation, etc.)
 - **G502 device module** — libinput HWDB entries force flat acceleration profile for wired (`c08d`) and Lightspeed wireless (`c539`) variants. This prevents libinput from applying additional acceleration on top of YeetMouse's custom curve. DPI and polling rate are configurable.
 
-Options: `myModules.yeetmouse` (acceleration parameters), `myModules.yeetmouse.devices.g502` (HWDB flat profile, product IDs, DPI).
+Options: `myModules.input.yeetmouse` (acceleration parameters), `myModules.input.yeetmouse.devices.g502` (HWDB flat profile, product IDs, DPI).
 
 ### Mesa-Git (`parts/hardware/graphics.nix`)
 
@@ -290,7 +294,7 @@ Full GoXLR Mini/Full support with:
 
 Options: `myModules.goxlr.enable`, `eq.enable`, `denoise.enable`, `toggle.enable`, per-channel sink overrides, EQ presets.
 
-### StreamController Patch (`parts/streamcontroller.nix`)
+### StreamController Patch (`parts/input/streamcontroller.nix`)
 
 Patches StreamController (Elgato Stream Deck app) to add USB websocket support and fix Elgato USB vendor ID resolution.
 
@@ -317,16 +321,32 @@ Auto-generated scripts from `myModules.desktop.displays` monitor definitions:
 - **linux-corecycler** — Qt6 GUI for per-core CPU stress testing and AMD PBO Curve Optimizer tuning. Tests one core at a time at full single-threaded boost to find per-core CO limits. Supports mprime, stress-ng, and y-cruncher backends. X3D-aware topology detection. Runtime CO read/write via ryzen_smu (Zen 2–5). Volatile-only writes — never touches BIOS.
 
 
+### VFIO Stealth GPU Passthrough (`parts/vfio.nix`)
+
+Declarative VFIO GPU passthrough with anti-cheat stealth for Windows gaming VMs:
+
+- **Per-VM definitions** — typed `vms.<name>` options for UUID, vCPU pinning, memory, disk, PCI passthrough, CPU identity spoofing
+- **Dynamic GPU binding** — libvirt hooks unbind GPU from `amdgpu` → bind to `vfio-pci` on VM start, reverse on stop
+- **Stealth QEMU** — patched QEMU (via overlay) removes all "QEMU"/"BOCHS"/"VirtIO" device signatures, ACPI/SMBIOS spoofing
+- **KVM kernel patches** — RDTSC timing spoofing and CPUID masking at the KVM level (applied via `boot.kernelPatches`)
+- **CPU identity spoofing** — per-VM CPUID brand string override (e.g., spoof CCD0 as Ryzen 7 9850X3D)
+- **Looking Glass** — KVMFR shared memory for viewing VM display on host without a separate monitor
+- **Evdev input** — keyboard/mouse passthrough with host/guest toggle
+- **Hugepages** — 1GB/2MB static allocation for VM memory (fewer TLB misses)
+- **NixVirt integration** — declarative libvirt domain XML generation from Nix attrsets
+
+Options: `myModules.vfio.{enable,bindMethod,stealth,lookingGlass,evdev,hugepages,vms.<name>}` — see [docs/OPTIONS.md](docs/OPTIONS.md).
+
 ### Arkenfox Auto-Update (`parts/security/arkenfox.nix`)
 
 Systemd service + timer that downloads the latest Arkenfox `user.js` Firefox security hardening config. Runs daily with retry on failure. Supports Flatpak Firefox/LibreWolf profiles.
 
-### Gaming Stack (`parts/gaming.nix`, `parts/overlays.nix`)
+### Gaming Stack (`parts/gaming.nix`)
 
 Integrated gaming performance and visual enhancement stack:
 
 - **GameMode** — per-game performance daemon: X3D V-Cache CCD mode switching, core pinning to V-Cache CCD, governor EPP hint (powersave→performance), GPU `power_dpm_force_performance_level=high`. Renice/ioprio disabled to avoid conflict with ananicy-cpp.
-- **vkBasalt Overlay** — Vulkan post-processing layer with in-game ImGui UI for real-time effect tuning (Wayland + X11). Fork of [vkBasalt overlay](https://github.com/Boux/vkBasalt_overlay) with full Wayland input support. Ships with ReShade shaders (Vibrance.fx, LiftGammaGain.fx, Tonemap.fx, Curves.fx, etc.). Configurable via `myModules.gaming.vkbasalt` options (effects, casSharpness, overlayKey, toggleKey, extraConfig)
+- **vkBasalt Overlay** — Vulkan post-processing layer with in-game ImGui UI for real-time effect tuning (Wayland + X11). Fork of [vkBasalt overlay](https://github.com/Boux/vkBasalt_overlay) with full Wayland input support. Ships with 15 modular ReShade shader collections (crosire, SweetFX, prod80, AstrayFX, fubax, qUINT, iMMERSE, METEOR, Insane, Daodan, FXShaders, potatoFX, CShade, ZenteonFX, HDR) — combined into a single shader directory. Configurable via `myModules.gaming.vkbasalt` options (effects, casSharpness, overlayKey, toggleKey, shaderPackages, extraConfig)
 - **MangoHud + MangoJuice** — FPS/GPU/CPU overlay (MangoHud) with a GUI configurator (MangoJuice)
 - **Steam** — with Proton-GE, Gamescope session support, and steam-devices udev rules
 - **Emulators** — Ryubing (Switch), Eden (Switch community fork), Azahar (3DS), Prism Launcher (Minecraft)
@@ -368,20 +388,20 @@ Options: `myModules.gaming.*` — see [docs/OPTIONS.md](docs/OPTIONS.md) for all
 | Module | Option Prefix | Description |
 |--------|--------------|-------------|
 | `system-boot` | `myModules.system.boot` | Bootloader (systemd-boot/GRUB), Secure Boot, Plymouth |
-| `system-kernel` | `myModules.kernel` | Kernel variant, CachyOS tuning, microarch, extra params |
+| `system-kernel` | `myModules.system.kernel` | Kernel variant, CachyOS tuning, microarch, extra params |
 | `system-nix` | `myModules.system.nix` | Nix daemon, binary caches, build settings |
 | `system-users` | `myModules.system.users` | User accounts, groups, `primaryUser` option |
 | `system-services` | `myModules.system.services` | CUPS, fstrim, earlyoom, ACPI, UPower, GeoClue |
 | `system-packages` | `myModules.system.packages` | System packages by category |
 | `system-filesystems` | `myModules.system.filesystems` | Filesystem kernel modules + userspace tools |
 | `system-impermanence` | `myModules.system.impermanence` | Opt-in ephemeral root (BTRFS rollback, persist declarations) |
-| `cachyos-settings` | `myModules.cachyos.settings` | CachyOS sysctl tuning, journald, THP |
+| `system-cachyos` | `myModules.system.cachyos` | CachyOS sysctl tuning, journald, THP |
 
 ### Security Modules
 
 | Module | Option Prefix | Description |
 |--------|--------------|-------------|
-| `security-system` | `myModules.security.system` | Kernel hardening, PAM limits |
+| `security-hardening` | `myModules.security.hardening` | Kernel hardening, PAM limits |
 | `security-ssh` | `myModules.security.ssh` | SSH server, hardened ciphers, fail2ban |
 | `security-sops` | `myModules.security.sops` | sops-nix secrets management |
 | `security-arkenfox` | `myModules.security.arkenfox` | Arkenfox auto-download + Flatpak Firefox support |
@@ -394,9 +414,9 @@ Options: `myModules.gaming.*` — see [docs/OPTIONS.md](docs/OPTIONS.md) for all
 | `hardware-core` | `myModules.hardware.core` | Firmware, fwupd, drive temp sensors |
 | `hardware-cpu-amd` | `myModules.hardware.cpu.amd` | AMD P-State, Prefcore, 3D V-Cache, KVM, microcode |
 | `hardware-cpu-intel` | `myModules.hardware.cpu.intel` | Intel P-State, EPP, KVM, thermald, microcode |
-| `hardware-gpu-amd` | `myModules.hardware.graphics.amd` | AMDGPU driver, DRM params, RDNA 4 fixes |
-| `hardware-gpu-intel` | `myModules.hardware.graphics.intel` | i915 driver, media acceleration |
-| `hardware-gpu-nvidia` | `myModules.hardware.graphics.nvidia` | NVIDIA proprietary driver, CUDA, Optimus |
+| `hardware-gpu-amd` | `myModules.hardware.gpu.amd` | AMDGPU driver, DRM params, RDNA 4 fixes |
+| `hardware-gpu-intel` | `myModules.hardware.gpu.intel` | i915 driver, media acceleration |
+| `hardware-gpu-nvidia` | `myModules.hardware.gpu.nvidia` | NVIDIA proprietary driver, CUDA, Optimus |
 | `hardware-graphics` | `myModules.hardware.graphics` | OpenGL, Vulkan, 32-bit, mesa-git vendor selection |
 | `hardware-audio` | `myModules.hardware.audio` | PipeWire, ALSA, low-latency config |
 | `hardware-networking` | `myModules.hardware.networking` | Network drivers, DNS nameservers, firewall |
@@ -412,25 +432,36 @@ Options: `myModules.gaming.*` — see [docs/OPTIONS.md](docs/OPTIONS.md) for all
 | `desktop-displays` | `myModules.desktop.displays` | Multi-monitor (SDDM config, rotation, toggle scripts) |
 | `desktop-flatpak` | `myModules.desktop.flatpak` | Flatpak runtime and portals |
 
+### Input Modules
+
+| Module | Option Prefix | Description |
+|--------|--------------|-------------|
+| `input-piper` | `myModules.input.piper` | Gaming mouse configuration |
+| `input-yeetmouse` | `myModules.input.yeetmouse` | Mouse acceleration driver (8 modes, LLVM build) |
+| `input-streamcontroller` | `myModules.input.streamcontroller` | Stream Deck (patched for USB websockets) |
+| `input-ducky-one-x-mini` | `myModules.input.duckyOneXMini` | Ducky One X Mini keyboard (60% HID quirks) |
+
+### Diagnostics Modules
+
+| Module | Option Prefix | Description |
+|--------|--------------|-------------|
+| `diagnostics-sysdiag` | `myModules.diagnostics.sysdiag` | Comprehensive NixOS system diagnostics |
+| `diagnostics-iommu` | `myModules.diagnostics.iommu` | IOMMU group listing |
+| `diagnostics-corecycler` | `myModules.diagnostics.corecycler` | Per-core CPU stability tester + PBO CO tuner, group-based device access, ryzen_smu, zenpower5 Zen 5 temps |
+
 ### Standalone Modules
 
 | Module | Option Prefix | Description |
 |--------|--------------|-------------|
 | `macbook` | `myModules.macbook` | MacBook fan (mbpfan), touchpad, keyboard, kernel patches |
-| `yeetmouse` | `myModules.yeetmouse` | Mouse acceleration driver (8 modes, LLVM build) |
 | `goxlr` | `myModules.goxlr` | GoXLR audio (UCM patch, EQ, denoise, toggle) |
 | `coolercontrol` | `myModules.coolercontrol` | CoolerControl fan/cooling management (overlay v4.0.1) |
-| `piper` | `myModules.piper` | Gaming mouse configuration |
-| `streamcontroller` | `myModules.streamcontroller` | Stream Deck (patched for USB websockets) |
-| `ducky-one-x-mini` | `myModules.duckyOneXMini` | Ducky One X Mini keyboard (60% HID quirks) |
-| `debugging-probes` | `myModules.debuggingProbes` | Embedded debug probes (LPC-Link2, ESP32) udev rules |
-| `gaming` | `myModules.gaming` | Steam, Proton, GameMode, vkBasalt overlay, MangoHud/MangoJuice, emulators, RADV tuning |
+| `gaming` | `myModules.gaming` | Steam, Proton, GameMode, vkBasalt overlay (15 shader collections), MangoHud, emulators, RADV tuning |
+| `gaming-wine` | `myModules.gaming.wine` | Wine variants + Bottles (`gaming.wine.bottles.enable`) |
 | `development` | `myModules.development` | Build tools, Claude Code, Saleae Logic |
-| `wine` | `myModules.wine`, `myModules.bottles` | Wine variants + Bottles |
+| `development-debugging-probes` | `myModules.development.debuggingProbes` | Embedded debug probes (LPC-Link2, ESP32) udev rules |
 | `tidalcycles` | `myModules.tidalcycles` | TidalCycles live coding + SuperDirt |
-| `sysdiag` | `myModules.sysdiag` | Comprehensive NixOS system diagnostics |
-| `iommu` | `myModules.iommu` | IOMMU group listing |
-| `corecycler` | `myModules.corecycler` | Per-core CPU stability tester + PBO Curve Optimizer tuner |
+| `vfio` | `myModules.vfio` | VFIO GPU passthrough, stealth QEMU, Looking Glass, per-VM definitions, CPU identity spoofing |
 
 ### Home Manager Modules
 
@@ -614,7 +645,7 @@ Create `parts/hosts/<hostname>/` with three files:
           inputs.self.nixosModules.system-packages
 
           # Security
-          inputs.self.nixosModules.security-system
+          inputs.self.nixosModules.security-hardening
           inputs.self.nixosModules.security-ssh
           inputs.self.nixosModules.security-sops
 
@@ -632,11 +663,22 @@ Create `parts/hosts/<hostname>/` with three files:
           inputs.self.nixosModules.desktop-kde
           inputs.self.nixosModules.desktop-flatpak
 
+          # Input devices (optional)
+          inputs.self.nixosModules.input-piper
+          inputs.self.nixosModules.input-yeetmouse
+
+          # Diagnostics (optional)
+          inputs.self.nixosModules.diagnostics-sysdiag
+          inputs.self.nixosModules.diagnostics-iommu
+          inputs.self.nixosModules.diagnostics-corecycler
+
           # Standalone modules (optional)
           inputs.self.nixosModules.gaming
+          inputs.self.nixosModules.gaming-wine
           inputs.self.nixosModules.development
-          inputs.self.nixosModules.sysdiag
-          inputs.self.nixosModules.iommu
+          inputs.self.nixosModules.development-debugging-probes
+          inputs.self.nixosModules.vfio
+          inputs.self.nixosModules.system-cachyos  # CachyOS sysctl tuning
           # ... add more as needed
         ];
       })
@@ -669,29 +711,49 @@ Create `parts/hosts/<hostname>/` with three files:
   imports = [ ./hardware-configuration.nix ];
 
   myModules = {
+    # System
     system = {
       nix.enable = true;
       users.enable = true;
       services.enable = true;
       filesystems = { enable = true; enableAll = true; };
-      packages = { enable = true; base = true; networking = true; android = true; ios = true; };
+      packages = { enable = true; base = true; networking = true; };
       boot = { enable = true; loader = "systemd-boot"; };
+      kernel = { enable = true; variant = "default"; };
+      # cachyos = { enable = true; };  # CachyOS sysctl tuning (needs cachyos-settings-nix input)
     };
+
+    # Security
+    security = {
+      hardening.enable = true;
+      ssh.enable = true;
+      # sops.enable = true;  # Needs age key setup first
+    };
+
+    # Hardware (pick for your system)
     hardware = {
       core.enable = true;
       networking.enable = true;
       audio.enable = true;
       cpu.amd.enable = true;       # or cpu.intel
-      graphics = {
-        enable = true;
-        amd.enable = true;         # or intel / nvidia
-      };
+      gpu.amd.enable = true;       # or gpu.intel / gpu.nvidia
+      graphics.enable = true;
       performance.enable = true;
       power.enable = true;
     };
+
+    # Desktop
     desktop.kde.enable = true;
-    kernel = { enable = true; variant = "default"; };
-    security.system.enable = true;
+
+    # Input (optional)
+    # input.piper.enable = true;
+
+    # Diagnostics (optional)
+    # diagnostics.sysdiag.enable = true;
+
+    # Gaming (optional)
+    # gaming.enable = true;
+    # gaming.wine = { enable = true; variant = "staging"; };
   };
 
   # Required host-specific settings
@@ -787,7 +849,7 @@ sudo sbctl enroll-keys --microsoft
 - Use `lib.mkEnableOption` + `lib.mkIf cfg.enable` for all modules
 - Use `lib.mkDefault` for defaults that hosts should override
 - Every `lib.mkOption` must have a `description` string
-- Gate vendor-specific config: `lib.optionals (config.myModules.hardware.graphics.amd.enable or false) [...]`
+- Gate vendor-specific config: `lib.optionals (config.myModules.hardware.gpu.amd.enable or false) [...]`
 - Keep modules single-responsibility — if it covers two concerns, split it
 - No hardcoded usernames, paths, or hardware identifiers in generic modules — use `config.myModules.primaryUser` for the username
 - Host-specific values (UUIDs, connectors, profile names, product IDs) belong in `parts/hosts/<hostname>/default.nix`
@@ -819,6 +881,9 @@ sudo sbctl enroll-keys --microsoft
 | `mesa-git-nix` | Bleeding-edge Mesa from git main |
 | `lsfg-vk` | Vulkan frame generation (Lossless Scaling) |
 | `vkbasalt-overlay` | vkBasalt Vulkan post-processing overlay |
+| `coolercontrol` | CoolerControl 4.0.1 fan/cooling management (overlay) |
+| `linux-corecycler` | Per-core CPU stability tester + PBO Curve Optimizer tuner |
+| `NixVirt` | Declarative libvirt domain management (VFIO VMs) |
 | `treefmt-nix` | Unified code formatting via flake-parts |
 | `git-hooks-nix` | Pre-commit hooks via flake-parts |
 | `disko` | Declarative disk partitioning |
@@ -944,4 +1009,4 @@ The pipeline: `scripts/generate-docs.nix` evaluates the `ryzen-9950x3d` NixOS co
 
 `scripts/test-shell-functions.sh` validates all configurations (including specialisations), verifies nrb flags and functions match the zsh source, and checks documentation completeness. It auto-extracts flags and function names from the zsh module, so it stays in sync without manual updates.
 
-See [docs/OPTIONS.md](docs/OPTIONS.md) for the full reference (240 options across 13 categories).
+See [docs/OPTIONS.md](docs/OPTIONS.md) for the full reference (263 options across 14 categories).

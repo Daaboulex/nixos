@@ -22,7 +22,7 @@
             inputs.self.nixosModules.system-packages
 
             # Security
-            inputs.self.nixosModules.security-system
+            inputs.self.nixosModules.security-hardening
             inputs.self.nixosModules.security-ssh
             inputs.self.nixosModules.security-sops
             inputs.self.nixosModules.security-arkenfox
@@ -46,14 +46,16 @@
 
             # Standalone
             inputs.self.nixosModules.macbook
-            inputs.self.nixosModules.wine
+            inputs.self.nixosModules.gaming-wine
             inputs.self.nixosModules.tidalcycles
             inputs.self.nixosModules.development
-            inputs.self.nixosModules.sysdiag
-            inputs.self.nixosModules.iommu
+
+            # Diagnostics
+            inputs.self.nixosModules.diagnostics-sysdiag
+            inputs.self.nixosModules.diagnostics-iommu
 
             # CachyOS settings
-            inputs.self.nixosModules.cachyos-settings
+            inputs.self.nixosModules.system-cachyos
 
             # External modules
             inputs.portmaster.nixosModules.default
@@ -106,16 +108,16 @@
           # Xanmod: optimized kernel (better latency, newer patches)
           xanmod.configuration = {
             system.nixos.tags = [ "xanmod" ];
-            myModules.kernel.variant = "xanmod";
+            myModules.system.kernel.variant = "xanmod";
             myModules.macbook.patches.enable = false;
           };
 
           # CachyOS: full CachyOS kernel + optimizations
           cachyos.configuration = {
             system.nixos.tags = [ "cachyos" ];
-            myModules.kernel.variant = "cachyos";
+            myModules.system.kernel.variant = "cachyos";
             myModules.macbook.patches.enable = false;
-            myModules.kernel.cachyos = {
+            myModules.system.kernel.cachyos = {
               bbr3 = true;
               hzTicks = "1000";
               tickrate = "full";
