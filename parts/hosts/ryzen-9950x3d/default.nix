@@ -381,7 +381,7 @@
     # --------------------------------------------------------------------------
     goxlr = {
       enable = true;
-      isMini = false; # (default) — full-size GoXLR
+      isMini = true; # GoXLR Mini (S200907296DI7)
       utility.enable = true; # (default)
       installProfiles = true; # (default)
       eq = {
@@ -407,6 +407,8 @@
         enable = true;
         activeProfile = "Yellow Default";
         activeMicProfile = "Mic NeatKingBee";
+        sleepProfile = "Sleep";
+        sleepMicProfile = "Sleep";
       };
     };
 

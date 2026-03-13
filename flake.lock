@@ -122,11 +122,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1773339720,
-        "narHash": "sha256-WhD1F3In89dd7ilAc/aGrA0Cv1eVHCXMkwXwJFNVPTc=",
+        "lastModified": 1773442557,
+        "narHash": "sha256-9hgK1KtTrmRfZyXuT/je9uMR3cENXTlmwZO3z0gz18E=",
         "owner": "Daaboulex",
         "repo": "coolercontrol-nix",
-        "rev": "668cbd321b3480f4b75c66a850ce2689e214a158",
+        "rev": "3ea08b46dccd21c18777bfeb13d6de79aef82426",
         "type": "github"
       },
       "original": {
@@ -453,11 +453,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1773432503,
-        "narHash": "sha256-j67bx+16xSzHdu9RcJBMYpPipunQ+ygt4ud5tWr/QwE=",
+        "lastModified": 1773442560,
+        "narHash": "sha256-cWBkRtohoNIibNeJ5Rc4urFStot7v41wV8/Z/LtyCkg=",
         "owner": "Daaboulex",
         "repo": "goxlr-hm-nix",
-        "rev": "5c1e8dffc463be048c73132e0eceff758d975d3d",
+        "rev": "090c3ae2b4e646ed939b0217336ee093faa03d24",
         "type": "github"
       },
       "original": {
@@ -969,11 +969,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1773432509,
-        "narHash": "sha256-Gh0fRLsyPGNHgwUAKElL48CmidyQ5zxLbx7JqtcOMwU=",
+        "lastModified": 1773442855,
+        "narHash": "sha256-iYR51zmy8/MMvV3wK63AyKeh7VjbHxPUNz16azEImjM=",
         "owner": "Daaboulex",
         "repo": "streamcontroller-nix",
-        "rev": "a82feb82e6b77ec074c760fa495b90d1edff67d5",
+        "rev": "c5752fc566fb0eb5c8c226d204ef9a56a17430e4",
         "type": "github"
       },
       "original": {

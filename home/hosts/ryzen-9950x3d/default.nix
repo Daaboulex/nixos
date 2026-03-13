@@ -7,6 +7,11 @@ let
 in
 
 {
+  imports = [
+    ./goxlr.nix
+    ./coolercontrol.nix
+    ./streamcontroller.nix
+  ];
   # ============================================================================
   # Ryzen 9950X3D Home Manager Host Configuration — Exhaustive Reference
   # ============================================================================
@@ -214,4 +219,6 @@ in
     };
   };
 
+  # GoXLR, CoolerControl, StreamController — split into separate files:
+  # ./goxlr.nix, ./coolercontrol.nix, ./streamcontroller.nix
 }
