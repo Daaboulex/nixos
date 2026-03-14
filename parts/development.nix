@@ -33,7 +33,7 @@
             # Dev workflow
             devenv
             nix-prefetch-git
-            inputs.gemini-cli-nix.packages.${pkgs.system}.default
+            inputs.gemini-cli-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
             (pkgs.symlinkJoin {
               name = "agy-wrapper";
               paths = [ pkgs.google-antigravity ];
