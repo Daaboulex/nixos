@@ -77,7 +77,56 @@
 
       # Collect all PCI passthrough addresses (NVMe, USB controllers, etc.)
 
-      # Per-VM hook: bind/unbind only the devices that specific VM uses
+      # --- Safe VFIO hook helpers ---
+
+      # Check if a PCI device has active DRM connectors (displays attached and enabled)
+      # Returns 0 if the device has at least one active connector
+      hasActiveDisplay = ''
+        vfio_has_active_display() {
+          local pci_addr="$1"
+          for card_dir in /sys/bus/pci/devices/"$pci_addr"/drm/card*; do
+            [ -d "$card_dir" ] || continue
+            for conn_dir in "$card_dir"/card*-*; do
+              [ -f "$conn_dir/status" ] || continue
+              if [ "$(cat "$conn_dir/status")" = "connected" ]; then
+                # Check if connector is enabled (has a valid mode)
+                if [ -f "$conn_dir/enabled" ] && [ "$(cat "$conn_dir/enabled")" = "enabled" ]; then
+                  return 0
+                fi
+              fi
+            done
+          done
+          return 1
+        }
+      '';
+
+      # Find any OTHER GPU (not the one being passed through) that has active displays
+      hasFallbackDisplay = ''
+        vfio_has_fallback_display() {
+          local passthrough_addrs="$*"
+          for gpu_dir in /sys/class/drm/card*/device; do
+            [ -L "$gpu_dir" ] || continue
+            local this_addr
+            this_addr="$(basename "$(readlink -f "$gpu_dir")")"
+            # Skip the GPU(s) being passed through
+            local is_passthrough=0
+            for pt_addr in $passthrough_addrs; do
+              if [ "$this_addr" = "$pt_addr" ]; then
+                is_passthrough=1
+                break
+              fi
+            done
+            [ "$is_passthrough" = "1" ] && continue
+            # Check if this other GPU has active displays
+            if vfio_has_active_display "$this_addr"; then
+              return 0
+            fi
+          done
+          return 1
+        }
+      '';
+
+      # Per-VM hook: prepare (bind devices for passthrough) and release (return to host)
       mkVmHookSection =
         name: vmCfg:
         let
@@ -85,37 +134,152 @@
             [ vmCfg.gpu.pciAddress ]
             ++ lib.optionals (vmCfg.gpu.audioAddress != null) [ vmCfg.gpu.audioAddress ]
           );
-          nvmeAddrs = vmCfg.pciPassthrough;
+          pciAddrs = vmCfg.pciPassthrough;
+          mounts = vmCfg.mountsToUnmount;
         in
         ''
           if [ "$GUEST_NAME" = "${name}" ]; then
-            ${lib.optionalString (nvmeAddrs != [ ]) ''
-              # Unmount NVMe partitions before passthrough
-              for pci_addr in ${lib.concatStringsSep " " nvmeAddrs}; do
-                for nvme_dev in /sys/bus/pci/devices/$pci_addr/nvme/nvme*/nvme*n*; do
+            ${lib.optionalString (mounts != [ ] || pciAddrs != [ ]) ''
+              # --- Check for open files on mount points before unmounting ---
+              mount_blocked=""
+              ${lib.concatMapStringsSep "\n" (mp: ''
+                if ${pkgs.util-linux}/bin/findmnt -n "${mp}" >/dev/null 2>&1; then
+                  open_files=$(${pkgs.psmisc}/bin/fuser -mv "${mp}" 2>&1 || true)
+                  # fuser -m lists all processes using files on the mount
+                  # Filter out kernel threads (PID 1, 2) and the fuser process itself
+                  real_procs=$(echo "$open_files" | grep -v "^$" | grep -v "COMMAND" | grep -v "kernel" || true)
+                  if [ -n "$real_procs" ]; then
+                    mount_blocked="$mount_blocked\n  ${mp}:\n$real_procs"
+                  fi
+                fi
+              '') mounts}
+              if [ -n "$mount_blocked" ]; then
+                log "[$GUEST_NAME] ABORT: files are open on mount points that need unmounting"
+                echo -e "$mount_blocked" | while read -r line; do
+                  [ -n "$line" ] && log "[$GUEST_NAME]   $line"
+                done
+                log "[$GUEST_NAME] Close all files/apps using these paths, then try again"
+                exit 1
+              fi
+
+              # --- Unmount filesystems before PCI passthrough ---
+              ${pkgs.coreutils}/bin/sync
+              ${lib.concatMapStringsSep "\n" (mp: ''
+                if ${pkgs.util-linux}/bin/findmnt -n "${mp}" >/dev/null 2>&1; then
+                  log "[$GUEST_NAME] unmounting ${mp}"
+                  ${pkgs.util-linux}/bin/umount "${mp}" || {
+                    log "[$GUEST_NAME] ABORT: failed to unmount ${mp} — files may still be open"
+                    exit 1
+                  }
+                fi
+              '') mounts}
+              # Also unmount any remaining partitions discovered from sysfs (safety net)
+              for pci_addr in ${lib.concatStringsSep " " pciAddrs}; do
+                for nvme_dev in /sys/bus/pci/devices/"$pci_addr"/nvme/nvme*/nvme*n*; do
                   if [ -e "$nvme_dev" ]; then
                     blk_dev="/dev/$(basename "$nvme_dev")"
-                    echo "VFIO [$GUEST_NAME]: unmounting partitions on $blk_dev"
+                    log "[$GUEST_NAME] scanning $blk_dev for remaining mounts"
                     for part in ''${blk_dev}p*; do
-                      ${pkgs.util-linux}/bin/umount "$part" 2>/dev/null || true
+                      if ${pkgs.util-linux}/bin/findmnt -n "$part" >/dev/null 2>&1; then
+                        log "[$GUEST_NAME] unmounting $part"
+                        ${pkgs.util-linux}/bin/umount "$part" || {
+                          log "[$GUEST_NAME] WARNING: failed to unmount $part"
+                        }
+                      fi
                     done
-                    ${pkgs.util-linux}/bin/umount "$blk_dev" 2>/dev/null || true
                   fi
                 done
               done
             ''}
             ${lib.optionalString (gpuAddrs != [ ]) ''
+              # --- Safety check: verify fallback display exists ---
+              if ! vfio_has_fallback_display ${lib.concatStringsSep " " gpuAddrs}; then
+                log "[$GUEST_NAME] ABORT: no fallback display found on another GPU"
+                log "[$GUEST_NAME] Connect a monitor to the iGPU (motherboard HDMI) before starting the VM"
+                exit 1
+              fi
+              log "[$GUEST_NAME] fallback display verified on another GPU"
+
+              # --- Check for processes using the dGPU ---
+              # GPU contexts CANNOT be migrated between GPUs. Any app with an open
+              # render context on the dGPU will crash when it's unbound. Instead of
+              # silently killing them (fuser -k), check and abort if non-compositor
+              # processes are found so the user can close them first.
+              blocking_procs=""
+              for pci_addr in ${lib.concatStringsSep " " gpuAddrs}; do
+                for drm_node in /sys/bus/pci/devices/"$pci_addr"/drm/card* /sys/bus/pci/devices/"$pci_addr"/drm/renderD*; do
+                  [ -d "$drm_node" ] || continue
+                  node_name=$(basename "$drm_node")
+                  # List processes using this DRM device (without killing)
+                  procs=$(${pkgs.psmisc}/bin/fuser "/dev/dri/$node_name" 2>/dev/null || true)
+                  for pid in $procs; do
+                    comm=$(cat "/proc/$pid/comm" 2>/dev/null || echo "unknown")
+                    # KWin holds output-only handles when KWIN_DRM_DEVICES has iGPU first — safe to lose
+                    # PowerDevil holds i2c handles — we stop it explicitly below
+                    case "$comm" in
+                      kwin_wayland|kwin_x11|sddm*|Xwayland|powerdevil) ;;
+                      *) blocking_procs="$blocking_procs  PID $pid ($comm) on /dev/dri/$node_name\n" ;;
+                    esac
+                  done
+                done
+              done
+              if [ -n "$blocking_procs" ]; then
+                log "[$GUEST_NAME] ABORT: processes still using the dGPU (close them first):"
+                echo -e "$blocking_procs" | while read -r line; do
+                  [ -n "$line" ] && log "[$GUEST_NAME]   $line"
+                done
+                exit 1
+              fi
+              log "[$GUEST_NAME] no blocking processes on dGPU"
+
+              # --- Stop services that hold GPU file descriptors ---
+              # PowerDevil binds to GPU i2c bus (DDC brightness) and blocks driver unbind
+              ${pkgs.systemd}/bin/systemctl --user -M ${user}@ stop plasma-powerdevil.service 2>/dev/null || true
+              sleep 0.5
+
+              ${lib.optionalString cfg.stopScxOnVm ''
+                # Stop scx scheduler — with pinned vCPUs, the host scheduler competing
+                # over those cores adds overhead. BORE (compiled into kernel) handles
+                # pinned threads well as fallback.
+                if ${pkgs.systemd}/bin/systemctl is-active scx.service >/dev/null 2>&1; then
+                  log "[$GUEST_NAME] stopping scx scheduler for VM duration"
+                  ${pkgs.systemd}/bin/systemctl stop scx.service 2>/dev/null || true
+                fi
+              ''}
+
+              # Switch to text VT — forces KWin to release DRM master on the dGPU
+              log "[$GUEST_NAME] switching to VT3 for safe GPU unbind"
+              ${pkgs.kbd}/bin/chvt 3
+              sleep 2
+
               # Unbind GPU from host driver, bind to vfio-pci
               for pci_addr in ${lib.concatStringsSep " " gpuAddrs}; do
                 if [ -d "/sys/bus/pci/devices/$pci_addr" ]; then
-                  echo "VFIO [$GUEST_NAME]: unbinding $pci_addr from host driver"
+                  log "[$GUEST_NAME] unbinding $pci_addr from host driver"
                   if [ -f "/sys/bus/pci/devices/$pci_addr/driver/unbind" ]; then
-                    echo "$pci_addr" > "/sys/bus/pci/devices/$pci_addr/driver/unbind" 2>/dev/null || true
+                    echo "$pci_addr" > "/sys/bus/pci/devices/$pci_addr/driver/unbind" || {
+                      log "[$GUEST_NAME] ERROR: failed to unbind $pci_addr"
+                      ${pkgs.kbd}/bin/chvt 1
+                      exit 1
+                    }
                   fi
                   echo "vfio-pci" > "/sys/bus/pci/devices/$pci_addr/driver_override"
-                  echo "$pci_addr" > /sys/bus/pci/drivers/vfio-pci/bind 2>/dev/null || true
+                  echo "$pci_addr" > /sys/bus/pci/drivers/vfio-pci/bind || {
+                    log "[$GUEST_NAME] ERROR: failed to bind $pci_addr to vfio-pci"
+                    ${pkgs.kbd}/bin/chvt 1
+                    exit 1
+                  }
+                  log "[$GUEST_NAME] $pci_addr bound to vfio-pci"
                 fi
               done
+
+              # Switch back to graphical VT — KWin continues on iGPU
+              sleep 1
+              ${pkgs.kbd}/bin/chvt 1
+
+              # Restart PowerDevil (now on iGPU)
+              ${pkgs.systemd}/bin/systemctl --user -M ${user}@ start plasma-powerdevil.service 2>/dev/null || true
+              log "[$GUEST_NAME] GPU passthrough complete, compositor on iGPU"
             ''}
           fi
         '';
@@ -127,32 +291,82 @@
             [ vmCfg.gpu.pciAddress ]
             ++ lib.optionals (vmCfg.gpu.audioAddress != null) [ vmCfg.gpu.audioAddress ]
           );
+          mounts = vmCfg.mountsToUnmount;
         in
-        lib.optionalString (gpuAddrs != [ ]) ''
+        ''
           if [ "$GUEST_NAME" = "${name}" ]; then
-            # Unbind from vfio-pci, clear override
-            for pci_addr in ${lib.concatStringsSep " " gpuAddrs}; do
-              if [ -d "/sys/bus/pci/devices/$pci_addr" ]; then
-                echo "VFIO [$GUEST_NAME]: unbinding $pci_addr from vfio-pci"
-                echo "$pci_addr" > /sys/bus/pci/drivers/vfio-pci/unbind 2>/dev/null || true
-                echo "" > "/sys/bus/pci/devices/$pci_addr/driver_override"
-              fi
-            done
-            echo "VFIO [$GUEST_NAME]: rescanning PCI bus"
-            echo 1 > /sys/bus/pci/rescan
+            ${lib.optionalString (gpuAddrs != [ ]) ''
+              log "[$GUEST_NAME] releasing GPU back to host"
+
+              # Stop PowerDevil before GPU rebind
+              ${pkgs.systemd}/bin/systemctl --user -M ${user}@ stop plasma-powerdevil.service 2>/dev/null || true
+
+              # Switch to text VT for safe GPU rebind
+              ${pkgs.kbd}/bin/chvt 3
+              sleep 1
+
+              # Unbind from vfio-pci, clear override
+              for pci_addr in ${lib.concatStringsSep " " gpuAddrs}; do
+                if [ -d "/sys/bus/pci/devices/$pci_addr" ]; then
+                  log "[$GUEST_NAME] unbinding $pci_addr from vfio-pci"
+                  echo "$pci_addr" > /sys/bus/pci/drivers/vfio-pci/unbind 2>/dev/null || true
+                  echo "" > "/sys/bus/pci/devices/$pci_addr/driver_override"
+                fi
+              done
+
+              log "[$GUEST_NAME] rescanning PCI bus"
+              echo 1 > /sys/bus/pci/rescan
+              sleep 2
+
+              # Switch back to graphical VT — host driver reclaims GPU, KWin picks up outputs
+              ${pkgs.kbd}/bin/chvt 1
+
+              # Restart PowerDevil (now sees both GPUs)
+              ${pkgs.systemd}/bin/systemctl --user -M ${user}@ start plasma-powerdevil.service 2>/dev/null || true
+
+              ${lib.optionalString cfg.stopScxOnVm ''
+                # Restart scx scheduler now that VM cores are free
+                log "[$GUEST_NAME] restarting scx scheduler"
+                ${pkgs.systemd}/bin/systemctl start scx.service 2>/dev/null || true
+              ''}
+              log "[$GUEST_NAME] GPU returned to host"
+            ''}
+            ${lib.optionalString (mounts != [ ]) ''
+              # Remount filesystems after PCI devices return to host
+              sleep 1
+              ${lib.concatMapStringsSep "\n" (mp: ''
+                log "[$GUEST_NAME] remounting ${mp}"
+                ${pkgs.util-linux}/bin/mount "${mp}" 2>/dev/null || {
+                  log "[$GUEST_NAME] WARNING: failed to remount ${mp} — run 'mount -a' manually"
+                }
+              '') mounts}
+            ''}
           fi
         '';
 
       vfioHookScript = pkgs.writeShellScript "qemu-hook" ''
+        set -euo pipefail
+
         GUEST_NAME="$1"
         HOOK_NAME="$2"
         STATE_NAME="$3"
 
+        # Log helper — all output goes to systemd journal: journalctl -t vfio-hook
+        log() {
+          echo "VFIO-HOOK: $*" | ${pkgs.systemd}/bin/logger -t vfio-hook
+        }
+
+        # Display detection helpers
+        ${hasActiveDisplay}
+        ${hasFallbackDisplay}
+
         if [ "$HOOK_NAME" = "prepare" ] && [ "$STATE_NAME" = "begin" ]; then
+          log "[$GUEST_NAME] prepare/begin"
           ${lib.concatStringsSep "\n" (lib.mapAttrsToList mkVmHookSection enabledVms)}
         fi
 
         if [ "$HOOK_NAME" = "release" ] && [ "$STATE_NAME" = "end" ]; then
+          log "[$GUEST_NAME] release/end"
           ${lib.concatStringsSep "\n" (lib.mapAttrsToList mkVmReleaseSection enabledVms)}
         fi
       '';
@@ -186,6 +400,18 @@
               type = lib.types.nullOr (lib.types.listOf lib.types.int);
               default = null;
               description = "List of host CPU cores to pin vCPUs to (null = no pinning)";
+            };
+            emulatorPin = lib.mkOption {
+              type = lib.types.nullOr lib.types.str;
+              default = null;
+              example = "8-9";
+              description = "Host cores for QEMU emulator threads (e.g. \"8-9\"). Should be on a different CCD than the VM's vCPU cores to avoid contention. null = no pinning.";
+            };
+            iothreadPin = lib.mkOption {
+              type = lib.types.nullOr lib.types.str;
+              default = null;
+              example = "10";
+              description = "Host core for IO thread (e.g. \"10\"). Should be on the host CCD, not the VM's vCPU CCD. null = no pinning.";
             };
           };
           os = {
@@ -285,6 +511,12 @@
               "0000:05:00.0"
             ];
           };
+          mountsToUnmount = lib.mkOption {
+            type = lib.types.listOf lib.types.str;
+            default = [ ];
+            description = "Mount points to unmount before PCI passthrough and remount after VM stop. The hook also discovers mounts from sysfs as a safety net, but this ensures specific paths like '/mnt/Windows SSD' are handled explicitly.";
+            example = [ "/mnt/Windows SSD" ];
+          };
           # CPU identity spoofing (per-VM — different VMs on different CCDs can spoof different CPUs)
           cpuIdentity = {
             modelId = lib.mkOption {
@@ -331,14 +563,15 @@
                   vcpu = i;
                   cpuset = toString core;
                 }) vmCfg.vcpu.pinning;
-                # Pin emulator threads to host CCD (avoid stealing VM cores)
-                # Use cores 8-9 (CCD1 physical cores) for emulator overhead
-                emulatorpin.cpuset = "8-9";
-                # Pin IO thread to a dedicated host core
+              }
+              // lib.optionalAttrs (vmCfg.vcpu.emulatorPin != null) {
+                emulatorpin.cpuset = vmCfg.vcpu.emulatorPin;
+              }
+              // lib.optionalAttrs (vmCfg.vcpu.iothreadPin != null) {
                 iothreadpin = [
                   {
                     iothread = 1;
-                    cpuset = "10";
+                    cpuset = vmCfg.vcpu.iothreadPin;
                   }
                 ];
               }
@@ -452,7 +685,7 @@
           os = {
             type = "hvm";
             arch = "x86_64";
-            machine = "pc-q35-10.0";
+            machine = cfg.machineType;
             smbios.mode = if cfg.stealth.enable then "sysinfo" else null;
             boot = [ { dev = "hd"; } ] ++ lib.optionals (vmCfg.iso != null) [ { dev = "cdrom"; } ];
           };
@@ -768,7 +1001,7 @@
               ++ (lib.optionals (cfg.stealth.enable && vmCfg.cpuIdentity.modelId != null) [
                 { value = "-smbios"; }
                 {
-                  value = "type=4,sock_pfx=AM5,manufacturer=Advanced Micro Devices\\, Inc.,version=${vmCfg.cpuIdentity.modelId},max-speed=${toString vmCfg.cpuIdentity.maxSpeed},current-speed=${toString vmCfg.cpuIdentity.currentSpeed}";
+                  value = "type=4,sock_pfx=${cfg.stealth.smbios.socketPrefix},manufacturer=Advanced Micro Devices\\, Inc.,version=${vmCfg.cpuIdentity.modelId},max-speed=${toString vmCfg.cpuIdentity.maxSpeed},current-speed=${toString vmCfg.cpuIdentity.currentSpeed}";
                 }
               ])
               # SMBIOS type 3 (chassis) — prevents empty WMI Win32_SystemEnclosure
@@ -817,6 +1050,35 @@
       # ========================================================================
       options.myModules.vfio = {
         enable = lib.mkEnableOption "VFIO GPU passthrough with stealth VM management";
+
+        # --- Session GPU Management ---
+        # Force KWin to use iGPU as primary render device so the dGPU can be
+        # safely unbound without crashing the compositor. KWin treats the first
+        # device as its primary render GPU; remaining devices are output-only.
+        # When the dGPU is removed for passthrough, KWin loses those outputs
+        # but keeps rendering on the iGPU. On return, KWin reclaims the dGPU.
+        sessionGpuDevices = lib.mkOption {
+          type = lib.types.nullOr (lib.types.listOf lib.types.str);
+          default = null;
+          example = [
+            "/dev/dri/card0"
+            "/dev/dri/card1"
+          ];
+          description = "DRM device paths for KWIN_DRM_DEVICES. First device becomes the primary render GPU — set your iGPU first for safe GPU passthrough. null = KWin auto-detects (unsafe for passthrough).";
+        };
+
+        # --- Machine & VM Configuration ---
+        machineType = lib.mkOption {
+          type = lib.types.str;
+          default = "pc-q35-10.0";
+          description = "QEMU machine type for VM definitions";
+        };
+
+        vmDiskPath = lib.mkOption {
+          type = lib.types.str;
+          default = "/var/lib/vfio";
+          description = "Directory for VM disk images and state files";
+        };
 
         # --- VFIO Device Binding ---
         bindMethod = lib.mkOption {
@@ -869,6 +1131,16 @@
               default = "System Serial Number";
               description = "SMBIOS system serial number";
             };
+            socketPrefix = lib.mkOption {
+              type = lib.types.str;
+              default = "AM5";
+              description = "SMBIOS Type 4 socket prefix (e.g. AM5, AM4, LGA1700)";
+            };
+          };
+          maxCState = lib.mkOption {
+            type = lib.types.int;
+            default = 1;
+            description = "Maximum CPU C-state (1 = C1, ~1us wake latency — good stealth/power trade-off). Lower = lower latency but higher power.";
           };
           spoofMac = lib.mkOption {
             type = lib.types.bool;
@@ -937,6 +1209,19 @@
           };
         };
 
+        # --- Scheduler & Priority Integration ---
+        anancyOverride = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Override CachyOS ananicy-cpp rules for QEMU. Default rules classify QEMU as Heavy_CPU (nice=9, ionice=7) which deprioritizes VM performance. This adds custom rules that give QEMU and libvirt high priority instead.";
+        };
+
+        stopScxOnVm = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = "Stop the scx scheduler service while a VM with pinned vCPUs is running. With CPU pinning, the sched-ext scheduler competing over pinned cores can add overhead. The BORE fallback scheduler handles pinned threads well. Restarted on VM stop.";
+        };
+
         # --- VM Definitions ---
         vms = lib.mkOption {
           type = lib.types.lazyAttrsOf vmSubmodule;
@@ -968,6 +1253,69 @@
             ];
           }
 
+          # ── KWin GPU device order (safe passthrough) ──
+          (lib.mkIf (cfg.sessionGpuDevices != null) {
+            # Set KWIN_DRM_DEVICES so KWin uses iGPU as primary render device.
+            # The first device in the list becomes the primary — when the dGPU
+            # is removed for passthrough, KWin loses those outputs but keeps
+            # rendering on the iGPU. Without this, KWin crashes on GPU removal.
+            environment.variables.KWIN_DRM_DEVICES = lib.concatStringsSep ":" cfg.sessionGpuDevices;
+          })
+
+          # ── Ananicy-cpp override: promote QEMU from Heavy_CPU to high priority ──
+          # CachyOS default rules set qemu-system-x86_64 as Heavy_CPU (nice=9, ionice=7,
+          # latency_nice=9) which deprioritizes VM threads. For GPU passthrough gaming VMs,
+          # QEMU vCPU threads need low latency. Custom rules override this.
+          (lib.mkIf cfg.anancyOverride {
+            # Override CachyOS default rules that classify QEMU as Heavy_CPU (nice=9,
+            # ionice=7, latency_nice=9). For gaming VMs, vCPU threads need low latency.
+            services.ananicy.extraRules = [
+              # QEMU vCPU threads — high priority for gaming/interactive VMs
+              {
+                name = "qemu-system-x86_64";
+                nice = -5;
+                ioclass = "best-effort";
+                ionice = 1;
+                latency_nice = -7;
+              }
+              {
+                name = "qemu-system-x86";
+                nice = -5;
+                ioclass = "best-effort";
+                ionice = 1;
+                latency_nice = -7;
+              }
+              # Libvirt management — moderate priority (not latency-sensitive)
+              {
+                name = "libvirtd";
+                nice = -2;
+                ioclass = "best-effort";
+                ionice = 3;
+              }
+              {
+                name = "virtqemud";
+                nice = -2;
+                ioclass = "best-effort";
+                ionice = 3;
+              }
+              # Looking Glass client — low latency for frame relay display
+              {
+                name = "looking-glass-client";
+                nice = -10;
+                ioclass = "best-effort";
+                ionice = 0;
+                latency_nice = -10;
+              }
+              # swtpm — TPM emulation, low priority
+              {
+                name = "swtpm";
+                nice = 5;
+                ioclass = "best-effort";
+                ionice = 5;
+              }
+            ];
+          })
+
           # ── KVM kernel patches for RDTSC spoofing (stealth) ──
           (lib.mkIf cfg.stealth.enable {
             boot.kernelPatches = [
@@ -979,7 +1327,7 @@
 
             # Stealth kernel params (idle=poll removed: wastes 100-150W, max_cstate=1 is sufficient on Zen 5)
             boot.kernelParams = [
-              "processor.max_cstate=1" # Limit C-states to C1 (~1us wake, good stealth/power trade-off)
+              "processor.max_cstate=${toString cfg.stealth.maxCState}" # Limit C-states for timer stability
             ];
           })
 
@@ -1121,7 +1469,7 @@
           # ── VM disk directory ──
           {
             systemd.tmpfiles.rules = [
-              "d /var/lib/vfio 0770 ${user} libvirtd -"
+              "d ${cfg.vmDiskPath} 0770 ${user} libvirtd -"
             ];
           }
         ]

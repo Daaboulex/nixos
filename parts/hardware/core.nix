@@ -14,6 +14,11 @@
       _class = "nixos";
       options.myModules.hardware.core = {
         enable = lib.mkEnableOption "Core hardware configuration (firmware, microcode, sensors)";
+        msr = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = "Load the msr kernel module for x86 Model-Specific Register access. Required for APERF/MPERF clock stretch detection and RAPL energy counters. Used by CPU stability testers, power monitors, and tuning tools.";
+        };
       };
 
       config = lib.mkIf cfg.enable {
@@ -27,7 +32,7 @@
         # thermald is Intel-only — it conflicts with AMD P-State/Prefcore
         services.thermald.enable = lib.mkDefault (config.myModules.hardware.cpu.intel.enable or false);
         # coretemp is Intel-only; AMD uses k10temp (loaded by cpu-amd.nix)
-        boot.kernelModules = [ "drivetemp" ];
+        boot.kernelModules = [ "drivetemp" ] ++ lib.optionals cfg.msr [ "msr" ];
       };
     };
 }

@@ -89,6 +89,7 @@
         home-manager.sharedModules = [
           inputs.goxlr-hm-nix.homeManagerModules.default
           inputs.streamcontroller-nix.homeManagerModules.default
+          inputs.coolercontrol.homeManagerModules.default
         ];
       }
 

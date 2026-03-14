@@ -41,9 +41,6 @@
       config = lib.mkIf cfg.enable {
         environment.systemPackages = [ package ];
 
-        # MSR module — needed for APERF/MPERF clock stretch and RAPL MSR power
-        boot.kernelModules = [ "msr" ];
-
         # --- Device access via dedicated group (no sudo) ---
         # Creates a 'corecycler' group, adds primaryUser to it, then:
         # - udev rule: /dev/cpu/*/msr readable by group

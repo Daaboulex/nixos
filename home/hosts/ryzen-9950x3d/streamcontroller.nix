@@ -10,8 +10,8 @@
   programs.streamcontroller = {
     enable = true;
 
-    # Flatpak data directory (switch to default when migrating to native package)
-    dataPath = "${config.home.homeDirectory}/.var/app/com.core447.StreamController/data";
+    # Native XDG data directory
+    dataPath = "${config.home.homeDirectory}/.local/share/StreamController";
 
     assets = {
       "goxlr-utility-5.png" = ./streamcontroller-assets/goxlr-utility-5.png;

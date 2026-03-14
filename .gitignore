@@ -44,7 +44,12 @@ Todo.txt
 .direnv/
 .pre-commit-config.yaml
 
-# AI files
-CLAUDE.md
-GEMINI.md
-.claude/
+# AI context submodule
+.ai-context/
+
+# Root-level AI symlinks (Tracked via .ai-context submodule instead)
+/CLAUDE.md
+/GEMINI.md
+/.claude/
+/.gemini/
+

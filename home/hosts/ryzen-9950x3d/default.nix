@@ -157,15 +157,11 @@ in
   # --------------------------------------------------------------------------
   services.flatpak.packages = [
     "com.calibre_ebook.calibre"
-    "com.github.tenderowl.frog"
     "com.github.jeromerobert.pdfarranger"
-    "com.github.Darazaki.Spedread"
-    "com.logseq.Logseq"
     "com.obsproject.Studio"
     "com.spotify.Client"
     "com.rtosta.zapzap"
     "de.bund.ausweisapp.ausweisapp2"
-    "dev.geopjr.Calligraphy"
     "eu.betterbird.Betterbird"
     "io.github.shiftey.Desktop"
     "io.github.milkshiift.GoofCord"

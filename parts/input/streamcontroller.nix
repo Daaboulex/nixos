@@ -1,4 +1,4 @@
-{ inputs, ... }:
+{ inputs, withSystem, ... }:
 {
   flake.nixosModules.input-streamcontroller =
     {
@@ -9,13 +9,8 @@
     }:
     let
       cfg = config.myModules.input.streamcontroller;
-
-      streamcontrollerPatched = pkgs.streamcontroller.overrideAttrs (old: {
-        propagatedBuildInputs = (old.propagatedBuildInputs or [ ]) ++ [ pkgs.python3Packages.websockets ];
-        postPatch = (old.postPatch or "") + ''
-          find . -name "*.py" -exec sed -i 's/DeviceManager.USB_VID_ELGATO/0x0fd9/g' {} +
-        '';
-      });
+      perSystem = withSystem pkgs.stdenv.hostPlatform.system ({ inputs', ... }: inputs');
+      streamcontrollerPkg = perSystem.streamcontroller-nix.packages.streamcontroller;
     in
     {
       _class = "nixos";
@@ -25,10 +20,10 @@
 
       config = lib.mkIf cfg.enable {
         environment.systemPackages = [
-          streamcontrollerPatched
+          streamcontrollerPkg
           pkgs.kdotool
         ];
-        services.udev.packages = [ streamcontrollerPatched ];
+        services.udev.packages = [ streamcontrollerPkg ];
       };
     };
 }
