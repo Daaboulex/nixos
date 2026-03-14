@@ -149,6 +149,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Gemini-CLI - Gemini agent for your terminal
+    gemini-cli-nix = {
+      url = "github:Daaboulex/gemini-cli-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # treefmt-nix - Unified code formatting via flake-parts
     treefmt-nix = {
       url = "github:numtide/treefmt-nix";
