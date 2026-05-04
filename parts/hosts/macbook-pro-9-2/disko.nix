@@ -128,7 +128,10 @@ _: {
     # btrbk snapshot archive. Keyfile auto-unlocks both at boot.
     disk.kingston = {
       type = "disk";
-      device = "/dev/disk/by-id/${(import ../../../secrets/host-identifiers.nix).hardware.macbook-pro-9-2.kingstonDiskId}";
+      # DR-only: hardcoded here because disko runs standalone from ISO
+      # where the site registry doesn't exist. Keep in sync with
+      # site/hosts/macbook-pro-9-2.nix → hardware.kingstonDiskId
+      device = "/dev/disk/by-id/ata-KINGSTON_SA400S37240G_50026B7685D72E86";
       content = {
         type = "gpt";
         partitions = {

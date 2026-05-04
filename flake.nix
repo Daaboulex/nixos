@@ -196,6 +196,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Site — private infrastructure registry (local-only, Syncthing-synced)
+    site = {
+      url = "git+file:///home/user/Documents/site";
+      flake = false;
+    };
+
     # treefmt-nix - Unified code formatting via flake-parts
     treefmt-nix = {
       url = "github:numtide/treefmt-nix";

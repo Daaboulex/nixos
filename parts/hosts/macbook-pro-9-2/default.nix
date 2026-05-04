@@ -4,6 +4,7 @@
   pkgs,
   inputs,
   lib,
+  site,
   ...
 }:
 {
@@ -84,9 +85,9 @@
         hostPublicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE/jG7luSfcKBrQtez0W8eZ8X0fgr2R6YStna/dEKdGT";
         extraHostNames = [
           "ryzen-9950x3d"
-          (import ../../../secrets/host-identifiers.nix).ips.ryzen-9950x3d
+          site.network.hosts.ryzen-9950x3d.ip
         ];
-        staticIp = (import ../../../secrets/host-identifiers.nix).ips.ryzen-9950x3d;
+        staticIp = site.network.hosts.ryzen-9950x3d.ip;
       };
       server.enable = false; # laptop doesn't serve builds
     };
@@ -219,7 +220,7 @@
         # Kingston A400 (DRAM-less SATA) + btrfs = metadata storm when the
         # full-folder scan runs at boot. Delay by 120 s so KDE settles first.
         startDelay = 120;
-        devices.ryzen-9950x3d.id = (import ../../../secrets/host-identifiers.nix).syncthing.ryzen-9950x3d;
+        devices.ryzen-9950x3d.id = site.hosts.ryzen-9950x3d.syncthing.deviceId;
         folders = {
           documents = {
             path = "/home/user/Documents";
@@ -819,12 +820,12 @@
   # starving behind btrfs commit writes — exactly the cascade that caused
   # the 120 s hung-task → journald watchdog timeout hangs (see dmesg
   # analysis).
-  # Second remote builder. Identity from secrets/host-identifiers.nix.
+  # Second remote builder. Identity from site registry.
   # Uses same remotebuild SSH key as ryzen (reused across builders).
   # List-merge: nix.buildMachines from remote-builder module + this entry.
   nix.buildMachines =
     let
-      wb = (import ../../../secrets/host-identifiers.nix).aux-builder;
+      wb = site.network.builders.aux;
     in
     [
       {
@@ -845,7 +846,7 @@
     ];
   programs.ssh.knownHosts."aux-builder" =
     let
-      wb = (import ../../../secrets/host-identifiers.nix).aux-builder;
+      wb = site.network.builders.aux;
     in
     {
       hostNames = [ wb.hostName ];

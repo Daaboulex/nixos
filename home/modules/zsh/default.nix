@@ -414,7 +414,7 @@ in
               # Verify sudo works without password on target
               if ! ssh -o ConnectTimeout=5 "$_dt_ssh" 'sudo -n /run/current-system/sw/bin/true' 2>/dev/null; then
                 _msg_fail "$_dt requires NOPASSWD sudo for deploy"
-                _msg_dim "  Add to sudoers on $_dt: user ALL=(ALL) NOPASSWD: ALL"
+                _msg_dim "  Target must have myModules.security.hardening.enable = true (provides nrb-activate)"
                 _deploy_cleanup; return 1
               fi
 
@@ -441,13 +441,13 @@ in
               # Step 1: link profile. Step 2: activate. If step 2 fails,
               # rollback the profile so next boot doesn't use the broken config.
               _msg_step "Linking profile on $_dt ..."
-              if ! ssh -t "$_dt_ssh" "sudo nix-env -p /nix/var/nix/profiles/system --set '$_store_path'"; then
+              if ! ssh -t "$_dt_ssh" "sudo nrb-activate set-profile '$_store_path'"; then
                 _msg_fail "Profile link failed on $_dt — no changes made"
                 _deploy_cleanup; return 1
               fi
 
               _msg_step "Activating on $_dt ..."
-              if ! ssh -t "$_dt_ssh" "sudo '$_store_path/bin/switch-to-configuration' switch"; then
+              if ! ssh -t "$_dt_ssh" "sudo nrb-activate switch '$_store_path'"; then
                 _msg_fail "Activation failed on $_dt — profile was linked but services not switched"
                 _msg_warn "  Remote is in a half-switched state. To fix on $_dt, run:"
                 _msg_dim "    sudo nix-env -p /nix/var/nix/profiles/system --rollback"
@@ -546,7 +546,7 @@ in
               # = 1-5 moved inputs → ~1-3 min on MBP.
 
               local _lock_backup _mk_kern_expr _lock_guard _eval_log _escaped_dir _escaped_host
-              local _lock_fd="" _old_traps=""
+              local _lock_fd=""
               _lock_backup=$(mktemp -t nrb-flake-lock-XXXXXX) || {
                 _msg_fail "mktemp failed"
                 return 1
@@ -574,13 +574,12 @@ in
                 fi
               fi
 
-              # Cleanup function — guaranteed to run via trap. Closes lock
-              # fd, restores flake.lock from backup if needed, removes temp
-              # files, and restores prior traps.
+              # Cleanup function — closes lock fd, removes temp files,
+              # clears traps set by this block.
               _nrb_cleanup() {
                 [[ -n "$_lock_fd" ]] && exec {_lock_fd}>&- 2>/dev/null
                 rm -f "$_lock_guard" "$_lock_backup"
-                eval "$_old_traps"
+                trap - INT TERM HUP
               }
               # Restore function — called on abort to revert flake.lock
               _nrb_abort_restore() {
@@ -588,9 +587,6 @@ in
                 _nrb_cleanup
               }
 
-              # Save existing traps before overwriting
-              # zsh: `trap` with no args prints all traps (bash uses `trap -p`)
-              _old_traps=$(trap)
               trap '_nrb_abort_restore' INT TERM HUP
 
               cp "$flake_dir/flake.lock" "$_lock_backup"
@@ -702,6 +698,11 @@ in
               _msg_dim "  3/4 re-evaluating all kernels..."
               local _new
               _new=$(_mk_kern_map)
+              if [[ -z "$_new" ]]; then
+                _msg_fail "Post-update kernel eval failed — restoring baseline lock"
+                _nrb_abort_restore
+                return 1
+              fi
 
               if _kern_map_eq_or_cached "$_baseline" "$_new"; then
                 if [[ -n "$_kern_cache_status" ]]; then
@@ -829,8 +830,9 @@ in
               _sudo_keepalive_pid=""
             }
             if (( ! dry )); then
-              ( trap 'exit 0' TERM; while true; do sudo -v 2>/dev/null; sleep 60; done ) &
+              ( trap 'exit 0' TERM INT; while true; do sudo -v 2>/dev/null; sleep 60; done ) &
               _sudo_keepalive_pid=$!
+              trap '_nrb_kill_sudo' INT TERM
             fi
 
             # Remote builder reachability check. Parses /etc/nix/machines
@@ -999,12 +1001,12 @@ in
             # Set system profile
             echo ""
             _msg_step "Setting system profile..."
-            if ! sudo nix-env -p /nix/var/nix/profiles/system --set "$build_path"; then
+            if ! sudo nrb-activate set-profile "$build_path"; then
               _msg_fail "Profile switch cancelled or failed!"
               _msg_dim "  Built path: $build_path"
               _msg_dim "  To activate manually:"
-              _msg_dim "  sudo nix-env -p /nix/var/nix/profiles/system --set $build_path"
-              _msg_dim "  sudo $build_path/bin/switch-to-configuration switch"
+              _msg_dim "  sudo nrb-activate set-profile $build_path"
+              _msg_dim "  sudo nrb-activate switch $build_path"
               _nrb_kill_sudo
               return 1
             fi
@@ -1018,7 +1020,7 @@ in
               _msg_step "Activating new configuration..."
             fi
             local switch_rc=0
-            sudo "$build_path/bin/switch-to-configuration" "$action" || switch_rc=$?
+            sudo nrb-activate "$action" "$build_path" || switch_rc=$?
             case $switch_rc in
               0)  ;; # success
               2)  _msg_warn "Activation scripts had errors (non-fatal)"

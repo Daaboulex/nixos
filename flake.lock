@@ -717,11 +717,11 @@
         "nixpkgs-lib": "nixpkgs-lib"
       },
       "locked": {
-        "lastModified": 1777895621,
-        "narHash": "sha256-7Aww3lPr+1Sq/CXlevDYUlwuvSPTgneASCNzLZ6egkE=",
+        "lastModified": 1777898446,
+        "narHash": "sha256-tTEOTTjMHd8Vffn4hehLTPgOXXxJ27xfkf4DoyZgD7s=",
         "owner": "hercules-ci",
         "repo": "flake-parts",
-        "rev": "ae2918651e0bf52437fa08a79514c01023527d4d",
+        "rev": "5d82aa3d6b5da25dbfec1a995750a70a03b8c659",
         "type": "github"
       },
       "original": {
@@ -2046,11 +2046,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1777865555,
-        "narHash": "sha256-AQUiFMLw3ZLQTSCpl2j/ykwAyEVi6QGnsrItJ+FFw+s=",
+        "lastModified": 1777903777,
+        "narHash": "sha256-3sBhyvnp2lMFkXD0V2EocC7OVywydc3KAaoE5BfT/uQ=",
         "owner": "daaboulex",
         "repo": "mesa-git-nix",
-        "rev": "374546652ee6c9c5d5b0c151f6c6ccc5c92cc4e9",
+        "rev": "20e80c1af7da31eab192e15b0c0bd09aa1a0e1ab",
         "type": "github"
       },
       "original": {
@@ -2441,6 +2441,7 @@
         "portmaster": "portmaster",
         "ripgrep-nix": "ripgrep-nix",
         "rocksmith-nix": "rocksmith-nix",
+        "site": "site",
         "sops-nix": "sops-nix",
         "streamcontroller-nix": "streamcontroller-nix",
         "tidalcycles": "tidalcycles",
@@ -2485,6 +2486,22 @@
         "owner": "oxalica",
         "repo": "rust-overlay",
         "type": "github"
+      }
+    },
+    "site": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1777909057,
+        "narHash": "sha256-CjZZchGImOOqNFrtJ56WmfpYkp+dsN3yullAaE95Wms=",
+        "ref": "refs/heads/master",
+        "rev": "bb82d8b6d07da92edf0b3a590d929effd9d360de",
+        "revCount": 2,
+        "type": "git",
+        "url": "file:///home/user/Documents/site"
+      },
+      "original": {
+        "type": "git",
+        "url": "file:///home/user/Documents/site"
       }
     },
     "sops-nix": {

@@ -10,6 +10,71 @@ let
     }:
     let
       cfg = config.myModules.security.hardening;
+
+      nrb-activate = pkgs.writeShellApplication {
+        name = "nrb-activate";
+        runtimeInputs = [ pkgs.coreutils pkgs.nix ];
+        text = ''
+          set -euo pipefail
+
+          usage() {
+            echo "Usage: nrb-activate {set-profile|switch|boot|test} /nix/store/<hash>-nixos-system-*" >&2
+            exit 1
+          }
+
+          [[ $# -eq 2 ]] || usage
+
+          action="$1"
+          store_path="$2"
+
+          # Validate action
+          case "$action" in
+            set-profile|switch|boot|test) ;;
+            *) echo "nrb-activate: invalid action '$action'" >&2; exit 1 ;;
+          esac
+
+          # Validate store path: must be a real /nix/store path, not a symlink chain
+          # that resolves elsewhere
+          real_path=$(readlink -f "$store_path")
+          if [[ "$real_path" != /nix/store/* ]]; then
+            echo "nrb-activate: path does not resolve to /nix/store/" >&2
+            exit 1
+          fi
+
+          # Validate NixOS system closure naming convention
+          basename=$(basename "$real_path")
+          if [[ ! "$basename" =~ ^[a-z0-9]{32}-nixos-system-.+ ]]; then
+            echo "nrb-activate: not a NixOS system closure: $basename" >&2
+            exit 1
+          fi
+
+          # Validate the closure has the expected structure
+          if [[ ! -x "$real_path/bin/switch-to-configuration" ]]; then
+            echo "nrb-activate: missing bin/switch-to-configuration in $real_path" >&2
+            exit 1
+          fi
+          if [[ ! -e "$real_path/nixos-version" ]]; then
+            echo "nrb-activate: missing nixos-version in $real_path" >&2
+            exit 1
+          fi
+
+          # Verify store path integrity — re-hashes contents against NAR hash
+          # in the nix DB. Catches tampered store paths.
+          if ! nix store verify --no-trust "$real_path" 2>/dev/null; then
+            echo "nrb-activate: store integrity check failed for $real_path" >&2
+            exit 1
+          fi
+
+          case "$action" in
+            set-profile)
+              exec nix-env -p /nix/var/nix/profiles/system --set "$real_path"
+              ;;
+            switch|boot|test)
+              exec "$real_path/bin/switch-to-configuration" "$action"
+              ;;
+          esac
+        '';
+      };
     in
     {
       _class = "nixos";
@@ -38,11 +103,7 @@ let
                     options = [ "NOPASSWD" ];
                   }
                   {
-                    command = "/run/current-system/sw/bin/nix-env -p /nix/var/nix/profiles/system --set /nix/store/*";
-                    options = [ "NOPASSWD" ];
-                  }
-                  {
-                    command = "/nix/store/*/bin/switch-to-configuration *";
+                    command = "${nrb-activate}/bin/nrb-activate *";
                     options = [ "NOPASSWD" ];
                   }
                 ];
@@ -101,7 +162,9 @@ let
           "net.ipv4.tcp_syncookies" = lib.mkDefault 1;
         };
 
-        environment.systemPackages = lib.optionals cfg.firejail.enable [ pkgs.firejail ];
+        environment.systemPackages =
+          [ nrb-activate ]
+          ++ lib.optionals cfg.firejail.enable [ pkgs.firejail ];
       };
     };
 in

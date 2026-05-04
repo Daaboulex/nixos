@@ -4,6 +4,7 @@
   pkgs,
   inputs,
   lib,
+  site,
   ...
 }:
 {
@@ -235,8 +236,7 @@
       };
       syncthing = {
         enable = true;
-        devices.macbook-pro-9-2.id =
-          (import ../../../secrets/host-identifiers.nix).syncthing.macbook-pro-9-2;
+        devices.macbook-pro-9-2.id = site.hosts.macbook-pro-9-2.syncthing.deviceId;
         folders = {
           documents = {
             path = "/home/user/Documents";
@@ -600,7 +600,7 @@
           # Match actual installed RAM
           memory = {
             manufacturer = "G.Skill International";
-            inherit ((import ../../../secrets/host-identifiers.nix).hardware.ryzen-9950x3d.vfio.ram) partNumber;
+            inherit (site.hosts.ryzen-9950x3d.vfio.ram) partNumber;
             speed = 6000;
             size = 16384; # 16GB per DIMM
             count = 2; # 2 × 16GB = 32GB
@@ -614,7 +614,7 @@
         };
         edid =
           let
-            hw = (import ../../../secrets/host-identifiers.nix).hardware.ryzen-9950x3d.vfio;
+            hw = site.hosts.ryzen-9950x3d.vfio;
           in
           {
             manufacturer = "DEL";
@@ -626,8 +626,8 @@
             week = 18;
             year = 2021;
           };
-        disk.model = (import ../../../secrets/host-identifiers.nix).hardware.ryzen-9950x3d.vfio.disk.model;
-        disk.opticalModel = "ASUS DRW-24B1ST   c    ";
+        disk.model = site.hosts.ryzen-9950x3d.vfio.disk.model;
+        disk.opticalModel = site.hosts.ryzen-9950x3d.vfio.disk.opticalModel;
         # Match actual motherboard ACPI
         acpiOem = {
           id = "ASUS  ";

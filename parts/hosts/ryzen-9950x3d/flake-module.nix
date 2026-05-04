@@ -14,6 +14,7 @@
     specialArgs = {
       inherit inputs;
       myLib = inputs.self.lib;
+      site = import inputs.site;
     };
     modules = [
       # Host config
@@ -149,6 +150,7 @@
         home-manager.extraSpecialArgs = {
           inherit inputs;
           myLib = inputs.self.lib;
+          site = import inputs.site;
         };
         home-manager.sharedModules = [
           inputs.goxlr-hm-nix.homeManagerModules.default
