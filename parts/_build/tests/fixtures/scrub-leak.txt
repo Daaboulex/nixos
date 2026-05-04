@@ -1,0 +1,9 @@
+diff --git a/parts/example/foo.nix b/parts/example/foo.nix
+index abc..def 100644
+--- a/parts/example/foo.nix
++++ b/parts/example/foo.nix
+@@ -1,3 +1,4 @@
+ { ... }: {
++  # Sync against Development-Mobile project
+   foo = "bar";
+ }
