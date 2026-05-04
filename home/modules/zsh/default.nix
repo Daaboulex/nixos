@@ -272,11 +272,13 @@ in
               local _pid=$! _elapsed=0
               local -a _frames=('⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏')
               [[ -z "$_c_reset" ]] && _frames=('-' '\' '|' '/')
+              trap "kill $_pid 2>/dev/null; printf '\r\033[K'; trap - INT TERM; return 130" INT TERM
               while kill -0 "$_pid" 2>/dev/null; do
                 printf "\r  ''${_c_dim}%s %s (%ds)''${_c_reset}  " "''${_frames[$(( _elapsed % ''${#_frames[@]} + 1 ))]}" "$_lbl" "$_elapsed"
                 sleep 1
                 (( _elapsed++ ))
               done
+              trap - INT TERM
               printf "\r\033[K"
               wait "$_pid"
             }
@@ -378,11 +380,19 @@ in
             # Profile-linked + bootloader-updated on the remote. Proper NixOS workflow.
             # Requires: passwordless SSH + NOPASSWD sudo on target for nix-env + switch.
             if [[ -n "$deploy_target" ]]; then
+              if (( dry )); then
+                _msg_fail "--deploy does not support --dry (remote activation is all-or-nothing)"
+                return 1
+              fi
+              if (( check )); then
+                _msg_fail "--deploy does not support --check (use nrb --check separately)"
+                return 1
+              fi
               local _dt="$deploy_target"
               local _dt_ssh=""
               local _build_dir
               _build_dir=$(mktemp -d)
-              trap "rm -rf '$_build_dir'" EXIT
+              _deploy_cleanup() { rm -rf "$_build_dir" 2>/dev/null; }
               _msg_step "Deploy mode: building $_dt config locally, deploying via SSH"
 
               # Resolve target — try bare hostname, then .local (mDNS), then IP from ssh_config
@@ -397,7 +407,7 @@ in
                 _msg_fail "Cannot reach $_dt via SSH"
                 _msg_dim "  Tried: $_dt, ''${_dt}.local"
                 _msg_dim "  Ensure target is on the network and SSH key auth is configured."
-                return 1
+                _deploy_cleanup; return 1
               fi
               [[ "$_dt_ssh" != "$_dt" ]] && _msg_dim "  resolved via $_dt_ssh"
 
@@ -405,7 +415,7 @@ in
               if ! ssh -o ConnectTimeout=5 "$_dt_ssh" 'sudo -n /run/current-system/sw/bin/true' 2>/dev/null; then
                 _msg_fail "$_dt requires NOPASSWD sudo for deploy"
                 _msg_dim "  Add to sudoers on $_dt: user ALL=(ALL) NOPASSWD: ALL"
-                return 1
+                _deploy_cleanup; return 1
               fi
 
               # Build (uses $_dt for the nix config name, $_dt_ssh for SSH)
@@ -413,7 +423,7 @@ in
               if ! nix build "''${flake_dir}#nixosConfigurations.''${_dt}.config.system.build.toplevel" \
                 -o "$_build_dir/result" $trace_flag; then
                 _msg_fail "Build failed for $_dt"
-                return 1
+                _deploy_cleanup; return 1
               fi
               local _store_path
               _store_path=$(readlink "$_build_dir/result")
@@ -423,7 +433,7 @@ in
               _msg_step "Copying closure to $_dt_ssh ..."
               if ! NIX_SSHOPTS="-o ConnectTimeout=30" nix copy --to "ssh://''${_dt_ssh}" "$_store_path"; then
                 _msg_fail "Failed to copy closure to $_dt_ssh"
-                return 1
+                _deploy_cleanup; return 1
               fi
               _msg_ok "Closure copied"
 
@@ -433,7 +443,7 @@ in
               _msg_step "Linking profile on $_dt ..."
               if ! ssh -t "$_dt_ssh" "sudo nix-env -p /nix/var/nix/profiles/system --set '$_store_path'"; then
                 _msg_fail "Profile link failed on $_dt — no changes made"
-                return 1
+                _deploy_cleanup; return 1
               fi
 
               _msg_step "Activating on $_dt ..."
@@ -442,7 +452,7 @@ in
                 _msg_warn "  Remote is in a half-switched state. To fix on $_dt, run:"
                 _msg_dim "    sudo nix-env -p /nix/var/nix/profiles/system --rollback"
                 _msg_dim "    sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch"
-                return 1
+                _deploy_cleanup; return 1
               fi
 
               _msg_ok "Deployed to $_dt"
