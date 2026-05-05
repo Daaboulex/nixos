@@ -137,7 +137,7 @@ Do NOT bypass with `--no-verify` — that skips ALL hooks and hides real violati
 
 ## Flake Checks
 
-Run with `nix flake check`. Full check set (20 checks):
+Run with `nix flake check`. Full check set (24 checks):
 
 | Check                             | Source                  | What it validates                                                               |
 | --------------------------------- | ----------------------- | ------------------------------------------------------------------------------- |
@@ -160,6 +160,10 @@ Run with `nix flake check`. Full check set (20 checks):
 | `check-placement-test`            | tests.nix               | Regression fixture for `check-placement` hook (intentional violation must fail) |
 | `eval-mylib-mkSimplePackage`      | tests.nix               | `myLib.mkSimplePackage` factory returns valid module function                   |
 | `eval-mylib-mergeSettings`        | tests.nix               | `myLib.mergeSettings` override semantics (overrides win, nested merge)          |
+| `eval-mylib-cap`                  | tests.nix               | `myLib.cap` capitalizes first letter correctly                                  |
+| `eval-mylib-mkSettingsOption`     | tests.nix               | `myLib.mkSettingsOption` produces option with type + empty default              |
+| `eval-mylib-themeCtx`             | tests.nix               | `myLib.themeCtx` handles disabled theme gracefully                              |
+| `eval-mylib-withStdenvCC`         | tests.nix               | `myLib.withStdenvCC` injects stdenv.cc into nativeBuildInputs                   |
 | `check-scrub-tokens-test`         | tests.nix               | Regression fixture for `check-scrub-tokens` hook                                |
 
 Run a single test:

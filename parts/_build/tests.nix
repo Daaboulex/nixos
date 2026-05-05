@@ -416,6 +416,77 @@
               exit 1
             ''
           );
+        # myLib.cap — contract: capitalizes first letter, preserves rest.
+        eval-mylib-cap =
+          let
+            cap = inputs.self.lib.cap;
+            pass = cap "blue" == "Blue" && cap "red" == "Red" && cap "a" == "A";
+          in
+          pkgs.runCommand "eval-mylib-cap" { } (
+            if pass then ''
+              echo "OK: cap capitalizes first letter correctly"
+              touch $out
+            '' else ''
+              echo "FAIL: cap produced wrong result"
+              echo "  cap \"blue\" = ${cap "blue"} (expected Blue)"
+              exit 1
+            ''
+          );
+
+        # myLib.mkSettingsOption — contract: returns an option with
+        # attrsOf anything type and empty default.
+        eval-mylib-mkSettingsOption =
+          let
+            opt = inputs.self.lib.mkSettingsOption { };
+            hasType = opt ? type;
+            hasDefault = opt ? default && opt.default == { };
+          in
+          pkgs.runCommand "eval-mylib-mkSettingsOption" { } (
+            if hasType && hasDefault then ''
+              echo "OK: mkSettingsOption produces option with type + empty default"
+              touch $out
+            '' else ''
+              echo "FAIL: mkSettingsOption missing type or default"
+              exit 1
+            ''
+          );
+
+        # myLib.themeCtx — contract: returns hasTheme/c/when attrs,
+        # handles missing theme gracefully.
+        eval-mylib-themeCtx =
+          let
+            ctx = inputs.self.lib.themeCtx {
+              config.myModules.home.theme = { };
+            };
+            pass = ctx.hasTheme == false && ctx.c == { } && ctx.when { x = 1; } == { };
+          in
+          pkgs.runCommand "eval-mylib-themeCtx" { } (
+            if pass then ''
+              echo "OK: themeCtx handles disabled theme (hasTheme=false, c={}, when={})"
+              touch $out
+            '' else ''
+              echo "FAIL: themeCtx contract violation"
+              exit 1
+            ''
+          );
+
+        # myLib.withStdenvCC — contract: returns a derivation with
+        # stdenv.cc in nativeBuildInputs.
+        eval-mylib-withStdenvCC =
+          let
+            dummy = pkgs.runCommand "dummy-drv" { } "touch $out";
+            result = inputs.self.lib.withStdenvCC { inherit pkgs; drv = dummy; };
+            hasCC = builtins.elem pkgs.stdenv.cc (result.nativeBuildInputs or [ ]);
+          in
+          pkgs.runCommand "eval-mylib-withStdenvCC" { } (
+            if hasCC then ''
+              echo "OK: withStdenvCC injects stdenv.cc into nativeBuildInputs"
+              touch $out
+            '' else ''
+              echo "FAIL: stdenv.cc not found in nativeBuildInputs"
+              exit 1
+            ''
+          );
       };
     };
 }
