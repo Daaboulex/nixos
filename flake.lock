@@ -200,11 +200,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1777967973,
+        "lastModified": 1777968249,
         "narHash": "sha256-nUzdv1tAWpcR5IL/Seia/oAD0i8iNZK4NPKpVnvSiEg=",
         "owner": "Daaboulex",
         "repo": "coolercontrol-nix",
-        "rev": "7dc926c23e8c8a0d08ce9e396aa439851937c3ae",
+        "rev": "4084d1b731fdc5aa6904183a6be3b5c97d3e012d",
         "type": "github"
       },
       "original": {
@@ -2282,11 +2282,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1777967973,
+        "lastModified": 1777968250,
         "narHash": "sha256-0zRKHADRmSW7L53iSE5qiFVCIV9nkDDrCgYNQZA4Et4=",
         "owner": "Daaboulex",
         "repo": "openviking-nix",
-        "rev": "938e9b5faa9c7ad8ffa80cd5cdbbbf3c395d8aba",
+        "rev": "dcbdfc2cf3f6fcb3f54c354b08ee4a5dfc72b39d",
         "type": "github"
       },
       "original": {
