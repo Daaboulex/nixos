@@ -38,7 +38,7 @@ Full operator reference + hook list in [`docs/BUILD.md`](docs/BUILD.md).
 
 - [`docs/installation.md`](docs/installation.md) — BTRFS + LUKS + disko install, from live USB.
 - [`docs/secure-boot.md`](docs/secure-boot.md) — Lanzaboote enrollment + recovery.
-- [`docs/SECRETS.md`](docs/SECRETS.md) — sops-nix entry point.
+- [`docs/SECRETS.md`](docs/SECRETS.md) — agenix secrets management.
 - [`docs/NETWORKING.md`](docs/NETWORKING.md) — DNS, Portmaster, Mullvad interactions.
 - [`docs/STORAGE-STRATEGY.md`](docs/STORAGE-STRATEGY.md) — MBP 9,2 dual-drive decision record.
 - [`docs/TERMINAL-TOOLS.md`](docs/TERMINAL-TOOLS.md) — shell stack, aliases, key bindings.
@@ -672,7 +672,6 @@ home/modules/zsh/default.nix                                # Zsh shell with cus
 - `portmaster`
 - `ripgrep-nix`
 - `rocksmith-nix`
-- `sops-nix`
 - `streamcontroller-nix`
 - `tidalcycles`
 - `treefmt-nix`

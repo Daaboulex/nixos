@@ -56,14 +56,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # sops-nix — kept as dead input (work flake follows it). Migration to agenix
-    # complete; no NixOS module references remain. Remove after work flake migrates.
-    sops-nix = {
-      url = "github:Mic92/sops-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    # agenix — age-encrypted secrets using host SSH keys (replaces sops-nix).
+    # agenix — age-encrypted secrets using host SSH keys.
     agenix = {
       url = "github:ryantm/agenix";
       inputs.nixpkgs.follows = "nixpkgs";
