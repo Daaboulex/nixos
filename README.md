@@ -36,8 +36,8 @@ Full operator reference + hook list in [`docs/BUILD.md`](docs/BUILD.md).
 
 **How-to / reference:**
 
-- [`docs/installation.md`](docs/installation.md) — BTRFS + LUKS + disko install, from live USB.
-- [`docs/secure-boot.md`](docs/secure-boot.md) — Lanzaboote enrollment + recovery.
+- [`docs/INSTALLATION.md`](docs/INSTALLATION.md) — BTRFS + LUKS + disko install, from live USB.
+- [`docs/SECURE-BOOT.md`](docs/SECURE-BOOT.md) — Lanzaboote enrollment + recovery.
 - [`docs/SECRETS.md`](docs/SECRETS.md) — agenix secrets management.
 - [`docs/NETWORKING.md`](docs/NETWORKING.md) — DNS, Portmaster, Mullvad interactions.
 - [`docs/STORAGE-STRATEGY.md`](docs/STORAGE-STRATEGY.md) — MBP 9,2 dual-drive decision record.

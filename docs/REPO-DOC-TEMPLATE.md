@@ -1,25 +1,25 @@
-# Daaboulex Nix Packaging Repo — Documentation Template v1.0
+# Daaboulex Nix Packaging Repo — Documentation Template v2.0
 
-Documentation shape contract for `repos/*-nix` satellite flakes. Pairs with
+Documentation shape contract for `repos/` satellite flakes. Pairs with
 `docs/REPO-STANDARD.md` (file/CI/flake contract). Both apply.
 
-Version 1.0 (2026-04-24). Derived from the post-restructure state of the
-main nix flake's own `docs/` and from surveying all 20 satellite repos.
+Version 2.0 (2026-05-05). Breaking changes: 2-badge standard, table-format
+upstream, splice markers for auto-managed sections, 22 repos.
 
 ## Why a doc template
 
-The 20 `repos/*-nix` README files drifted into 20 different shapes —
-"What Is This?" vs "Overview" vs "Why?" vs "Features", attribution buried
-mid-document or omitted, license sections missing in half. A reader
-landing on a random repo could not predict where to find install steps
-or upstream credit.
+The 22 `repos/` README files drifted into different shapes — attribution
+buried or omitted, license sections missing, badge noise. A reader landing
+on a random repo could not predict where to find install steps or upstream
+credit.
 
 This template fixes the section set and ordering. Wording stays
-per-repo-authored.
+per-repo-authored. Auto-managed sections use splice markers for
+programmatic updates via `sync.sh`.
 
 ## Tiering — README only vs README + docs/
 
-```
+```text
 Tier 1  Single-package wrapper, no NixOS/HM module           → README only
 Tier 2  Package + module (NixOS or HM), small option set      → README only
 Tier 3  Multi-component (≥2 packages, or module ≥10 options,  → README + docs/
@@ -40,8 +40,9 @@ Examples by tier:
 - Tier 1: `durdraw-nix`, `ripgrep-nix`, `models-nix`, `lsfg-vk-nix`,
   `nx-save-sync-nix`, `OCCT-nix`, `openviking-nix`, `gemini-cli-nix`,
   `lmstudio-nix`, `rocksmith-nix`, `cachyos-settings-nix`,
-  `streamcontroller-nix`, `goxlr-hm-nix`, `eden-nix`, `mesa-git-nix`
-- Tier 2: `coolercontrol-nix`, `yeetmouse-nix`, `mullvad-vpn-nix`
+  `streamcontroller-nix`, `goxlr-hm-nix`, `eden-nix`, `mesa-git-nix`,
+  `linux-corecycler`, `yeetmouse-nix`
+- Tier 2: `coolercontrol-nix`, `mullvad-vpn-nix`, `vkBasalt_overlay_wayland`
 - Tier 3: `portmaster-nix`, `vfio-stealth-nix`
 
 ## Required README.md sections (all tiers)
@@ -49,79 +50,77 @@ Examples by tier:
 Order is fixed. Wording per-repo. Sections marked OPT may be omitted
 when not applicable.
 
-```
+```markdown
 # <repo-name>
 
-<badge block>                              [REQ]  CI, License, NixOS, last
-                                                  commit, Stars, Issues
-                                                  (canonical 6 — see below)
+<!-- BEGIN generated:badges -->             [REQ]  2 badges: NixOS-unstable
+<2-badge block>                                    + License (auto-managed)
+<!-- END generated:badges -->
 
-<one-line description with upstream link>  [REQ]  one sentence, links
+<one-line description>                     [REQ]  one sentence, links
                                                   upstream project + author
 
-## Upstream                                [REQ]  attribution block
+<!-- BEGIN generated:upstream -->           [REQ]  3-row table: Project,
+## Upstream                                        License, Tracked
+<!-- END generated:upstream -->                    (auto-managed)
 
-## What Is This?                           [REQ]  why this repo exists
-                                                  (separate from upstream)
+## What Is This? / Overview                [OPT]  why this repo exists
 
 ## Components / What's Included            [OPT]  Tier 2/3 — table of
                                                   packages/modules shipped
 
-## Requirements                            [OPT]  hardware / external deps
-                                                  (Steam, GPU, kernel
-                                                  module, etc.)
+<!-- BEGIN generated:installation -->       [REQ]  flake input + overlay +
+## Installation                                    module enable
+<!-- END generated:installation -->                (auto-managed for short
+                                                  sections; rich sections
+                                                  wrapped and preserved)
 
-## Installation                            [REQ]  flake input + overlay +
-                                                  module enable, in that
-                                                  order
+## Usage                                   [REQ]  how to use the tool
+                                                  after installation
 
-## Configuration                           [OPT]  Tier 2/3 — link to
-                                                  options reference or
-                                                  inline if short
+## Configuration                           [OPT]  Tier 2/3 — options
+                                                  reference or link
+
+<!-- BEGIN generated:options -->            [OPT]  module repos only —
+<!-- END generated:options -->                     auto-filled by hook
 
 ## Development                             [REQ]  devShell, formatter,
-                                                  pre-commit, how to run
-                                                  update.sh, where CI lives
+                                                  pre-commit commands
 
-## Updates                                 [OPT]  upstream tracking
-                                                  cadence, where bumps
-                                                  land
-
-## License                                 [REQ]  this repo's LICENSE +
+## License / Credits                       [REQ]  this repo's LICENSE +
                                                   upstream's license
-                                                  (different files,
-                                                  cite both)
+
+<!-- BEGIN generated:footer -->             [REQ]  ecosystem footer
+<!-- END generated:footer -->                     (auto-managed)
 ```
 
-### Canonical badge block
+### Canonical badge block (auto-managed)
 
-Six badges, in this order. Drop none, add none (extra package badges
-like Python version may follow but stay below the canonical block):
+Two badges, wrapped in splice markers. Generated by `sync.sh`:
 
 ```markdown
-[![CI](https://github.com/Daaboulex/<repo>/actions/workflows/ci.yml/badge.svg)](https://github.com/Daaboulex/<repo>/actions/workflows/ci.yml)
-[![License](https://img.shields.io/github/license/Daaboulex/<repo>)](./LICENSE)
-[![NixOS](https://img.shields.io/badge/NixOS-unstable-78C0E8?logo=nixos&logoColor=white)](https://nixos.org)
-[![Last commit](https://img.shields.io/github/last-commit/Daaboulex/<repo>)](https://github.com/Daaboulex/<repo>/commits)
-[![Stars](https://img.shields.io/github/stars/Daaboulex/<repo>?style=flat)](https://github.com/Daaboulex/<repo>/stargazers)
-[![Issues](https://img.shields.io/github/issues/Daaboulex/<repo>)](https://github.com/Daaboulex/<repo>/issues)
+<!-- BEGIN generated:badges -->
+[![NixOS unstable](https://img.shields.io/badge/NixOS-unstable-78C0E8?logo=nixos&logoColor=white)](https://nixos.org)
+[![License: <SPDX>](https://img.shields.io/badge/License-<SPDX>-blue.svg)](./LICENSE)
+<!-- END generated:badges -->
 ```
 
-### Upstream block — fixed shape
+### Upstream block — table format (auto-managed)
 
 ```markdown
+<!-- BEGIN generated:upstream -->
 ## Upstream
 
-This is a **Nix packaging wrapper** — not the original project. All
-credit for `<upstream-name>` goes to:
-
-- **Author**: [<name>](url)
-- **Repository**: [<owner>/<repo>](url)
-- **License**: [<SPDX>](link to upstream LICENSE)
+| | |
+|---|---|
+| **Project** | [owner/repo](url) |
+| **License** | SPDX-identifier |
+| **Tracked** | GitHub releases / Git commits / GitLab tags / N/A |
+<!-- END generated:upstream -->
 ```
 
-For forks (e.g., `cachyos-settings-nix`) replace "packaging wrapper"
-with "Nix-friendly fork" and add the divergence summary.
+Generated from `repos.json` by `sync.sh`. For repos with `upstream.type: none`,
+Project shows "Original code (no upstream)".
 
 ### Installation — fixed three-step shape
 
@@ -149,13 +148,13 @@ nixpkgs.overlays = [ inputs.<short>.overlays.default ];
 (varies — package only / NixOS module / HM module — pick the relevant
 sub-section, omit the others)
 
-```
+````markdown
 
 ## Tier 3 docs/ folder — required files
 
 Tier 3 repos add a `docs/` folder. The minimum file set:
 
-```
+```text
 
 docs/
 ├── ARCHITECTURE.md # directory layout, component boundaries,
@@ -166,6 +165,7 @@ docs/
 └── OPTIONS.md # full option reference (auto-generated where # possible — inherit nix repo's # `update-docs` pattern)
 
 ```
+````
 
 Optional files when they have meaningful content for the repo:
 - `docs/STYLE.md` — language-specific coding rules. Skip if repo
@@ -188,27 +188,31 @@ Optional files when they have meaningful content for the repo:
 
 ## Adoption checklist (per repo)
 
-```
-
-[ ] Six canonical badges in canonical order
-[ ] One-line intro with upstream link
-[ ] ## Upstream block in fixed shape
-[ ] ## What Is This? present
-[ ] Components / Requirements where Tier ≥ 2
-[ ] ## Installation in three-step shape
+```text
+[ ] 2 canonical badges in splice markers
+[ ] One-line description
+[ ] ## Upstream table in splice markers (3 rows)
+[ ] ## Installation section (short = generated; rich = wrapped in markers)
+[ ] ## Usage present (practical examples)
 [ ] ## Development present (devShell, fmt, hook commands)
-[ ] ## License cites BOTH this repo's LICENSE and upstream's
+[ ] ## License or ## Credits present
+[ ] Footer in splice markers
+[ ] Options markers present (module repos only)
+[ ] Pre-commit hooks: nixfmt + typos + rumdl + check-readme-sections
+[ ] scripts/check-readme-sections.sh present + executable
 [ ] Tier 3: docs/ARCHITECTURE.md + docs/BUILD.md + docs/OPTIONS.md
 [ ] No forbidden paths tracked (REPO-STANDARD §Forbidden paths)
-
 ```
 
 ## Related
 
-- `docs/REPO-STANDARD.md` — file/CI/flake contract (v1.2)
+- `docs/REPO-STANDARD.md` — file/CI/flake contract (v1.3)
 - `docs/STYLE.md` — Nix coding rules (shared)
 - `docs/ARCHITECTURE.md` — main flake's own architecture (sample
   Tier 3 doc set)
+- `.ai-context/repo-standard/sync.sh` — canonical sync tool
+- `.ai-context/repo-standard/readme-sync.py` — README migration/splice engine
+- `.ai-context/repo-standard/repos.json` — repo registry (22 entries)
 
 ## Versioning
 
@@ -218,5 +222,6 @@ This template is versioned. Bump on:
 - Tier criteria change
 
 History:
-- 1.0 (2026-04-24) — initial draft after surveying 20 satellite repos
-```
+- 2.0 (2026-05-05) — 2-badge standard, table upstream, splice markers,
+  22 repos, pre-commit doc hooks, auto-managed sections
+- 1.0 (2026-04-24) — initial draft after surveying 22 satellite repos

@@ -128,10 +128,8 @@ import ../../lib/mkSimplePackage.nix {
 - Leaf names: `camelCase`. Multi-word with hyphens only when mirroring an upstream option (`x11-bell`).
 - Booleans: positive sense (`enableHardening`, not `disableHardening`).
 - **File names:** `parts/**/*.nix`, `home/modules/*/`, `scripts/*.{sh,nix}` → kebab-case. Underscore prefix (`_build`, `_vms-lib.nix`) reserved for internal-helper files excluded from auto-discovery.
-- **Doc file names** (`docs/*.md`):
-  - UPPERCASE: reference docs (STYLE, BUILD, ARCHITECTURE, OPTIONS, PACKAGES, NETWORKING, SECRETS, REPO-STANDARD, TERMINAL-TOOLS, STORAGE-STRATEGY).
-  - lowercase: procedural prose (`installation.md`, `secure-boot.md`).
-  - Mix intentional — casing signals kind.
+- **Doc file names** (`docs/*.md`): **ALLCAPS-KEBAB.md** exclusively.
+  No lowercase filenames. See `docs/DOC-STYLE.md` §1 for rationale.
 
 ### 2.2 Declarations
 
@@ -181,7 +179,7 @@ Lift the submodule into a `let` if referenced from multiple options.
 
 ### 3.2 Message format
 
-```
+```text
 myModules.<option.path>: <what is wrong>. <why it is wrong>. <how to fix>.
 ```
 
@@ -395,7 +393,7 @@ Acceptable existing uses of hostname (for `nixdHost` LSP completion attr lookup)
 
 ### 8.2 Pre-commit hooks (git-hooks.nix)
 
-Current full set (source: `parts/_build/git-hooks.nix`): `auto-format`, `check-assertion-format`, `check-behind-remote`, `check-mkforce-comment`, `check-module-docstring`, `check-no-roadmap-in-docs`, `check-no-with-lib`, `check-placement`, `check-scrub-tokens`, `hm-exhaustiveness`, `nix-eval-check`, `nixos-exhaustiveness`, `update-docs`. **All custom hooks** MUST be `pkgs.writeShellApplication` (not `writeShellScript`) so they get shellcheck at build and `set -euo pipefail` automatically.
+Current full set (source: `parts/_build/git-hooks.nix`): `auto-format`, `check-assertion-format`, `check-behind-remote`, `check-mkforce-comment`, `check-module-docstring`, `check-no-roadmap-in-docs`, `check-no-with-lib`, `check-placement`, `check-scrub-tokens`, `check-secrets-leak`, `hm-exhaustiveness`, `nix-eval-check`, `nixos-exhaustiveness`, `update-docs`. **All custom hooks** MUST be `pkgs.writeShellApplication` (not `writeShellScript`) so they get shellcheck at build and `set -euo pipefail` automatically.
 
 ### 8.3 New enforcement (added by this standard)
 
@@ -506,7 +504,7 @@ Run `NIX_SHOW_STATS=1 nixos-rebuild dry-build …` periodically. If `nrThunks` o
 
 Reserved top-level keys (MUST NOT collide):
 
-```
+```text
 myModules.boot         myModules.hardware     myModules.services
 myModules.security     myModules.tuning       myModules.gaming
 myModules.macbook      myModules.desktop      myModules.home
@@ -526,7 +524,7 @@ Adding a new top-level key requires a commit with `refactor(schema):` scope and 
 
 Formally, the enforced rules are:
 
-```
+```text
 parts/<scope>/<name>.nix           →  options.myModules.<scope>.*      (any leaf)
 parts/<scope>.nix                  →  options.myModules.<scope>.*      (top-level schema)
 home/modules/<leaf>/default.nix    →  options.myModules.home.<leaf>.*  (dirname == leaf)

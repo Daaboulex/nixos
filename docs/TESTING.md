@@ -1,7 +1,8 @@
 # Testing
 
-Automated VM tests and manual test checklists for modules that cannot be
-fully tested in a NixOS VM.
+VM integration tests and how to run them.
+
+**See also:** [BUILD.md](BUILD.md) for the full check/hook matrix.
 
 ## Automated Tests
 

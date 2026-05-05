@@ -1,4 +1,4 @@
-# ARCHITECTURE.md
+# Architecture
 
 Structural rules for this flake. Answers "where does a new module go?"
 
@@ -14,7 +14,7 @@ Together these three are the project's standard.
 
 ## 1. Top-level layout
 
-```
+```text
 flake.nix                 # entry point — delegates to parts/
 parts/                    # NixOS modules (system-level concerns)
 home/                     # Home Manager modules (user-level concerns)
@@ -76,7 +76,7 @@ categories:
 | `parts/nix/`         | Nix daemon, nix-ld, remote-builder.                                                                                                                                                                                                                                                                                                                                                                          |
 | `parts/security/`    | sshd, agenix, portmaster, hardening.                                                                                                                                                                                                                                                                                                                                                                         |
 | `parts/sensors/`     | Hwmon drivers — nct6775, it87, zenpower, ryzen-smu, msr.                                                                                                                                                                                                                                                                                                                                                     |
-| `parts/services/`    | Daemon services where the app is foreground for the feature — cups, earlyoom, geoclue, mullvad, sunshine, syncthing.                                                                                                                                                                                                                                                                                         |
+| `parts/services/`    | Daemon services where the app is foreground for the feature — avahi, cups, earlyoom, geoclue, mullvad, sunshine, syncthing.                                                                                                                                                                                                                                                                                         |
 | `parts/storage/`     | Filesystems, fstrim, btrbk.                                                                                                                                                                                                                                                                                                                                                                                  |
 | `parts/tuning/`      | Performance + stability — cachyos settings, sysctls, performance, corecycler (benchmark/stress).                                                                                                                                                                                                                                                                                                             |
 | `parts/vfio/`        | VFIO GPU passthrough stack — base, device-binding, session-gpu, evdev, kvmfr, hugepages, vms.                                                                                                                                                                                                                                                                                                                |
@@ -100,7 +100,7 @@ is almost certainly in the wrong place; move it into a category.
 
 Create a new `parts/<name>/` directory when:
 
-1. You have **≥ 3 related modules** that share a concern, AND
+1. **≥ 3 related modules** share a concern, AND
 2. None of the existing categories are a natural fit, AND
 3. The name describes a shared **contract** (all modules in the dir
    do the same _kind_ of thing), not just a tag.

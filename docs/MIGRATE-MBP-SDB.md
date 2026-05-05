@@ -1,6 +1,8 @@
 # migrate-mbp-sdb.sh — quick reference
 
-Online 1:1 migration of NixOS root from Kingston A400 (`sda`) to Samsung PM841 (`sdb`). No live USB.
+Quick reference for the MBP SSD migration script.
+
+**See also:** [STORAGE-STRATEGY.md](STORAGE-STRATEGY.md) for drive layout context.
 
 ## TL;DR
 

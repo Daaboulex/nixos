@@ -71,6 +71,7 @@ docs/Roadmap.md
 /.codex
 /.nrb-update.lock
 docs/SECURITY-AUDIT.md
+docs/options.json
 
 # ── Syncthing conflict debris ────────────────────────────────────
 *.sync-conflict-*

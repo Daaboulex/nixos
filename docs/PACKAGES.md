@@ -1,6 +1,8 @@
 # Custom Packages & Patches
 
-This flake includes several custom-built packages, driver patches, and scripts that go beyond standard NixOS configuration.
+Custom packages, driver patches, and scripts beyond nixpkgs.
+
+**See also:** [TERMINAL-TOOLS-INVENTORY.md](TERMINAL-TOOLS-INVENTORY.md) for the full tool catalog.
 
 ## YeetMouse Driver (`parts/input/yeetmouse.nix`)
 
@@ -57,7 +59,7 @@ Auto-generated scripts from `myModules.desktop.displays` monitor definitions:
 
 ## Custom Scripts
 
-- **sysdiag** (591 lines) — comprehensive NixOS system diagnostics: CPU, GPU, memory, storage, network, services, kernel, scheduler, display, errors. Auto-detects AMD/Intel/NVIDIA hardware and shows hardware-specific metrics (P-State, GPU clocks, NVMe temps, scx status).
+- **sysdiag** (591 lines) — full NixOS system diagnostics: CPU, GPU, memory, storage, network, services, kernel, scheduler, display, errors. Auto-detects AMD/Intel/NVIDIA hardware and shows hardware-specific metrics (P-State, GPU clocks, NVMe temps, scx status).
 - **list-iommu-groups** — lists IOMMU groups for GPU passthrough planning.
 - **linux-corecycler** — Qt6 GUI for per-core CPU stress testing and AMD PBO Curve Optimizer tuning. Tests one core at a time at full single-threaded boost to find per-core CO limits. Supports mprime, stress-ng, and y-cruncher backends. X3D-aware topology detection. Runtime CO read/write via ryzen_smu (Zen 2–5). Volatile-only writes — never touches BIOS.
 

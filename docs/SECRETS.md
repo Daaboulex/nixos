@@ -1,6 +1,8 @@
 # Secrets Management
 
-Secrets are managed with [agenix](https://github.com/ryantm/agenix):
+Agenix secret management: identities, paths, and rules.
+
+**See also:** [ARCHITECTURE.md](ARCHITECTURE.md) for where secrets are consumed.
 
 - **Encrypted secrets**: `secrets/*.age` (gitignored, Syncthing-synced)
 - **Encryption rules**: `secrets/secrets.nix` (tracked — maps public keys to secret files)
@@ -34,4 +36,4 @@ Secrets are encrypted to each host's SSH public key. If the host SSH key is lost
 
 The `.age` files are **not tracked in git** (belt-and-suspenders against host-key compromise exposing historical secrets). They are synced to each host via Syncthing.
 
-For Secure Boot setup and recovery after BIOS updates, see [secure-boot.md](secure-boot.md). For installation from a live USB, see [installation.md](installation.md).
+For Secure Boot setup and recovery after BIOS updates, see [SECURE-BOOT.md](SECURE-BOOT.md). For installation from a live USB, see [INSTALLATION.md](INSTALLATION.md).

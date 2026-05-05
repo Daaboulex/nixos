@@ -1,13 +1,13 @@
 # NixOS Installation Guide
 
-Complete guide for installing NixOS using this flake's automated installer. The installer creates a BTRFS filesystem with optional LUKS encryption, generates hardware configuration, and runs `nixos-install` with your chosen host config.
+Step-by-step NixOS installation for both hosts.
 
 ## Prerequisites
 
 - A **NixOS live USB** booted on the target machine (any recent NixOS ISO works)
 - The machine must be booted in **UEFI mode** (the installer creates GPT + EFI System Partition)
 - **Network connectivity** (the build downloads packages from cache.nixos.org)
-- Know which disk you want to install to and which host config to use
+- Know the target install disk and host config
 
 ### Available Host Configurations
 
@@ -22,7 +22,7 @@ Hosts with specialisations build **all kernel variants** in a single install. Ea
 
 ## Alternative: Declarative Install with Disko
 
-Each host includes a `disko.nix` file that declaratively describes the disk layout (BTRFS + LUKS subvolumes). This provides a reproducible, version-controlled alternative to the `install-btrfs.sh` script.
+Each host includes a `disko.nix` file that declaratively describes the disk scheme (BTRFS + LUKS subvolumes). This provides a reproducible, version-controlled alternative to the `install-btrfs.sh` script.
 
 ### Usage
 
@@ -45,13 +45,13 @@ reboot
 
 ### Important: Disko is install-time only
 
-The `disko.nix` files are **not imported into the running NixOS configuration**. The disko NixOS module is imported in each host's `flake-module.nix` for CLI availability, but the actual disk layout declarations in `parts/hosts/<hostname>/disko.nix` are only used at install time via `nix run disko`. The running system's mounts come from `hardware-configuration.nix` as usual.
+The `disko.nix` files are **not imported into the running NixOS configuration**. The disko NixOS module is imported in each host's `flake-module.nix` for CLI availability, but the actual disk scheme declarations in `parts/hosts/<hostname>/disko.nix` are only used at install time via `nix run disko`. The running system's mounts come from `hardware-configuration.nix` as usual.
 
 ### Notes
 
 - Disko manages the NixOS root disk only (ESP + LUKS + BTRFS subvolumes)
 - Additional data drives (NTFS, ext4) remain in `hardware-configuration.nix`
-- The `device` path in `disko.nix` references the existing install's disk UUID — **update it** to your actual target disk path (e.g. `/dev/nvme0n1` or `/dev/sda`) before running disko (check with `lsblk`)
+- The `device` path in `disko.nix` references the existing install's disk UUID — **update it** to the actual target disk path (e.g. `/dev/nvme0n1` or `/dev/sda`) before running disko (check with `lsblk`)
 - The `install-btrfs.sh` script remains available as a more interactive alternative with safety prompts
 
 ---
@@ -62,7 +62,7 @@ The `boot-impermanence` module enables ephemeral root — `/` is rolled back to 
 
 ### Prerequisites
 
-Create the required subvolumes on your running system:
+Create the required subvolumes on the running system:
 
 ```bash
 # Mount the top-level BTRFS volume
@@ -88,7 +88,7 @@ sudo umount /mnt
 
 ### Enable
 
-In your host's `default.nix`:
+In the host's `default.nix`:
 
 ```nix
 myModules.boot.impermanence.enable = true;
@@ -115,7 +115,7 @@ The module automatically persists: `/var/lib/nixos`, `/var/lib/bluetooth`, `/var
 
 This flake tracks `nixos-unstable`, so use the **unstable graphical ISO** for best compatibility:
 
-```
+```text
 https://channels.nixos.org/nixos-unstable/latest-nixos-graphical-x86_64-linux.iso
 ```
 
@@ -126,10 +126,10 @@ The graphical ISO includes NetworkManager (easier WiFi), a desktop environment f
 **Linux:**
 
 ```bash
-# Find your USB device (check SIZE and MODEL carefully!)
+# Find the USB device (check SIZE and MODEL carefully!)
 lsblk
 
-# Flash (replace /dev/sdX with your USB — NOT your main disk!)
+# Flash (replace /dev/sdX with the USB — NOT the main disk!)
 sudo dd if=nixos-graphical-*-x86_64-linux.iso of=/dev/sdX bs=4M status=progress oflag=sync
 ```
 
@@ -146,7 +146,7 @@ sudo dd if=nixos-graphical-*-x86_64-linux.iso of=/dev/sdX bs=4M status=progress 
 
 ### Ethernet (automatic)
 
-If you have a wired connection, it should work immediately:
+If a wired connection is available, it should work immediately:
 
 ```bash
 ping -c2 nixos.org
@@ -163,12 +163,12 @@ wpa_cli
 
 Inside `wpa_cli`:
 
-```
+```text
 > scan
 > scan_results
 > add_network
-> set_network 0 ssid "YourNetworkName"
-> set_network 0 psk "YourPassword"
+> set_network 0 ssid "NetworkName"
+> set_network 0 psk "NetworkPassword"
 > enable_network 0
 > quit
 ```
@@ -182,7 +182,7 @@ ping -c2 nixos.org
 **Option B: Using NetworkManager** (available on graphical ISO)
 
 ```bash
-nmcli device wifi connect "YourNetworkName" password "YourPassword"
+nmcli device wifi connect "NetworkName" password "NetworkPassword"
 ```
 
 ### MacBook Pro 9,2 WiFi Note
@@ -207,9 +207,9 @@ git clone https://github.com/YOUR_USER/YOUR_REPO.git ~/nix
 cd ~/nix
 ```
 
-Replace the URL with your actual repository.
+Replace the URL with the actual repository.
 
-## Step 4: Identify Your Target Disk
+## Step 4: Identify Target Disk
 
 Run the installer without arguments to see all disks:
 
@@ -219,7 +219,7 @@ sudo bash scripts/install-btrfs.sh
 
 Output example:
 
-```
+```text
 ========== ALL DISKS AND THEIR CONTENTS ==========
 
 NAME   SIZE  TYPE FSTYPE LABEL     MODEL
@@ -233,7 +233,7 @@ sdb    250G  disk                   APPLE SSD SM0256F
 
 **Read this carefully.** Identify each disk by its **MODEL** and **SIZE**. Decide which disk to install NixOS on. The other disk will not be touched.
 
-**Multi-disk safety:** If you have multiple SSDs (like the MacBook Pro with 2x 250GB), the script shows both disks, their models, serial numbers, and current contents. It requires you to type the full device path (`/dev/sdb`) to confirm — you cannot accidentally wipe the wrong disk.
+**Multi-disk safety:** With multiple SSDs (like the MacBook Pro with 2x 250GB), the script shows both disks, their models, serial numbers, and current contents. It requires typing the full device path (`/dev/sdb`) to confirm — preventing accidental wipes of the wrong disk.
 
 ## Step 5: Run the Installer
 
@@ -243,7 +243,7 @@ sdb    250G  disk                   APPLE SSD SM0256F
 sudo bash scripts/install-btrfs.sh /dev/sdX <hostname>
 ```
 
-Replace `/dev/sdX` with your target disk and `<hostname>` with your host config name.
+Replace `/dev/sdX` with the target disk and `<hostname>` with the host config name.
 
 ### Common Examples
 
@@ -289,9 +289,9 @@ The installer runs through these phases:
 - Displays ALL disks with model, serial, size, and current contents
 - Shows the target disk's existing partitions
 - Shows all OTHER disks (marked "will NOT be touched")
-- Displays the full installation plan (partition layout, encryption, subvolumes)
-- **Confirmation 1:** You must type the full device path (e.g., `/dev/sdb`)
-- **Confirmation 2:** If the disk has existing OS partitions, you must type `ERASE`
+- Displays the full installation plan (partition scheme, encryption, subvolumes)
+- **Confirmation 1:** Type the full device path (e.g., `/dev/sdb`)
+- **Confirmation 2:** If the disk has existing OS partitions, type `ERASE`
 
 **Phase 3: Partitioning**
 
@@ -329,7 +329,7 @@ The installer runs through these phases:
 
 - Runs `nixos-generate-config --root /mnt` to detect hardware
 - Copies the generated `hardware-configuration.nix` into the flake's host directory
-- This file contains your disk UUIDs, detected kernel modules, and filesystem mounts
+- This file contains generated disk UUIDs, detected kernel modules, and filesystem mounts
 
 **Phase 7: NixOS Installation (unless `--no-install`)**
 
@@ -342,7 +342,7 @@ The installer runs through these phases:
 - If anything fails after partitioning, a cleanup trap automatically:
   - Unmounts `/mnt` and all submounts
   - Closes LUKS devices (`cryptroot`, `cryptswap`)
-- You can safely re-run the script after a failure
+- Safely re-run the script after a failure
 
 ## Step 6: Set User Password
 
@@ -352,7 +352,7 @@ After the install completes:
 sudo nixos-enter --root /mnt -c 'passwd user'
 ```
 
-Replace `user` with your actual username (check `parts/users.nix` for the `primaryUser` default).
+Replace `user` with the actual username (check `parts/users.nix` for the `primaryUser` default).
 
 ## Step 7: Reboot
 
@@ -364,9 +364,9 @@ Remove the USB drive when prompted (or during BIOS splash).
 
 ### Boot Menu
 
-On first boot, systemd-boot shows your available entries:
+On first boot, systemd-boot shows available entries:
 
-- **NixOS** — your default kernel
+- **NixOS** — default kernel
 - **NixOS (xanmod)** — xanmod specialisation (if the host has one)
 - **NixOS (cachyos)** — CachyOS specialisation (if the host has one)
 
@@ -407,7 +407,7 @@ nrb
 
 ### Set Up Secure Boot (if configured)
 
-If your host config enables Lanzaboote (Secure Boot):
+If the host config enables Lanzaboote (Secure Boot):
 
 ```bash
 sudo sbctl create-keys
@@ -415,7 +415,7 @@ sudo sbctl enroll-keys --microsoft
 nrb
 ```
 
-See [secure-boot.md](secure-boot.md) for the full guide.
+See [SECURE-BOOT.md](SECURE-BOOT.md) for the full guide.
 
 ---
 
@@ -427,7 +427,7 @@ Use USB Ethernet, USB WiFi dongle, or phone USB tethering. The live ISO may not 
 
 ### "experimental Nix feature 'flakes' is disabled"
 
-The install script sets this automatically. If you're running commands manually:
+The install script sets this automatically. For manual commands:
 
 ```bash
 export NIX_CONFIG="experimental-features = nix-command flakes"
@@ -461,9 +461,9 @@ The cleanup trap handles unmounting and closing LUKS. Just re-run the same comma
 sudo bash scripts/install-btrfs.sh --swap 4G /dev/sdX <hostname>
 ```
 
-### Need to manually mount an existing install
+### Manually mount an existing install
 
-If you need to access the installed system from the live USB:
+To access the installed system from the live USB:
 
 ```bash
 # Open LUKS (skip if --no-encrypt was used)
@@ -480,11 +480,11 @@ sudo mount /dev/sdX1 /mnt/boot
 sudo nixos-enter --root /mnt
 ```
 
-Adjust partition numbers based on your layout (check `lsblk`).
+Adjust partition numbers based on the scheme (check `lsblk`).
 
 ### Wrong disk selected
 
-The script requires typing the full device path AND typing `ERASE` if the disk has existing partitions. If you reach the "POINT OF NO RETURN" prompt and realize it's wrong, press Ctrl+C — nothing has been written yet.
+The script requires typing the full device path AND typing `ERASE` if the disk has existing partitions. At the "POINT OF NO RETURN" prompt, press Ctrl+C if the selected disk is wrong — nothing has been written yet.
 
 ### Build takes very long
 
@@ -492,7 +492,7 @@ First builds download and compile everything. On a MacBook Pro 9,2 (2C/4T Ivy Br
 
 ### "Host directory not found"
 
-The hostname you passed doesn't match a directory in `parts/hosts/`. Check available hosts:
+The passed hostname doesn't match a directory in `parts/hosts/`. Check available hosts:
 
 ```bash
 ls parts/hosts/
@@ -504,11 +504,11 @@ Select a different specialisation from the boot menu (xanmod or cachyos). Then i
 
 ---
 
-## Partition Layout Reference
+## Partition Scheme Reference
 
 ### With encryption + swap (`--swap 4G`)
 
-```
+```text
 /dev/sdX
 +-sdX1   512M   FAT32    EFI System Partition (BOOT)
 +-sdX2   4G     LUKS2    Encrypted swap
@@ -526,7 +526,7 @@ Select a different specialisation from the boot menu (xanmod or cachyos). Then i
 
 ### With encryption, no swap
 
-```
+```text
 /dev/sdX
 +-sdX1   512M   FAT32    EFI System Partition (BOOT)
 +-sdX2   rest   LUKS2    Encrypted BTRFS root
@@ -542,7 +542,7 @@ Select a different specialisation from the boot menu (xanmod or cachyos). Then i
 
 ### Without encryption (`--no-encrypt --swap 4G`)
 
-```
+```text
 /dev/sdX
 +-sdX1   512M   FAT32    EFI System Partition (BOOT)
 +-sdX2   4G     swap     Swap
@@ -558,10 +558,13 @@ Select a different specialisation from the boot menu (xanmod or cachyos). Then i
 
 ### NVMe drives
 
-Same layouts, but partition names use the `p` separator:
+Same schemes, but partition names use the `p` separator:
 
-```
+```text
 /dev/nvme0n1
 +-nvme0n1p1   512M   FAT32   EFI
 +-nvme0n1p2   rest   LUKS2   Root
 ```
+
+---
+*Last verified: 2026-05-05.*

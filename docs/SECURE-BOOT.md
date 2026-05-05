@@ -1,23 +1,23 @@
 # Secure Boot with Lanzaboote
 
-NixOS does not natively support Secure Boot. [Lanzaboote](https://github.com/nix-community/lanzaboote) bridges this gap by replacing `systemd-boot` with a signed UEFI stub that chainloads NixOS generations.
+Lanzaboote secure boot setup and key management.
 
-This guide covers initial setup, how the NixOS module works, and recovery after BIOS updates.
+**See also:** [INSTALLATION.md](INSTALLATION.md) for the full install guide.
 
 ## How It Works
 
 ### Architecture
 
-```
+```text
 UEFI Firmware (Secure Boot ON)
   └── Lanzaboote stub (signed EFI binary)
         └── Unified Kernel Image (signed)
               └── initrd → NixOS system
 ```
 
-1. **sbctl** generates your own Secure Boot keys (PK, KEK, db) and stores them at `/var/lib/sbctl`
-2. **Lanzaboote** hooks into `nixos-rebuild` and signs all EFI binaries (bootloader + kernel images) with your keys
-3. The UEFI firmware verifies signatures on boot — only your signed binaries can execute
+1. **sbctl** generates local Secure Boot keys (PK, KEK, db) and stores them at `/var/lib/sbctl`
+2. **Lanzaboote** hooks into `nixos-rebuild` and signs all EFI binaries (bootloader + kernel images) with those keys
+3. The UEFI firmware verifies signatures on boot — only signed binaries can execute
 
 ### NixOS Module (`parts/boot/boot.nix`)
 
@@ -59,18 +59,18 @@ Secure Boot key creation cannot be automated by Nix because it requires writing 
 sudo sbctl status
 ```
 
-You should see:
+Expected output:
 
-```
+```text
 Installed:      ✓ sbctl is installed
 Owner GUID:     <none>
 Setup Mode:     ✓ Enabled    ← Required
 Secure Boot:    ✗ Disabled
 ```
 
-If Setup Mode shows `✗ Disabled`, you need to enter BIOS and clear the Secure Boot keys first.
+If Setup Mode shows `✗ Disabled`, enter BIOS and clear the Secure Boot keys first.
 
-### Step 2: Create Your Keys
+### Step 2: Create Keys
 
 ```bash
 sudo sbctl create-keys
@@ -81,7 +81,7 @@ This generates:
 - `/var/lib/sbctl/keys/PK/` — Platform Key (root of trust)
 - `/var/lib/sbctl/keys/KEK/` — Key Exchange Key
 - `/var/lib/sbctl/keys/db/` — Signature Database key (signs binaries)
-- `/var/lib/sbctl/GUID` — Your unique Owner GUID
+- `/var/lib/sbctl/GUID` — Unique Owner GUID
 
 ### Step 3: Enroll Keys into Firmware
 
@@ -89,15 +89,15 @@ This generates:
 sudo sbctl enroll-keys --microsoft
 ```
 
-The `--microsoft` flag includes Microsoft's keys alongside yours. This is **required** for:
+The `--microsoft` flag includes Microsoft's keys alongside local keys. This is **required** for:
 
 - GPU firmware (VBIOS) to load — most GPUs have Microsoft-signed Option ROMs
 - USB device firmware during early boot
 - Any third-party UEFI drivers
 
-Without `--microsoft`, your system may not POST or display video output.
+Without `--microsoft`, the system may not POST or display video output.
 
-> **Troubleshooting**: If you get an error about "immutable files":
+> **Troubleshooting**: If an error appears about "immutable files":
 >
 > ```bash
 > sudo chattr -i /sys/firmware/efi/efivars/PK-*
@@ -120,7 +120,7 @@ sudo nixos-rebuild switch --flake ".#<hostname>"
 
 Lanzaboote signs during activation:
 
-```
+```text
 Installing Lanzaboote to "/boot"...
 Collecting garbage...
 Successfully installed Lanzaboote.
@@ -134,7 +134,7 @@ sudo sbctl verify
 
 Expected output (all green):
 
-```
+```text
 ✓ /boot/EFI/BOOT/BOOTX64.EFI is signed
 ✓ /boot/EFI/systemd/systemd-bootx64.efi is signed
 ✓ /boot/EFI/Linux/nixos-generation-*.efi is signed
@@ -157,15 +157,15 @@ sudo sbctl status
 
 Expected:
 
-```
+```text
 Installed:      ✓ sbctl is installed
-Owner GUID:     <your-guid>
+Owner GUID:     <owner-guid>
 Setup Mode:     ✗ Disabled
 Secure Boot:    ✓ Enabled
 Vendor Keys:    microsoft
 ```
 
-You can also verify via the kernel:
+Also verify via the kernel:
 
 ```bash
 bootctl status | grep "Secure Boot"
@@ -173,7 +173,7 @@ bootctl status | grep "Secure Boot"
 
 ## Recovery After BIOS Update
 
-BIOS updates typically wipe Secure Boot variables (PK, KEK, db, dbx), putting the motherboard back into Setup Mode. Your keys still exist at `/var/lib/sbctl` — they just need to be re-enrolled.
+BIOS updates typically wipe Secure Boot variables (PK, KEK, db, dbx), putting the motherboard back into Setup Mode. Stored keys still exist at `/var/lib/sbctl` — re-enroll them.
 
 ### Step 1: Check Status
 
@@ -181,9 +181,9 @@ BIOS updates typically wipe Secure Boot variables (PK, KEK, db, dbx), putting th
 sudo sbctl status
 ```
 
-You should see:
+Expected output:
 
-- `Owner GUID`: (your existing GUID — keys are intact)
+- `Owner GUID`: (existing GUID — keys are intact)
 - `Setup Mode`: ✓ Enabled (firmware was wiped)
 - `Secure Boot`: ✗ Disabled
 
@@ -219,7 +219,7 @@ Should show `Secure Boot: ✓ Enabled` again.
 
 ## Backing Up Keys
 
-Your Secure Boot keys at `/var/lib/sbctl` are **not managed by Nix** and not in your flake. If you lose them, you must create new keys and re-enroll.
+Secure Boot keys at `/var/lib/sbctl` are **not managed by Nix** and not in the flake. If lost, create new keys and re-enroll.
 
 Back them up:
 
@@ -240,7 +240,7 @@ nrb
 
 ### System won't POST after enrolling keys
 
-You likely enrolled without `--microsoft`. Boot from a USB, mount your system, and:
+Likely enrolled without `--microsoft`. Boot from a USB, mount the system, and:
 
 ```bash
 sudo chattr -i /sys/firmware/efi/efivars/{PK,KEK,db}-*
@@ -263,14 +263,17 @@ sudo sbctl verify
 
 ### Secure Boot is enabled but `sbctl status` shows disabled
 
-Check if your BIOS has separate "Secure Boot" and "Secure Boot Mode" settings. Some boards require setting the mode to "Custom" or "Standard" after enabling.
+Check if the BIOS has separate "Secure Boot" and "Secure Boot Mode" settings. Some boards require setting the mode to "Custom" or "Standard" after enabling.
 
 ### Plymouth not showing with Secure Boot
 
-Plymouth requires early KMS. Ensure your GPU driver is in the initrd:
+Plymouth requires early KMS. Ensure the GPU driver is in the initrd:
 
 ```nix
 # This flake handles it automatically when both are enabled:
 myModules.boot.boot.plymouth.enable = true;
 myModules.hardware.gpuAmd.enable = true;  # Loads amdgpu in initrd
 ```
+
+---
+*Last verified: 2026-05-05.*

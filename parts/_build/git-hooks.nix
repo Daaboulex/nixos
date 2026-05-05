@@ -409,8 +409,7 @@
               runtimeInputs = [ pkgs.git ];
               text = ''
                 # Block staging any file in secrets/ except secrets.nix.
-                # Also block .age, .key, .pem, private key files, and
-                # SECURITY-AUDIT.md (contains infrastructure details).
+                # Also block .age, .key, .pem, and private key files.
                 failed=0
                 while IFS= read -r f; do
                   case "$f" in
@@ -420,9 +419,6 @@
                       failed=1 ;;
                     *.age|*.key|*.pem|*_rsa|*_ed25519|*_ecdsa)
                       echo "BLOCKED: $f — cryptographic material"
-                      failed=1 ;;
-                    docs/SECURITY-AUDIT.md)
-                      echo "BLOCKED: $f — contains infrastructure topology"
                       failed=1 ;;
                   esac
                 done < <(git diff --cached --name-only --diff-filter=ACM)

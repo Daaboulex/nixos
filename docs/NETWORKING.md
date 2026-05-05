@@ -1,8 +1,8 @@
 # Networking Stack
 
-DNS, Portmaster firewall, and Mullvad VPN interactions. Consolidates the
-constraints captured across the security/hardware/networking modules so the
-full picture lives in one place.
+DNS, firewall, and VPN interaction constraints.
+
+**See also:** [ARCHITECTURE.md](ARCHITECTURE.md) for module placement.
 
 ## DNS — DoT-encrypted with fallback
 
@@ -119,8 +119,8 @@ in turn needs network up. `services.mullvad-vpn` + `portmaster.service`
 ordering is handled implicitly by systemd via `After=network-online.target`
 on both.
 
-If Portmaster starts before Mullvad is ready, you'll see Portmaster try to
-DoT `194.242.2.3`, fail, fall back, then Mullvad finally comes up. The
+If Portmaster starts before Mullvad is ready, Portmaster tries
+DoT `194.242.2.3`, fails, falls back, then Mullvad finally comes up. The
 `forceSettings` pattern means Portmaster re-reads config on every preStart,
 so any UI-introduced drift is corrected before the bootstrap race.
 
@@ -134,3 +134,6 @@ so any UI-introduced drift is corrected before the bootstrap race.
 - `reference_portmaster_config_format.md` — key grammar for `config.json`
   overrides
 - `feedback_portmaster_*.md` — incident-driven constraints
+
+---
+*Last verified: 2026-05-05.*

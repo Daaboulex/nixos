@@ -1,12 +1,10 @@
-# MacBook Pro 9,2 Storage Strategy
+# Storage Strategy
 
-Context: two internal drives; one is root, the other has leftover OS
-partitions. Goal: live redundancy + testable migration away from a
-failing/slow primary, without reinstalling.
+Drive layout and migration plan for MacBook Pro 9,2.
 
 ## Current State (as of 2026-04-18)
 
-```
+```text
 /dev/sda  KINGSTON SA400S37240G  223.6 GB  Primary (LUKS + btrfs, root)
   ├─ sda1 511 MB    vfat    /boot
   └─ sda2 223.1 GB  LUKS
@@ -51,7 +49,7 @@ the last hourly snapshot — boot into a recovery environment and restore.
 
 Structure:
 
-```
+```text
 sda (primary, active root) ──[btrfs-send]──► sdb (snapshot archive)
   cryptroot:                                   cryptroot:
     @  (live)                                    snapshots/<date>/@
@@ -172,3 +170,6 @@ sudo btrfs subvolume snapshot -r / /.snapshots/migrate-@
 sudo btrfs send /.snapshots/migrate-@ | sudo btrfs receive /mnt/
 # ... repeat for @home, @nix, etc.
 ```
+
+---
+*Last verified: 2026-05-05.*

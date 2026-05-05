@@ -520,6 +520,55 @@ Requires BIOS CPPC option set to "Driver".
 - **Type:** `one of "cache", "frequency"`
 - **Default:** `"cache"`
 
+### `myModules.hardware.cpuIntel.enable`
+
+Whether to enable Intel CPU optimizations.
+
+- **Type:** `boolean`
+- **Default:** `false`
+
+### `myModules.hardware.cpuIntel.governor`
+
+CPU frequency governor (powersave recommended for laptops with P-State)
+
+- **Type:** `one of "performance", "powersave", "schedutil", "ondemand", "conservative"`
+- **Default:** `"powersave"`
+
+### `myModules.hardware.cpuIntel.iommu.enable`
+
+Intel IOMMU (VT-d) for device passthrough
+
+- **Type:** `boolean`
+- **Default:** `false`
+
+### `myModules.hardware.cpuIntel.kvm.enable`
+
+KVM-Intel virtualization support (VT-x)
+
+- **Type:** `boolean`
+- **Default:** `true`
+
+### `myModules.hardware.cpuIntel.pstate.enable`
+
+Intel P-State driver for modern power management
+
+- **Type:** `boolean`
+- **Default:** `true`
+
+### `myModules.hardware.cpuIntel.pstate.mode`
+
+Intel P-State mode (active recommended for Haswell+)
+
+- **Type:** `one of "active", "passive", "no_hwp"`
+- **Default:** `"active"`
+
+### `myModules.hardware.cpuIntel.updateMicrocode`
+
+Update Intel CPU microcode
+
+- **Type:** `boolean`
+- **Default:** `true`
+
 ### `myModules.hardware.goxlr.enable`
 
 Whether to enable GoXLR Mini support.
@@ -618,6 +667,41 @@ Vulkan device name substring for DXVK_FILTER_DEVICE_NAME and VKD3D_FILTER_DEVICE
 - **Type:** `null or string`
 - **Default:** `null`
 
+### `myModules.hardware.gpuIntel.enable`
+
+Whether to enable Intel Graphics (i915) configuration.
+
+- **Type:** `boolean`
+- **Default:** `false`
+
+### `myModules.hardware.gpuIntel.kernelParams.enableDc`
+
+Display C-states (DC) — deeper power saving states
+
+- **Type:** `boolean`
+- **Default:** `false`
+
+### `myModules.hardware.gpuIntel.kernelParams.enableFbc`
+
+Frame Buffer Compression (FBC) — reduces power consumption
+
+- **Type:** `boolean`
+- **Default:** `false`
+
+### `myModules.hardware.gpuIntel.kernelParams.enablePsr`
+
+Panel Self Refresh (PSR) — may cause flickering on some displays
+
+- **Type:** `boolean`
+- **Default:** `false`
+
+### `myModules.hardware.gpuIntel.openCL`
+
+OpenCL support via RustiCL (Mesa) iris driver
+
+- **Type:** `boolean`
+- **Default:** `true`
+
 ### `myModules.hardware.graphics.enable`
 
 Whether to enable Graphics support.
@@ -710,6 +794,13 @@ Whether to enable Audio configuration with PipeWire.
 
 - **Type:** `boolean`
 - **Default:** `false`
+
+### `myModules.hardware.pipewire.extraLadspaPackages`
+
+LADSPA plugin packages forwarded to services.pipewire.extraLadspaPackages
+
+- **Type:** `list of package`
+- **Default:** `[]`
 
 ### `myModules.hardware.pipewire.lowLatency`
 
@@ -902,6 +993,76 @@ USB product ID for the Lightspeed Receiver
 ### `myModules.input.yeetmouse.enable`
 
 Whether to enable YeetMouse kernel mouse acceleration driver.
+
+- **Type:** `boolean`
+- **Default:** `false`
+
+### `myModules.macbook.hidApple.enable`
+
+Apple keyboard hid_apple configuration (fnMode, Option/Command swap)
+
+- **Type:** `boolean`
+- **Default:** `true`
+
+### `myModules.macbook.hidApple.fnMode`
+
+Apple keyboard fn key behavior (0=disabled, 1=press fn for media, 2=press fn for F-keys)
+
+- **Type:** `one of 0, 1, 2`
+- **Default:** `2`
+
+### `myModules.macbook.hidApple.swapOptCmd`
+
+Swap Option and Command keys (makes Cmd act as Alt)
+
+- **Type:** `boolean`
+- **Default:** `true`
+
+### `myModules.macbook.mbpfan.enable`
+
+mbpfan daemon for MacBook fan control
+
+- **Type:** `boolean`
+- **Default:** `true`
+
+### `myModules.macbook.mbpfan.highTemp`
+
+Temperature for high fan speed (Celsius)
+
+- **Type:** `signed integer`
+- **Default:** `65`
+
+### `myModules.macbook.mbpfan.lowTemp`
+
+Temperature to start ramping fan (Celsius)
+
+- **Type:** `signed integer`
+- **Default:** `45`
+
+### `myModules.macbook.mbpfan.maxTemp`
+
+Maximum temperature before full fan (Celsius)
+
+- **Type:** `signed integer`
+- **Default:** `80`
+
+### `myModules.macbook.mbpfan.pollingInterval`
+
+Fan polling interval in seconds
+
+- **Type:** `signed integer`
+- **Default:** `1`
+
+### `myModules.macbook.patches.enable`
+
+Whether to enable MacBook kernel patches (AppleSMC fixes, AT24 warning suppression).
+
+- **Type:** `boolean`
+- **Default:** `false`
+
+### `myModules.macbook.wifi.enable`
+
+Whether to enable Broadcom BCM4331 WiFi via b43 driver (MacBook Pro 9,2).
 
 - **Type:** `boolean`
 - **Default:** `false`
@@ -1105,7 +1266,7 @@ Encrypted agenix secrets keyed by runtime secret name. Defaults each entry to `s
 Directory containing encrypted agenix secret files.
 
 - **Type:** `absolute path`
-- **Default:** `"/nix/store/lj5mlyq28q9q49pjx3riwkn2kn0gjws0-source/secrets"`
+- **Default:** `"/nix/store/7r92hjdx7w8pa87b15jjlh4v737p67j0-source/secrets"`
 
 ### `myModules.security.hardening.enable`
 
@@ -2428,3 +2589,4 @@ Per-VM definitions
 
 - **Type:** `lazy attribute set of (submodule)`
 - **Default:** `{ … }`
+

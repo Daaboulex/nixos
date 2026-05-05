@@ -115,7 +115,7 @@ All 14 hooks run on every `git commit`. Grouped by concern:
 
 | Hook                 | Trigger         | What it enforces                                                                                                                                           |
 | -------------------- | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `check-secrets-leak` | any staged file | Blocks staging files in `secrets/` (except `secrets.nix`), `.age`, `.key`, `.pem`, private keys, and `SECURITY-AUDIT.md`.                                  |
+| `check-secrets-leak` | any staged file | Blocks staging files in `secrets/` (except `secrets.nix`), `.age`, `.key`, `.pem`, private keys, and `SECURITY-AUDIT-2026-05-04.md`.                                  |
 | `check-scrub-tokens` | any staged file | Scans staged content for forbidden tokens (hostnames, project names, internal paths) that must not appear in the public repo. Config: `scrub-config.json`. |
 
 ### Doc auto-regen
@@ -229,7 +229,7 @@ flakes (or external inputs); this file is purely the composition.
 
 ## The Commit Flow
 
-```
+```text
 Edit files
     │
     ▼

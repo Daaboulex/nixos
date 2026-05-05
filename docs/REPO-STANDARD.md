@@ -1,8 +1,21 @@
-# Daaboulex Nix Packaging Standard — v1.2
+# Daaboulex Nix Packaging Standard — v1.3
 
-Canonical reference for all `repos/*-nix` satellite flakes under `Daaboulex/`.
-Version 1.2 (2026-04-22) — adds scaffold lockdown CI gate, dependabot,
-SECURITY policy, branch protection.
+Canonical reference for all `repos/` satellite flakes under `Daaboulex/`.
+Version 1.3 (2026-05-05) — adds documentation standardization with splice
+markers, pre-commit doc hooks, README auto-sync via `sync.sh`.
+
+## What changed from v1.2 → v1.3
+
+- **README splice markers**: all READMEs use `<!-- BEGIN/END generated:X -->`
+  markers for badges, upstream, installation, options, footer sections.
+  Managed by `sync.sh` + `readme-sync.py`.
+- **2-badge standard**: reduced from 6 to 2 badges (NixOS-unstable + License).
+- **Upstream table**: standardized 3-row table (Project, License, Tracked)
+  replacing the old bullet-list format.
+- **Pre-commit doc hooks**: `typos`, `rumdl`, `check-readme-sections` added
+  to all 22 repos. Module repos also get `update-readme-options.sh`.
+- **Repo count**: 22 repos in `repos.json` (was 20 at v1.1, unchanged in v1.2).
+- **Folder naming**: local folder names match GitHub repo names exactly.
 
 ## What changed from v1.1 → v1.2
 
@@ -22,7 +35,7 @@ SECURITY policy, branch protection.
 
 ## Required files (satellite packaging repo)
 
-```
+```text
 .github/
 ├── dependabot.yml          # weekly Actions updates
 ├── update.json             # update contract (verify block + upstream spec)
@@ -31,7 +44,9 @@ SECURITY policy, branch protection.
     ├── maintenance.yml     # weekly flake.lock + stale branch cleanup
     └── update.yml          # scheduled upstream polling
 scripts/
-└── update.sh               # update contract implementation
+├── update.sh               # update contract implementation
+├── check-readme-sections.sh          # pre-commit: validates splice markers
+└── update-readme-options.sh          # (module repos) splices options into README
 .editorconfig
 .gitignore                  # scaffold patterns (see templates/gitignore)
 flake.nix                   # formatter + checks (pre-commit) + devShells + package
@@ -40,6 +55,20 @@ README.md
 SECURITY.md
 ```
 
+## Pre-commit hooks (required in flake.nix)
+
+All repos must declare these hooks in the `git-hooks.lib.${system}.run` block:
+
+| Hook | Source | Purpose |
+|------|--------|---------|
+| `nixfmt-rfc-style` | built-in | Nix code formatting |
+| `typos` | built-in | Catches common typos across all files |
+| `rumdl` | built-in | Markdown lint for README and docs |
+| `check-readme-sections` | custom | Validates README splice markers exist |
+
+Module repos (`nixosModules` or `homeManagerModules` output) additionally ship
+`scripts/update-readme-options.sh` for future options-table auto-generation.
+
 Local scaffold files (coding-agent config, session notes, ephemeral state)
 stay outside the tracked tree via the gitignore pattern set.
 
@@ -47,7 +76,7 @@ stay outside the tracked tree via the gitignore pattern set.
 
 Pattern used by `scaffold-lockdown` CI job and `templates/gitignore`:
 
-```
+```text
 CLAUDE.md
 GEMINI.md
 AGENTS.md
