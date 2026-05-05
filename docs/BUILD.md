@@ -83,7 +83,7 @@ Configured in `parts/_build/treefmt.nix` via [treefmt-nix](https://github.com/nu
 
 Configured in `parts/_build/git-hooks.nix` via [git-hooks.nix](https://github.com/cachix/git-hooks.nix). Hooks are **auto-installed** into `.git/hooks/` when you run `nix develop`.
 
-All 13 hooks run on every `git commit`. Grouped by concern:
+All 14 hooks run on every `git commit`. Grouped by concern:
 
 ### Formatting + eval
 
@@ -115,6 +115,7 @@ All 13 hooks run on every `git commit`. Grouped by concern:
 
 | Hook                 | Trigger         | What it enforces                                                                                                                                           |
 | -------------------- | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `check-secrets-leak` | any staged file | Blocks staging files in `secrets/` (except `secrets.nix`), `.age`, `.key`, `.pem`, private keys, and `SECURITY-AUDIT.md`.                                  |
 | `check-scrub-tokens` | any staged file | Scans staged content for forbidden tokens (hostnames, project names, internal paths) that must not appear in the public repo. Config: `scrub-config.json`. |
 
 ### Doc auto-regen
@@ -136,7 +137,7 @@ Do NOT bypass with `--no-verify` — that skips ALL hooks and hides real violati
 
 ## Flake Checks
 
-Run with `nix flake check`. Full check set (14 checks):
+Run with `nix flake check`. Full check set (18 checks):
 
 | Check                             | Source                  | What it validates                                                               |
 | --------------------------------- | ----------------------- | ------------------------------------------------------------------------------- |
@@ -145,15 +146,19 @@ Run with `nix flake check`. Full check set (14 checks):
 | `toplevel-macbook-pro-9-2`        | tests.nix               | MBP nixosConfiguration's `system.build.toplevel` evaluates                      |
 | `toplevel-ryzen-9950x3d`          | tests.nix               | Ryzen nixosConfiguration's `system.build.toplevel` evaluates                    |
 | `eval-hardware-graphics-mesa-git` | tests.nix               | mesa-git overlay path evaluates clean (drv only, no build)                      |
+| `eval-kernel-cachyos`             | tests.nix               | CachyOS kernel version active (catches silent fallback to stock)                |
 | `smoke-v2`                        | \_build/tests/smoke.nix | Per-tier (`v2`) canary VM — minimal config boots + reaches multi-user           |
 | `smoke-v4`                        | \_build/tests/smoke.nix | Per-tier (`v4`) canary VM — same shape, Ryzen-class tier                        |
 | `vm-nix-settings`                 | tests.nix               | Nix daemon starts, flakes enabled, GC configured                                |
 | `vm-users`                        | tests.nix               | User creation, groups, zsh shell                                                |
 | `vm-ssh`                          | tests.nix               | SSH hardening, fail2ban, firewall                                               |
 | `vm-networking`                   | tests.nix               | NetworkManager starts                                                           |
-| `vm-security-agenix`              | tests.nix               | agenix decryption + secret placement at activation                              |
+| `vm-networking-resolved`          | tests.nix               | systemd-resolved starts with DoT configured                                     |
+| `vm-hardware-pipewire`            | tests.nix               | PipeWire starts, LADSPA search path populated, WirePlumber running              |
+| `vm-security-agenix`              | tests.nix               | agenix CLI tools available (cannot test decryption — no host SSH key in VM)     |
 | `vm-boot-impermanence`            | tests.nix               | Impermanence boot path — ephemeral root + persisted state                       |
 | `check-placement-test`            | tests.nix               | Regression fixture for `check-placement` hook (intentional violation must fail) |
+| `check-scrub-tokens-test`         | tests.nix               | Regression fixture for `check-scrub-tokens` hook                                |
 
 Run a single test:
 
@@ -235,6 +240,7 @@ git commit
     ├─ check-no-roadmap-in-docs Planning artifacts in .ai-context/ only
     ├─ check-no-with-lib       Style: no `with lib;`
     ├─ check-placement         STYLE §13a path/scope mirror
+    ├─ check-secrets-leak      Repo integrity: no secrets staged
     ├─ check-scrub-tokens      Repo integrity: no forbidden tokens
     ├─ hm-exhaustiveness       HM modules wired in every host
     ├─ nix-eval-check          Every nixosConfigurations.* evals

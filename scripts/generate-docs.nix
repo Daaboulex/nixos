@@ -24,10 +24,11 @@
 let
   inherit (pkgs) lib;
 
-  # Canonical eval source — ryzen imports every NixOS module in the tree.
-  # MBP is a strict subset (exhaustiveness-exclude). Use ryzen for the
-  # fullest option view.
-  eval = flake.nixosConfigurations.ryzen-9950x3d;
+  # Merge options from ALL hosts to catch host-specific options that only
+  # appear on one configuration (e.g. macbook-only modules excluded from
+  # ryzen via exhaustiveness-exclude, or vice versa).
+  allConfigs = builtins.attrValues flake.nixosConfigurations;
+  mergedOptions = lib.foldl' (acc: cfg: lib.recursiveUpdate acc cfg.options.myModules) { } allConfigs;
 
   # Walk the `myModules` subtree of the option set. Each leaf is an
   # attribute with `_type == "option"` — its siblings are intermediate
@@ -110,7 +111,7 @@ let
       "";
 
   # Top-level entry: only the `myModules` subtree, skip everything else.
-  myModulesOptions = eval.options.myModules;
+  myModulesOptions = mergedOptions;
   body = renderOptions [ "myModules" ] myModulesOptions;
 
   # JSON — mirror structure flat: {path, type, default, description}.

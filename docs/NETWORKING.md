@@ -4,18 +4,23 @@ DNS, Portmaster firewall, and Mullvad VPN interactions. Consolidates the
 constraints captured across the security/hardware/networking modules so the
 full picture lives in one place.
 
-## DNS — everything is DoT-encrypted
+## DNS — DoT-encrypted with fallback
 
-Two DoT layers run in parallel. Both are always encrypted, independent of
-Mullvad VPN state.
+Two DNS layers run in parallel. Application DNS is opportunistic DoT
+(strict would SERVFAIL during Mullvad tunnel transitions when the upstream
+switches to plaintext 100.64.0.23). Portmaster's internal lookups are
+strict DoT with Quad9 fallback.
 
-### 1. Application DNS — `systemd-resolved` → Mullvad DoT
+### 1. Application DNS — `systemd-resolved` → Mullvad DoT (opportunistic)
 
 - Apps resolve names via glibc → `/etc/resolv.conf` → `127.0.0.53`
   (`systemd-resolved` stub).
 - `systemd-resolved` forwards to
   `194.242.2.3#dns.mullvad.net` (+ IPv6 equivalent) over **DoT on :853**.
-- Cert validated via the SNI hostname pair.
+- When Mullvad tunnel is up, Mullvad overrides the upstream to
+  `100.64.0.23` (plaintext, in-tunnel). DoT mode is **opportunistic** so
+  this plaintext upstream still works without SERVFAIL.
+- Cert validated via the SNI hostname pair (when DoT is active).
 - Configured by `myModules.hardware.networking.{nameservers,dnsOverTls}` in
   `parts/hardware/networking.nix`.
 
@@ -31,18 +36,26 @@ ss -tnp | grep :853
 
 ### 2. Portmaster-internal DNS — Portmaster → Mullvad DoT
 
-Portmaster has its own DNS resolver for rule matching. It does **not**
-intercept app-level :53 traffic (`filter/dnsQueryInterception = false`,
-required to avoid a Mullvad-bootstrap deadlock — see
-`feedback_portmaster_dns_deadlock.md`). Portmaster's own lookups go out over
-the same Mullvad DoT endpoint, configured via `forceSettings` in the host
-file:
+Portmaster has its own DNS resolver for internal lookups (filter lists, app
+reputation). It does **not** intercept app-level :53 traffic
+(`filter/dnsQueryInterception = false`, required to avoid a Mullvad-bootstrap
+deadlock — see `feedback_portmaster_dns_deadlock.md`). Application DNS flows
+through systemd-resolved, not Portmaster.
+
+Portmaster's internal resolver uses strict DoT with Quad9 fallback:
 
 ```nix
 myModules.security.portmaster.forceSettings = {
   "filter/dnsQueryInterception" = false;
-  "dns/nameservers" = [ "dot://dns.mullvad.net?ip=194.242.2.3&name=MullvadAdblockDoT&blockedif=empty" ];
+  "dns/nameservers" = [
+    "dot://dns.mullvad.net?ip=194.242.2.3&name=MullvadAdblockDoT&blockedif=empty"
+    "dot://dns.quad9.net?ip=9.9.9.9&name=Quad9&blockedif=empty"
+    "dot://dns.quad9.net?ip=149.112.112.112&name=Quad9&blockedif=empty"
+    "dot://dns.mullvad.net?ip=194.242.2.2&name=MullvadUnfilteredDoT&blockedif=empty"
+  ];
   "dns/noAssignedNameservers" = true;
+  "dns/noInsecureProtocols" = true;
+  "spn/enable" = false;
 };
 ```
 
@@ -50,21 +63,35 @@ myModules.security.portmaster.forceSettings = {
 these values on every boot. UI edits to them are reverted — breaks the chain
 otherwise. See `feedback_portmaster_forcesettings_pattern.md`.
 
+**Portmaster self-check failure:** Because `dnsQueryInterception = false`,
+Portmaster's built-in connectivity self-check fails — it reports a
+"Detected Compatibility Issue" notification. This is cosmetic and
+unavoidable given the alternative is a DNS deadlock. Portmaster also loses
+per-process DNS attribution (apps resolve via systemd-resolved, not
+Portmaster's resolver).
+
 ### What this does / doesn't protect
 
-| Scenario                            | ISP sees                               | Mullvad sees         | Protected by  |
-| ----------------------------------- | -------------------------------------- | -------------------- | ------------- |
-| VPN off, app looks up `example.com` | TLS flow to `194.242.2.3:853` (opaque) | query + your real IP | DoT           |
-| VPN on, app looks up `example.com`  | WireGuard packets to Mullvad exit      | query + VPN exit IP  | DoT inside WG |
-| VPN off, Portmaster matches rule    | same TLS flow                          | query + your real IP | DoT           |
+| Scenario                            | ISP sees                               | Mullvad sees         | Protected by       |
+| ----------------------------------- | -------------------------------------- | -------------------- | ------------------ |
+| VPN off, app looks up `example.com` | TLS flow to `194.242.2.3:853` (opaque) | query + your real IP | DoT (opportunistic) |
+| VPN on, app looks up `example.com`  | WireGuard packets to Mullvad exit      | query + VPN exit IP  | plaintext in-tunnel |
+| VPN on, tunnel transition           | WireGuard packets                      | N/A                  | opportunistic fallback |
+| VPN off, Portmaster internal lookup | TLS flow to resolver                   | query + your real IP | DoT (strict)        |
+
+**Note:** When the tunnel is up, Mullvad overrides systemd-resolved's
+upstream to `100.64.0.23` (plaintext, in-tunnel). This is acceptable because
+the entire tunnel is encrypted — the plaintext DNS is only visible inside
+the WireGuard channel. Opportunistic DoT means resolved doesn't SERVFAIL
+during the transition between tunnel-up and tunnel-down states.
 
 Mullvad's public DoT resolver is **free** and does not require a paid VPN
 subscription; the paid VPN only covers the WireGuard tunnel. See
 <https://mullvad.net/en/help/dns-over-https-and-dns-over-tls>.
 
-Swap the resolver in `parts/hardware/networking.nix` if you'd rather use
-Quad9 / Cloudflare / NextDNS — keep the `IP#hostname` form so DoT cert
-validation still works.
+Quad9 (`9.9.9.9`, `149.112.112.112`) is configured as fallback in
+Portmaster's internal resolver. If Mullvad's DoT is unreachable (e.g.
+Mullvad infrastructure outage), Portmaster falls back to Quad9 DoT.
 
 ## Portmaster ↔ Mullvad fwmark coexistence
 
