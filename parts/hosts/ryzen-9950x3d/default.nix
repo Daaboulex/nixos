@@ -184,11 +184,11 @@
           betaProgram = false;
           updateDefaultLocation = false;
           # ── DNS blockers — ACTIVE (Mullvad's in-tunnel filter tier) ──
-          # Portmaster forwards all DNS to 100.64.0.23 via wg0-mullvad
-          # (see security.portmaster.settings."dns/nameservers"), so
-          # these block* flags decide which categories Mullvad returns
-          # NXDOMAIN for. Two filter layers stack: Portmaster's own
-          # filter lists block first, these flags block second.
+          # When tunnel is up, Mullvad overrides systemd-resolved
+          # upstream to 100.64.0.23 (in-tunnel). These block* flags
+          # decide which categories Mullvad returns NXDOMAIN for.
+          # Portmaster's filter lists also block at the connection
+          # level (independent layer, not DNS-based).
           dns = {
             mode = "default";
             blockAds = true;
@@ -294,36 +294,42 @@
         autostart = true; # Start on boot
         # MULLVAD + PORTMASTER STACK
         #
-        # Post-tunnel topology (when `filter/dnsQueryInterception=false`):
-        #   app DNS query
-        #     → systemd-resolved → /etc/resolv.conf
-        #     → Mullvad tunnel DNS (100.64.0.23 via wg0-mullvad)
-        #     → applies Mullvad's ad/tracker/malware filter tier
-        #     → authoritative resolve
+        # DNS topology (with `filter/dnsQueryInterception=false`):
+        #   app DNS → 127.0.0.53 (systemd-resolved stub)
+        #     → systemd-resolved upstream: Mullvad DoT 194.242.2.3:853
+        #     → when tunnel up: Mullvad overrides upstream to 100.64.0.23
+        #       (plaintext in-tunnel, hence dnsOverTls=opportunistic)
+        #     → Mullvad's ad/tracker/malware filter tier applied server-side
         #   app TCP/UDP
         #     → Portmaster nfqueue (per-app firewall, filterlists, rules)
         #     → wg0-mullvad → Mullvad relay
         #
+        # Portmaster's own resolver is configured (dns/nameservers below)
+        # but only used for Portmaster's internal lookups (filter lists,
+        # app reputation). App DNS does NOT flow through Portmaster when
+        # dnsQueryInterception=false.
+        #
         # Why `dnsQueryInterception=false` is load-bearing:
         # Portmaster's packet_handler.go:467 rewrites every outbound :53
-        # packet to its internal resolver — this is GLOBAL, ignores per-
-        # profile allow rules. With our configured resolver being the
-        # in-tunnel 100.64.0.23, pre-tunnel queries have no route, time
-        # out, and mullvad-daemon can never resolve api.mullvad.net to
-        # bring the tunnel up. Deadlock. Flipping this off lets mullvad-
-        # daemon's bootstrap DNS go direct (Mullvad's nftables kill-
-        # switch exempts its own daemon for bootstrap traffic). Once the
-        # tunnel is up, systemd-resolved is pointed at 100.64.0.23 by
-        # Mullvad, so all DNS still flows through Mullvad's filter tier
-        # — we just drop Portmaster's intercept layer.
+        # packet to its internal resolver — GLOBAL, ignores per-profile
+        # allow rules. With the in-tunnel resolver (100.64.0.23), pre-
+        # tunnel queries have no route → timeout → mullvad-daemon can't
+        # resolve api.mullvad.net → deadlock. Disabling lets mullvad-
+        # daemon bootstrap DNS go direct (Mullvad's nftables kill-switch
+        # exempts its own daemon).
+        #
+        # Trade-off: Portmaster's self-check fails → "Detected
+        # Compatibility Issue" notification (cosmetic, unavoidable).
+        # Portmaster loses per-process DNS attribution. Both are
+        # acceptable given the alternative is a DNS deadlock.
         #
         # Ref: service/firewall/packet_handler.go:467-483  (interception)
         # Ref: service/resolver/resolve.go:395,446         (offline fail)
+        # Ref: service/compat/selfcheck.go                 (self-check)
         # Ref: wiki.safing.io/en/Portmaster/App/Compatibility/Software/MullvadVPN
         # These keys ALL live in forceSettings because the wrong value on
-        # any of them breaks the Mullvad+Portmaster stack (see detailed
-        # rationale for each below). Anything the user changes in the UI
-        # here is reverted on next boot — intentional.
+        # any of them breaks the Mullvad+Portmaster stack. UI edits are
+        # reverted on next boot — intentional.
         forceSettings = {
           # Do NOT redirect outbound :53 to Portmaster's resolver.
           # Required to break the Mullvad bootstrap deadlock.
@@ -349,10 +355,20 @@
           # (`dot://dns.quad9.net?ip=9.9.9.9&name=Quad9&...`).
           "dns/nameservers" = [
             "dot://dns.mullvad.net?ip=194.242.2.3&name=MullvadAdblockDoT&blockedif=empty"
+            "dot://dns.quad9.net?ip=9.9.9.9&name=Quad9&blockedif=empty"
+            "dot://dns.quad9.net?ip=149.112.112.112&name=Quad9&blockedif=empty"
+            "dot://dns.mullvad.net?ip=194.242.2.2&name=MullvadUnfilteredDoT&blockedif=empty"
           ];
-          # Ignore DHCP-assigned system DNS so Portmaster doesn't fall
-          # back to the ISP resolver while the tunnel is still coming up.
+          # Portmaster's internal resolver ignores DHCP-assigned DNS.
+          # Not load-bearing for app DNS (apps use systemd-resolved),
+          # but prevents Portmaster's own lookups from leaking to ISP.
           "dns/noAssignedNameservers" = true;
+          # Reject plaintext DNS in Portmaster's internal resolver.
+          "dns/noInsecureProtocols" = true;
+          # SPN and Mullvad are mutually exclusive — both reroute all
+          # traffic. SPN defaults to false but lock it to prevent
+          # accidental UI toggle.
+          "spn/enable" = false;
         };
       };
       # Preserve Mullvad's WireGuard fwmark (0x6d6f6c65) from Portmaster's
@@ -372,11 +388,16 @@
         enable = true;
         #openPorts = [24727]; # (default)
         #openPortRanges = [{ from = 24727; to = 24727; }]; # (default)
-        # nameservers use module default
+        # nameservers use module default (Mullvad adblock DoT)
+        # Why opportunistic: Mullvad overrides systemd-resolved upstream
+        # to plaintext 100.64.0.23 inside the tunnel. Strict DoT would
+        # SERVFAIL on that plaintext upstream during tunnel transitions.
+        dnsOverTls = "opportunistic";
       };
       pipewire = {
         enable = true;
         lowLatency = true;
+        extraLadspaPackages = [ pkgs.deepfilternet ];
       };
       bluetooth = {
         enable = true;

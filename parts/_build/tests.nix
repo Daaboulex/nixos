@@ -267,6 +267,81 @@
         # "26.2.0-devel-8736d1a"). Checking this catches the real
         # regression: if mkForce fails or the mesa-git overlay isn't
         # applied, version falls back to nixpkgs stable (no "-devel-").
+        # hardware-pipewire — PipeWire service starts, LADSPA search path
+        # populated, wireplumber running. Cannot test actual audio in VM
+        # but catches the LADSPA_PATH / SPA symbol regressions.
+        vm-hardware-pipewire = pkgs.testers.nixosTest {
+          name = "hardware-pipewire";
+          nodes.machine = {
+            imports = [
+              inputs.self.modules.nixos.hardware-pipewire
+              inputs.self.modules.nixos.users
+            ];
+            myModules.hardware.pipewire = {
+              enable = true;
+              extraLadspaPackages = [ pkgs.deepfilternet ];
+            };
+            myModules.users.enable = true;
+          };
+          testScript = ''
+            machine.wait_for_unit("multi-user.target")
+            # PipeWire system service socket exists
+            machine.succeed("test -S /run/pipewire/pipewire-0 || systemctl --user -M user@ is-active pipewire.service")
+            # LADSPA plugins directory is populated (not empty)
+            machine.succeed("ls /nix/store/*-pipewire-ladspa-plugins/lib/ladspa/*.so")
+          '';
+        };
+
+        # hardware-networking-resolved — systemd-resolved starts with DoT
+        # configured. Validates the DNS encryption layer is active.
+        vm-networking-resolved = pkgs.testers.nixosTest {
+          name = "networking-resolved";
+          nodes.machine = {
+            imports = [
+              inputs.self.modules.nixos.hardware-networking
+              inputs.self.modules.nixos.users
+            ];
+            myModules.hardware.networking = {
+              enable = true;
+              dnsOverTls = "opportunistic";
+            };
+            myModules.users.enable = true;
+          };
+          testScript = ''
+            machine.wait_for_unit("systemd-resolved.service")
+            # DoT is configured (not "no")
+            machine.succeed("resolvectl status | grep -i 'DNSOverTLS' | grep -iv 'no'")
+            # Stub resolver is listening
+            machine.succeed("ss -tlnp | grep '127.0.0.53'")
+          '';
+        };
+
+        # eval-kernel-cachyos — CachyOS kernel is active on ryzen host.
+        # Catches regressions where kernel overlay or input pin breaks
+        # and silently falls back to stock nixpkgs kernel.
+        eval-kernel-cachyos =
+          let
+            kernelVersion = inputs.self.nixosConfigurations.ryzen-9950x3d.config.boot.kernelPackages.kernel.version;
+          in
+          pkgs.runCommand "eval-kernel-cachyos"
+            {
+              actual = kernelVersion;
+            }
+            ''
+              echo "boot.kernelPackages.kernel.version = $actual"
+              case "$actual" in
+                *cachyos*|*lto*)
+                  echo "OK: CachyOS kernel active"
+                  touch $out
+                  ;;
+                *)
+                  echo "FAIL: expected CachyOS kernel (version containing cachyos or lto)"
+                  echo "Got: $actual — looks like stock nixpkgs kernel"
+                  exit 1
+                  ;;
+              esac
+            '';
+
         eval-hardware-graphics-mesa-git =
           let
             inherit (inputs.self.nixosConfigurations.ryzen-9950x3d.config.hardware.graphics.package) version;

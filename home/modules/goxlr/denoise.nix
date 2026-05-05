@@ -29,7 +29,7 @@ let
             {
               type = ladspa
               name = deepfilter
-              plugin = ${pkgs.deepfilternet}/lib/ladspa/libdeep_filter_ladspa.so
+              plugin = libdeep_filter_ladspa
               label = deep_filter_mono
               control = {
                 "Attenuation Limit (dB)" = ${toString cfg.attenuationLimit}
@@ -110,8 +110,5 @@ in
       context.modules = [ ${denoiseModule} ]
     '';
 
-    # PipeWire 1.6+ LADSPA loader searches LADSPA_PATH, not full nix store paths.
-    # Without this, filter-chain fails to find deepfilternet → PipeWire crashes (exit 254).
-    systemd.user.sessionVariables.LADSPA_PATH = "${pkgs.deepfilternet}/lib/ladspa";
   };
 }

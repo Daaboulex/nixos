@@ -21,11 +21,17 @@ let
           default = 256;
           description = "Audio buffer size in samples (lower = less latency, more CPU). 256=5.3ms, 512=10.7ms, 1024=21ms";
         };
+        extraLadspaPackages = lib.mkOption {
+          type = lib.types.listOf lib.types.package;
+          default = [ ];
+          description = "LADSPA plugin packages forwarded to services.pipewire.extraLadspaPackages";
+        };
       };
 
       config = lib.mkIf cfg.enable {
         services.pipewire = {
           enable = true;
+          inherit (cfg) extraLadspaPackages;
           alsa = {
             enable = true;
             support32Bit = true;
@@ -62,6 +68,15 @@ let
             };
           };
         };
+
+        # PipeWire 1.6.3 SPA filter-graph plugins reference spa_log_topic_enum
+        # from libspa-support.so, but PipeWire loads SPA plugins via dlopen
+        # without RTLD_GLOBAL — the symbol isn't visible. Preload libspa-support
+        # so its symbols are globally available to all SPA plugins.
+        # Why: without this, filter-chain (EQ, denoise) crashes PipeWire with
+        # "undefined symbol: spa_log_topic_enum".
+        systemd.user.services.pipewire.environment.LD_PRELOAD =
+          "${config.services.pipewire.package}/lib/spa-0.2/support/libspa-support.so";
 
         users.users.${config.myModules.primaryUser}.extraGroups = [
           "audio"

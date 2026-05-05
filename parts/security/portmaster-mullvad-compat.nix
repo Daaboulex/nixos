@@ -72,7 +72,11 @@ let
         assertions = [
           {
             assertion = config.myModules.security.portmaster.enable;
-            message = "myModules.security.portmasterMullvadCompat.enable=true requires myModules.security.portmaster.enable=true.";
+            message = "myModules.security.portmasterMullvadCompat: requires myModules.security.portmaster.enable=true.";
+          }
+          {
+            assertion = config.myModules.services.mullvad.enable;
+            message = "myModules.security.portmasterMullvadCompat: requires myModules.services.mullvad.enable=true.";
           }
         ];
 
@@ -81,7 +85,10 @@ let
           bindsTo = [ "portmaster.service" ];
           after = [ "portmaster.service" ];
           wantedBy = [ "portmaster.service" ];
-          path = [ pkgs.iptables ];
+          path = [
+            pkgs.iptables
+            pkgs.gnused
+          ];
           serviceConfig = {
             Type = "simple";
             Restart = "on-failure";
@@ -115,7 +122,7 @@ let
                   $fw -t mangle -I "$chain" 1 $want_rule 2>/dev/null || true
                 done
               done
-              sleep 3
+              sleep 1
             done
           '';
           preStop = ''
