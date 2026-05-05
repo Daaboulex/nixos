@@ -215,6 +215,10 @@ in
             # ── Security: per-machine OAuth tokens ──
             ".credentials.json"
             ".credentials.*"
+            # ── Plugin state: absolute paths differ per machine ──
+            "plugins/installed_plugins.json"
+            "plugins/installed_plugins.json.bak-*"
+            "plugins/install-counts-cache.json"
             # ── Per-machine runtime state (NOT session data — those sync) ──
             ".dream-session-count"
             ".dream-lock"
