@@ -365,6 +365,57 @@
                   ;;
               esac
             '';
+
+        # myLib.mkSimplePackage — contract: factory is a function that
+        # accepts {name,description} and returns a module function.
+        eval-mylib-mkSimplePackage =
+          let
+            factory = inputs.self.lib.mkSimplePackage;
+            mod = factory {
+              name = "test-dummy";
+              description = "contract test";
+            };
+            isFunc = builtins.isFunction mod;
+          in
+          pkgs.runCommand "eval-mylib-mkSimplePackage" { } (
+            if isFunc then ''
+              echo "OK: mkSimplePackage returns a function (valid module shape)"
+              touch $out
+            '' else ''
+              echo "FAIL: mkSimplePackage did not return a function"
+              exit 1
+            ''
+          );
+
+        # myLib.mergeSettings — contract: overrides win over defaults,
+        # nested attrs merge recursively.
+        eval-mylib-mergeSettings =
+          let
+            merge = inputs.self.lib.mergeSettings;
+            merged = merge {
+              defaults = {
+                a = 1;
+                b = 2;
+                nested.x = 10;
+              };
+              overrides = {
+                b = 99;
+                nested.y = 20;
+              };
+            };
+            pass =
+              merged.a == 1 && merged.b == 99 && merged.nested.x == 10 && merged.nested.y == 20;
+          in
+          pkgs.runCommand "eval-mylib-mergeSettings" { } (
+            if pass then ''
+              echo "OK: mergeSettings override semantics correct"
+              echo "  a=1 (kept), b=99 (overridden), nested.x=10 (kept), nested.y=20 (added)"
+              touch $out
+            '' else ''
+              echo "FAIL: mergeSettings produced wrong result"
+              exit 1
+            ''
+          );
       };
     };
 }

@@ -137,7 +137,7 @@ Do NOT bypass with `--no-verify` — that skips ALL hooks and hides real violati
 
 ## Flake Checks
 
-Run with `nix flake check`. Full check set (18 checks):
+Run with `nix flake check`. Full check set (20 checks):
 
 | Check                             | Source                  | What it validates                                                               |
 | --------------------------------- | ----------------------- | ------------------------------------------------------------------------------- |
@@ -158,6 +158,8 @@ Run with `nix flake check`. Full check set (18 checks):
 | `vm-security-agenix`              | tests.nix               | agenix CLI tools available (cannot test decryption — no host SSH key in VM)     |
 | `vm-boot-impermanence`            | tests.nix               | Impermanence boot path — ephemeral root + persisted state                       |
 | `check-placement-test`            | tests.nix               | Regression fixture for `check-placement` hook (intentional violation must fail) |
+| `eval-mylib-mkSimplePackage`      | tests.nix               | `myLib.mkSimplePackage` factory returns valid module function                   |
+| `eval-mylib-mergeSettings`        | tests.nix               | `myLib.mergeSettings` override semantics (overrides win, nested merge)          |
 | `check-scrub-tokens-test`         | tests.nix               | Regression fixture for `check-scrub-tokens` hook                                |
 
 Run a single test:
