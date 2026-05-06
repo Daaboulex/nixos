@@ -9,7 +9,10 @@
 let
   cfg = config.myModules.home.zsh;
   inherit (myLib.themeCtx { inherit config; }) hasTheme c;
-  nrbFns = import ./nrb-functions.nix { inherit pkgs; flakeDir = cfg.flakeDir; };
+  nrbFns = import ./nrb-functions.nix {
+    inherit pkgs;
+    inherit (cfg) flakeDir;
+  };
 in
 {
   options.myModules.home.zsh = {

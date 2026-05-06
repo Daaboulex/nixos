@@ -13,7 +13,10 @@ let
 
       nrb-activate = pkgs.writeShellApplication {
         name = "nrb-activate";
-        runtimeInputs = [ pkgs.coreutils pkgs.nix ];
+        runtimeInputs = [
+          pkgs.coreutils
+          pkgs.nix
+        ];
         text = ''
           set -euo pipefail
 
@@ -167,9 +170,10 @@ let
           "net.ipv4.tcp_syncookies" = lib.mkDefault 1;
         };
 
-        environment.systemPackages =
-          [ nrb-activate ]
-          ++ lib.optionals cfg.firejail.enable [ pkgs.firejail ];
+        environment.systemPackages = [
+          nrb-activate
+        ]
+        ++ lib.optionals cfg.firejail.enable [ pkgs.firejail ];
       };
     };
 in

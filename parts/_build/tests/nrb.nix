@@ -132,28 +132,26 @@
         # AFTER hostname/flakeDir/daemon preflight, so it can't be tested in a
         # runCommand sandbox. It's pre-existing behavior, not a new fix.
 
-        nrb-activate-regex-test =
-          pkgs.runCommand "nrb-activate-regex-test" { }
-            ''
-              set -euo pipefail
-              # Test the regex used by nrb-activate (hardening.nix:46)
-              valid="abcdefghijklmnopqrstuvwxyz012345-nixos-system-ryzen"
-              invalid1="../../etc/shadow"
-              invalid2="ABCDEFGHIJKLMNOPQRSTUVWXYZ012345-nixos-system-evil"
-              invalid3="abcdefghijklmnopqrstuvwxyz01234-nixos-system-short"
+        nrb-activate-regex-test = pkgs.runCommand "nrb-activate-regex-test" { } ''
+          set -euo pipefail
+          # Test the regex used by nrb-activate (hardening.nix:46)
+          valid="abcdefghijklmnopqrstuvwxyz012345-nixos-system-ryzen"
+          invalid1="../../etc/shadow"
+          invalid2="ABCDEFGHIJKLMNOPQRSTUVWXYZ012345-nixos-system-evil"
+          invalid3="abcdefghijklmnopqrstuvwxyz01234-nixos-system-short"
 
-              [[ "$valid" =~ ^[a-z0-9]{32}-nixos-system-.+ ]] \
-                || { echo "FAIL: valid basename rejected"; exit 1; }
-              [[ ! "$invalid1" =~ ^[a-z0-9]{32}-nixos-system-.+ ]] \
-                || { echo "FAIL: path traversal accepted"; exit 1; }
-              [[ ! "$invalid2" =~ ^[a-z0-9]{32}-nixos-system-.+ ]] \
-                || { echo "FAIL: uppercase accepted"; exit 1; }
-              [[ ! "$invalid3" =~ ^[a-z0-9]{32}-nixos-system-.+ ]] \
-                || { echo "FAIL: short hash (31 char) accepted"; exit 1; }
+          [[ "$valid" =~ ^[a-z0-9]{32}-nixos-system-.+ ]] \
+            || { echo "FAIL: valid basename rejected"; exit 1; }
+          [[ ! "$invalid1" =~ ^[a-z0-9]{32}-nixos-system-.+ ]] \
+            || { echo "FAIL: path traversal accepted"; exit 1; }
+          [[ ! "$invalid2" =~ ^[a-z0-9]{32}-nixos-system-.+ ]] \
+            || { echo "FAIL: uppercase accepted"; exit 1; }
+          [[ ! "$invalid3" =~ ^[a-z0-9]{32}-nixos-system-.+ ]] \
+            || { echo "FAIL: short hash (31 char) accepted"; exit 1; }
 
-              echo "OK: nrb-activate regex validation correct"
-              touch $out
-            '';
+          echo "OK: nrb-activate regex validation correct"
+          touch $out
+        '';
 
         # ── VM integration tests (nixosTest) ─────────────────────────────
 

@@ -15,7 +15,8 @@ let
   '';
 in
 {
-  options.myModules.home.opencode.enable = lib.mkEnableOption "OpenCode AI coding agent (sst/opencode)";
+  options.myModules.home.opencode.enable =
+    lib.mkEnableOption "OpenCode AI coding agent (sst/opencode)";
 
   config = lib.mkIf cfg.enable {
     home.packages = [ opencodeWrapped ];

@@ -344,7 +344,7 @@
           pkgs.runCommand "eval-kernel-cachyos"
             {
               actual = kpkg.pname;
-              version = kpkg.version;
+              inherit (kpkg) version;
             }
             ''
               echo "kernel.pname = $actual  version = $version"
@@ -397,13 +397,16 @@
             isFunc = builtins.isFunction mod;
           in
           pkgs.runCommand "eval-mylib-mkSimplePackage" { } (
-            if isFunc then ''
-              echo "OK: mkSimplePackage returns a function (valid module shape)"
-              touch $out
-            '' else ''
-              echo "FAIL: mkSimplePackage did not return a function"
-              exit 1
-            ''
+            if isFunc then
+              ''
+                echo "OK: mkSimplePackage returns a function (valid module shape)"
+                touch $out
+              ''
+            else
+              ''
+                echo "FAIL: mkSimplePackage did not return a function"
+                exit 1
+              ''
           );
 
         # myLib.mergeSettings — contract: overrides win over defaults,
@@ -422,34 +425,39 @@
                 nested.y = 20;
               };
             };
-            pass =
-              merged.a == 1 && merged.b == 99 && merged.nested.x == 10 && merged.nested.y == 20;
+            pass = merged.a == 1 && merged.b == 99 && merged.nested.x == 10 && merged.nested.y == 20;
           in
           pkgs.runCommand "eval-mylib-mergeSettings" { } (
-            if pass then ''
-              echo "OK: mergeSettings override semantics correct"
-              echo "  a=1 (kept), b=99 (overridden), nested.x=10 (kept), nested.y=20 (added)"
-              touch $out
-            '' else ''
-              echo "FAIL: mergeSettings produced wrong result"
-              exit 1
-            ''
+            if pass then
+              ''
+                echo "OK: mergeSettings override semantics correct"
+                echo "  a=1 (kept), b=99 (overridden), nested.x=10 (kept), nested.y=20 (added)"
+                touch $out
+              ''
+            else
+              ''
+                echo "FAIL: mergeSettings produced wrong result"
+                exit 1
+              ''
           );
         # myLib.cap — contract: capitalizes first letter, preserves rest.
         eval-mylib-cap =
           let
-            cap = inputs.self.lib.cap;
+            inherit (inputs.self.lib) cap;
             pass = cap "blue" == "Blue" && cap "red" == "Red" && cap "a" == "A";
           in
           pkgs.runCommand "eval-mylib-cap" { } (
-            if pass then ''
-              echo "OK: cap capitalizes first letter correctly"
-              touch $out
-            '' else ''
-              echo "FAIL: cap produced wrong result"
-              echo "  cap \"blue\" = ${cap "blue"} (expected Blue)"
-              exit 1
-            ''
+            if pass then
+              ''
+                echo "OK: cap capitalizes first letter correctly"
+                touch $out
+              ''
+            else
+              ''
+                echo "FAIL: cap produced wrong result"
+                echo "  cap \"blue\" = ${cap "blue"} (expected Blue)"
+                exit 1
+              ''
           );
 
         # myLib.mkSettingsOption — contract: returns an option with
@@ -461,13 +469,16 @@
             hasDefault = opt ? default && opt.default == { };
           in
           pkgs.runCommand "eval-mylib-mkSettingsOption" { } (
-            if hasType && hasDefault then ''
-              echo "OK: mkSettingsOption produces option with type + empty default"
-              touch $out
-            '' else ''
-              echo "FAIL: mkSettingsOption missing type or default"
-              exit 1
-            ''
+            if hasType && hasDefault then
+              ''
+                echo "OK: mkSettingsOption produces option with type + empty default"
+                touch $out
+              ''
+            else
+              ''
+                echo "FAIL: mkSettingsOption missing type or default"
+                exit 1
+              ''
           );
 
         # myLib.themeCtx — contract: returns hasTheme/c/when attrs,
@@ -477,16 +488,19 @@
             ctx = inputs.self.lib.themeCtx {
               config.myModules.home.theme = { };
             };
-            pass = ctx.hasTheme == false && ctx.c == { } && ctx.when { x = 1; } == { };
+            pass = !ctx.hasTheme && ctx.c == { } && ctx.when { x = 1; } == { };
           in
           pkgs.runCommand "eval-mylib-themeCtx" { } (
-            if pass then ''
-              echo "OK: themeCtx handles disabled theme (hasTheme=false, c={}, when={})"
-              touch $out
-            '' else ''
-              echo "FAIL: themeCtx contract violation"
-              exit 1
-            ''
+            if pass then
+              ''
+                echo "OK: themeCtx handles disabled theme (hasTheme=false, c={}, when={})"
+                touch $out
+              ''
+            else
+              ''
+                echo "FAIL: themeCtx contract violation"
+                exit 1
+              ''
           );
 
         # myLib.withStdenvCC — contract: returns a derivation with
@@ -494,17 +508,23 @@
         eval-mylib-withStdenvCC =
           let
             dummy = pkgs.runCommand "dummy-drv" { } "touch $out";
-            result = inputs.self.lib.withStdenvCC { inherit pkgs; drv = dummy; };
+            result = inputs.self.lib.withStdenvCC {
+              inherit pkgs;
+              drv = dummy;
+            };
             hasCC = builtins.elem pkgs.stdenv.cc (result.nativeBuildInputs or [ ]);
           in
           pkgs.runCommand "eval-mylib-withStdenvCC" { } (
-            if hasCC then ''
-              echo "OK: withStdenvCC injects stdenv.cc into nativeBuildInputs"
-              touch $out
-            '' else ''
-              echo "FAIL: stdenv.cc not found in nativeBuildInputs"
-              exit 1
-            ''
+            if hasCC then
+              ''
+                echo "OK: withStdenvCC injects stdenv.cc into nativeBuildInputs"
+                touch $out
+              ''
+            else
+              ''
+                echo "FAIL: stdenv.cc not found in nativeBuildInputs"
+                exit 1
+              ''
           );
 
         # ── Eval canaries — high-blast-radius module property assertions ──
@@ -733,7 +753,7 @@
           in
           pkgs.runCommand "eval-x3d-vcache-mode"
             {
-              mode = cfg.myModules.hardware.cpuAmd.x3dVcache.mode;
+              inherit (cfg.myModules.hardware.cpuAmd.x3dVcache) mode;
             }
             ''
               [[ "$mode" == "cache" ]] || { echo "FAIL: x3dVcache mode is '$mode', expected 'cache'"; exit 1; }
@@ -743,7 +763,9 @@
 
         eval-mbp-specialisations =
           let
-            specs = builtins.attrNames (inputs.self.nixosConfigurations.macbook-pro-9-2.config.specialisation or {});
+            specs = builtins.attrNames (
+              inputs.self.nixosConfigurations.macbook-pro-9-2.config.specialisation or { }
+            );
           in
           pkgs.runCommand "eval-mbp-specialisations"
             {
