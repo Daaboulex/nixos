@@ -110,8 +110,8 @@ Docs with time-sensitive content include a footer:
 | BUILD.md | Gold standard | None |
 | STYLE.md | Gold standard | None |
 | OPTIONS.md | Generated | None (auto-regen) |
-| REPO-STANDARD.md | Updated v1.3 | None |
-| REPO-DOC-TEMPLATE.md | Updated v2.0 | None |
+| REPO-STANDARD.md | Updated | None |
+| REPO-DOC-TEMPLATE.md | Updated | None |
 | NETWORKING.md | Good | Minor: add opening cross-ref |
 | SECRETS.md | Thin (37 lines) | Expand or merge into ARCHITECTURE |
 | TESTING.md | Thin (61 lines) | Expand or merge into BUILD |

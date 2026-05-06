@@ -39,7 +39,7 @@ Tier promotion criteria (any one triggers Tier 3):
 Examples by tier:
 
 - Tier 1: `durdraw-nix`, `ripgrep-nix`, `models-nix`, `lsfg-vk-nix`,
-  `nx-save-sync-nix`, `OCCT-nix`, `openviking-nix`, `gemini-cli-nix`,
+  `refind-nix`, `OCCT-nix`, `openviking-nix`, `gemini-cli-nix`,
   `lmstudio-nix`, `rocksmith-nix`, `cachyos-settings-nix`,
   `streamcontroller-nix`, `goxlr-hm-nix`, `eden-nix`, `mesa-git-nix`,
   `linux-corecycler`, `yeetmouse-nix`

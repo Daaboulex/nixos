@@ -207,7 +207,7 @@ version)` at the top of the package. Eval fails loudly when upstream
 ## Related
 
 - `docs/STYLE.md` — Nix coding standards (shared across main config + repos).
-- `docs/REPO-DOC-TEMPLATE.md` — README + `docs/` shape contract (v1.0).
+- `docs/REPO-DOC-TEMPLATE.md` — README + `docs/` shape contract (v2.1).
   REPO-STANDARD covers files/CI/flake; REPO-DOC-TEMPLATE covers the
   prose layout inside README.md and the optional `docs/` folder for
   Tier 3 repos.
