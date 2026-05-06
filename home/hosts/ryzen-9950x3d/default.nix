@@ -213,6 +213,9 @@ in
             "(?d)instances/"
             "(?d)/projects/"
             "(?d)backups/"
+            "(?d)cache/"
+            # ── High-churn telemetry (per-machine, 27MB+) ──
+            "(?d)**/episodic/"
             # ── Handoff session volatiles ──
             "(?d)handoffs/sessions/.current-*"
             "(?d)handoffs/sessions/.debounce-*"
