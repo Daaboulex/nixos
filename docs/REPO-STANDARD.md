@@ -9,7 +9,9 @@ markers, pre-commit doc hooks, README auto-sync via `sync.sh`.
 - **README splice markers**: all READMEs use `<!-- BEGIN/END generated:X -->`
   markers for badges, upstream, installation, options, footer sections.
   Managed by `sync.sh` + `readme-sync.py`.
-- **2-badge standard**: reduced from 6 to 2 badges (NixOS-unstable + License).
+- **3-badge standard**: CI + NixOS-unstable + License (was 6 in v1.2, then
+  2 in initial v1.3, restored CI badge in v1.3.1 — CI is the only dynamic
+  badge that shows live build health).
 - **Upstream table**: standardized 3-row table (Project, License, Tracked)
   replacing the old bullet-list format.
 - **Pre-commit doc hooks**: `typos`, `rumdl`, `check-readme-sections` added
