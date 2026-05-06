@@ -1,13 +1,21 @@
+# crush — Crush AI coding agent (charmbracelet) with --data-dir wrapper.
 {
   config,
   lib,
   pkgs,
-  myLib,
   ...
-}@args:
-(myLib.mkSimplePackage {
-  name = "crush";
-  description = "Crush AI coding agent (charmbracelet)";
-  package = p: p.llm-agents.crush;
-})
-  args
+}:
+
+let
+  cfg = config.myModules.home.crush;
+  crushWrapped = pkgs.writeShellScriptBin "crush" ''
+    exec ${pkgs.llm-agents.crush}/bin/crush --data-dir "$HOME/.local/share/crush" "$@"
+  '';
+in
+{
+  options.myModules.home.crush.enable = lib.mkEnableOption "Crush AI coding agent (charmbracelet)";
+
+  config = lib.mkIf cfg.enable {
+    home.packages = [ crushWrapped ];
+  };
+}

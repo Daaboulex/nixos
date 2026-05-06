@@ -22,6 +22,7 @@ in
       defaults = {
         enable = true;
         lfs.enable = lib.mkDefault true;
+        ignores = [ ".crush/" ];
       }
       // lib.optionalAttrs hasTheme {
         settings.color = {
