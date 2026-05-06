@@ -237,6 +237,7 @@ Full operator reference + hook list in [`docs/BUILD.md`](docs/BUILD.md).
 | `myModules.home.comma`                  | comma — run uninstalled programs via nix-index                                 |
 | `myModules.home.coolercontrol`          | declarative fan/cooling configuration with optional GUI autostart.             |
 | `myModules.home.corecycler`             | per-core CPU stability tester and PBO Curve Optimizer tuner.                   |
+| `myModules.home.crush`                  | Crush AI coding agent (charmbracelet)                                          |
 | `myModules.home.csvlens`                | terminal CSV viewer with theme-derived color palette.                          |
 | `myModules.home.curl`                   | HTTP client with user .curlrc configuration.                                   |
 | `myModules.home.delta`                  | syntax-highlighting git diff pager with theme integration.                     |
@@ -260,7 +261,7 @@ Full operator reference + hook list in [`docs/BUILD.md`](docs/BUILD.md).
 | `myModules.home.gamescope`              | Valve's micro-compositor for gaming.                                           |
 | `myModules.home.gcc`                    | GCC compiler                                                                   |
 | `myModules.home.gdb`                    | GNU debugger with custom ~/.gdbinit and theme integration.                     |
-| `myModules.home.gemini-cli`             | Google Gemini terminal AI assistant with pinned-version selection.             |
+| `myModules.home.gemini-cli`             | Gemini CLI AI assistant                                                        |
 | `myModules.home.git`                    | git version control with GitHub CLI and delta pager integration.               |
 | `myModules.home.glow`                   | terminal markdown renderer with theme integration.                             |
 | `myModules.home.gnumake`                | GNU Make                                                                       |
@@ -322,7 +323,7 @@ Full operator reference + hook list in [`docs/BUILD.md`](docs/BUILD.md).
 | `myModules.home.nvd`                    | nvd — Nix version diff between system generations                              |
 | `myModules.home.occt`                   | OCCT stability test/benchmark                                                  |
 | `myModules.home.okular`                 | KDE PDF viewer.                                                                |
-| `myModules.home.opencode`               | OpenCode AI terminal agent                                                     |
+| `myModules.home.opencode`               | OpenCode AI coding agent (sst/opencode)                                        |
 | `myModules.home.openviking`             | OpenViking context database with configurable read-only search paths.          |
 | `myModules.home.pastel`                 | pastel color manipulation CLI                                                  |
 | `myModules.home.pciutils`               | pciutils (lspci)                                                               |
@@ -487,6 +488,7 @@ home/modules/codex-cli/default.nix                          # Codex CLI AI assis
 home/modules/comma/default.nix                              # comma — run uninstalled programs via nix-index
 home/modules/coolercontrol/default.nix                      # declarative fan/cooling configuration with optional GUI autostart.
 home/modules/corecycler/default.nix                         # per-core CPU stability tester and PBO Curve Optimizer tuner.
+home/modules/crush/default.nix                              # Crush AI coding agent (charmbracelet)
 home/modules/csvlens/default.nix                            # terminal CSV viewer with theme-derived color palette.
 home/modules/curl/default.nix                               # HTTP client with user .curlrc configuration.
 home/modules/delta/default.nix                              # syntax-highlighting git diff pager with theme integration.
@@ -510,7 +512,7 @@ home/modules/fzf/default.nix                                # fuzzy finder with 
 home/modules/gamescope/default.nix                          # Valve's micro-compositor for gaming.
 home/modules/gcc/default.nix                                # GCC compiler
 home/modules/gdb/default.nix                                # GNU debugger with custom ~/.gdbinit and theme integration.
-home/modules/gemini-cli/default.nix                         # Google Gemini terminal AI assistant with pinned-version selection.
+home/modules/gemini-cli/default.nix                         # Gemini CLI AI assistant
 home/modules/git/default.nix                                # git version control with GitHub CLI and delta pager integration.
 home/modules/glow/default.nix                               # terminal markdown renderer with theme integration.
 home/modules/gnumake/default.nix                            # GNU Make
@@ -572,7 +574,7 @@ home/modules/ns-usbloader/default.nix                       # Nintendo Switch US
 home/modules/nvd/default.nix                                # nvd — Nix version diff between system generations
 home/modules/occt/default.nix                               # OCCT stability test/benchmark
 home/modules/okular/default.nix                             # KDE PDF viewer.
-home/modules/opencode/default.nix                           # OpenCode AI terminal agent
+home/modules/opencode/default.nix                           # OpenCode AI coding agent (sst/opencode)
 home/modules/openviking/default.nix                         # OpenViking context database with configurable read-only search paths.
 home/modules/pastel/default.nix                             # pastel color manipulation CLI
 home/modules/pciutils/default.nix                           # pciutils (lspci)
@@ -643,20 +645,18 @@ home/modules/zsh/default.nix                                # Zsh shell with cus
 - `agenix`
 - `antigravity`
 - `cachyos-settings-nix`
-- `claude-code`
-- `codex-cli`
 - `coolercontrol`
 - `disko`
 - `durdraw-nix`
 - `eden`
 - `flake-parts`
-- `gemini-cli-nix`
 - `git-hooks-nix`
 - `goxlr-hm-nix`
 - `home-manager`
 - `impermanence`
 - `lanzaboote`
 - `linux-corecycler`
+- `llm-agents`
 - `lmstudio`
 - `lsfg-vk`
 - `mesa-git-nix`
@@ -672,6 +672,7 @@ home/modules/zsh/default.nix                                # Zsh shell with cus
 - `portmaster`
 - `ripgrep-nix`
 - `rocksmith-nix`
+- `site`
 - `streamcontroller-nix`
 - `tidalcycles`
 - `treefmt-nix`
@@ -679,7 +680,7 @@ home/modules/zsh/default.nix                                # Zsh shell with cus
 - `vkbasalt-overlay`
 - `yeetmouse-nix`
 
-_Total: 40 flake inputs. Run `nix flake metadata` for pinned revisions + URLs._
+_Total: 38 flake inputs. Run `nix flake metadata` for pinned revisions + URLs._
 
 <!-- END generated:flakeInputs -->
 

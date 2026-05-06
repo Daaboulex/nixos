@@ -26,6 +26,7 @@ Format: `# Topic Name`
 ## 3. Opening block (first 5 lines after title)
 
 Every doc opens with exactly:
+
 1. One sentence stating what question this doc answers
 2. One blank line
 3. Cross-reference table (if part of core trio) OR "**See also:**" line
@@ -59,7 +60,7 @@ What this doc answers in one sentence.
 
 - **Bold** for terms being defined or key constraints
 - `Backticks` for code, paths, commands, option names
-- *Italic* only for emphasis within a sentence (rare)
+- _Italic_ only for emphasis within a sentence (rare)
 - Dash lists (`-`) exclusively, never `*` or `+`
 - No trailing whitespace
 - No HTML in markdown (except splice markers in READMEs)
@@ -73,7 +74,7 @@ What this doc answers in one sentence.
 
 ## 8. Code blocks
 
-- Always specify language: ````nix`, ````bash`, ````text`
+- Always specify language: ``nix`, ``bash`, ````text`
 - Commands use `bash`, output uses `text`
 - Nix snippets: minimal — show only the relevant fragment
 - No `$` prompt prefix (obvious from context)
@@ -91,7 +92,8 @@ Docs with time-sensitive content include a footer:
 
 ```markdown
 ---
-*Last verified: 2026-05-05. Run `nix flake check` to validate.*
+
+_Last verified: 2026-05-05. Run `nix flake check` to validate._
 ```
 
 ## 11. What stays OUT of docs/
@@ -104,21 +106,21 @@ Docs with time-sensitive content include a footer:
 
 ## Current docs and their compliance
 
-| File | Status | Action needed |
-|------|--------|---------------|
-| ARCHITECTURE.md | Gold standard | None |
-| BUILD.md | Gold standard | None |
-| STYLE.md | Gold standard | None |
-| OPTIONS.md | Generated | None (auto-regen) |
-| REPO-STANDARD.md | Updated | None |
-| REPO-DOC-TEMPLATE.md | Updated | None |
-| NETWORKING.md | Good | Minor: add opening cross-ref |
-| SECRETS.md | Thin (37 lines) | Expand or merge into ARCHITECTURE |
-| TESTING.md | Thin (61 lines) | Expand or merge into BUILD |
-| PACKAGES.md | OK | Remove "comprehensive" |
-| SECURITY-AUDIT-2026-05-04.md | One-time note | Move to git history or archive |
-| STORAGE-STRATEGY.md | Host-specific | Keep (MBP storage is complex) |
-| TERMINAL-TOOLS.md | Reference list | Trim AI voice |
-| INSTALLATION.md | Rename + trim | → INSTALLATION.md |
-| MIGRATE-MBP-SDB.md | Rename | → MIGRATE-MBP-SDB.md |
-| SECURE-BOOT.md | Rename | → SECURE-BOOT.md |
+| File                         | Status          | Action needed                     |
+| ---------------------------- | --------------- | --------------------------------- |
+| ARCHITECTURE.md              | Gold standard   | None                              |
+| BUILD.md                     | Gold standard   | None                              |
+| STYLE.md                     | Gold standard   | None                              |
+| OPTIONS.md                   | Generated       | None (auto-regen)                 |
+| REPO-STANDARD.md             | Updated         | None                              |
+| REPO-DOC-TEMPLATE.md         | Updated         | None                              |
+| NETWORKING.md                | Good            | Minor: add opening cross-ref      |
+| SECRETS.md                   | Thin (37 lines) | Expand or merge into ARCHITECTURE |
+| TESTING.md                   | Thin (61 lines) | Expand or merge into BUILD        |
+| PACKAGES.md                  | OK              | Remove "comprehensive"            |
+| SECURITY-AUDIT-2026-05-04.md | One-time note   | Move to git history or archive    |
+| STORAGE-STRATEGY.md          | Host-specific   | Keep (MBP storage is complex)     |
+| TERMINAL-TOOLS.md            | Reference list  | Trim AI voice                     |
+| INSTALLATION.md              | Rename + trim   | → INSTALLATION.md                 |
+| MIGRATE-MBP-SDB.md           | Rename          | → MIGRATE-MBP-SDB.md              |
+| SECURE-BOOT.md               | Rename          | → SECURE-BOOT.md                  |

@@ -61,12 +61,12 @@ SECURITY.md
 
 All repos must declare these hooks in the `git-hooks.lib.${system}.run` block:
 
-| Hook | Source | Purpose |
-|------|--------|---------|
-| `nixfmt-rfc-style` | built-in | Nix code formatting |
-| `typos` | built-in | Catches common typos across all files |
-| `rumdl` | built-in | Markdown lint for README and docs |
-| `check-readme-sections` | custom | Validates README splice markers exist |
+| Hook                    | Source   | Purpose                               |
+| ----------------------- | -------- | ------------------------------------- |
+| `nixfmt-rfc-style`      | built-in | Nix code formatting                   |
+| `typos`                 | built-in | Catches common typos across all files |
+| `rumdl`                 | built-in | Markdown lint for README and docs     |
+| `check-readme-sections` | custom   | Validates README splice markers exist |
 
 Module repos (`nixosModules` or `homeManagerModules` output) additionally ship
 `scripts/update-readme-options.sh` for future options-table auto-generation.

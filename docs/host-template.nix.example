@@ -2,7 +2,7 @@
 # NixOS Host Configuration Template
 # ==========================================================================
 # Auto-generated from myModules option definitions.
-# 311 options across 82 groups.
+# 312 options across 82 groups.
 #
 # Usage: copy this file to parts/hosts/<hostname>/default.nix and uncomment
 # the options you want to set. Options left commented use their module defaults.
@@ -184,8 +184,9 @@ plaintext...
     # openPorts = [ ];  # list of signed integer — List of TCP ports to open
     # ... and 1 more options with complex defaults (see docs/OPTIONS.md)
 
-# --- hardware.pipewire (3 options) ---
+# --- hardware.pipewire (4 options) ---
     # enable = false;  # boolean — Whether to enable Audio configuration with PipeWire.
+    # extraLadspaPackages = [ ];  # list of package — LADSPA plugin packages forwarded to services.pipewire.extraLadspaPackages
     # lowLatency = false;  # boolean — Whether to enable Low latency configuration (48kHz, quantum 256).
     # quantum = 256;  # signed integer — Audio buffer size in samples (lower = less latency, more CPU). 256=5.3ms, 512...
 
@@ -291,7 +292,7 @@ Paste output of `sudo ca...
 
 # --- security.agenix (4 options) ---
     # enable = false;  # boolean — Whether to enable agenix secret management.
-    # secretsRoot = "/nix/store/ybizn8zx5hnrq796720m1qxl35wbpkab-source/secrets";  # absolute path — Directory containing encrypted agenix secret files.
+    # secretsRoot = "/nix/store/y3jwaviqh8zdqi4x53cazdz20xxvkrdh-source/secrets";  # absolute path — Directory containing encrypted agenix secret files.
     # ... and 2 more options with complex defaults (see docs/OPTIONS.md)
 
 # --- security.hardening (2 options) ---

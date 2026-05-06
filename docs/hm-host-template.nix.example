@@ -2,7 +2,7 @@
 # Home Manager Host Configuration Template
 # ==========================================================================
 # Auto-generated from myModules.home option definitions.
-# 149 modules available.
+# 150 modules available.
 #
 # Copy to home/hosts/<hostname>/default.nix and customise.
 # Set enable = false for modules you don't need on this host.
@@ -52,6 +52,7 @@
   # myModules.home.coolercontrol.autostart = false;
   myModules.home.corecycler.enable = true;
   # myModules.home.corecycler.unfreeBackends = false;
+  myModules.home.crush.enable = true;
   myModules.home.csvlens.enable = true;
   myModules.home.curl.enable = true;
   # myModules.home.curl.extraConfig = ...;
@@ -80,7 +81,6 @@
   myModules.home.gdb.enable = true;
   # myModules.home.gdb.extraInit = ...;
   myModules.home.gemini-cli.enable = true;
-  # myModules.home.gemini-cli.version = ...;
   myModules.home.git.enable = true;
   myModules.home.glow.enable = true;
   # myModules.home.glow.extraConfig = ...;
