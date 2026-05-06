@@ -1078,9 +1078,6 @@ Whether to enable Nix daemon configuration and settings.
 
 Where nix-daemon gets the GitHub API token (for rate-limited
 flake fetches).
-  • `agenix` — decrypt from secrets/github-token.age at boot
-    (declarative; requires `agenix -e secrets/github-token.age`
-    with content `access-tokens = github.com=ghp_...`).
   • `gh-cli` — activation script reads `gh auth token` into
     /etc/nix/github-token. Opportunistic (no-op if gh not
     configured for root).
@@ -1088,7 +1085,7 @@ flake fetches).
     unauthenticated rate limits.
 
 
-- **Type:** `one of "agenix", "gh-cli", "none"`
+- **Type:** `one of "gh-cli", "none"`
 - **Default:** `"gh-cli"`
 
 ### `myModules.nix.nixLd.enable`
@@ -1266,7 +1263,7 @@ Encrypted agenix secrets keyed by runtime secret name. Defaults each entry to `s
 Directory containing encrypted agenix secret files.
 
 - **Type:** `absolute path`
-- **Default:** `"/nix/store/r29i97cyscpdqj2k7d8aqijdk5qfd95c-source/secrets"`
+- **Default:** `"/nix/store/42f1kqwkx3i9bwyyb1160cqak3lq3bsd-source/secrets"`
 
 ### `myModules.security.hardening.enable`
 

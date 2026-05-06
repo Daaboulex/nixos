@@ -172,4 +172,5 @@ sudo btrfs send /.snapshots/migrate-@ | sudo btrfs receive /mnt/
 ```
 
 ---
-*Last verified: 2026-05-05.*
+
+_Last verified: 2026-05-05._

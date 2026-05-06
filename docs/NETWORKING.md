@@ -72,12 +72,12 @@ Portmaster's resolver).
 
 ### What this does / doesn't protect
 
-| Scenario                            | ISP sees                               | Mullvad sees         | Protected by       |
-| ----------------------------------- | -------------------------------------- | -------------------- | ------------------ |
-| VPN off, app looks up `example.com` | TLS flow to `194.242.2.3:853` (opaque) | query + your real IP | DoT (opportunistic) |
-| VPN on, app looks up `example.com`  | WireGuard packets to Mullvad exit      | query + VPN exit IP  | plaintext in-tunnel |
+| Scenario                            | ISP sees                               | Mullvad sees         | Protected by           |
+| ----------------------------------- | -------------------------------------- | -------------------- | ---------------------- |
+| VPN off, app looks up `example.com` | TLS flow to `194.242.2.3:853` (opaque) | query + your real IP | DoT (opportunistic)    |
+| VPN on, app looks up `example.com`  | WireGuard packets to Mullvad exit      | query + VPN exit IP  | plaintext in-tunnel    |
 | VPN on, tunnel transition           | WireGuard packets                      | N/A                  | opportunistic fallback |
-| VPN off, Portmaster internal lookup | TLS flow to resolver                   | query + your real IP | DoT (strict)        |
+| VPN off, Portmaster internal lookup | TLS flow to resolver                   | query + your real IP | DoT (strict)           |
 
 **Note:** When the tunnel is up, Mullvad overrides systemd-resolved's
 upstream to `100.64.0.23` (plaintext, in-tunnel). This is acceptable because
@@ -136,4 +136,5 @@ so any UI-introduced drift is corrected before the bootstrap race.
 - `feedback_portmaster_*.md` — incident-driven constraints
 
 ---
-*Last verified: 2026-05-05.*
+
+_Last verified: 2026-05-05._

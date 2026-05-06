@@ -276,4 +276,5 @@ myModules.hardware.gpuAmd.enable = true;  # Loads amdgpu in initrd
 ```
 
 ---
-*Last verified: 2026-05-05.*
+
+_Last verified: 2026-05-05._

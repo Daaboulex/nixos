@@ -567,4 +567,5 @@ Same schemes, but partition names use the `p` separator:
 ```
 
 ---
-*Last verified: 2026-05-05.*
+
+_Last verified: 2026-05-05._
