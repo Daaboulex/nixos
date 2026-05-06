@@ -18,10 +18,6 @@
         # ─── v2 (Ivy Bridge / MBP 9,2) ────────────────────────────────────
         smoke-v2 = pkgs.testers.nixosTest {
           name = "smoke-v2";
-          defaults.virtualisation = {
-            memorySize = 1024;
-            graphics = false;
-          };
           nodes.machine =
             { ... }:
             {
@@ -35,6 +31,8 @@
                 inputs.self.modules.nixos.hardware-networking
                 inputs.self.modules.nixos.services-syncthing
               ];
+              virtualisation.memorySize = 1024;
+              virtualisation.graphics = false;
               myModules = {
                 host.tier = "v2";
                 users.enable = true;
@@ -53,10 +51,6 @@
         # ─── v4 (Ryzen 9950X3D / workstation) ─────────────────────────────
         smoke-v4 = pkgs.testers.nixosTest {
           name = "smoke-v4";
-          defaults.virtualisation = {
-            memorySize = 1024;
-            graphics = false;
-          };
           nodes.machine =
             { ... }:
             {
@@ -67,6 +61,8 @@
                 inputs.self.modules.nixos.services-syncthing
                 inputs.self.modules.nixos.services-sunshine
               ];
+              virtualisation.memorySize = 1024;
+              virtualisation.graphics = false;
               myModules = {
                 host.tier = "v4";
                 users.enable = true;

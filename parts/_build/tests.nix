@@ -107,15 +107,13 @@
         # Verify nix daemon starts with flakes enabled and GC configured
         vm-nix-settings = pkgs.testers.nixosTest {
           name = "nix-settings";
-          defaults.virtualisation = {
-            memorySize = 512;
-            graphics = false;
-          };
           nodes.machine = {
             imports = [
               inputs.self.modules.nixos.nix-nix
               inputs.self.modules.nixos.users
             ];
+            virtualisation.memorySize = 512;
+            virtualisation.graphics = false;
             myModules.nix.nix.enable = true;
             myModules.users.enable = true;
           };
@@ -131,14 +129,12 @@
         # Verify user creation, groups, and zsh shell
         vm-users = pkgs.testers.nixosTest {
           name = "users";
-          defaults.virtualisation = {
-            memorySize = 512;
-            graphics = false;
-          };
           nodes.machine = {
             imports = [
               inputs.self.modules.nixos.users
             ];
+            virtualisation.memorySize = 512;
+            virtualisation.graphics = false;
             myModules.users.enable = true;
             myModules.primaryUser = "testuser";
           };
@@ -154,15 +150,13 @@
         # Verify SSH hardening and fail2ban
         vm-ssh = pkgs.testers.nixosTest {
           name = "ssh";
-          defaults.virtualisation = {
-            memorySize = 512;
-            graphics = false;
-          };
           nodes.machine = {
             imports = [
               inputs.self.modules.nixos.security-ssh
               inputs.self.modules.nixos.users
             ];
+            virtualisation.memorySize = 512;
+            virtualisation.graphics = false;
             myModules.security.ssh.enable = true;
             myModules.users.enable = true;
           };
@@ -183,15 +177,13 @@
         # Verify NetworkManager starts
         vm-networking = pkgs.testers.nixosTest {
           name = "networking";
-          defaults.virtualisation = {
-            memorySize = 512;
-            graphics = false;
-          };
           nodes.machine = {
             imports = [
               inputs.self.modules.nixos.hardware-networking
               inputs.self.modules.nixos.users
             ];
+            virtualisation.memorySize = 512;
+            virtualisation.graphics = false;
             myModules.hardware.networking.enable = true;
             myModules.users.enable = true;
           };
@@ -211,10 +203,6 @@
         # Validates that the module activates and the CLI tools are available.
         vm-security-agenix = pkgs.testers.nixosTest {
           name = "security-agenix";
-          defaults.virtualisation = {
-            memorySize = 512;
-            graphics = false;
-          };
           nodes.machine =
             { ... }:
             {
@@ -223,6 +211,8 @@
                 inputs.self.modules.nixos.security-agenix
                 inputs.self.modules.nixos.users
               ];
+              virtualisation.memorySize = 512;
+              virtualisation.graphics = false;
               myModules.users.enable = true;
               myModules.security.agenix = {
                 enable = true;
@@ -240,10 +230,6 @@
         # but validates the service derivation is generated when enabled.
         vm-boot-impermanence = pkgs.testers.nixosTest {
           name = "boot-impermanence";
-          defaults.virtualisation = {
-            memorySize = 512;
-            graphics = false;
-          };
           nodes.machine =
             { ... }:
             {
@@ -252,6 +238,8 @@
                 inputs.self.modules.nixos.boot-impermanence
                 inputs.self.modules.nixos.users
               ];
+              virtualisation.memorySize = 512;
+              virtualisation.graphics = false;
               myModules.users.enable = true;
               myModules.boot.impermanence = {
                 enable = true;
@@ -298,15 +286,13 @@
         # but catches the LADSPA_PATH / SPA symbol regressions.
         vm-hardware-pipewire = pkgs.testers.nixosTest {
           name = "hardware-pipewire";
-          defaults.virtualisation = {
-            memorySize = 512;
-            graphics = false;
-          };
           nodes.machine = {
             imports = [
               inputs.self.modules.nixos.hardware-pipewire
               inputs.self.modules.nixos.users
             ];
+            virtualisation.memorySize = 512;
+            virtualisation.graphics = false;
             myModules.hardware.pipewire = {
               enable = true;
               extraLadspaPackages = [ pkgs.deepfilternet ];
@@ -326,15 +312,13 @@
         # configured. Validates the DNS encryption layer is active.
         vm-networking-resolved = pkgs.testers.nixosTest {
           name = "networking-resolved";
-          defaults.virtualisation = {
-            memorySize = 512;
-            graphics = false;
-          };
           nodes.machine = {
             imports = [
               inputs.self.modules.nixos.hardware-networking
               inputs.self.modules.nixos.users
             ];
+            virtualisation.memorySize = 512;
+            virtualisation.graphics = false;
             myModules.hardware.networking = {
               enable = true;
               dnsOverTls = "opportunistic";

@@ -159,11 +159,9 @@
 
         vm-nrb-build-fail-timing = pkgs.testers.nixosTest {
           name = "nrb-build-fail-timing";
-          defaults.virtualisation = {
-            memorySize = 2048;
-            graphics = false;
-          };
           nodes.machine = {
+            virtualisation.memorySize = 2048;
+            virtualisation.graphics = false;
             nix.settings.experimental-features = [
               "nix-command"
               "flakes"
@@ -216,11 +214,9 @@
 
         vm-nrb-preflight-no-daemon = pkgs.testers.nixosTest {
           name = "nrb-preflight-no-daemon";
-          defaults.virtualisation = {
-            memorySize = 512;
-            graphics = false;
-          };
           nodes.machine = {
+            virtualisation.memorySize = 512;
+            virtualisation.graphics = false;
             nix.settings.experimental-features = [
               "nix-command"
               "flakes"
