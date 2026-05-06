@@ -83,7 +83,7 @@ Configured in `parts/_build/treefmt.nix` via [treefmt-nix](https://github.com/nu
 
 Configured in `parts/_build/git-hooks.nix` via [git-hooks.nix](https://github.com/cachix/git-hooks.nix). Hooks are **auto-installed** into `.git/hooks/` when you run `nix develop`.
 
-All 14 hooks run on every `git commit`. Grouped by concern:
+All 15 hooks run on every `git commit`. Grouped by concern:
 
 ### Formatting + eval
 
@@ -117,6 +117,7 @@ All 14 hooks run on every `git commit`. Grouped by concern:
 | -------------------- | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `check-secrets-leak` | any staged file | Blocks staging files in `secrets/` (except `secrets.nix`), `.age`, `.key`, `.pem`, private keys, and `SECURITY-AUDIT-2026-05-04.md`.                                  |
 | `check-scrub-tokens` | any staged file | Scans staged content for forbidden tokens (hostnames, project names, internal paths) that must not appear in the public repo. Config: `scrub-config.json`. |
+| `check-no-ai-files`  | any staged file | Blocks committing AI context files (AGENTS.md, CLAUDE.md, GEMINI.md, .claude/, .gemini/, .codex/). These are symlinks into `.ai-context/` submodule. |
 
 ### Doc auto-regen
 
@@ -137,40 +138,83 @@ Do NOT bypass with `--no-verify` — that skips ALL hooks and hides real violati
 
 ## Flake Checks
 
-Run with `nix flake check`. Full check set (24 checks):
-
-| Check                             | Source                  | What it validates                                                               |
-| --------------------------------- | ----------------------- | ------------------------------------------------------------------------------- |
-| `treefmt`                         | treefmt-nix             | All files are formatted (`--fail-on-change`)                                    |
-| `pre-commit`                      | git-hooks.nix           | Full pre-commit hook suite passes                                               |
-| `toplevel-macbook-pro-9-2`        | tests.nix               | MBP nixosConfiguration's `system.build.toplevel` evaluates                      |
-| `toplevel-ryzen-9950x3d`          | tests.nix               | Ryzen nixosConfiguration's `system.build.toplevel` evaluates                    |
-| `eval-hardware-graphics-mesa-git` | tests.nix               | mesa-git overlay path evaluates clean (drv only, no build)                      |
-| `eval-kernel-cachyos`             | tests.nix               | CachyOS kernel version active (catches silent fallback to stock)                |
-| `smoke-v2`                        | \_build/tests/smoke.nix | Per-tier (`v2`) canary VM — minimal config boots + reaches multi-user           |
-| `smoke-v4`                        | \_build/tests/smoke.nix | Per-tier (`v4`) canary VM — same shape, Ryzen-class tier                        |
-| `vm-nix-settings`                 | tests.nix               | Nix daemon starts, flakes enabled, GC configured                                |
-| `vm-users`                        | tests.nix               | User creation, groups, zsh shell                                                |
-| `vm-ssh`                          | tests.nix               | SSH hardening, fail2ban, firewall                                               |
-| `vm-networking`                   | tests.nix               | NetworkManager starts                                                           |
-| `vm-networking-resolved`          | tests.nix               | systemd-resolved starts with DoT configured                                     |
-| `vm-hardware-pipewire`            | tests.nix               | PipeWire starts, LADSPA search path populated, WirePlumber running              |
-| `vm-security-agenix`              | tests.nix               | agenix CLI tools available (cannot test decryption — no host SSH key in VM)     |
-| `vm-boot-impermanence`            | tests.nix               | Impermanence boot path — ephemeral root + persisted state                       |
-| `check-placement-test`            | tests.nix               | Regression fixture for `check-placement` hook (intentional violation must fail) |
-| `eval-mylib-mkSimplePackage`      | tests.nix               | `myLib.mkSimplePackage` factory returns valid module function                   |
-| `eval-mylib-mergeSettings`        | tests.nix               | `myLib.mergeSettings` override semantics (overrides win, nested merge)          |
-| `eval-mylib-cap`                  | tests.nix               | `myLib.cap` capitalizes first letter correctly                                  |
-| `eval-mylib-mkSettingsOption`     | tests.nix               | `myLib.mkSettingsOption` produces option with type + empty default              |
-| `eval-mylib-themeCtx`             | tests.nix               | `myLib.themeCtx` handles disabled theme gracefully                              |
-| `eval-mylib-withStdenvCC`         | tests.nix               | `myLib.withStdenvCC` injects stdenv.cc into nativeBuildInputs                   |
-| `check-scrub-tokens-test`         | tests.nix               | Regression fixture for `check-scrub-tokens` hook                                |
-
-Run a single test:
+Run with `nix flake check`. Full check set (48 checks):
 
 ```bash
-nix build .#checks.x86_64-linux.vm-ssh
+# Fast eval-only (~10s):
+nrb --check
+
+# All fast checks — eval canaries + runCommand (~30s):
+nix build --no-link '.#checks.x86_64-linux.eval-'{kernel-cachyos,boot-lanzaboote,security-hardening,services-earlyoom,hardware-networking,nix-flakes,users-zsh,hardware-graphics-mesa-git,portmaster-dns-interception,vfio-iommu-params,scx-scheduler,mullvad-lockdown,networking-dot,nix-trusted-users,kernel-modules-vfio,x3d-vcache-mode,mbp-specialisations}
+
+# Single check:
+nix build --no-link '.#checks.x86_64-linux.<name>'
+
+# Full suite including VMs (~5-20min cached):
+nix flake check
 ```
+
+### Check Categories
+
+| Prefix | Type | Speed | Count |
+|--------|------|-------|-------|
+| `eval-*` | Config property canary — probes host config values | <1s each | 23 |
+| `nrb-*` | nrb flag validation + regex tests | <1s each | 7 |
+| `check-*` | Pre-commit hook self-tests (fixture-based) | <30s | 2 |
+| `vm-*` | VM integration — boots QEMU, tests service behavior | 1-5min | 12 |
+| `smoke-*` | Per-tier host smoke — partial host config in VM | 2-5min | 2 |
+| `toplevel-*` | Full system closure build | 1-10min | 2 |
+
+### Eval Canaries (instant, catch silent regressions)
+
+| Check | What it catches |
+|-------|----------------|
+| `eval-kernel-cachyos` | CachyOS kernel overlay fell back to stock nixpkgs |
+| `eval-hardware-graphics-mesa-git` | mesa-git overlay not applied |
+| `eval-boot-lanzaboote` | Secure boot disabled, systemd-boot conflict, pkiBundle wrong |
+| `eval-security-hardening` | Hardening module disabled, polkit/rtkit off |
+| `eval-services-earlyoom` | OOM killer disabled |
+| `eval-portmaster-dns-interception` | Mullvad bootstrap deadlock (DNS interception not forced off) |
+| `eval-vfio-iommu-params` | GPU passthrough broken (amd_iommu/iommu=pt missing) |
+| `eval-scx-scheduler` | Wrong sched_ext scheduler (scx_lavd has crash bugs) |
+| `eval-mullvad-lockdown` | VPN kill-switch disabled (IP exposure at boot) |
+| `eval-networking-dot` | DNS-over-TLS dropped to plaintext |
+| `eval-nix-flakes` | Flakes/nix-command not in experimental-features |
+| `eval-nix-trusted-users` | Primary user not in nix trusted-users |
+| `eval-hardware-networking` | NetworkManager disabled |
+| `eval-users-zsh` | Primary user shell not zsh |
+| `eval-kernel-modules-vfio` | VFIO kernel modules missing |
+| `eval-x3d-vcache-mode` | X3D V-Cache not in cache mode |
+| `eval-mbp-specialisations` | MBP missing cachyos boot variant |
+
+### nrb Tests (flag validation + timing)
+
+| Check | What it catches |
+|-------|----------------|
+| `nrb-flag-compat-boot-deploy` | `--deploy --boot` silently accepted |
+| `nrb-flag-compat-update-deploy` | `--deploy --update` silently accepted |
+| `nrb-flag-compat-update-no-kernel-deploy` | `--deploy --update-no-kernel` silently accepted |
+| `nrb-flag-compat-host-deploy` | `--host --deploy` mutual exclusion |
+| `nrb-flag-unknown` | Unknown flags silently accepted |
+| `nrb-help-output` | `--help` broken or exits nonzero |
+| `nrb-activate-regex-test` | Store path validation regex in nrb-activate |
+| `vm-nrb-build-fail-timing` | Build failure hangs 60s (sudo keepalive bug) |
+| `vm-nrb-preflight-no-daemon` | Daemon-down not detected cleanly |
+
+### VM Integration Tests
+
+| Check | What it proves |
+|-------|---------------|
+| `vm-nix-settings` | Nix daemon starts, flakes + cgroups enabled |
+| `vm-users` | User creation, groups, zsh shell |
+| `vm-ssh` | SSH hardening, fail2ban, firewall port |
+| `vm-networking` | NetworkManager starts, systemd-resolved active |
+| `vm-networking-resolved` | DNS-over-TLS configured (opportunistic mode) |
+| `vm-hardware-pipewire` | PipeWire starts, LADSPA config wired |
+| `vm-security-agenix` | agenix + age CLI tools available |
+| `vm-boot-impermanence` | Bind mount from /persist verified via findmnt |
+| `smoke-v2` | v2-tier (MBP): NM + Syncthing active |
+| `smoke-v4` | v4-tier (Ryzen): NM + Syncthing active |
 
 ---
 

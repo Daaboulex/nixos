@@ -2,7 +2,7 @@
   "_comment": "Minimal scrub-config for hook tests. Mirrors real config shape.",
   "forbidden_tokens": {
     "identity": ["Daaboulex"],
-    "projects": ["Acme-Internal"]
+    "projects": ["Acme-Internal", "Development-Mobile"]
   },
   "forbidden_patterns": {
     "private_project_paths": ["~/Documents/(?!nix\\b)[A-Z][a-zA-Z0-9_-]+"],

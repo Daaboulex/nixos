@@ -60,7 +60,12 @@ let
 
           # Verify store path integrity — re-hashes contents against NAR hash
           # in the nix DB. Catches tampered store paths.
-          if ! nix store verify --no-trust "$real_path" 2>/dev/null; then
+          verify_rc=0
+          timeout 30 nix store verify --no-trust "$real_path" 2>/dev/null || verify_rc=$?
+          if (( verify_rc == 124 )); then
+            echo "nrb-activate: store verify timed out (30s) for $real_path — try when I/O is idle" >&2
+            exit 1
+          elif (( verify_rc != 0 )); then
             echo "nrb-activate: store integrity check failed for $real_path" >&2
             exit 1
           fi

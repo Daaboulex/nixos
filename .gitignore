@@ -54,11 +54,13 @@ worktrees
 # ── Root-level AI symlinks ───────────────────────────────────────
 # Tracked as symlinks into `.ai-context/`. Ignored to prevent re-adding
 # the resolved files if a symlink breaks.
+/AGENTS.md
 /CLAUDE.md
 /GEMINI.md
 /DEBT.md
 /.claude/
 /.gemini/
+/.codex/
 /.planning/
 
 # ── Planning artifacts must live in .ai-context/.superpowers/ ────
@@ -96,3 +98,4 @@ bunfig.toml
 .npmrc
 .yarnrc
 .yarnrc.yml
+.crush

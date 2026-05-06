@@ -119,6 +119,7 @@
             machine.wait_for_unit("nix-daemon.service")
             machine.succeed("nix --version")
             machine.succeed("nix show-config | grep experimental-features | grep flakes")
+            machine.succeed("nix show-config | grep experimental-features | grep cgroups")
             machine.succeed("nix show-config | grep auto-optimise-store | grep true")
           '';
         };
@@ -181,6 +182,7 @@
           testScript = ''
             machine.wait_for_unit("NetworkManager.service")
             machine.succeed("nmcli general status")
+            machine.succeed("systemctl is-active systemd-resolved.service")
           '';
         };
 
@@ -253,7 +255,7 @@
             machine.succeed("test -d /persist/var/log")
             # The bind mount means /var/log and /persist/var/log share
             # the same inode. Confirm the link is live, not accidental.
-            machine.succeed("mountpoint -q /var/log || test \\"$(stat -c %d /var/log)\\" = \\"$(stat -c %d /persist/var/log)\\"")
+            machine.succeed("findmnt -n -o SOURCE /var/log | grep -q /persist")
           '';
         };
 
@@ -287,8 +289,8 @@
             machine.wait_for_unit("multi-user.target")
             # PipeWire system service socket exists
             machine.succeed("test -S /run/pipewire/pipewire-0 || systemctl --user -M user@ is-active pipewire.service")
-            # LADSPA plugins directory is populated (not empty)
-            machine.succeed("ls /nix/store/*-pipewire-ladspa-plugins/lib/ladspa/*.so")
+            # LADSPA plugin config wired into PipeWire — no store-path fallback
+            machine.succeed("grep -r 'ladspa' /etc/pipewire/pipewire.conf.d/ 2>/dev/null | grep -qv '^#'")
           '';
         };
 
@@ -321,22 +323,23 @@
         # and silently falls back to stock nixpkgs kernel.
         eval-kernel-cachyos =
           let
-            kernelVersion = inputs.self.nixosConfigurations.ryzen-9950x3d.config.boot.kernelPackages.kernel.version;
+            kpkg = inputs.self.nixosConfigurations.ryzen-9950x3d.config.boot.kernelPackages.kernel;
           in
           pkgs.runCommand "eval-kernel-cachyos"
             {
-              actual = kernelVersion;
+              actual = kpkg.pname;
+              version = kpkg.version;
             }
             ''
-              echo "boot.kernelPackages.kernel.version = $actual"
+              echo "kernel.pname = $actual  version = $version"
               case "$actual" in
-                *cachyos*|*lto*)
+                *cachyos*)
                   echo "OK: CachyOS kernel active"
                   touch $out
                   ;;
                 *)
-                  echo "FAIL: expected CachyOS kernel (version containing cachyos or lto)"
-                  echo "Got: $actual — looks like stock nixpkgs kernel"
+                  echo "FAIL: expected pname containing 'cachyos', got '$actual'"
+                  echo "Overlay may have fallen back to stock nixpkgs kernel"
                   exit 1
                   ;;
               esac
@@ -487,6 +490,255 @@
               exit 1
             ''
           );
+
+        # ── Eval canaries — high-blast-radius module property assertions ──
+        # Instant (<1s), catch silent-fallback regressions before VM tests.
+
+        eval-security-hardening =
+          let
+            cfg = inputs.self.nixosConfigurations.ryzen-9950x3d.config;
+          in
+          pkgs.runCommand "eval-security-hardening"
+            {
+              enabled = builtins.toJSON cfg.myModules.security.hardening.enable;
+              polkit = builtins.toJSON cfg.security.polkit.enable;
+              rtkit = builtins.toJSON cfg.security.rtkit.enable;
+            }
+            ''
+              echo "myModules.security.hardening.enable = $enabled"
+              echo "security.polkit.enable = $polkit"
+              echo "security.rtkit.enable = $rtkit"
+              [[ "$enabled" == "true" ]] || { echo "FAIL: hardening not enabled"; exit 1; }
+              [[ "$polkit" == "true" ]] || { echo "FAIL: polkit not enabled by hardening"; exit 1; }
+              [[ "$rtkit" == "true" ]] || { echo "FAIL: rtkit not enabled by hardening"; exit 1; }
+              echo "OK: hardening active (polkit + rtkit)"
+              touch $out
+            '';
+
+        eval-boot-lanzaboote =
+          let
+            cfg = inputs.self.nixosConfigurations.ryzen-9950x3d.config;
+          in
+          pkgs.runCommand "eval-boot-lanzaboote"
+            {
+              lanzaboote = builtins.toJSON (cfg.boot.lanzaboote.enable or false);
+              sdBoot = builtins.toJSON cfg.boot.loader.systemd-boot.enable;
+              pkiBundle = cfg.boot.lanzaboote.pkiBundle or "unset";
+            }
+            ''
+              [[ "$lanzaboote" == "true" ]] || { echo "FAIL: lanzaboote not enabled"; exit 1; }
+              [[ "$sdBoot" == "false" ]] || { echo "FAIL: systemd-boot still enabled — conflicts with lanzaboote"; exit 1; }
+              [[ "$pkiBundle" == "/var/lib/sbctl" ]] || { echo "FAIL: pkiBundle is '$pkiBundle', expected /var/lib/sbctl"; exit 1; }
+              echo "OK: lanzaboote active, systemd-boot disabled, pki at /var/lib/sbctl"
+              touch $out
+            '';
+
+        eval-services-earlyoom =
+          let
+            cfg = inputs.self.nixosConfigurations.ryzen-9950x3d.config;
+          in
+          pkgs.runCommand "eval-services-earlyoom"
+            {
+              enabled = builtins.toJSON cfg.services.earlyoom.enable;
+            }
+            ''
+              echo "services.earlyoom.enable = $enabled"
+              [[ "$enabled" == "true" ]] || { echo "FAIL: earlyoom not enabled"; exit 1; }
+              echo "OK: earlyoom active"
+              touch $out
+            '';
+
+        eval-nix-flakes =
+          let
+            cfg = inputs.self.nixosConfigurations.ryzen-9950x3d.config;
+            features = cfg.nix.settings.experimental-features;
+          in
+          pkgs.runCommand "eval-nix-flakes"
+            {
+              hasFlakes = builtins.toJSON (builtins.elem "flakes" features);
+              hasNixCmd = builtins.toJSON (builtins.elem "nix-command" features);
+            }
+            ''
+              echo "has flakes = $hasFlakes"
+              echo "has nix-command = $hasNixCmd"
+              [[ "$hasFlakes" == "true" ]] || { echo "FAIL: flakes not in experimental-features"; exit 1; }
+              [[ "$hasNixCmd" == "true" ]] || { echo "FAIL: nix-command not in experimental-features"; exit 1; }
+              echo "OK: flakes + nix-command active"
+              touch $out
+            '';
+
+        eval-hardware-networking =
+          let
+            cfg = inputs.self.nixosConfigurations.ryzen-9950x3d.config;
+          in
+          pkgs.runCommand "eval-hardware-networking"
+            {
+              nm = builtins.toJSON cfg.networking.networkmanager.enable;
+            }
+            ''
+              echo "networking.networkmanager.enable = $nm"
+              [[ "$nm" == "true" ]] || { echo "FAIL: NetworkManager not enabled"; exit 1; }
+              echo "OK: NetworkManager active"
+              touch $out
+            '';
+
+        eval-users-zsh =
+          let
+            cfg = inputs.self.nixosConfigurations.ryzen-9950x3d.config;
+            user = cfg.myModules.primaryUser;
+            shell = cfg.users.users.${user}.shell.pname;
+          in
+          pkgs.runCommand "eval-users-zsh"
+            {
+              actual = shell;
+              inherit user;
+            }
+            ''
+              echo "users.users.$user.shell.pname = $actual"
+              [[ "$actual" == "zsh" ]] || { echo "FAIL: user $user shell is $actual, expected zsh"; exit 1; }
+              echo "OK: user $user has zsh shell"
+              touch $out
+            '';
+
+        eval-portmaster-dns-interception =
+          let
+            cfg = inputs.self.nixosConfigurations.ryzen-9950x3d.config;
+            forced = cfg.myModules.security.portmaster.forceSettings;
+          in
+          pkgs.runCommand "eval-portmaster-dns-interception"
+            {
+              intercept = builtins.toJSON (forced."filter/dnsQueryInterception" or true);
+            }
+            ''
+              [[ "$intercept" == "false" ]] \
+                || { echo "FAIL: dnsQueryInterception not forced off — Mullvad deadlock risk"; exit 1; }
+              echo "OK: Portmaster DNS interception forced off"
+              touch $out
+            '';
+
+        eval-vfio-iommu-params =
+          let
+            params = inputs.self.nixosConfigurations.ryzen-9950x3d.config.boot.kernelParams;
+          in
+          pkgs.runCommand "eval-vfio-iommu-params"
+            {
+              hasIommu = builtins.toJSON (builtins.elem "amd_iommu=on" params);
+              hasPt = builtins.toJSON (builtins.elem "iommu=pt" params);
+            }
+            ''
+              [[ "$hasIommu" == "true" ]] || { echo "FAIL: amd_iommu=on missing from kernelParams"; exit 1; }
+              [[ "$hasPt" == "true" ]] || { echo "FAIL: iommu=pt missing from kernelParams"; exit 1; }
+              echo "OK: IOMMU params present for VFIO"
+              touch $out
+            '';
+
+        eval-scx-scheduler =
+          let
+            cfg = inputs.self.nixosConfigurations.ryzen-9950x3d.config;
+          in
+          pkgs.runCommand "eval-scx-scheduler"
+            {
+              actual = cfg.services.scx.scheduler;
+            }
+            ''
+              [[ "$actual" == "scx_bpfland" ]] \
+                || { echo "FAIL: scx scheduler is '$actual', expected scx_bpfland (scx_lavd has crash bugs)"; exit 1; }
+              echo "OK: scx_bpfland active"
+              touch $out
+            '';
+
+        eval-mullvad-lockdown =
+          let
+            cfg = inputs.self.nixosConfigurations.ryzen-9950x3d.config;
+          in
+          pkgs.runCommand "eval-mullvad-lockdown"
+            {
+              lockdown = builtins.toJSON (cfg.myModules.services.mullvad.settings.lockdownMode or false);
+              autoConn = builtins.toJSON (cfg.myModules.services.mullvad.settings.autoConnect or false);
+            }
+            ''
+              [[ "$lockdown" == "true" ]] || { echo "FAIL: lockdownMode not enabled — real IP exposed at boot"; exit 1; }
+              [[ "$autoConn" == "true" ]] || { echo "FAIL: autoConnect not enabled — tunnel requires manual start"; exit 1; }
+              echo "OK: Mullvad always-on kill-switch active"
+              touch $out
+            '';
+
+        eval-networking-dot =
+          let
+            cfg = inputs.self.nixosConfigurations.ryzen-9950x3d.config;
+          in
+          pkgs.runCommand "eval-networking-dot"
+            {
+              dot = cfg.services.resolved.settings.Resolve.DNSOverTLS or "unset";
+            }
+            ''
+              [[ "$dot" == "opportunistic" ]] || { echo "FAIL: DNSOverTLS is '$dot', expected 'opportunistic'"; exit 1; }
+              echo "OK: DNS-over-TLS set to opportunistic"
+              touch $out
+            '';
+
+        eval-nix-trusted-users =
+          let
+            cfg = inputs.self.nixosConfigurations.ryzen-9950x3d.config;
+            trusted = cfg.nix.settings.trusted-users;
+            user = cfg.myModules.primaryUser;
+          in
+          pkgs.runCommand "eval-nix-trusted-users"
+            {
+              hasPrimary = builtins.toJSON (builtins.elem user trusted);
+              hasRoot = builtins.toJSON (builtins.elem "root" trusted);
+            }
+            ''
+              [[ "$hasPrimary" == "true" ]] || { echo "FAIL: primaryUser not in trusted-users"; exit 1; }
+              [[ "$hasRoot" == "true" ]] || { echo "FAIL: root not in trusted-users"; exit 1; }
+              echo "OK: primaryUser + root in nix trusted-users"
+              touch $out
+            '';
+
+        eval-kernel-modules-vfio =
+          let
+            mods = inputs.self.nixosConfigurations.ryzen-9950x3d.config.boot.kernelModules;
+          in
+          pkgs.runCommand "eval-kernel-modules-vfio"
+            {
+              hasVfio = builtins.toJSON (builtins.elem "vfio-pci" mods);
+              hasKvm = builtins.toJSON (builtins.elem "kvm-amd" mods);
+            }
+            ''
+              [[ "$hasVfio" == "true" ]] || { echo "FAIL: vfio-pci not in kernelModules"; exit 1; }
+              [[ "$hasKvm" == "true" ]] || { echo "FAIL: kvm-amd not in kernelModules"; exit 1; }
+              echo "OK: VFIO kernel modules present"
+              touch $out
+            '';
+
+        eval-x3d-vcache-mode =
+          let
+            cfg = inputs.self.nixosConfigurations.ryzen-9950x3d.config;
+          in
+          pkgs.runCommand "eval-x3d-vcache-mode"
+            {
+              mode = cfg.myModules.hardware.cpuAmd.x3dVcache.mode;
+            }
+            ''
+              [[ "$mode" == "cache" ]] || { echo "FAIL: x3dVcache mode is '$mode', expected 'cache'"; exit 1; }
+              echo "OK: X3D V-Cache in cache mode"
+              touch $out
+            '';
+
+        eval-mbp-specialisations =
+          let
+            specs = builtins.attrNames (inputs.self.nixosConfigurations.macbook-pro-9-2.config.specialisation or {});
+          in
+          pkgs.runCommand "eval-mbp-specialisations"
+            {
+              hasCachyos = builtins.toJSON (builtins.elem "cachyos" specs);
+              count = builtins.toString (builtins.length specs);
+            }
+            ''
+              [[ "$hasCachyos" == "true" ]] || { echo "FAIL: cachyos specialisation missing on MBP"; exit 1; }
+              echo "OK: MBP has $count specialisation(s) including cachyos"
+              touch $out
+            '';
       };
     };
 }

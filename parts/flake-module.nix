@@ -33,6 +33,7 @@
       ./_build/git-hooks.nix
       ./_build/tests.nix
       ./_build/tests/smoke.nix
+      ./_build/tests/nrb.nix
       ./_build/lib.nix
       ./_build/modules-hierarchy.nix
 

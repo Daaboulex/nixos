@@ -13,11 +13,14 @@ let
     in
     {
       _class = "nixos";
+
+      # Agenix integration is in the host flake-modules that import both
+      # nix-nix and security-agenix. Moved there to avoid coupling.
+
       options.myModules.nix.nix = {
         enable = lib.mkEnableOption "Nix daemon configuration and settings";
         githubTokenSource = lib.mkOption {
           type = lib.types.enum [
-            "agenix"
             "gh-cli"
             "none"
           ];
@@ -25,9 +28,6 @@ let
           description = ''
             Where nix-daemon gets the GitHub API token (for rate-limited
             flake fetches).
-              • `agenix` — decrypt from secrets/github-token.age at boot
-                (declarative; requires `agenix -e secrets/github-token.age`
-                with content `access-tokens = github.com=ghp_...`).
               • `gh-cli` — activation script reads `gh auth token` into
                 /etc/nix/github-token. Opportunistic (no-op if gh not
                 configured for root).
@@ -78,23 +78,9 @@ let
           ];
         };
 
-        # GitHub API token for rate-limited flake fetches. Three sources
-        # (see option doc above). `!include` silently skips if missing,
-        # so any of them failing is safe.
-        age.secrets.github-token = lib.mkIf (cfg.githubTokenSource == "agenix") {
-          file = config.myModules.security.agenix.secretsRoot + "/github-token.age";
-          mode = "0400";
-          owner = "root";
-        };
-
-        nix.extraOptions = lib.mkMerge [
-          (lib.mkIf (cfg.githubTokenSource == "agenix") ''
-            !include ${config.age.secrets.github-token.path}
-          '')
-          (lib.mkIf (cfg.githubTokenSource == "gh-cli") ''
-            !include /etc/nix/github-token
-          '')
-        ];
+        nix.extraOptions = lib.mkIf (cfg.githubTokenSource == "gh-cli") ''
+          !include /etc/nix/github-token
+        '';
 
         # Legacy gh-cli path: populate /etc/nix/github-token from gh CLI
         # at activation time. Only runs when source = "gh-cli".

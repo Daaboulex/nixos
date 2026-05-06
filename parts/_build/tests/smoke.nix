@@ -42,13 +42,9 @@
             };
           testScript = ''
             machine.wait_for_unit("multi-user.target")
-            # NetworkManager up
             machine.wait_for_unit("NetworkManager.service")
-            # Syncthing user service reachable (per-user; primary user)
             machine.succeed("id user")
-            # Typed host metadata reachable at eval time (via /etc/nixos/configuration
-            # — just assert the test booted)
-            machine.succeed("true")
+            machine.wait_for_unit("syncthing.service")
           '';
         };
 
@@ -80,7 +76,7 @@
             machine.wait_for_unit("multi-user.target")
             machine.wait_for_unit("NetworkManager.service")
             machine.succeed("id user")
-            machine.succeed("true")
+            machine.wait_for_unit("syncthing.service")
           '';
         };
       };

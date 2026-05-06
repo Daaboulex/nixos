@@ -173,7 +173,10 @@
               local _dt="$deploy_target"
               local _dt_ssh=""
               local _build_dir
-              _build_dir=$(mktemp -d)
+              _build_dir=$(mktemp -d) || {
+                _msg_fail "Cannot create temp dir for deploy"
+                return 1
+              }
               _deploy_cleanup() { rm -rf "$_build_dir" 2>/dev/null; trap - INT TERM HUP; }
               trap '_deploy_cleanup' INT TERM HUP
               _msg_step "Deploy mode: building $_dt config locally, deploying via SSH"
@@ -423,7 +426,7 @@
                 local -a _outputs
                 _outputs=( $(nix-store --query --outputs "$_drv" 2>/dev/null) )
                 (( ''${#_outputs[@]} == 0 )) && return 1
-                # Check the main output (last = the one without -dev/-modules suffix)
+                # Check the main output (first = "out", without -dev/-modules suffix)
                 local _out_path="''${_outputs[1]}"
                 _out_hash=$(basename "$_out_path" | cut -d- -f1)
                 [[ -z "$_out_hash" ]] && return 1

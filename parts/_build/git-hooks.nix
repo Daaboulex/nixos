@@ -508,6 +508,41 @@
           pass_filenames = false;
         };
 
+        # Block AI context files from being committed. These are symlinks
+        # into .ai-context/ (a submodule) and must never be tracked directly.
+        # Catches: AGENTS.md, CLAUDE.md, GEMINI.md, .claude/, .gemini/, .codex/
+        check-no-ai-files = {
+          enable = true;
+          name = "check-no-ai-files";
+          entry = toString (
+            (pkgs.writeShellApplication {
+              name = "check-no-ai-files";
+              runtimeInputs = [ pkgs.git ];
+              text = ''
+                staged=$(git diff --cached --name-only --diff-filter=ACMR)
+                blocked=""
+                for f in $staged; do
+                  case "$f" in
+                    AGENTS.md|CLAUDE.md|GEMINI.md|DEBT.md) blocked="$blocked $f" ;;
+                    .claude/*|.gemini/*|.codex/*|.planning/*) blocked="$blocked $f" ;;
+                  esac
+                done
+                if [[ -n "$blocked" ]]; then
+                  echo "BLOCKED: AI context files must not be committed:"
+                  for f in $blocked; do echo "  $f"; done
+                  echo ""
+                  echo "These are symlinks into .ai-context/ (submodule)."
+                  echo "Run: git rm --cached <file> to untrack."
+                  exit 1
+                fi
+              '';
+            })
+            + "/bin/check-no-ai-files"
+          );
+          stages = [ "pre-commit" ];
+          pass_filenames = false;
+        };
+
         # Content scrub gate (STYLE.md §8.5) — blocks personal/work tokens
         # in staged diffs, sourced from canonical catalog at
         # $HOME/.ai-context/scripts/scrub-config.json. Exits 0 if config

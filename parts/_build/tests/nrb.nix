@@ -110,19 +110,73 @@
               touch $out
             '';
 
+        nrb-flag-compat-host-deploy =
+          pkgs.runCommand "nrb-flag-compat-host-deploy"
+            {
+              nativeBuildInputs = [ nrbTest ];
+            }
+            ''
+              set -euo pipefail
+              if output=$(nrb-test --host foo --deploy bar 2>&1); then
+                echo "FAIL: --host with --deploy not rejected"
+                echo "$output"
+                exit 1
+              fi
+              echo "$output" | grep -q "cannot be combined" \
+                || { echo "FAIL: wrong error message"; echo "$output"; exit 1; }
+              echo "OK: --host --deploy rejected"
+              touch $out
+            '';
+
+        # Note: --update + --update-no-kernel mutual exclusion (line 307) is checked
+        # AFTER hostname/flakeDir/daemon preflight, so it can't be tested in a
+        # runCommand sandbox. It's pre-existing behavior, not a new fix.
+
+        nrb-activate-regex-test =
+          pkgs.runCommand "nrb-activate-regex-test" { }
+            ''
+              set -euo pipefail
+              # Test the regex used by nrb-activate (hardening.nix:46)
+              valid="abcdefghijklmnopqrstuvwxyz012345-nixos-system-ryzen"
+              invalid1="../../etc/shadow"
+              invalid2="ABCDEFGHIJKLMNOPQRSTUVWXYZ012345-nixos-system-evil"
+              invalid3="abcdefghijklmnopqrstuvwxyz01234-nixos-system-short"
+
+              [[ "$valid" =~ ^[a-z0-9]{32}-nixos-system-.+ ]] \
+                || { echo "FAIL: valid basename rejected"; exit 1; }
+              [[ ! "$invalid1" =~ ^[a-z0-9]{32}-nixos-system-.+ ]] \
+                || { echo "FAIL: path traversal accepted"; exit 1; }
+              [[ ! "$invalid2" =~ ^[a-z0-9]{32}-nixos-system-.+ ]] \
+                || { echo "FAIL: uppercase accepted"; exit 1; }
+              [[ ! "$invalid3" =~ ^[a-z0-9]{32}-nixos-system-.+ ]] \
+                || { echo "FAIL: short hash (31 char) accepted"; exit 1; }
+
+              echo "OK: nrb-activate regex validation correct"
+              touch $out
+            '';
+
         # ── VM integration tests (nixosTest) ─────────────────────────────
 
         vm-nrb-build-fail-timing = pkgs.testers.nixosTest {
           name = "nrb-build-fail-timing";
           nodes.machine = {
-            imports = [
-              inputs.self.modules.nixos.users
-              inputs.self.modules.nixos.nix-nix
+            nix.settings.experimental-features = [
+              "nix-command"
+              "flakes"
             ];
-            myModules = {
-              users.enable = true;
-              nix.nix.enable = true;
-            };
+            # NOPASSWD sudo so nrb passes sudo -v and reaches the build phase.
+            # Without this, nrb exits at sudo check and the C1/C2 hang fix is never exercised.
+            security.sudo.extraRules = [
+              {
+                users = [ "root" ];
+                commands = [
+                  {
+                    command = "ALL";
+                    options = [ "NOPASSWD" ];
+                  }
+                ];
+              }
+            ];
             environment.systemPackages = [
               nrbTest
               pkgs.zsh
@@ -160,14 +214,10 @@
         vm-nrb-preflight-no-daemon = pkgs.testers.nixosTest {
           name = "nrb-preflight-no-daemon";
           nodes.machine = {
-            imports = [
-              inputs.self.modules.nixos.users
-              inputs.self.modules.nixos.nix-nix
+            nix.settings.experimental-features = [
+              "nix-command"
+              "flakes"
             ];
-            myModules = {
-              users.enable = true;
-              nix.nix.enable = true;
-            };
             environment.systemPackages = [
               nrbTest
               pkgs.zsh
@@ -184,7 +234,7 @@
             machine.succeed("systemctl stop nix-daemon.socket nix-daemon.service")
 
             # nrb should fail cleanly with daemon error
-            output = machine.fail("FLAKE_DIR=/tmp/fake nrb-test 2>&1")
+            output = machine.fail("FLAKE_DIR=/tmp/test-flake nrb-test 2>&1")
             assert "Nix daemon not responding" in output, f"Expected daemon error, got: {output[:200]}"
           '';
         };
