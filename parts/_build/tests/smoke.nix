@@ -18,6 +18,10 @@
         # ─── v2 (Ivy Bridge / MBP 9,2) ────────────────────────────────────
         smoke-v2 = pkgs.testers.nixosTest {
           name = "smoke-v2";
+          defaults.virtualisation = {
+            memorySize = 1024;
+            graphics = false;
+          };
           nodes.machine =
             { ... }:
             {
@@ -37,8 +41,6 @@
                 hardware.networking.enable = true;
                 services.syncthing.enable = true;
               };
-              # Keep the VM tiny — disable graphical bits.
-              virtualisation.memorySize = 1024;
             };
           testScript = ''
             machine.wait_for_unit("multi-user.target")
@@ -51,6 +53,10 @@
         # ─── v4 (Ryzen 9950X3D / workstation) ─────────────────────────────
         smoke-v4 = pkgs.testers.nixosTest {
           name = "smoke-v4";
+          defaults.virtualisation = {
+            memorySize = 1024;
+            graphics = false;
+          };
           nodes.machine =
             { ... }:
             {
@@ -70,7 +76,6 @@
                 # module doesn't break activation when declared.
                 services.sunshine.enable = false;
               };
-              virtualisation.memorySize = 1024;
             };
           testScript = ''
             machine.wait_for_unit("multi-user.target")

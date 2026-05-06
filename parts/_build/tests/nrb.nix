@@ -159,6 +159,10 @@
 
         vm-nrb-build-fail-timing = pkgs.testers.nixosTest {
           name = "nrb-build-fail-timing";
+          defaults.virtualisation = {
+            memorySize = 2048;
+            graphics = false;
+          };
           nodes.machine = {
             nix.settings.experimental-features = [
               "nix-command"
@@ -182,7 +186,6 @@
               pkgs.zsh
               pkgs.git
             ];
-            virtualisation.memorySize = 2048;
           };
           testScript = ''
             import time
@@ -213,6 +216,10 @@
 
         vm-nrb-preflight-no-daemon = pkgs.testers.nixosTest {
           name = "nrb-preflight-no-daemon";
+          defaults.virtualisation = {
+            memorySize = 512;
+            graphics = false;
+          };
           nodes.machine = {
             nix.settings.experimental-features = [
               "nix-command"
@@ -222,7 +229,6 @@
               nrbTest
               pkgs.zsh
             ];
-            virtualisation.memorySize = 1024;
           };
           testScript = ''
             machine.wait_for_unit("multi-user.target")
