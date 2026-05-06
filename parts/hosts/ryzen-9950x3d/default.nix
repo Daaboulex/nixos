@@ -242,24 +242,6 @@
             path = "/home/user/Documents";
             devices = [ "macbook-pro-9-2" ];
           };
-          claude = {
-            path = "/home/user/.claude";
-            devices = [ "macbook-pro-9-2" ];
-            ignorePerms = true;
-            versioningMaxAge = "1209600"; # 14 days
-          };
-          gemini = {
-            path = "/home/user/.gemini";
-            devices = [ "macbook-pro-9-2" ];
-            ignorePerms = true;
-            versioningMaxAge = "1209600"; # 14 days
-          };
-          codex = {
-            path = "/home/user/.codex";
-            devices = [ "macbook-pro-9-2" ];
-            ignorePerms = true;
-            versioningMaxAge = "1209600";
-          };
           ai-context = {
             path = "/home/user/.ai-context";
             devices = [ "macbook-pro-9-2" ];

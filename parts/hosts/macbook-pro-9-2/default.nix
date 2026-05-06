@@ -229,24 +229,6 @@
             # Default 1 h thrashes the A400's btrfs metadata on every pass.
             rescanIntervalS = 21600;
           };
-          claude = {
-            path = "/home/user/.claude";
-            devices = [ "ryzen-9950x3d" ];
-            ignorePerms = true;
-            versioningMaxAge = "1209600"; # 14 days
-          };
-          gemini = {
-            path = "/home/user/.gemini";
-            devices = [ "ryzen-9950x3d" ];
-            ignorePerms = true;
-            versioningMaxAge = "1209600"; # 14 days
-          };
-          codex = {
-            path = "/home/user/.codex";
-            devices = [ "ryzen-9950x3d" ];
-            ignorePerms = true;
-            versioningMaxAge = "1209600";
-          };
           ai-context = {
             path = "/home/user/.ai-context";
             devices = [ "ryzen-9950x3d" ];

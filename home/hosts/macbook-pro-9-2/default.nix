@@ -182,92 +182,6 @@
             "/.env.test.local"
           ];
         };
-        claude = {
-          path = "/home/user/.claude";
-          ignorePatterns = [
-            # ── Regenerable caches — (?d) safe ──
-            "(?d)image-cache/"
-            "(?d)statsig/"
-            "(?d)telemetry/"
-            "(?d)plans/" # Claude Code per-session plan files
-            "(?d)paste-cache/" # ephemeral paste/share refs
-            "(?d)debug/" # transient debug logs
-            "(?d).skill-log-*.jsonl" # per-session skill invocation logs
-            ".reflect-proposals.md"
-            # ── Security: NO (?d) — OAuth tokens are per-machine auth ──
-            # ── Security: per-machine OAuth tokens ──
-            ".credentials.json"
-            ".credentials.*"
-            # ── Per-machine runtime state (NOT session data — those sync) ──
-            ".dream-session-count"
-            ".dream-lock"
-            ".dream-last"
-            ".reflect-last"
-            ".auto-push-last"
-            ".catchup-done"
-            "active-sessions.jsonl"
-            "self-improvements-pending*.jsonl"
-            # ── Ephemeral agent task outputs ──
-            "(?d)tasks/"
-            # ── Syncthing own artifacts ──
-            "(?d).stversions/"
-            # ── Git: FULL exclusion — git push/pull handles history sync ──
-            ".git"
-            # ── Syncthing conflict files ──
-            "*.sync-conflict-*"
-          ];
-        };
-        gemini = {
-          path = "/home/user/.gemini";
-          ignorePatterns = [
-            # ── Security: per-machine auth ──
-            "oauth_creds.json"
-            "google_accounts.json"
-            "installation_id"
-            # ── Per-machine runtime state ──
-            ".dream-session-count"
-            ".dream-lock"
-            ".dream-last"
-            ".reflect-last"
-            ".catchup-done"
-            "state.json"
-            # ── Regenerable caches ──
-            "(?d)tmp/skill-*"
-            "(?d)tmp/*.tmp"
-            "(?d)tmp/bin/"
-            "(?d)cache/"
-            # ── Syncthing own artifacts ──
-            "(?d).stversions/"
-            # ── Git: FULL exclusion — git push/pull handles history sync ──
-            ".git"
-            # ── Syncthing conflict files ──
-            "*.sync-conflict-*"
-          ];
-        };
-        codex = {
-          path = "/home/user/.codex";
-          ignorePatterns = [
-            # ── Security: per-machine auth ──
-            "auth.json"
-            "installation_id"
-            # ── Binary databases (will conflict, machine-rebuilt) ──
-            "(?d)logs_2.sqlite*"
-            "(?d)state_5.sqlite*"
-            "(?d)models_cache.json"
-            # ── Regenerable caches ──
-            "(?d)cache/"
-            "(?d)log/"
-            "(?d).tmp/"
-            "(?d)tmp/"
-            ".personality_migration"
-            # ── Syncthing own artifacts ──
-            "(?d).stversions/"
-            # ── Git: FULL exclusion — git push/pull handles history sync ──
-            ".git"
-            # ── Syncthing conflict files ──
-            "*.sync-conflict-*"
-          ];
-        };
         ai-context = {
           path = "/home/user/.ai-context";
           ignorePatterns = [
@@ -283,6 +197,10 @@
             "(?d)handoffs/sessions/.current-*"
             "(?d)handoffs/sessions/.debounce-*"
             "(?d)handoffs/sessions/.git-cache-*"
+            # ── Nested git repos — have their own remotes ──
+            "kachow-mirror/"
+            # ── Handoff session JSON volatiles ──
+            "(?d)handoffs/sessions/*.json"
             # ── Syncthing own artifacts ──
             "(?d).stversions/"
           ];
