@@ -158,11 +158,14 @@ let
         (lib.mkIf cfg.client.enable {
           nix.distributedBuilds = true;
           nix.settings.builders-use-substitutes = true;
-          # Don't waste local CPU on source builds — offload everything.
-          # Store lookups + substituter downloads still work (max-jobs
-          # only governs local source compilations, not fetches).
-          # Override: `nix build --max-jobs 1` for emergency local builds.
-          nix.settings.max-jobs = lib.mkOverride 999 0;
+          # Local builds enabled as fallback when remote is unreachable.
+          # The build hook tries remote FIRST (nix architecture guarantee:
+          # hook is consulted before local slots). With remote up + high
+          # speedFactor, builds go to remote naturally. With remote down,
+          # hook emits `# decline` and daemon falls back to local.
+          # Previous max-jobs=0 forced remote-only but broke offline use
+          # (hook emits `# postpone` → hangs indefinitely). Removed 2026-05-05.
+          # See: build-remote.cc canBuildLocally, NixOS/nix#7101.
           nix.buildMachines = [
             {
               inherit (cfg.client)

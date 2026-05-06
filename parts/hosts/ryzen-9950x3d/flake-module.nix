@@ -133,7 +133,6 @@
             inputs.NixVirt.nixosModules.default
             inputs.impermanence.nixosModules.impermanence
             inputs.yeetmouse-nix.nixosModules.default
-            inputs.gemini-cli-nix.nixosModules.default
             inputs.openviking.nixosModules.default
             inputs.lmstudio.nixosModules.default
             # CoolerControl: overlay provides 4.0.1 packages, nixpkgs module handles the rest

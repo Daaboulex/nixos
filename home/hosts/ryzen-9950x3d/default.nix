@@ -40,6 +40,7 @@ in
     codex-cli.enable = true;
     cmake.enable = true;
     comma.enable = true;
+    crush.enable = true;
     coolercontrol.enable = true;
     coolercontrol.autostart = true;
     corecycler.enable = true;
@@ -66,8 +67,7 @@ in
     gamescope.enable = false;
     gcc.enable = true;
     gdb.enable = true;
-    gemini-cli.enable = true;
-    gemini-cli.version = "nightly";
+    gemini-cli.enable = false; # temporary: numtide npm hash mismatch, re-enable after update
     git.enable = true;
     glow.enable = true;
     gnumake.enable = true;
@@ -228,22 +228,10 @@ in
             "(?d)tasks/"
             # ── Syncthing own artifacts ──
             "(?d).stversions/"
-            # ── Git transient files (auto-push handles sync via remotes) ──
-            "(?d).git/**/*.lock"
-            "(?d).git/gc.log"
-            "(?d).git/gc.pid"
-            "(?d).git/MERGE_HEAD"
-            "(?d).git/MERGE_MSG"
-            "(?d).git/MERGE_MODE"
-            "(?d).git/CHERRY_PICK_HEAD"
-            "(?d).git/REBASE_HEAD"
-            "(?d).git/REVERT_HEAD"
-            "(?d).git/BISECT_HEAD"
-            "(?d).git/AUTO_MERGE"
-            "(?d).git/rebase-merge/"
-            "(?d).git/rebase-apply/"
-            "(?d).git/sequencer/"
-            "(?d).git/objects/pack/tmp_*"
+            # ── Git: FULL exclusion — git push/pull handles history sync ──
+            ".git"
+            # ── Syncthing conflict files ──
+            "*.sync-conflict-*"
           ];
         };
         gemini = {
@@ -267,22 +255,10 @@ in
             "(?d)cache/"
             # ── Syncthing own artifacts ──
             "(?d).stversions/"
-            # ── Git transient files ──
-            "(?d).git/**/*.lock"
-            "(?d).git/gc.log"
-            "(?d).git/gc.pid"
-            "(?d).git/MERGE_HEAD"
-            "(?d).git/MERGE_MSG"
-            "(?d).git/MERGE_MODE"
-            "(?d).git/CHERRY_PICK_HEAD"
-            "(?d).git/REBASE_HEAD"
-            "(?d).git/REVERT_HEAD"
-            "(?d).git/BISECT_HEAD"
-            "(?d).git/AUTO_MERGE"
-            "(?d).git/rebase-merge/"
-            "(?d).git/rebase-apply/"
-            "(?d).git/sequencer/"
-            "(?d).git/objects/pack/tmp_*"
+            # ── Git: FULL exclusion — git push/pull handles history sync ──
+            ".git"
+            # ── Syncthing conflict files ──
+            "*.sync-conflict-*"
           ];
         };
         codex = {
@@ -303,22 +279,32 @@ in
             ".personality_migration"
             # ── Syncthing own artifacts ──
             "(?d).stversions/"
-            # ── Git transient files ──
-            "(?d).git/**/*.lock"
-            "(?d).git/gc.log"
-            "(?d).git/gc.pid"
-            "(?d).git/MERGE_HEAD"
-            "(?d).git/MERGE_MSG"
-            "(?d).git/MERGE_MODE"
-            "(?d).git/CHERRY_PICK_HEAD"
-            "(?d).git/REBASE_HEAD"
-            "(?d).git/REVERT_HEAD"
-            "(?d).git/BISECT_HEAD"
-            "(?d).git/AUTO_MERGE"
-            "(?d).git/rebase-merge/"
-            "(?d).git/rebase-apply/"
-            "(?d).git/sequencer/"
-            "(?d).git/objects/pack/tmp_*"
+            # ── Git: FULL exclusion — git push/pull handles history sync ──
+            ".git"
+            # ── Syncthing conflict files ──
+            "*.sync-conflict-*"
+          ];
+        };
+        ai-context = {
+          path = "/home/user/.ai-context";
+          ignorePatterns = [
+            # ── Git: FULL exclusion — Syncthing must never touch git internals ──
+            # Syncthing cannot understand git's object model. Partial syncs of
+            # .git/index, objects, refs corrupt the repo. Git push/pull handles
+            # cross-machine history sync independently.
+            ".git"
+            # ── Syncthing conflict files — must never be committed ──
+            "*.sync-conflict-*"
+            # ── Per-machine volatile state ──
+            "(?d)instances/"
+            "(?d)projects/"
+            "(?d)backups/"
+            # ── Handoff session volatiles ──
+            "(?d)handoffs/sessions/.current-*"
+            "(?d)handoffs/sessions/.debounce-*"
+            "(?d)handoffs/sessions/.git-cache-*"
+            # ── Syncthing own artifacts ──
+            "(?d).stversions/"
           ];
         };
       };

@@ -105,7 +105,6 @@
             inputs.cachyos-settings-nix.nixosModules.default
             inputs.NixVirt.nixosModules.default
             inputs.impermanence.nixosModules.impermanence
-            inputs.gemini-cli-nix.nixosModules.default
             inputs.openviking.nixosModules.default
             inputs.lmstudio.nixosModules.default
           ];

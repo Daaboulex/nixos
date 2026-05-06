@@ -260,6 +260,12 @@
             ignorePerms = true;
             versioningMaxAge = "1209600";
           };
+          ai-context = {
+            path = "/home/user/.ai-context";
+            devices = [ "macbook-pro-9-2" ];
+            ignorePerms = true;
+            versioningMaxAge = "1209600";
+          };
         };
       };
     };

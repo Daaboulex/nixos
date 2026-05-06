@@ -247,6 +247,12 @@
             ignorePerms = true;
             versioningMaxAge = "1209600";
           };
+          ai-context = {
+            path = "/home/user/.ai-context";
+            devices = [ "ryzen-9950x3d" ];
+            ignorePerms = true;
+            versioningMaxAge = "1209600";
+          };
         };
       };
     };
@@ -665,11 +671,12 @@
   # Nix Daemon — Ivy Bridge i5 is 2C/4T
   # ============================================================================
   # max-jobs and cores: NOT overridden here. Layered defaults handle it:
-  #   remote-builder client ON  → module sets max-jobs = mkDefault 0 (remote-only)
-  #   remote-builder client OFF → nix.nix module's mkDefault "auto" wins (local)
+  #   nix.nix module sets max-jobs = mkDefault "auto" (local builds enabled)
+  #   remote-builder client ON → build hook tries remote FIRST (nix architecture
+  #     guarantee), falls back to local when SSH fails. No max-jobs override needed.
   #   cores: nix.nix module default 0 (use all threads). On 2C/4T that's 4.
-  # nrb detects unreachable builders and injects --max-jobs override at
-  # build time, so even with remote-only config, offline builds work.
+  # nrb checks builder reachability and injects --builders "" when unreachable
+  # to skip SSH timeout delays (~2min per derivation without this).
   #
   # Idle scheduling is the real throttle — daemon yields to GUI completely.
   # WiFi + 2C/4T: stalled downloads block the single build slot longer.

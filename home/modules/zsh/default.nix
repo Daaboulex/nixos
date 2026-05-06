@@ -837,47 +837,41 @@ in
 
             # Remote builder reachability check. Parses /etc/nix/machines
             # for SSH builders and tests connectivity (2s timeout per host).
-            # When all builders are unreachable and max-jobs=0 (local builds
-            # disabled), injects --max-jobs override so builds fall back to
-            # local instead of hanging on SSH timeouts for 20+ minutes.
+            # When all builders are unreachable, injects --builders "" so
+            # nixos-rebuild skips SSH attempts entirely (avoids ~2min TCP
+            # timeout per derivation). With max-jobs=auto, the daemon would
+            # eventually fall back to local, but the SSH timeout makes it
+            # painfully slow without this shortcut.
             local -a _jobs_override=()
             if [[ -f /etc/nix/machines ]] && [[ -s /etc/nix/machines ]]; then
-              local _cur_max_jobs
-              _cur_max_jobs=$(nix --extra-experimental-features 'nix-command flakes' \
-                show-config 2>/dev/null | ${pkgs.gnugrep}/bin/grep '^max-jobs' | ${pkgs.gawk}/bin/awk '{print $3}')
-              if [[ "$_cur_max_jobs" == "0" ]]; then
-                local -a _builder_hosts=()
-                local _line _uri _host
-                while IFS= read -r _line; do
-                  [[ -z "$_line" || "$_line" == \#* ]] && continue
-                  _uri=''${_line%% *}
-                  _host=''${_uri##*@}
-                  _host=''${_host%% *}
-                  [[ -n "$_host" ]] && _builder_hosts+=("$_host")
-                done < /etc/nix/machines
+              local -a _builder_hosts=()
+              local _line _uri _host
+              while IFS= read -r _line; do
+                [[ -z "$_line" || "$_line" == \#* ]] && continue
+                _uri=''${_line%% *}
+                _host=''${_uri##*@}
+                _host=''${_host%% *}
+                [[ -n "$_host" ]] && _builder_hosts+=("$_host")
+              done < /etc/nix/machines
 
-                local _any_reachable=0
-                if (( ''${#_builder_hosts[@]} > 0 )); then
-                  _msg_step "Checking remote builders..."
-                  for _host in "''${_builder_hosts[@]}"; do
-                    if ${pkgs.iputils}/bin/ping -c1 -W2 "$_host" &>/dev/null; then
-                      _msg_dim "  $_host reachable"
-                      _any_reachable=1
-                    else
-                      _msg_dim "  $_host unreachable"
-                    fi
-                  done
-                fi
+              local _any_reachable=0
+              if (( ''${#_builder_hosts[@]} > 0 )); then
+                _msg_step "Checking remote builders..."
+                for _host in "''${_builder_hosts[@]}"; do
+                  if ${pkgs.iputils}/bin/ping -c1 -W2 "$_host" &>/dev/null; then
+                    _msg_dim "  $_host reachable"
+                    _any_reachable=1
+                  else
+                    _msg_dim "  $_host unreachable"
+                  fi
+                done
+              fi
 
-                if (( ! _any_reachable )); then
-                  local _ncpu
-                  _ncpu=$(nproc 2>/dev/null || echo 2)
-                  _msg_warn "All remote builders unreachable — falling back to local (max-jobs=$_ncpu)"
-                  _msg_dim "  System has max-jobs=0 (remote-only). Overriding for this build."
-                  _msg_dim "  Build will be slower on local hardware."
-                  echo ""
-                  _jobs_override=(--max-jobs "$_ncpu" --builders "")
-                fi
+              if (( ! _any_reachable )); then
+                _msg_warn "All remote builders unreachable — building locally"
+                _msg_dim "  Skipping remote to avoid SSH timeout delays."
+                echo ""
+                _jobs_override=(--builders "")
               fi
             fi
 

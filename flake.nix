@@ -99,15 +99,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Claude Code - AI coding assistant (Always up-to-date)
-    claude-code = {
-      url = "github:sadjow/claude-code-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    # Codex CLI - AI coding assistant (Always up-to-date)
-    codex-cli = {
-      url = "github:sadjow/codex-cli-nix";
+    # LLM Agents - All AI coding CLIs (claude-code, codex, opencode, crush)
+    # numtide/llm-agents.nix — auto-updated daily, binary cache at cache.numtide.com
+    llm-agents = {
+      url = "github:numtide/llm-agents.nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -156,12 +151,6 @@
     # OpenViking - Agent-native context database for AI agents
     openviking = {
       url = "github:Daaboulex/openviking-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    # Gemini-CLI - Gemini agent for your terminal
-    gemini-cli-nix = {
-      url = "github:Daaboulex/gemini-cli-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 

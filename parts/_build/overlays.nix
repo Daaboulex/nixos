@@ -23,7 +23,7 @@
       inputs.antigravity.overlays.default
       inputs.portmaster.overlays.default
       inputs.occt-nix.overlays.default
-      inputs.claude-code.overlays.default
+      inputs.llm-agents.overlays.default
       inputs.lsfg-vk.overlays.default
       inputs.vkbasalt-overlay.overlays.default
       inputs.mesa-git-nix.overlays.default
@@ -34,12 +34,10 @@
       inputs.models-nix.overlays.default
       inputs.ripgrep-nix.overlays.default
       inputs.durdraw-nix.overlays.default
-      inputs.gemini-cli-nix.overlays.default
       inputs.streamcontroller-nix.overlays.default
       inputs.yeetmouse-nix.overlays.default
       inputs.rocksmith-nix.overlays.default
       inputs.eden.overlays.default
-      inputs.codex-cli.overlays.default
       inputs.mullvad-vpn-nix.overlays.default
 
       # nixpkgs#513245: openldap test017-syncreplication-refresh fails
