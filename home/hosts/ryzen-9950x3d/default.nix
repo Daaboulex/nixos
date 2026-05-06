@@ -67,7 +67,7 @@ in
     gamescope.enable = false;
     gcc.enable = true;
     gdb.enable = true;
-    gemini-cli.enable = false; # temporary: numtide npm hash mismatch, re-enable after update
+    gemini-cli.enable = true;
     git.enable = true;
     glow.enable = true;
     gnumake.enable = true;
