@@ -191,7 +191,7 @@
             "*.sync-conflict-*"
             # ── Per-machine volatile state ──
             "(?d)instances/"
-            "(?d)projects/"
+            "(?d)/projects/"
             "(?d)backups/"
             # ── Handoff session volatiles ──
             "(?d)handoffs/sessions/.current-*"
