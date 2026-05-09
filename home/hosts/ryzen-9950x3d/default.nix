@@ -128,11 +128,7 @@ in
           path = "/home/user/Documents";
           ignorePatterns = [
             # ── NEGATIONS FIRST (first-match-wins) ──
-            # AI skill dirs named "build"/"packages": NOT build artifacts.
-            # Without this, `**/build/` silently blocks sync of
-            # <work-monorepo>/.claude/skills/build/ (legitimate skill content).
-            "!**/.claude/skills/*/"
-            "!**/.gemini/skills/*/"
+            # (skill negations removed — skills unified to project-state/ which IS synced)
 
             # ── Regenerable build artifacts — (?d) safe ──
             # (?d) allows Syncthing to delete these when they block dir removal.
@@ -177,6 +173,16 @@ in
             # ── Syncthing own artifacts ──
             ".stversions/"
             "**/*.sync-conflict-*"
+
+            # ── Per-machine AI tool dirs in projects ──
+            # Created by Claude Code / session-start hooks per-machine.
+            # Contain symlinks (not portable), settings.local.json, caches.
+            # (?d) allows Syncthing to delete when remote removes them.
+            "(?d)**/.claude/"
+            "(?d)**/.gemini/"
+            "(?d)**/.codex/"
+            "(?d)**/.crush/"
+            "(?d)**/.opencode/"
 
             # ── Per-machine AI runtime state (NOT session data) ──
             "**/active-sessions.jsonl"
