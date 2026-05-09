@@ -23,7 +23,7 @@ in
         enable = true;
         lfs.enable = lib.mkDefault true;
         ignores = [ ".crush/" ];
-        extraConfig.core = {
+        settings.core = {
           # Syncthing compatibility — prevent phantom diffs from ctime/stat changes.
           # Syncthing preserves mtime but always updates ctime on delivery.
           # trustctime=false: ignore ctime mismatches (safe — git still checks mtime+size+content)
