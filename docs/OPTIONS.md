@@ -1263,7 +1263,7 @@ Encrypted agenix secrets keyed by runtime secret name. Defaults each entry to `s
 Directory containing encrypted agenix secret files.
 
 - **Type:** `absolute path`
-- **Default:** `"/nix/store/v38nv2wgrnj1lb5m1nvx6zfbm48wc93i-source/secrets"`
+- **Default:** `"/nix/store/zhcqn66qm8gm53aygzwganwf4q8cwp6y-source/secrets"`
 
 ### `myModules.security.hardening.enable`
 

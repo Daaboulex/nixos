@@ -13,12 +13,7 @@ let
   gcDevShellFlake = cfg.gc.devShellFlake;
   gcDevShellNames = cfg.gc.devShellNames;
   nrbFns = import ./nrb-functions.nix {
-    inherit
-      pkgs
-      gcDevShellDirs
-      gcDevShellFlake
-      gcDevShellNames
-      ;
+    inherit pkgs;
     inherit (cfg) flakeDir;
   };
 in
