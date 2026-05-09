@@ -208,8 +208,14 @@
             "(?d)handoffs/sessions/.git-cache-*"
             # ── Nested git repos — have their own remotes ──
             "kachow-mirror/"
-            # ── Handoff session JSON volatiles ──
+            # ── Handoff volatiles ──
             "(?d)handoffs/sessions/*.json"
+            "(?d)handoffs/projects/*.json"
+            # ── Per-machine runtime state ──
+            "**/active-sessions*.jsonl"
+            "**/.autosave-recovery.log"
+            "(?d)*.lock"
+            "(?d)**/.frontmatter-cache.json"
             # ── Syncthing own artifacts ──
             "(?d).stversions/"
           ];
