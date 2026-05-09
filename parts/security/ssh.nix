@@ -33,7 +33,7 @@ let
       config = lib.mkIf cfg.enable {
         services.openssh = {
           enable = true;
-          extraConfig = "AuthorizedKeysFile %h/.ssh/authorized_keys";
+          extraConfig = "AuthorizedKeysFile %h/.ssh/authorized_keys /etc/ssh/authorized_keys.d/%u";
           settings = {
             PasswordAuthentication = false;
             KbdInteractiveAuthentication = false;
