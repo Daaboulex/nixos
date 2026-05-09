@@ -557,10 +557,9 @@
         };
 
         # Regenerate docs when module definitions change.
-        # Pure eval (no nix-build): ~4 CPU-seconds to walk options.myModules
-        # tree and emit markdown via string concatenation. Previous version
-        # used `pkgs.nixosOptionsDoc` wrapped in `runCommand`, which forced
-        # realisation of the full nixpkgs-doc toolchain (10-20 min cold).
+        # Single nix eval via generate-all-docs.nix (was 7 separate evals,
+        # each re-evaluating the flake — ~144s on MacBook). Now: 1 eval
+        # for all 7 outputs, ~40-70s.
         update-docs = {
           enable = true;
           name = "update-docs";
@@ -579,17 +578,11 @@
 
                 echo "Module / flake changes detected — regenerating documentation..."
                 failed=0
+                gen="scripts/generate-all-docs.nix"
 
-                # Capture stderr separately — merging with stdout via `2>&1`
-                # pollutes generated files with nix warnings like
-                # "warning: SQLite database '/nix/var/nix/db/db.sqlite' is busy"
-                # which then ship inside docs/host-template.nix.example.
                 errfile=$(mktemp)
                 trap 'rm -f "$errfile"' EXIT
 
-                # $1 = target file, $@ = nix eval args.
-                # Format is always '%s' (H2 security fix — no dynamic format strings).
-                # Returns 0 on success (sets failed=1 on failure).
                 emit() {
                   local target="$1"; shift 1
                   local out
@@ -604,15 +597,12 @@
                   fi
                 }
 
-                # $1 = marker name (matches <!-- BEGIN generated:$1 --> in README.md).
-                # Runs scripts/generate-readme-sections.nix with that attr, splices
-                # the result between the matching marker comments.
                 splice_section() {
                   local marker="$1"
                   local tmpfile
                   tmpfile=$(mktemp)
                   if ! nix eval --raw --impure \
-                       --file scripts/generate-readme-sections.nix "$marker" \
+                       --file "$gen" "$marker" \
                        > "$tmpfile" 2>"$errfile"; then
                     echo "ERROR: README section '$marker' generation failed."
                     cat "$errfile"
@@ -641,31 +631,21 @@
                   echo "  README.md section '$marker' regenerated."
                 }
 
-                # OPTIONS.md — pure eval, no build
+                # All outputs from single generate-all-docs.nix (shared flake eval)
                 emit docs/OPTIONS.md \
-                  --raw --impure --file scripts/generate-docs.nix markdown
-
-                # options.json — pure eval, no build
+                  --raw --impure --file "$gen" markdown
                 emit docs/options.json \
-                  --json --impure --file scripts/generate-docs.nix json
-
-                # Host templates — pure eval, no build
+                  --json --impure --file "$gen" json
                 emit docs/host-template.nix.example \
-                  --raw --impure --file scripts/generate-host-template.nix text
+                  --raw --impure --file "$gen" hostTemplate
                 emit docs/hm-host-template.nix.example \
-                  --raw --impure --file scripts/generate-hm-template.nix text
+                  --raw --impure --file "$gen" hmTemplate
 
-                # README sections — auto-spliced between BEGIN/END markers.
                 splice_section moduleReference
                 splice_section directoryLayout
                 splice_section flakeInputs
 
-                # Reformat README so its post-splice form matches prettier's
-                # canonical output. Otherwise standalone `nix fmt` reflows
-                # the spliced sections and `treefmt --fail-on-change`
-                # oscillates against the manual regen.
                 nix fmt -- README.md > /dev/null 2>&1 || true
-
                 git add README.md
 
                 [ "$failed" -ne 0 ] && {
