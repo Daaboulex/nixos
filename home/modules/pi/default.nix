@@ -1,18 +1,13 @@
-# pi — Pi AI agent CLI (earendil-works).
 {
   config,
   lib,
   pkgs,
+  myLib,
   ...
-}:
-
-let
-  cfg = config.myModules.home.pi;
-in
-{
-  options.myModules.home.pi.enable = lib.mkEnableOption "Pi AI agent CLI (earendil-works)";
-
-  config = lib.mkIf cfg.enable {
-    home.packages = [ pkgs.llm-agents.pi ];
-  };
-}
+}@args:
+(myLib.mkSimplePackage {
+  name = "pi";
+  package = p: p.llm-agents.pi;
+  description = "Pi AI agent CLI (earendil-works)";
+})
+  args

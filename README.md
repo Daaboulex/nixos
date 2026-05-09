@@ -327,7 +327,7 @@ Full operator reference + hook list in [`docs/BUILD.md`](docs/BUILD.md).
 | `myModules.home.openviking`             | OpenViking context database with configurable read-only search paths.          |
 | `myModules.home.pastel`                 | pastel color manipulation CLI                                                  |
 | `myModules.home.pciutils`               | pciutils (lspci)                                                               |
-| `myModules.home.pi`                     | Pi AI agent CLI (earendil-works).                                              |
+| `myModules.home.pi`                     | Pi AI agent CLI (earendil-works)                                               |
 | `myModules.home.piper`                  | Piper mouse configuration tool                                                 |
 | `myModules.home.pkg-config`             | pkg-config build helper                                                        |
 | `myModules.home.plasma`                 | KDE Plasma core packages, programs.plasma.enable, and app configFile entries.  |
@@ -580,7 +580,7 @@ home/modules/opencode/default.nix                           # OpenCode AI coding
 home/modules/openviking/default.nix                         # OpenViking context database with configurable read-only search paths.
 home/modules/pastel/default.nix                             # pastel color manipulation CLI
 home/modules/pciutils/default.nix                           # pciutils (lspci)
-home/modules/pi/default.nix                                 # Pi AI agent CLI (earendil-works).
+home/modules/pi/default.nix                                 # Pi AI agent CLI (earendil-works)
 home/modules/piper/default.nix                              # Piper mouse configuration tool
 home/modules/pkg-config/default.nix                         # pkg-config build helper
 home/modules/plasma/appearance.nix                          # Plasma workspace theme, KDE globals, window decorations, session restore.
