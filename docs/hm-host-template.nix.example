@@ -2,7 +2,7 @@
 # Home Manager Host Configuration Template
 # ==========================================================================
 # Auto-generated from myModules.home option definitions.
-# 150 modules available.
+# 151 modules available.
 #
 # Copy to home/hosts/<hostname>/default.nix and customise.
 # Set enable = false for modules you don't need on this host.
@@ -162,6 +162,7 @@
   # myModules.home.openviking.readOnlyPaths = ...;
   myModules.home.pastel.enable = true;
   myModules.home.pciutils.enable = true;
+  myModules.home.pi.enable = true;
   myModules.home.piper.enable = true;
   myModules.home.pkg-config.enable = true;
   myModules.home.plasma.enable = true;

@@ -147,11 +147,26 @@
             "**/.obsidian/workspace.json"
             "**/.obsidian/workspace-mobile.json"
 
-            # ── Git internals — FULL exclusion ──
-            # No trailing slash: matches both .git/ dirs (normal repos) AND
-            # .git files (submodule/worktree pointers like .ai-context/.git).
-            # Both hosts maintain history via push/pull to GitHub remotes.
-            ".git"
+            # ── Git internals — targeted transient exclusion ──
+            # Sync .git/ so history travels with files (no "forgot to push").
+            # Only exclude transient lock/state files from in-progress ops.
+            # Safe: loose objects + packfiles are content-addressed (immutable).
+            # Single-user = no concurrent git operations across hosts.
+            "(?d).git/**/*.lock"
+            "(?d).git/gc.log"
+            "(?d).git/gc.pid"
+            "(?d).git/MERGE_HEAD"
+            "(?d).git/MERGE_MSG"
+            "(?d).git/MERGE_MODE"
+            "(?d).git/CHERRY_PICK_HEAD"
+            "(?d).git/REBASE_HEAD"
+            "(?d).git/REVERT_HEAD"
+            "(?d).git/BISECT_HEAD"
+            "(?d).git/AUTO_MERGE"
+            "(?d).git/rebase-merge/"
+            "(?d).git/rebase-apply/"
+            "(?d).git/sequencer/"
+            "(?d).git/objects/pack/tmp_*"
 
             # ── Syncthing own artifacts ──
             ".stversions/"
@@ -191,8 +206,22 @@
         ai-context = {
           path = "/home/user/.ai-context";
           ignorePatterns = [
-            # ── Git: FULL exclusion — Syncthing must never touch git internals ──
-            ".git"
+            # ── Git internals — targeted transient exclusion ──
+            "(?d).git/**/*.lock"
+            "(?d).git/gc.log"
+            "(?d).git/gc.pid"
+            "(?d).git/MERGE_HEAD"
+            "(?d).git/MERGE_MSG"
+            "(?d).git/MERGE_MODE"
+            "(?d).git/CHERRY_PICK_HEAD"
+            "(?d).git/REBASE_HEAD"
+            "(?d).git/REVERT_HEAD"
+            "(?d).git/BISECT_HEAD"
+            "(?d).git/AUTO_MERGE"
+            "(?d).git/rebase-merge/"
+            "(?d).git/rebase-apply/"
+            "(?d).git/sequencer/"
+            "(?d).git/objects/pack/tmp_*"
             # ── Syncthing conflict files — must never be committed ──
             "*.sync-conflict-*"
             # ── Per-machine volatile state ──
@@ -244,6 +273,7 @@
     okular.enable = true;
     opencode.enable = true;
     openviking.enable = false;
+    pi.enable = true;
     pastel.enable = true;
     pciutils.enable = true;
     piper.enable = false;
