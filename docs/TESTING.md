@@ -6,14 +6,39 @@ VM integration tests and how to run them.
 
 ## Automated Tests
 
-Run all checks with `nix flake check`. See `docs/BUILD.md` for the full
-check matrix (18 checks). Individual tests:
+46 checks total. See `docs/BUILD.md` for the full matrix.
 
 ```bash
-nix build .#checks.x86_64-linux.vm-hardware-pipewire
-nix build .#checks.x86_64-linux.vm-networking-resolved
-nix build .#checks.x86_64-linux.eval-kernel-cachyos
+# Fast eval-only (~10s) — daily use, MacBook, slow machines:
+nrb --check
+nix flake check --no-build
+
+# Single VM test (~3-7min each):
+nix build --no-link '.#checks.x86_64-linux.vm-core'
+
+# All eval canaries (~30s):
+nix build --no-link '.#checks.x86_64-linux.eval-'{kernel-cachyos,boot-lanzaboote,security-hardening,services-earlyoom}
+
+# Full suite including 10 VM tests (~10-20min cached, ~60min cold):
+nix flake check
 ```
+
+### VM Test Inventory
+
+Each test boots a QEMU VM with KVM acceleration and runs assertions.
+
+| Test                       | Modules tested                        | Asserts                                                         |
+| -------------------------- | ------------------------------------- | --------------------------------------------------------------- |
+| `vm-core`                  | nix-nix, users                        | Nix daemon + flakes + cgroups + user creation + groups + zsh    |
+| `vm-ssh`                   | security-ssh, users                   | sshd hardening, fail2ban, firewall port 22                      |
+| `vm-networking`            | hardware-networking, users            | NetworkManager + systemd-resolved + DNS-over-TLS                |
+| `vm-hardware-pipewire`     | hardware-pipewire, users              | PipeWire + LADSPA filter chain config                           |
+| `vm-security-agenix`       | security-agenix, users                | agenix + age CLI availability                                   |
+| `vm-boot-impermanence`     | boot-impermanence, users              | /persist bind mount via findmnt                                 |
+| `vm-nrb-build-fail-timing` | (standalone)                          | nrb returns within 30s on build failure (no sudo keepalive hang) |
+| `vm-nrb-preflight-no-daemon` | (standalone)                        | nrb detects stopped nix daemon cleanly                          |
+| `smoke-v2`                 | host, users, networking, syncthing    | v2-tier (MBP): multi-user + NM + Syncthing                     |
+| `smoke-v4`                 | host, users, networking, syncthing    | v4-tier (Ryzen): multi-user + NM + Syncthing                   |
 
 ## Manual Test Checklists
 

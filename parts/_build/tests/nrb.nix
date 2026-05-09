@@ -158,7 +158,7 @@
         vm-nrb-build-fail-timing = pkgs.testers.nixosTest {
           name = "nrb-build-fail-timing";
           nodes.machine = {
-            virtualisation.memorySize = 2048;
+            virtualisation.memorySize = 1024;
             virtualisation.graphics = false;
             nix.settings.experimental-features = [
               "nix-command"

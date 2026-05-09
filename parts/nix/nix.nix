@@ -53,6 +53,7 @@ let
           # disk streaming (slower but safe). Keep conservative for low-RAM systems.
           download-buffer-size = lib.mkDefault (2 * 1024 * 1024 * 1024); # 2 GiB
           sandbox = true;
+          extra-sandbox-paths = [ "/dev/kvm" ];
           # Isolate each build in its own cgroup for accurate memory tracking
           # and preventing one build from OOM-killing another.
           use-cgroups = true;

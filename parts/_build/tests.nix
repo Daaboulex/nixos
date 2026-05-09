@@ -104,9 +104,10 @@
         toplevel-macbook-pro-9-2 =
           inputs.self.nixosConfigurations.macbook-pro-9-2.config.system.build.toplevel;
 
-        # Verify nix daemon starts with flakes enabled and GC configured
-        vm-nix-settings = pkgs.testers.nixosTest {
-          name = "nix-settings";
+        # Verify nix daemon + user creation in one VM boot (merged from
+        # vm-nix-settings + vm-users — identical base modules, one boot).
+        vm-core = pkgs.testers.nixosTest {
+          name = "core";
           nodes.machine = {
             imports = [
               inputs.self.modules.nixos.nix-nix
@@ -116,30 +117,19 @@
             virtualisation.graphics = false;
             myModules.nix.nix.enable = true;
             myModules.users.enable = true;
+            myModules.primaryUser = "testuser";
           };
           testScript = ''
+            machine.wait_for_unit("multi-user.target")
+
+            # Nix daemon + settings
             machine.wait_for_unit("nix-daemon.service")
             machine.succeed("nix --version")
             machine.succeed("nix show-config | grep experimental-features | grep flakes")
             machine.succeed("nix show-config | grep experimental-features | grep cgroups")
             machine.succeed("nix show-config | grep auto-optimise-store | grep true")
-          '';
-        };
 
-        # Verify user creation, groups, and zsh shell
-        vm-users = pkgs.testers.nixosTest {
-          name = "users";
-          nodes.machine = {
-            imports = [
-              inputs.self.modules.nixos.users
-            ];
-            virtualisation.memorySize = 512;
-            virtualisation.graphics = false;
-            myModules.users.enable = true;
-            myModules.primaryUser = "testuser";
-          };
-          testScript = ''
-            machine.wait_for_unit("multi-user.target")
+            # User creation, groups, shell
             machine.succeed("id testuser")
             machine.succeed("id -nG testuser | grep -q wheel")
             machine.succeed("id -nG testuser | grep -q video")
@@ -174,7 +164,8 @@
           '';
         };
 
-        # Verify NetworkManager starts
+        # Verify NetworkManager + systemd-resolved DoT in one VM boot
+        # (merged from vm-networking + vm-networking-resolved — same modules).
         vm-networking = pkgs.testers.nixosTest {
           name = "networking";
           nodes.machine = {
@@ -184,13 +175,21 @@
             ];
             virtualisation.memorySize = 512;
             virtualisation.graphics = false;
-            myModules.hardware.networking.enable = true;
+            myModules.hardware.networking = {
+              enable = true;
+              dnsOverTls = "opportunistic";
+            };
             myModules.users.enable = true;
           };
           testScript = ''
             machine.wait_for_unit("NetworkManager.service")
             machine.succeed("nmcli general status")
             machine.succeed("systemctl is-active systemd-resolved.service")
+
+            # DNS-over-TLS configured (not "no")
+            machine.succeed("resolvectl status | grep -i 'DNSOverTLS' | grep -iv 'no'")
+            # Stub resolver listening
+            machine.succeed("ss -tlnp | grep '127.0.0.53'")
           '';
         };
 
@@ -305,32 +304,6 @@
             machine.succeed("test -S /run/pipewire/pipewire-0 || systemctl --user -M user@ is-active pipewire.service")
             # LADSPA plugin config wired into PipeWire — no store-path fallback
             machine.succeed("grep -r 'ladspa' /etc/pipewire/pipewire.conf.d/ 2>/dev/null | grep -qv '^#'")
-          '';
-        };
-
-        # hardware-networking-resolved — systemd-resolved starts with DoT
-        # configured. Validates the DNS encryption layer is active.
-        vm-networking-resolved = pkgs.testers.nixosTest {
-          name = "networking-resolved";
-          nodes.machine = {
-            imports = [
-              inputs.self.modules.nixos.hardware-networking
-              inputs.self.modules.nixos.users
-            ];
-            virtualisation.memorySize = 512;
-            virtualisation.graphics = false;
-            myModules.hardware.networking = {
-              enable = true;
-              dnsOverTls = "opportunistic";
-            };
-            myModules.users.enable = true;
-          };
-          testScript = ''
-            machine.wait_for_unit("systemd-resolved.service")
-            # DoT is configured (not "no")
-            machine.succeed("resolvectl status | grep -i 'DNSOverTLS' | grep -iv 'no'")
-            # Stub resolver is listening
-            machine.succeed("ss -tlnp | grep '127.0.0.53'")
           '';
         };
 

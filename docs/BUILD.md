@@ -138,11 +138,14 @@ Do NOT bypass with `--no-verify` — that skips ALL hooks and hides real violati
 
 ## Flake Checks
 
-Run with `nix flake check`. Full check set (48 checks):
+Run with `nix flake check`. Full check set (46 checks):
 
 ```bash
 # Fast eval-only (~10s):
 nrb --check
+
+# Structural check — no VM tests (~30s):
+nix flake check --no-build
 
 # All fast checks — eval canaries + runCommand (~30s):
 nix build --no-link '.#checks.x86_64-linux.eval-'{kernel-cachyos,boot-lanzaboote,security-hardening,services-earlyoom,hardware-networking,nix-flakes,users-zsh,hardware-graphics-mesa-git,portmaster-dns-interception,vfio-iommu-params,scx-scheduler,mullvad-lockdown,networking-dot,nix-trusted-users,kernel-modules-vfio,x3d-vcache-mode,mbp-specialisations}
@@ -150,9 +153,22 @@ nix build --no-link '.#checks.x86_64-linux.eval-'{kernel-cachyos,boot-lanzaboote
 # Single check:
 nix build --no-link '.#checks.x86_64-linux.<name>'
 
-# Full suite including VMs (~5-20min cached):
+# Full suite including VMs (~10-20min cached, ~60min cold):
 nix flake check
 ```
+
+**Which command to use:**
+
+| Situation                         | Command                                |
+| --------------------------------- | -------------------------------------- |
+| Daily development (fast feedback) | `nrb --check` or `nix flake check --no-build` |
+| Pre-commit sanity                 | pre-commit hooks handle this automatically |
+| MacBook / slow machines           | `nix flake check --no-build` (never bare `nix flake check`) |
+| CI / full validation              | `nix flake check` (includes all VM tests) |
+| Single VM test                    | `nix build --no-link '.#checks.x86_64-linux.vm-core'` |
+
+VM tests boot QEMU VMs with KVM acceleration. Each takes 3-7 min.
+On machines without KVM or with limited RAM, use `--no-build`.
 
 ### Check Categories
 
@@ -161,7 +177,7 @@ nix flake check
 | `eval-*`     | Config property canary — probes host config values  | <1s each | 23    |
 | `nrb-*`      | nrb flag validation + regex tests                   | <1s each | 7     |
 | `check-*`    | Pre-commit hook self-tests (fixture-based)          | <30s     | 2     |
-| `vm-*`       | VM integration — boots QEMU, tests service behavior | 1-5min   | 12    |
+| `vm-*`       | VM integration — boots QEMU, tests service behavior | 1-5min   | 10    |
 | `smoke-*`    | Per-tier host smoke — partial host config in VM     | 2-5min   | 2     |
 | `toplevel-*` | Full system closure build                           | 1-10min  | 2     |
 
@@ -203,18 +219,16 @@ nix flake check
 
 ### VM Integration Tests
 
-| Check                    | What it proves                                 |
-| ------------------------ | ---------------------------------------------- |
-| `vm-nix-settings`        | Nix daemon starts, flakes + cgroups enabled    |
-| `vm-users`               | User creation, groups, zsh shell               |
-| `vm-ssh`                 | SSH hardening, fail2ban, firewall port         |
-| `vm-networking`          | NetworkManager starts, systemd-resolved active |
-| `vm-networking-resolved` | DNS-over-TLS configured (opportunistic mode)   |
-| `vm-hardware-pipewire`   | PipeWire starts, LADSPA config wired           |
-| `vm-security-agenix`     | agenix + age CLI tools available               |
-| `vm-boot-impermanence`   | Bind mount from /persist verified via findmnt  |
-| `smoke-v2`               | v2-tier (MBP): NM + Syncthing active           |
-| `smoke-v4`               | v4-tier (Ryzen): NM + Syncthing active         |
+| Check                    | What it proves                                                    |
+| ------------------------ | ----------------------------------------------------------------- |
+| `vm-core`                | Nix daemon + flakes + cgroups + user creation + groups + zsh      |
+| `vm-ssh`                 | SSH hardening, fail2ban, firewall port                            |
+| `vm-networking`          | NetworkManager + systemd-resolved + DNS-over-TLS (opportunistic)  |
+| `vm-hardware-pipewire`   | PipeWire starts, LADSPA config wired                              |
+| `vm-security-agenix`     | agenix + age CLI tools available                                  |
+| `vm-boot-impermanence`   | Bind mount from /persist verified via findmnt                     |
+| `smoke-v2`               | v2-tier (MBP): NM + Syncthing active                             |
+| `smoke-v4`               | v4-tier (Ryzen): NM + Syncthing active                           |
 
 ---
 
