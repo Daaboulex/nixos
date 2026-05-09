@@ -508,9 +508,8 @@
           pass_filenames = false;
         };
 
-        # Block AI context files from being committed. These are symlinks
-        # into .ai-context/ (a submodule) and must never be tracked directly.
-        # Catches: AGENTS.md, CLAUDE.md, GEMINI.md, .claude/, .gemini/, .codex/
+        # Block AI context files from being committed. .ai-context is a
+        # symlink to ~/.ai-context/project-state/nix/ — never tracked.
         check-no-ai-files = {
           enable = true;
           name = "check-no-ai-files";
@@ -523,15 +522,17 @@
                 blocked=""
                 for f in $staged; do
                   case "$f" in
+                    .ai-context/*) blocked="$blocked $f" ;;
                     AGENTS.md|CLAUDE.md|GEMINI.md|DEBT.md) blocked="$blocked $f" ;;
                     .claude/*|.gemini/*|.codex/*|.planning/*) blocked="$blocked $f" ;;
+                    .crush/*|.opencode/*) blocked="$blocked $f" ;;
                   esac
                 done
                 if [[ -n "$blocked" ]]; then
                   echo "BLOCKED: AI context files must not be committed:"
                   for f in $blocked; do echo "  $f"; done
                   echo ""
-                  echo "These are symlinks into .ai-context/ (submodule)."
+                  echo "These are symlinks/dirs managed by AI tools — never tracked in git."
                   echo "Run: git rm --cached <file> to untrack."
                   exit 1
                 fi

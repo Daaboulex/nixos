@@ -258,7 +258,7 @@ plaintext...
 
 # --- nix.nix (2 options) ---
     # enable = false;  # boolean — Whether to enable Nix daemon configuration and settings.
-    # githubTokenSource = "gh-cli";  # one of "agenix", "gh-cli", "none" — Where nix-daemon gets the GitHub API token (for rate-limited
+    # githubTokenSource = "gh-cli";  # one of "gh-cli", "none" — Where nix-daemon gets the GitHub API token (for rate-limited
 flake fetches).
 ...
 
@@ -292,7 +292,7 @@ Paste output of `sudo ca...
 
 # --- security.agenix (4 options) ---
     # enable = false;  # boolean — Whether to enable agenix secret management.
-    # secretsRoot = "/nix/store/y3jwaviqh8zdqi4x53cazdz20xxvkrdh-source/secrets";  # absolute path — Directory containing encrypted agenix secret files.
+    # secretsRoot = "/nix/store/5xph3li4dji3v8im5q92agghsf8ywf65-source/secrets";  # absolute path — Directory containing encrypted agenix secret files.
     # ... and 2 more options with complex defaults (see docs/OPTIONS.md)
 
 # --- security.hardening (2 options) ---

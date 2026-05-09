@@ -237,7 +237,7 @@ Full operator reference + hook list in [`docs/BUILD.md`](docs/BUILD.md).
 | `myModules.home.comma`                  | comma — run uninstalled programs via nix-index                                 |
 | `myModules.home.coolercontrol`          | declarative fan/cooling configuration with optional GUI autostart.             |
 | `myModules.home.corecycler`             | per-core CPU stability tester and PBO Curve Optimizer tuner.                   |
-| `myModules.home.crush`                  | Crush AI coding agent (charmbracelet)                                          |
+| `myModules.home.crush`                  | Crush AI coding agent (charmbracelet) with --data-dir wrapper.                 |
 | `myModules.home.csvlens`                | terminal CSV viewer with theme-derived color palette.                          |
 | `myModules.home.curl`                   | HTTP client with user .curlrc configuration.                                   |
 | `myModules.home.delta`                  | syntax-highlighting git diff pager with theme integration.                     |
@@ -323,7 +323,7 @@ Full operator reference + hook list in [`docs/BUILD.md`](docs/BUILD.md).
 | `myModules.home.nvd`                    | nvd — Nix version diff between system generations                              |
 | `myModules.home.occt`                   | OCCT stability test/benchmark                                                  |
 | `myModules.home.okular`                 | KDE PDF viewer.                                                                |
-| `myModules.home.opencode`               | OpenCode AI coding agent (sst/opencode)                                        |
+| `myModules.home.opencode`               | OpenCode AI coding agent (sst/opencode).                                       |
 | `myModules.home.openviking`             | OpenViking context database with configurable read-only search paths.          |
 | `myModules.home.pastel`                 | pastel color manipulation CLI                                                  |
 | `myModules.home.pciutils`               | pciutils (lspci)                                                               |
@@ -382,6 +382,7 @@ Full operator reference + hook list in [`docs/BUILD.md`](docs/BUILD.md).
 | `myModules.home.zellij`                 | terminal workspace/multiplexer with theme-derived colors.                      |
 | `myModules.home.zoxide`                 | smart directory jumper (z/zi replacement for cd).                              |
 | `myModules.home.zsh`                    | Zsh shell with custom functions, aliases, and theme-aware colors.              |
+| `myModules.home.zsh.nrb-functions`      | NixOS rebuild helper functions (nrb, nrb-check, nrb-info).                     |
 
 <!-- END generated:moduleReference -->
 
@@ -488,7 +489,7 @@ home/modules/codex-cli/default.nix                          # Codex CLI AI assis
 home/modules/comma/default.nix                              # comma — run uninstalled programs via nix-index
 home/modules/coolercontrol/default.nix                      # declarative fan/cooling configuration with optional GUI autostart.
 home/modules/corecycler/default.nix                         # per-core CPU stability tester and PBO Curve Optimizer tuner.
-home/modules/crush/default.nix                              # Crush AI coding agent (charmbracelet)
+home/modules/crush/default.nix                              # Crush AI coding agent (charmbracelet) with --data-dir wrapper.
 home/modules/csvlens/default.nix                            # terminal CSV viewer with theme-derived color palette.
 home/modules/curl/default.nix                               # HTTP client with user .curlrc configuration.
 home/modules/delta/default.nix                              # syntax-highlighting git diff pager with theme integration.
@@ -574,7 +575,7 @@ home/modules/ns-usbloader/default.nix                       # Nintendo Switch US
 home/modules/nvd/default.nix                                # nvd — Nix version diff between system generations
 home/modules/occt/default.nix                               # OCCT stability test/benchmark
 home/modules/okular/default.nix                             # KDE PDF viewer.
-home/modules/opencode/default.nix                           # OpenCode AI coding agent (sst/opencode)
+home/modules/opencode/default.nix                           # OpenCode AI coding agent (sst/opencode).
 home/modules/openviking/default.nix                         # OpenViking context database with configurable read-only search paths.
 home/modules/pastel/default.nix                             # pastel color manipulation CLI
 home/modules/pciutils/default.nix                           # pciutils (lspci)
@@ -633,6 +634,7 @@ home/modules/yeetmouse/default.nix                          # YeetMouse configur
 home/modules/zellij/default.nix                             # terminal workspace/multiplexer with theme-derived colors.
 home/modules/zoxide/default.nix                             # smart directory jumper (z/zi replacement for cd).
 home/modules/zsh/default.nix                                # Zsh shell with custom functions, aliases, and theme-aware colors.
+home/modules/zsh/nrb-functions.nix                          # NixOS rebuild helper functions (nrb, nrb-check, nrb-info).
 ```
 
 <!-- END generated:directoryLayout -->

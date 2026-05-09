@@ -45,15 +45,13 @@ repos
 .worktrees/
 worktrees
 
-# ── AI context submodule ─────────────────────────────────────────
-# `.ai-context/` is a tracked submodule (see .gitmodules). The ignore
-# entry is defensive against broken submodule init — prevents untracked
-# contents from leaking into the parent working tree.
-.ai-context/
+# ── AI context (symlink to ~/.ai-context/project-state/nix/) ─────
+# Not tracked — local symlink created per-machine, synced via Syncthing.
+# No trailing slash: matches the symlink itself (not just directory contents).
+.ai-context
 
-# ── Root-level AI symlinks ───────────────────────────────────────
-# Tracked as symlinks into `.ai-context/`. Ignored to prevent re-adding
-# the resolved files if a symlink breaks.
+# ── Root-level AI symlinks + tool dirs ───────────────────────────
+# Relative symlinks resolved through .ai-context/. Never tracked.
 /AGENTS.md
 /CLAUDE.md
 /GEMINI.md
@@ -62,6 +60,8 @@ worktrees
 /.gemini/
 /.codex/
 /.planning/
+/.opencode/
+/.crush/
 
 # ── Planning artifacts must live in .ai-context/.superpowers/ ────
 # Enforced by check-no-roadmap-in-docs hook; gitignore here is belt-and-braces.
@@ -98,4 +98,3 @@ bunfig.toml
 .npmrc
 .yarnrc
 .yarnrc.yml
-.crush
