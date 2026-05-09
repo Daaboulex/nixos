@@ -9,8 +9,16 @@
 let
   cfg = config.myModules.home.zsh;
   inherit (myLib.themeCtx { inherit config; }) hasTheme c;
+  gcDevShellDirs = cfg.gc.devShellDirs;
+  gcDevShellFlake = cfg.gc.devShellFlake;
+  gcDevShellNames = cfg.gc.devShellNames;
   nrbFns = import ./nrb-functions.nix {
-    inherit pkgs;
+    inherit
+      pkgs
+      gcDevShellDirs
+      gcDevShellFlake
+      gcDevShellNames
+      ;
     inherit (cfg) flakeDir;
   };
 in
@@ -22,6 +30,23 @@ in
       type = lib.types.str;
       default = "$HOME/Documents/nix";
       description = "Path to the NixOS flake directory used by nrb, nrb-check, and nrb-info.";
+    };
+    gc = {
+      devShellDirs = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ ];
+        description = "Directories with .envrc devShells to check for GC root protection during gc.";
+      };
+      devShellFlake = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = "Flake path for devshells command. Empty prints a warning.";
+      };
+      devShellNames = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ ];
+        description = "DevShell names to pre-build with devshells command.";
+      };
     };
   };
 
@@ -96,14 +121,88 @@ in
           # Colored output
           grep = "grep --color=auto";
 
-          # System maintenance (cleans system generations, user generations, HM generations, optimizes store)
-          gc = "sudo nix-collect-garbage -d && nix-collect-garbage -d && sudo nix-store --optimize";
+          # System maintenance — safe in all scenarios (low disk, weekly, idle machines)
+          gc = ''
+            echo "── Phase 1: Check devShell GC roots ──"
+            ${lib.concatMapStringsSep "\n" (dir: ''
+              for d in ${dir}; do
+                if [ -d "$d" ] && [ -f "$d/.envrc" ] && [ ! -d "$d/.direnv" ]; then
+                  echo "  ⚠ $(basename "$d") has no GC root — devShell will be collected"
+                  echo "    To protect: cd $d && direnv allow"
+                fi
+              done
+            '') gcDevShellDirs}
+
+            echo "── Phase 2: Clean stale direnv profiles (keep newest per project) ──"
+            find "$HOME/Documents" -name ".direnv" -maxdepth 4 -type d 2>/dev/null | while read d; do
+              profiles=$(ls -t "$d"/flake-profile-* 2>/dev/null | grep -v '\.rc$')
+              latest=$(echo "$profiles" | head -1)
+              old=$(echo "$profiles" | tail -n +2)
+              [ -n "$old" ] && echo "$old" | xargs rm -f && echo "  Pruned: $d"
+            done
+
+            echo "── Phase 3: Remove dangling result symlinks ──"
+            find "$HOME/Documents" -maxdepth 3 -name "result" -type l 2>/dev/null | while read r; do
+              [ ! -e "$r" ] && rm -f "$r" && echo "  Removed dangling: $r"
+            done
+
+            echo "── Phase 4: Trim generations (keep newest 2, always safe) ──"
+            ${pkgs.home-manager}/bin/home-manager expire-generations "-7 days" 2>/dev/null || true
+            nix-env --delete-generations +2 2>/dev/null || true
+            sudo nix-env --delete-generations +2 -p /nix/var/nix/profiles/system
+            sudo nix-store --gc
+            nix-store --gc
+
+            echo "── Phase 5: Optimize store (dedup via hardlinks) ──"
+            sudo nix-store --optimise
+
+            echo "── Phase 6: Rebuild boot entries ──"
+            sudo nixos-rebuild boot --flake "$HOME/Documents/nix" || echo "  ⚠ Boot rebuild failed — old entries preserved"
+
+            echo "── Done ──"
+            df -h /nix/store
+          '';
+
           lc = ''
+            echo "── Logs ──"
             sudo dmesg -C
             sudo sh -c "journalctl --rotate && journalctl --vacuum-time=1s"
             sudo find /var/log -type f -name '*.log' -exec truncate -s 0 {} +
             sudo find /var/log -type f \( -name '*.log.*' -o -name '*.old' \) -exec truncate -s 0 {} +
+            sudo rm -rf /nix/var/log/nix/drvs/ 2>/dev/null
             sudo systemctl restart systemd-journald.service
+
+            echo "── Caches ──"
+            rm -rf "$HOME/.cache/nix/eval-cache-v6/" 2>/dev/null
+            ${pkgs.flatpak}/bin/flatpak uninstall --unused -y 2>/dev/null || true
+
+            echo "── Trash ──"
+            gio trash --empty 2>/dev/null || rm -rf "$HOME/.local/share/Trash/"* 2>/dev/null
+
+            echo "── Syncthing old versions ──"
+            find "$HOME" -maxdepth 3 -name ".stversions" -type d -exec rm -rf {} + 2>/dev/null
+
+            echo "── Done ──"
+            df -h /
+          '';
+
+          devshells = ''
+            local flake="${gcDevShellFlake}"
+            if [ -z "$flake" ]; then
+              echo "No devShellFlake configured (zsh.gc.devShellFlake is empty)"
+              return 1
+            fi
+            echo "Building devShells from $flake..."
+            mkdir -p "$HOME/.local/share/nix/gcroots"
+            ${lib.concatMapStringsSep "\n" (name: ''
+              echo "  Building: ${name}"
+              nix build --no-link "$flake#devShells.x86_64-linux.${name}" \
+                --out-link "$HOME/.local/share/nix/gcroots/devshell-${name}" \
+                2>&1 | tail -3
+            '') gcDevShellNames}
+            echo ""
+            echo "GC roots at ~/.local/share/nix/gcroots/devshell-*"
+            ls -la "$HOME/.local/share/nix/gcroots/devshell-"* 2>/dev/null
           '';
 
           # Better defaults

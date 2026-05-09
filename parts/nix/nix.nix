@@ -54,6 +54,9 @@ let
           download-buffer-size = lib.mkDefault (2 * 1024 * 1024 * 1024); # 2 GiB
           sandbox = true;
           extra-sandbox-paths = [ "/dev/kvm" ];
+          # Emergency GC during builds — prevents disk-full mid-build.
+          min-free = lib.mkDefault (1 * 1024 * 1024 * 1024); # 1 GiB trigger
+          max-free = lib.mkDefault (5 * 1024 * 1024 * 1024); # 5 GiB target
           # Isolate each build in its own cgroup for accurate memory tracking
           # and preventing one build from OOM-killing another.
           use-cgroups = true;

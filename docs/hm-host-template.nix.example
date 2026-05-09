@@ -246,6 +246,7 @@
   myModules.home.zoxide.enable = true;
   myModules.home.zsh.enable = true;
   # myModules.home.zsh.flakeDir = ...;
+  # myModules.home.zsh.gc = ...;
 
   # ========================================================================
   # Per-Host Overrides (add below toggle block)

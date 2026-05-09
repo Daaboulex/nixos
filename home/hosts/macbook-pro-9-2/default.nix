@@ -331,6 +331,18 @@
     zellij.enable = true;
     zoxide.enable = true;
     zsh.enable = true;
+    zsh.gc.devShellDirs = [
+      "$HOME/Documents/nix/"
+      "$HOME/Documents/fahlke-monorepo/Development-*/"
+    ];
+    zsh.gc.devShellFlake = "$HOME/Documents/fahlke-monorepo/Portable-Builder";
+    zsh.gc.devShellNames = [
+      "default"
+      "esp32"
+      "mobile"
+      "dotnet"
+      "emulator"
+    ];
   };
 
   # Per-host overrides
