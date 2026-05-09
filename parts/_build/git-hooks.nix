@@ -525,7 +525,7 @@
                     .ai-context/*) blocked="$blocked $f" ;;
                     AGENTS.md|CLAUDE.md|GEMINI.md|DEBT.md) blocked="$blocked $f" ;;
                     .claude/*|.gemini/*|.codex/*|.planning/*) blocked="$blocked $f" ;;
-                    .crush/*|.opencode/*) blocked="$blocked $f" ;;
+                    .crush/*|.opencode/*|.pi/*) blocked="$blocked $f" ;;
                   esac
                 done
                 if [[ -n "$blocked" ]]; then

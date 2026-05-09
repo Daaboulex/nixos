@@ -198,6 +198,7 @@ in
             "(?d)**/.codex/"
             "(?d)**/.crush/"
             "(?d)**/.opencode/"
+            "(?d)**/.pi/"
 
             # ── Per-machine AI runtime state (NOT session data) ──
             "**/active-sessions.jsonl"

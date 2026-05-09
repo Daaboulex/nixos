@@ -62,6 +62,7 @@ worktrees
 /.planning/
 /.opencode/
 /.crush/
+/.pi/
 
 # ── Planning artifacts must live in .ai-context/.superpowers/ ────
 # Enforced by check-no-roadmap-in-docs hook; gitignore here is belt-and-braces.
