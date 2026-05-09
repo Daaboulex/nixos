@@ -23,6 +23,15 @@ in
         enable = true;
         lfs.enable = lib.mkDefault true;
         ignores = [ ".crush/" ];
+        extraConfig.core = {
+          # Syncthing compatibility — prevent phantom diffs from ctime/stat changes.
+          # Syncthing preserves mtime but always updates ctime on delivery.
+          # trustctime=false: ignore ctime mismatches (safe — git still checks mtime+size+content)
+          # checkStat=minimal: only check size + whole-second mtime (skips sub-second, inode, uid/gid)
+          # Both are standard on network/sync filesystems. git add/commit still content-hash.
+          trustctime = false;
+          checkStat = "minimal";
+        };
       }
       // lib.optionalAttrs hasTheme {
         settings.color = {
