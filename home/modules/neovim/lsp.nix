@@ -57,6 +57,30 @@ in
       description = "powershell-editor-services LSP (bundled formatter).";
     };
 
+    markdown = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "marksman LSP for Markdown (headings, links, references).";
+    };
+
+    lua = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "lua-language-server for Lua (neovim config, scripts).";
+    };
+
+    yaml = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "yaml-language-server for YAML (CI configs, platformio, docker-compose).";
+    };
+
+    json = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "JSON/HTML LSP from vscode-langservers-extracted (tsconfig, package.json).";
+    };
+
     spell = lib.mkOption {
       type = lib.types.bool;
       default = false;
@@ -92,12 +116,18 @@ in
         ++ lib.optionals cfg.typescript [
           pkgs.typescript-language-server
           pkgs.vscode-langservers-extracted
+        ]
+        ++ lib.optionals (cfg.typescript || cfg.json || cfg.yaml || cfg.markdown) [
           pkgs.prettierd
         ]
         ++ lib.optionals cfg.dotnet [
           pkgs.omnisharp-roslyn
           pkgs.csharpier
         ]
+        ++ lib.optionals cfg.markdown [ pkgs.marksman ]
+        ++ lib.optionals cfg.lua [ pkgs.lua-language-server ]
+        ++ lib.optionals cfg.yaml [ pkgs.yaml-language-server ]
+        ++ lib.optionals cfg.json [ pkgs.vscode-langservers-extracted ]
         ++ lib.optionals cfg.powershell [ pkgs.powershell-editor-services ]
         ++ lib.optionals cfg.spell [ pkgs.cspell ];
 
@@ -168,11 +198,12 @@ in
               typescriptreact = { 'prettierd' },
               javascript = { 'prettierd' },
               javascriptreact = { 'prettierd' },
-              json = { 'prettierd' },
-              markdown = { 'prettierd' },
               css = { 'prettierd' },
               html = { 'prettierd' },
             ''}
+            ${lib.optionalString cfg.markdown "markdown = { 'prettierd' },"}
+            ${lib.optionalString cfg.json "json = { 'prettierd' },"}
+            ${lib.optionalString cfg.yaml "yaml = { 'prettierd' },"}
             ${lib.optionalString cfg.dotnet "cs = { 'csharpier' },"}
           },
           format_on_save = {
@@ -298,6 +329,75 @@ in
             root_markers = { '*.ps1', '*.psm1', '*.psd1', '.git' },
           })
           vim.lsp.enable('powershell_es')
+        ''}
+
+        ${lib.optionalString cfg.markdown ''
+          -- ============================================================
+          -- marksman (Markdown — headings, links, references)
+          -- ============================================================
+          vim.lsp.config('marksman', {
+            capabilities = capabilities,
+            filetypes = { 'markdown', 'markdown.mdx' },
+            root_markers = { '.marksman.toml', '.git' },
+          })
+          vim.lsp.enable('marksman')
+        ''}
+
+        ${lib.optionalString cfg.lua ''
+          -- ============================================================
+          -- lua-language-server (Lua — neovim config, scripts)
+          -- ============================================================
+          vim.lsp.config('lua_ls', {
+            capabilities = capabilities,
+            settings = {
+              Lua = {
+                runtime = { version = 'LuaJIT' },
+                workspace = {
+                  checkThirdParty = false,
+                  library = { vim.env.VIMRUNTIME },
+                },
+                diagnostics = {
+                  globals = { 'vim' },
+                },
+                telemetry = { enable = false },
+              },
+            },
+          })
+          vim.lsp.enable('lua_ls')
+        ''}
+
+        ${lib.optionalString cfg.yaml ''
+          -- ============================================================
+          -- yaml-language-server (YAML — CI, docker-compose, platformio)
+          -- ============================================================
+          vim.lsp.config('yamlls', {
+            capabilities = capabilities,
+            settings = {
+              yaml = {
+                validate = true,
+                hover = true,
+                completion = true,
+                schemaStore = { enable = true, url = 'https://www.schemastore.org/api/json/catalog.json' },
+              },
+            },
+          })
+          vim.lsp.enable('yamlls')
+        ''}
+
+        ${lib.optionalString cfg.json ''
+          -- ============================================================
+          -- json-language-server (JSON — tsconfig, package.json, settings)
+          -- ============================================================
+          vim.lsp.config('jsonls', {
+            capabilities = capabilities,
+            settings = {
+              json = {
+                validate = { enable = true },
+                schemaStore = { enable = true, url = 'https://www.schemastore.org/api/json/catalog.json' },
+              },
+            },
+          })
+          vim.lsp.enable('jsonls')
         ''}
 
         ${lib.optionalString cfg.spell ''

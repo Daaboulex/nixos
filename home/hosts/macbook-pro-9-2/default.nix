@@ -48,6 +48,7 @@
     ethtool.enable = true;
     eza.enable = true;
     fastfetch.enable = true;
+    fd.enable = true;
     ffmpeg.enable = true;
     flatpak.enable = true;
     fzf.enable = true;
@@ -244,10 +245,14 @@
             # ── Per-machine runtime state ──
             "**/active-sessions*.jsonl"
             "**/.autosave-recovery.log"
+            "(?d).auto-push-last"
+            "(?d)telemetry-epoch.json"
             "(?d)*.lock"
             "(?d)**/.frontmatter-cache.json"
             # ── Syncthing own artifacts ──
             "(?d).stversions/"
+            # ── Obsidian vault metadata — per-machine, must not sync ──
+            ".obsidian/"
           ];
         };
       };
@@ -262,6 +267,10 @@
     neovim.lsp.typescript = false; # No frontend work on the MacBook
     neovim.lsp.dotnet = false; # No .NET here
     neovim.lsp.powershell = false; # No PS work here
+    neovim.lsp.markdown = true; # (default)
+    neovim.lsp.lua = true; # (default)
+    neovim.lsp.yaml = true; # (default)
+    neovim.lsp.json = true; # (default)
     neovim.lsp.spell = true; # cspell still useful for docs
     nil.enable = true;
     nix-output-monitor.enable = true;
@@ -270,6 +279,7 @@
     ns-usbloader.enable = false;
     node.enable = true;
     nvd.enable = true;
+    obsidian.enable = true;
     occt.enable = false;
     okular.enable = true;
     opencode.enable = true;
@@ -445,7 +455,7 @@
 
   # Flatpak packages (host-specific)
   services.flatpak.packages = [
-    "com.calibre_ebook.calibre"
+    #"com.calibre_ebook.calibre"
     "com.github.jeromerobert.pdfarranger"
     "com.obsproject.Studio"
     "com.spotify.Client"
@@ -453,18 +463,14 @@
     "de.bund.ausweisapp.ausweisapp2"
     "eu.betterbird.Betterbird"
     "io.github.milkshiift.GoofCord"
-    "io.github.flattool.Ignition"
+    #"io.github.flattool.Ignition"
     "io.github.giantpinkrobots.flatsweep"
     "io.github.ungoogled_software.ungoogled_chromium"
-    "io.gitlab.adhami3310.Impression" # USB image writer
+    #"io.gitlab.adhami3310.Impression" # USB image writer
     "io.gitlab.librewolf-community"
-    "md.obsidian.Obsidian"
-    "org.ardour.Ardour"
     "org.cryptomator.Cryptomator"
     "org.gimp.GIMP"
     "org.gnome.meld"
-    "org.kde.kdenlive"
-    "org.kicad.KiCad"
     "org.libreoffice.LibreOffice"
     "org.remmina.Remmina"
     "org.signal.Signal"

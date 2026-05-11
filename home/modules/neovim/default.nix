@@ -11,8 +11,17 @@
 let
   cfg = config.myModules.home.neovim;
   inherit (myLib.themeCtx { inherit config; }) hasTheme c;
+  themeFontFamily = if hasTheme then config.myModules.home.theme.font.family else "Hack Nerd Font";
   # Derive hostname from NixOS config — no manual per-host override needed
   detectedHost = osConfig.networking.hostName;
+  # Derive refresh rate from display config (millihertz → Hz)
+  detectedRefreshRate =
+    let
+      monitors = osConfig.myModules.desktop.displays.monitors or { };
+      rates = lib.mapAttrsToList (_: m: m.mode.refreshRate or 60000) monitors;
+      maxRate = if rates == [ ] then 60000 else lib.foldl' lib.max 0 rates;
+    in
+    maxRate / 1000;
 in
 {
   imports = [
@@ -74,6 +83,7 @@ in
         withRuby = lib.mkDefault false;
 
         extraPackages = [
+          pkgs.fd
           pkgs.stylua
         ];
 
@@ -122,13 +132,18 @@ in
           -- Neovide (GUI frontend) — only runs when launched via neovide
           -- ============================================================
           if vim.g.neovide then
+            vim.o.guifont = '${themeFontFamily}:h11'
             vim.g.neovide_cursor_vfx_mode = "railgun"
-            vim.g.neovide_refresh_rate = 60
+            vim.g.neovide_refresh_rate = ${toString detectedRefreshRate}
+            vim.g.neovide_refresh_rate_idle = 5
             vim.g.neovide_opacity = 0.95
             vim.g.neovide_padding_top = 8
             vim.g.neovide_padding_bottom = 8
             vim.g.neovide_padding_left = 8
             vim.g.neovide_padding_right = 8
+            vim.g.neovide_scroll_animation_length = 0.1
+            vim.g.neovide_scroll_animation_far_lines = 1
+            vim.g.neovide_cursor_animation_length = 0.08
             -- GUI clipboard shortcuts (standard X11/Wayland, not VSCode mimicry)
             vim.keymap.set({ 'n', 'v' }, '<C-S-c>', '"+y')
             vim.keymap.set({ 'n', 'v', 'i', 'c' }, '<C-S-v>', '<C-r>+')

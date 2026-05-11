@@ -255,6 +255,7 @@ Full operator reference + hook list in [`docs/BUILD.md`](docs/BUILD.md).
 | `myModules.home.ethtool`                | ethtool Ethernet diagnostics                                                   |
 | `myModules.home.eza`                    | modern ls replacement with theme-derived color scheme.                         |
 | `myModules.home.fastfetch`              | fastfetch system info display                                                  |
+| `myModules.home.fd`                     | fd file finder (used by Telescope, fzf)                                        |
 | `myModules.home.ffmpeg`                 | ffmpeg multimedia framework                                                    |
 | `myModules.home.flatpak`                | declarative Flatpak management via nix-flatpak with flathub remote.            |
 | `myModules.home.fzf`                    | fuzzy finder with ripgrep/fd integration and theme-derived colors.             |
@@ -321,6 +322,7 @@ Full operator reference + hook list in [`docs/BUILD.md`](docs/BUILD.md).
 | `myModules.home.node`                   | Node.js environment                                                            |
 | `myModules.home.ns-usbloader`           | Nintendo Switch USB loader and NSP installer                                   |
 | `myModules.home.nvd`                    | nvd — Nix version diff between system generations                              |
+| `myModules.home.obsidian`               | Obsidian knowledge base editor                                                 |
 | `myModules.home.occt`                   | OCCT stability test/benchmark                                                  |
 | `myModules.home.okular`                 | KDE PDF viewer.                                                                |
 | `myModules.home.opencode`               | OpenCode AI coding agent (sst/opencode).                                       |
@@ -508,6 +510,7 @@ home/modules/elisa/default.nix                              # KDE music player.
 home/modules/ethtool/default.nix                            # ethtool Ethernet diagnostics
 home/modules/eza/default.nix                                # modern ls replacement with theme-derived color scheme.
 home/modules/fastfetch/default.nix                          # fastfetch system info display
+home/modules/fd/default.nix                                 # fd file finder (used by Telescope, fzf)
 home/modules/ffmpeg/default.nix                             # ffmpeg multimedia framework
 home/modules/flatpak/default.nix                            # declarative Flatpak management via nix-flatpak with flathub remote.
 home/modules/fzf/default.nix                                # fuzzy finder with ripgrep/fd integration and theme-derived colors.
@@ -574,6 +577,7 @@ home/modules/nix-tree/default.nix                           # nix-tree — explo
 home/modules/node/default.nix                               # Node.js environment
 home/modules/ns-usbloader/default.nix                       # Nintendo Switch USB loader and NSP installer
 home/modules/nvd/default.nix                                # nvd — Nix version diff between system generations
+home/modules/obsidian/default.nix                           # Obsidian knowledge base editor
 home/modules/occt/default.nix                               # OCCT stability test/benchmark
 home/modules/okular/default.nix                             # KDE PDF viewer.
 home/modules/opencode/default.nix                           # OpenCode AI coding agent (sst/opencode).

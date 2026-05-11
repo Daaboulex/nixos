@@ -292,7 +292,7 @@ Paste output of `sudo ca...
 
 # --- security.agenix (4 options) ---
     # enable = false;  # boolean — Whether to enable agenix secret management.
-    # secretsRoot = "/nix/store/7m1k4facrryf12p77jkamibq737m0wi7-source/secrets";  # absolute path — Directory containing encrypted agenix secret files.
+    # secretsRoot = "/nix/store/49y9f6fk1jzd2y1pnk6l7m942bhl8z8v-source/secrets";  # absolute path — Directory containing encrypted agenix secret files.
     # ... and 2 more options with complex defaults (see docs/OPTIONS.md)
 
 # --- security.hardening (2 options) ---

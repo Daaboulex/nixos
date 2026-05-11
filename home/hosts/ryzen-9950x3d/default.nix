@@ -61,6 +61,7 @@ in
     ethtool.enable = true;
     eza.enable = true;
     fastfetch.enable = true;
+    fd.enable = true;
     ffmpeg.enable = true;
     flatpak.enable = true;
     fzf.enable = true;
@@ -261,10 +262,14 @@ in
             # ── Per-machine runtime state ──
             "**/active-sessions*.jsonl"
             "**/.autosave-recovery.log"
+            "(?d).auto-push-last"
+            "(?d)telemetry-epoch.json"
             "(?d)*.lock"
             "(?d)**/.frontmatter-cache.json"
             # ── Syncthing own artifacts ──
             "(?d).stversions/"
+            # ── Obsidian vault metadata — per-machine, must not sync ──
+            ".obsidian/"
           ];
         };
       };
@@ -279,6 +284,10 @@ in
     neovim.lsp.typescript = true; # Mobile/Expo React Native
     neovim.lsp.dotnet = true; # Decryptor projects
     neovim.lsp.powershell = true; # Portable build tooling
+    neovim.lsp.markdown = true; # (default)
+    neovim.lsp.lua = true; # (default)
+    neovim.lsp.yaml = true; # (default)
+    neovim.lsp.json = true; # (default)
     neovim.lsp.spell = true; # cspell en/de/es
     nil.enable = true;
     nix-output-monitor.enable = true;
@@ -287,6 +296,7 @@ in
     ns-usbloader.enable = true;
     node.enable = true;
     nvd.enable = true;
+    obsidian.enable = true;
     occt.enable = true;
     okular.enable = true;
     opencode.enable = true;
@@ -599,7 +609,6 @@ in
     "io.github.giantpinkrobots.flatsweep"
     "io.github.ungoogled_software.ungoogled_chromium"
     "io.gitlab.librewolf-community"
-    "md.obsidian.Obsidian"
     "org.ardour.Ardour"
     "org.cryptomator.Cryptomator"
     "org.gimp.GIMP"

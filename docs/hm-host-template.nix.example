@@ -2,7 +2,7 @@
 # Home Manager Host Configuration Template
 # ==========================================================================
 # Auto-generated from myModules.home option definitions.
-# 151 modules available.
+# 153 modules available.
 #
 # Copy to home/hosts/<hostname>/default.nix and customise.
 # Set enable = false for modules you don't need on this host.
@@ -73,6 +73,7 @@
   myModules.home.ethtool.enable = true;
   myModules.home.eza.enable = true;
   myModules.home.fastfetch.enable = true;
+  myModules.home.fd.enable = true;
   myModules.home.ffmpeg.enable = true;
   myModules.home.flatpak.enable = true;
   myModules.home.fzf.enable = true;
@@ -155,6 +156,7 @@
   myModules.home.node.enable = true;
   myModules.home.ns-usbloader.enable = true;
   myModules.home.nvd.enable = true;
+  myModules.home.obsidian.enable = true;
   myModules.home.occt.enable = true;
   myModules.home.okular.enable = true;
   myModules.home.opencode.enable = true;

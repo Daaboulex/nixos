@@ -19,6 +19,15 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    home.packages = [
+      pkgs.marksman
+      pkgs.bash-language-server
+      pkgs.yaml-language-server
+      pkgs.lua-language-server
+      pkgs.clang-tools
+      pkgs.vscode-langservers-extracted
+    ];
+
     # ============================================================================
     # Kate (Text Editor) — native plasma-manager options where available
     # ============================================================================
@@ -52,11 +61,42 @@ in
           };
         };
 
-        # LSP server for Nix (nil)
         lsp.customServers = lib.mkDefault {
           nix = {
             command = [ "nil" ];
             highlightingModeRegex = "^Nix$";
+          };
+          markdown = {
+            command = [
+              "marksman"
+              "server"
+            ];
+            highlightingModeRegex = "^Markdown$";
+          };
+          yaml = {
+            command = [
+              "yaml-language-server"
+              "--stdio"
+            ];
+            highlightingModeRegex = "^YAML$";
+          };
+          bash = {
+            command = [
+              "bash-language-server"
+              "start"
+            ];
+            highlightingModeRegex = "^Bash$";
+          };
+          lua = {
+            command = [ "lua-language-server" ];
+            highlightingModeRegex = "^Lua$";
+          };
+          json = {
+            command = [
+              "vscode-json-language-server"
+              "--stdio"
+            ];
+            highlightingModeRegex = "^JSON$";
           };
         };
       };

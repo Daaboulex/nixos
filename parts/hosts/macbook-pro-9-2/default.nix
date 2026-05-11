@@ -281,6 +281,9 @@
           "filter/dnsQueryInterception" = false;
           "dns/nameservers" = [
             "dot://dns.mullvad.net?ip=194.242.2.3&name=MullvadAdblockDoT&blockedif=empty"
+            "dot://dns.quad9.net?ip=9.9.9.9&name=Quad9&blockedif=empty"
+            "dot://dns.quad9.net?ip=149.112.112.112&name=Quad9&blockedif=empty"
+            "dot://dns.mullvad.net?ip=194.242.2.2&name=MullvadUnfilteredDoT&blockedif=empty"
           ];
           "dns/noAssignedNameservers" = true;
         };
