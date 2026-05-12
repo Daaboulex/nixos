@@ -5,9 +5,7 @@
 # 153 modules available.
 #
 # Copy to home/hosts/<hostname>/default.nix and customise.
-# Set enable = false for modules you don't need on this host.
-#
-# Regenerate: bash scripts/update-docs.sh
+# Regenerate: pre-commit hook or nix eval --raw --impure -f scripts/generate-all-docs.nix hmTemplate
 # ==========================================================================
 {
   config,
@@ -15,18 +13,11 @@
   ...
 }:
 {
-  # ========================================================================
-  # Git credentials (required per-host)
-  # ========================================================================
   programs.git.settings.user = {
     name = "<username>";
     email = "<email>";
   };
 
-  # ========================================================================
-  # Module Enable Toggles (exhaustive, alphabetical)
-  # ========================================================================
-  # Sub-options shown commented below their parent. Uncomment to override.
   myModules.home.android.enable = true;
   myModules.home.antigravity.enable = true;
   myModules.home.anydesk.enable = true;
@@ -249,12 +240,4 @@
   myModules.home.zsh.enable = true;
   # myModules.home.zsh.flakeDir = ...;
   # myModules.home.zsh.gc = ...;
-
-  # ========================================================================
-  # Per-Host Overrides (add below toggle block)
-  # ========================================================================
-  # Host-specific settings go here, grouped by concern.
-  # Example:
-  #   myModules.home.tidalcycles.autostartSuperDirt = true;
-  #   myModules.home.btop.settings = { ... };
 }

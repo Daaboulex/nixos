@@ -2,7 +2,7 @@
 #
 # exhaustiveness-exclude:
 #   gaming-gamemode gaming-gamescope gaming-rocksmith gaming-steam
-#   hardware-coolercontrol hardware-cpu-amd hardware-goxlr hardware-gpu-amd hardware-gpu-nvidia hardware-udev-access
+#   hardware-coolercontrol hardware-cpu-amd hardware-goxlr hardware-gpu-amd hardware-gpu-nvidia
 #   input-ducky-one-x-mini input-ratbagd input-streamcontroller input-yeetmouse
 #   nix-nix-ld
 #   sensors-it87 sensors-msr sensors-nct6775 sensors-ryzen-smu sensors-zenpower
@@ -75,6 +75,7 @@
             inputs.self.modules.nixos.hardware-power
             inputs.self.modules.nixos.hardware-acpid
             inputs.self.modules.nixos.hardware-upower
+            inputs.self.modules.nixos.hardware-udev-access
             inputs.self.modules.nixos.hardware-usbmuxd
 
             # Tuning

@@ -221,17 +221,24 @@
         # full-folder scan runs at boot. Delay by 120 s so KDE settles first.
         startDelay = 120;
         devices.ryzen-9950x3d.id = site.hosts.ryzen-9950x3d.syncthing.deviceId;
+        devices.fcse01.id = "DM6NT2D-66G4QOQ-7VKQCVV-NQKJKBN-R2TDJFX-TVNZ4BO-ZXO67VY-VKNLBQ7";
         folders = {
           documents = {
             path = "/home/user/Documents";
-            devices = [ "ryzen-9950x3d" ];
+            devices = [
+              "ryzen-9950x3d"
+              "fcse01"
+            ];
             # 6 h periodic scan (fsWatcher already does real-time updates).
             # Default 1 h thrashes the A400's btrfs metadata on every pass.
             rescanIntervalS = 21600;
           };
           ai-context = {
             path = "/home/user/.ai-context";
-            devices = [ "ryzen-9950x3d" ];
+            devices = [
+              "ryzen-9950x3d"
+              "fcse01"
+            ];
             ignorePerms = true;
             versioningMaxAge = "1209600";
           };
@@ -252,6 +259,7 @@
         trustedKeys = [
           "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIM5DIyEj88eLxYvf4UrvdWJ4mbPPVUtBT9LqIp5mRS7h laptop"
           "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKmK9yl3ndTzn5Qt42njlROMMf2LzOCjwzQwob1mrP9p desktop"
+          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDtj4kjDkPU8L62T6sB3CWcBeVVel43PyI7Y8uf45BCb fcse01"
         ];
         fail2banIgnoreIPs = [
           "127.0.0.1/8"
@@ -354,6 +362,11 @@
       acpid.enable = true;
       upower.enable = true;
       usbmuxd.enable = true;
+      udevAccess = {
+        enable = true;
+        saleae = true;
+        debuggingProbes = true;
+      };
     };
 
     # --------------------------------------------------------------------------

@@ -31,6 +31,8 @@ let
           pkgs.saleae-logic-2
         ];
         services.udev.extraRules = lib.optionalString cfg.debuggingProbes ''
+          # LPC-Link2 debug probe — DFU bootloader mode
+          ATTRS{idVendor}=="1fc9", ATTRS{idProduct}=="000c", MODE="0660", GROUP="dialout"
           # LPC-Link2 debug probe — CMSIS-DAP interface
           ATTRS{idVendor}=="1fc9", ATTRS{idProduct}=="0090", MODE="0660", GROUP="dialout"
           # LPC-Link2 debug probe — LPCXpresso/LinkServer interface

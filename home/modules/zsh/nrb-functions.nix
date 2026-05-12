@@ -198,7 +198,7 @@
         [[ "$_dt_ssh" != "$_dt" ]] && _msg_dim "  resolved via $_dt_ssh"
 
         # Verify sudo works without password on target
-        if ! ssh -o ConnectTimeout=5 "$_dt_ssh" 'sudo -n true' 2>/dev/null; then
+        if ! ssh -o ConnectTimeout=5 "$_dt_ssh" 'sudo -n /run/current-system/sw/bin/true' 2>/dev/null; then
           _msg_fail "$_dt requires NOPASSWD sudo for deploy"
           _msg_dim "  Target must have myModules.security.hardening.enable = true (provides nrb-activate)"
           _deploy_cleanup; return 1
