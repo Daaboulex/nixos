@@ -56,7 +56,6 @@
   # than native). Pixel's real value is as a native aarch64 builder;
   # x86_64 emulation kept for emergency cross-arch builds only.
   boot.binfmt.emulatedSystems = [ "x86_64-linux" ];
-  boot.binfmt.preferStaticEmulators = true;
   environment.variables.QEMU_CPU = "max";
 
   # SSH port — AVF blocks < 1024. ssh.nix handles all other settings.
