@@ -11,6 +11,10 @@
   # Override overlay packages — shared overlay is x86_64-only
   programs.ripgrep.package = pkgs.ripgrep;
 
+  # Git identity
+  programs.git.userName = "Daaboulex";
+  programs.git.userEmail = "39669593+Daaboulex@users.noreply.github.com";
+
   # HM Module Toggles — exhaustive, alphabetical
   myModules.home = {
     # ── Enabled: lean CLI essentials for headless builder ──
