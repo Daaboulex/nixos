@@ -101,15 +101,22 @@
   nix.settings = {
     download-buffer-size = 512 * 1024 * 1024; # 512 MiB (shared default 2 GiB — too large for 4 GB)
     max-substitution-jobs = 16; # saturate downloads from cache
+    max-jobs = lib.mkForce 4; # override auto (8) — 8 parallel builds OOM on 4 GB + thermal throttle
+    cores = lib.mkForce 2; # threads per build — limits peak RAM per derivation
   };
 
   # zram — override AVF default (ram/4) to ram/2 for better effective memory.
   # 2 GB compressed at ~3:1 ratio → ~6 GB effective swap in RAM.
   services.zram-generator.settings."zram0".zram-size = lib.mkForce "ram / 2";
 
-  # Prefer zram (fast, compressed RAM) over evicting file caches.
-  # Values >100 are valid on kernels ≥5.8 with zram; 180 is recommended.
-  boot.kernel.sysctl."vm.swappiness" = 180;
+  # Memory tuning for 4 GB VM with zram
+  boot.kernel.sysctl = {
+    "vm.swappiness" = 180; # prefer zram (fast compressed RAM) over cache eviction
+    "vm.vfs_cache_pressure" = 150; # reclaim filesystem caches faster → more RAM for builds
+    "vm.dirty_ratio" = 10; # flush writes at 10% RAM (vs 20% default) — less write-back pressure
+    "vm.dirty_background_ratio" = 5; # start background flush earlier through virtio
+    "kernel.sched_autogroup_enabled" = 0; # fair CPU scheduling for nix-daemon, not per-TTY
+  };
 
   # Disk swap — 4 GB file as fallback after zram fills.
   # Total effective: 4 GB RAM + 2 GB zram (~6 GB at 3:1) + 4 GB disk = ~14 GB.
@@ -119,6 +126,12 @@
       size = 4096;
     }
   ];
+
+  # /tmp on disk — tmpfs (default) uses RAM, large nix builds OOM on 4 GB
+  boot.tmp.useTmpfs = false;
+
+  # Journal — cap at 50M to save disk + reduce I/O
+  services.journald.extraConfig = "SystemMaxUse=50M";
 
   # Firewall — SSH on 2222 only
   networking.firewall.allowedTCPPorts = [ 2222 ];
