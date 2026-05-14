@@ -10,6 +10,7 @@
 #   hardware-gpu-intel hardware-gpu-nvidia hardware-graphics hardware-networking
 #   hardware-pipewire hardware-power hardware-udev-access hardware-upower
 #   hardware-usb-power hardware-usbmuxd
+#   host
 #   input-ducky-one-x-mini input-libinput input-ratbagd input-streamcontroller
 #   input-yeetmouse
 #   hardware-hid-apple hardware-mbpfan hardware-broadcom-wifi
@@ -43,7 +44,6 @@
       inputs.nixos-avf.nixosModules.avf
 
       # Nix
-      inputs.self.modules.nixos.host
       inputs.self.modules.nixos.nix-nix
       inputs.self.modules.nixos.nix-remote-builder
 

@@ -882,6 +882,7 @@
     download-buffer-size = 12 * 1024 * 1024 * 1024; # 12 GiB
     http-connections = 50; # Saturate gigabit for parallel substituter downloads
     fsync-store-paths = true; # Desktop has no battery — survive power loss
+    extra-sandbox-paths = [ "/dev/kvm" ];
   };
 
   # ============================================================================

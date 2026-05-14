@@ -103,6 +103,7 @@
         toplevel-ryzen-9950x3d = inputs.self.nixosConfigurations.ryzen-9950x3d.config.system.build.toplevel;
         toplevel-macbook-pro-9-2 =
           inputs.self.nixosConfigurations.macbook-pro-9-2.config.system.build.toplevel;
+        toplevel-pixel-9-pro = inputs.self.nixosConfigurations.pixel-9-pro.config.system.build.toplevel;
 
         consumer-nixos-import =
           let

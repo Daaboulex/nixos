@@ -53,7 +53,6 @@ let
           # disk streaming (slower but safe). Keep conservative for low-RAM systems.
           download-buffer-size = lib.mkDefault (2 * 1024 * 1024 * 1024); # 2 GiB
           sandbox = true;
-          extra-sandbox-paths = [ "/dev/kvm" ];
           # Emergency GC during builds — prevents disk-full mid-build.
           min-free = lib.mkDefault (1 * 1024 * 1024 * 1024); # 1 GiB trigger
           max-free = lib.mkDefault (5 * 1024 * 1024 * 1024); # 5 GiB target

@@ -665,6 +665,7 @@
   # Idle scheduling is the real throttle — daemon yields to GUI completely.
   # WiFi + 2C/4T: stalled downloads block the single build slot longer.
   nix.settings.stalled-download-timeout = 60;
+  nix.settings.extra-sandbox-paths = [ "/dev/kvm" ];
   nix.daemonCPUSchedPolicy = "idle";
   nix.daemonIOSchedClass = "idle";
 

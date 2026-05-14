@@ -13,6 +13,9 @@
   # ============================================================================
   myModules = {
 
+    # AVF convention — gates ssh AllowUsers + users.nix account creation
+    primaryUser = "droid";
+
     # --------------------------------------------------------------------------
     # Nix
     # --------------------------------------------------------------------------
@@ -35,43 +38,46 @@
     # --------------------------------------------------------------------------
     services.avahi.enable = true;
 
-    security.ssh.enable = true;
+    security.ssh = {
+      enable = true;
+      trustedKeys = site.hosts.pixel-9-pro.ssh.authorizedKeys;
+    };
   };
 
   # ============================================================================
   # AVF VM overrides
   # ============================================================================
 
-  # Default user — matches nixos-avf convention
   avf.defaultUser = "droid";
+  avf.enableGraphics = false;
+  networking.hostName = "pixel-9-pro";
 
-  # SSH — key-only, hardened, port 2222 (AVF blocks < 1024)
-  services.openssh = {
-    enable = true;
-    ports = [ 2222 ];
-    settings = {
-      PasswordAuthentication = false;
-      PermitRootLogin = "no";
-    };
-  };
-  users.users.droid.openssh.authorizedKeys.keys = site.hosts.pixel-9-pro.ssh.authorizedKeys;
+  # x86_64 emulation via QEMU binfmt_misc (no KVM — pure TCG, ~10x slower
+  # than native). Pixel's real value is as a native aarch64 builder;
+  # x86_64 emulation kept for emergency cross-arch builds only.
+  boot.binfmt.emulatedSystems = [ "x86_64-linux" ];
+  boot.binfmt.preferStaticEmulators = true;
+  environment.variables.QEMU_CPU = "max";
 
-  # Nix daemon — trusted user for remote builder, lean GC
+  # SSH port — AVF blocks < 1024. ssh.nix handles all other settings.
+  services.openssh.ports = [ 2222 ];
+
+  # Nix daemon — tuned for 4 GB VM
   nix.settings = {
-    trusted-users = [
-      "root"
-      "droid"
-    ];
-    min-free = 1073741824; # 1 GB
-    max-free = 3221225472; # 3 GB
-    auto-optimise-store = true;
-    max-jobs = "auto";
-    cores = 0;
+    download-buffer-size = 512 * 1024 * 1024; # 512 MiB (shared default 2 GiB — too large for 4 GB)
+    max-substitution-jobs = 16; # saturate downloads from cache
   };
 
-  # Swap — 4 GB file on disk to supplement 4 GB RAM + 1 GB zram.
-  # Prevents OOM during nixos-rebuild on large flakes.
-  # Total effective memory: 4 GB RAM + 1 GB zram + 4 GB disk swap = ~9 GB.
+  # zram — override AVF default (ram/4) to ram/2 for better effective memory.
+  # 2 GB compressed at ~3:1 ratio → ~6 GB effective swap in RAM.
+  services.zram-generator.settings."zram0".zram-size = lib.mkForce "ram / 2";
+
+  # Prefer zram (fast, compressed RAM) over evicting file caches.
+  # Values >100 are valid on kernels ≥5.8 with zram; 180 is recommended.
+  boot.kernel.sysctl."vm.swappiness" = 180;
+
+  # Disk swap — 4 GB file as fallback after zram fills.
+  # Total effective: 4 GB RAM + 2 GB zram (~6 GB at 3:1) + 4 GB disk = ~14 GB.
   swapDevices = [
     {
       device = "/var/swapfile";
@@ -79,8 +85,11 @@
     }
   ];
 
-  # Firewall — allow SSH
+  # Firewall — SSH on 2222 only
   networking.firewall.allowedTCPPorts = [ 2222 ];
+
+  # Override ssh.nix's fail2ban — 4 GB AVF VM can't spare the RAM
+  services.fail2ban.enable = lib.mkForce false;
 
   system.stateVersion = "25.11";
 }

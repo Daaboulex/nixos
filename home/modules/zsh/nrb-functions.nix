@@ -671,7 +671,7 @@
         while IFS= read -r _line; do
           [[ -z "$_line" || "$_line" == \#* ]] && continue
           _uri=''${_line%% *}
-          [[ "$_uri" != ssh://* ]] && _uri="ssh://$_uri"
+          [[ "$_uri" != ssh://* && "$_uri" != ssh-ng://* ]] && _uri="ssh://$_uri"
           [[ -n "$_uri" ]] && _builder_uris+=("$_uri")
         done < /etc/nix/machines
 
