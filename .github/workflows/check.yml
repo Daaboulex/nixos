@@ -15,17 +15,34 @@ jobs:
       - name: Evaluate all host configurations
         run: |
           failed=0
-          for host in ryzen-9950x3d macbook-pro-9-2 pixel-9-pro; do
+
+          # Ryzen: evaluate etc (not toplevel) — VFIO specialisation
+          # triggers IFD that depends on overlay packages not in any
+          # public cache. Full toplevel validated locally by pre-commit
+          # nix-eval-check hook. TODO: self-hosted cache or runner.
+          printf "  %-25s " "ryzen-9950x3d"
+          if output=$(nix eval ".#nixosConfigurations.ryzen-9950x3d.config.system.build.etc.drvPath" \
+            --override-input site path:./ci/site-stub 2>&1); then
+            echo "OK (etc)"
+          else
+            echo "FAIL"
+            echo "$output" | tail -5 | sed 's/^/    /'
+            failed=1
+          fi
+
+          # Macbook + pixel: full toplevel eval
+          for host in macbook-pro-9-2 pixel-9-pro; do
             printf "  %-25s " "$host"
             if output=$(nix eval ".#nixosConfigurations.$host.config.system.build.toplevel.drvPath" \
               --override-input site path:./ci/site-stub 2>&1); then
               echo "OK"
             else
               echo "FAIL"
-              echo "$output" | tail -10 | sed 's/^/    /'
+              echo "$output" | tail -5 | sed 's/^/    /'
               failed=1
             fi
           done
+
           exit $failed
 
   docs:
