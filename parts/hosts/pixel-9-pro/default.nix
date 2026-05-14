@@ -36,7 +36,6 @@
     services.avahi.enable = true;
 
     security.ssh.enable = true;
-    security.hardening.enable = true;
   };
 
   # ============================================================================

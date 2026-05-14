@@ -14,7 +14,7 @@
 #   input-yeetmouse
 #   hardware-hid-apple hardware-mbpfan hardware-broadcom-wifi
 #   nix-nix-ld
-#   security-agenix security-portmaster
+#   security-agenix security-hardening security-portmaster
 #   security-portmaster-mullvad-compat
 #   sensors-it87 sensors-msr sensors-nct6775 sensors-ryzen-smu sensors-zenpower
 #   services-cups services-earlyoom services-geoclue
@@ -53,9 +53,8 @@
       # Services
       inputs.self.modules.nixos.services-avahi
 
-      # Security
+      # Security (hardening excluded — conflicts with AVF's sudo/security defaults)
       inputs.self.modules.nixos.security-ssh
-      inputs.self.modules.nixos.security-hardening
 
       # Overlays
       {

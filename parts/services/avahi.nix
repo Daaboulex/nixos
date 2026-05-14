@@ -52,7 +52,7 @@ let
             addresses = true;
             hinfo = false;
             workstation = true;
-            userServices = false;
+            userServices = true;
           };
         };
       };
