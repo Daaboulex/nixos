@@ -19,7 +19,7 @@
 #   security-portmaster-mullvad-compat
 #   sensors-it87 sensors-msr sensors-nct6775 sensors-ryzen-smu sensors-zenpower
 #   services-cups services-earlyoom services-geoclue
-#   services-mullvad services-sunshine services-syncthing
+#   services-mullvad services-sunshine
 #   storage-btrbk storage-filesystems storage-fstrim
 #   tuning-cachyos tuning-corecycler tuning-performance tuning-sysctls
 #   vfio-base vfio-device-binding vfio-evdev vfio-hugepages vfio-kvmfr
@@ -52,6 +52,7 @@
 
       # Services
       inputs.self.modules.nixos.services-avahi
+      inputs.self.modules.nixos.services-syncthing
 
       # Security (hardening excluded — conflicts with AVF's sudo/security defaults)
       inputs.self.modules.nixos.security-ssh

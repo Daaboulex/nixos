@@ -235,14 +235,21 @@
       syncthing = {
         enable = true;
         devices.macbook-pro-9-2.id = site.hosts.macbook-pro-9-2.syncthing.deviceId;
+        devices.pixel-9-pro.id = site.hosts.pixel-9-pro.syncthing.deviceId;
         folders = {
           documents = {
             path = "/home/user/Documents";
-            devices = [ "macbook-pro-9-2" ];
+            devices = [
+              "macbook-pro-9-2"
+              "pixel-9-pro"
+            ];
           };
           ai-context = {
             path = "/home/user/.ai-context";
-            devices = [ "macbook-pro-9-2" ];
+            devices = [
+              "macbook-pro-9-2"
+              "pixel-9-pro"
+            ];
             ignorePerms = true;
             versioningMaxAge = "1209600";
           };

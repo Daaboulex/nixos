@@ -42,6 +42,30 @@
       enable = true;
       trustedKeys = site.hosts.pixel-9-pro.ssh.authorizedKeys;
     };
+
+    services.syncthing = {
+      enable = true;
+      devices.ryzen-9950x3d.id = site.hosts.ryzen-9950x3d.syncthing.deviceId;
+      devices.macbook-pro-9-2.id = site.hosts.macbook-pro-9-2.syncthing.deviceId;
+      folders = {
+        documents = {
+          path = "/home/droid/Documents";
+          devices = [
+            "ryzen-9950x3d"
+            "macbook-pro-9-2"
+          ];
+        };
+        ai-context = {
+          path = "/home/droid/.ai-context";
+          devices = [
+            "ryzen-9950x3d"
+            "macbook-pro-9-2"
+          ];
+          ignorePerms = true;
+          versioningMaxAge = "1209600";
+        };
+      };
+    };
   };
 
   # ============================================================================

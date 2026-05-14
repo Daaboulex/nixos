@@ -222,12 +222,14 @@
         startDelay = 120;
         devices.ryzen-9950x3d.id = site.hosts.ryzen-9950x3d.syncthing.deviceId;
         devices.fcse01.id = site.hosts.fcse01.syncthing.deviceId;
+        devices.pixel-9-pro.id = site.hosts.pixel-9-pro.syncthing.deviceId;
         folders = {
           documents = {
             path = "/home/user/Documents";
             devices = [
               "ryzen-9950x3d"
               "fcse01"
+              "pixel-9-pro"
             ];
             # 6 h periodic scan (fsWatcher already does real-time updates).
             # Default 1 h thrashes the A400's btrfs metadata on every pass.
@@ -238,6 +240,7 @@
             devices = [
               "ryzen-9950x3d"
               "fcse01"
+              "pixel-9-pro"
             ];
             ignorePerms = true;
             versioningMaxAge = "1209600";

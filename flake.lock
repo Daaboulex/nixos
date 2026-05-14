@@ -2455,11 +2455,11 @@
     "site": {
       "flake": false,
       "locked": {
-        "lastModified": 1778754070,
-        "narHash": "sha256-A0Dwp93FqyQGFXdpQe2TgBvGvWbSFoDMsdfR8MccG/M=",
+        "lastModified": 1778788218,
+        "narHash": "sha256-6gROFgo3xcrPSXkEI1UypIFLm4awIR2F5V2qTGsAsi8=",
         "ref": "refs/heads/master",
-        "rev": "8b7f2e5ed2c99db0292a6f520ce689a1ba8749c4",
-        "revCount": 6,
+        "rev": "cf7117c07ad60cfd7b11b65d121d2e7e868d6e0c",
+        "revCount": 7,
         "type": "git",
         "url": "file:///home/user/Documents/site"
       },
