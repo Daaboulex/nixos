@@ -41,7 +41,7 @@ let
         initrd = {
           enable = lib.mkOption {
             type = lib.types.bool;
-            default = config.myModules.boot.boot.plymouth.enable or false;
+            default = config.myModules.boot.loader.plymouth.enable or false;
             description = "Load amdgpu in initrd (required for Plymouth)";
           };
         };

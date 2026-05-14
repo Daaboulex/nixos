@@ -117,8 +117,8 @@ let
             type = lib.types.listOf lib.types.str;
             default = [ ];
             example = [
-              "ryzen-9950x3d"
-              "192.168.2.113"
+              "my-builder"
+              "192.168.1.100"
             ];
             description = ''
               Additional hostnames/IPs the remote answers to. Added to
@@ -131,7 +131,7 @@ let
           staticIp = lib.mkOption {
             type = lib.types.nullOr lib.types.str;
             default = null;
-            example = "192.168.2.113";
+            example = "192.168.1.100";
             description = ''
               LAN IP for the remote. When set, adds a `networking.hosts`
               entry so `hostName` resolves even if mDNS breaks. Leave

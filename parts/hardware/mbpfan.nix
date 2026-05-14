@@ -9,11 +9,11 @@ let
       ...
     }:
     let
-      cfg = config.myModules.macbook.mbpfan;
+      cfg = config.myModules.hardware.mbpfan;
     in
     {
       _class = "nixos";
-      options.myModules.macbook.mbpfan = {
+      options.myModules.hardware.mbpfan = {
         enable = lib.mkOption {
           type = lib.types.bool;
           default = true;
@@ -55,6 +55,6 @@ let
     };
 in
 {
-  flake.modules.nixos.macbook-mbpfan = mod;
+  flake.modules.nixos.hardware-mbpfan = mod;
 
 }

@@ -36,6 +36,8 @@
       ./_build/tests/nrb.nix
       ./_build/lib.nix
       ./_build/modules-hierarchy.nix
+      ./_build/home-modules.nix
+      ./_build/docs.nix
 
       # ── Hosts ───────────────────────────────────────────────────────
     ]

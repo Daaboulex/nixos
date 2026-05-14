@@ -19,7 +19,6 @@
       #   1. auto-format    — format first, so later hooks see clean code
       #   2. hm-exhaustiveness — fast grep check
       #   3. nix-eval-check — slow eval, runs on already-formatted code
-      #   4. update-docs    — regenerates docs from the validated state
       # Do not rename hooks without considering execution order.
       pre-commit.settings.hooks = {
         # Disable auto-wired treefmt (replaced by auto-format below)
@@ -556,110 +555,9 @@
           pass_filenames = false;
         };
 
-        # Regenerate docs when module definitions change.
-        # Single nix eval via generate-all-docs.nix (was 7 separate evals,
-        # each re-evaluating the flake — ~144s on MacBook). Now: 1 eval
-        # for all 7 outputs, ~40-70s.
-        update-docs = {
-          enable = true;
-          name = "update-docs";
-          entry = toString (
-            (pkgs.writeShellApplication {
-              name = "update-docs";
-              runtimeInputs = with pkgs; [
-                git
-                nix
-                gawk
-                coreutils
-              ];
-              text = ''
-                staged=$(git diff --cached --name-only -- 'parts/' 'home/modules/' 'scripts/' 'flake.nix')
-                [ -z "$staged" ] && exit 0
-
-                echo "Module / flake changes detected — regenerating documentation..."
-                failed=0
-                gen="scripts/generate-all-docs.nix"
-
-                errfile=$(mktemp)
-                trap 'rm -f "$errfile"' EXIT
-
-                emit() {
-                  local target="$1"; shift 1
-                  local out
-                  if out=$(nix eval "$@" 2>"$errfile"); then
-                    printf '%s' "$out" > "$target"
-                    git add "$target"
-                    echo "  $target updated and staged."
-                  else
-                    echo "ERROR: $target generation failed."
-                    cat "$errfile"
-                    failed=1
-                  fi
-                }
-
-                splice_section() {
-                  local marker="$1"
-                  local tmpfile
-                  tmpfile=$(mktemp)
-                  if ! nix eval --raw --impure \
-                       --file "$gen" "$marker" \
-                       > "$tmpfile" 2>"$errfile"; then
-                    echo "ERROR: README section '$marker' generation failed."
-                    cat "$errfile"
-                    rm -f "$tmpfile"
-                    failed=1
-                    return 1
-                  fi
-                  awk -v marker="$marker" -v content_file="$tmpfile" '
-                    $0 ~ ("<!-- BEGIN generated:" marker " -->") {
-                      print
-                      print ""
-                      while ((getline line < content_file) > 0) print line
-                      close(content_file)
-                      print ""
-                      skip = 1
-                      next
-                    }
-                    $0 ~ ("<!-- END generated:" marker " -->") {
-                      print
-                      skip = 0
-                      next
-                    }
-                    !skip { print }
-                  ' README.md > README.md.tmp && mv README.md.tmp README.md
-                  rm -f "$tmpfile"
-                  echo "  README.md section '$marker' regenerated."
-                }
-
-                # All outputs from single generate-all-docs.nix (shared flake eval)
-                emit docs/OPTIONS.md \
-                  --raw --impure --file "$gen" markdown
-                emit docs/options.json \
-                  --json --impure --file "$gen" json
-                emit docs/host-template.nix.example \
-                  --raw --impure --file "$gen" hostTemplate
-                emit docs/hm-host-template.nix.example \
-                  --raw --impure --file "$gen" hmTemplate
-
-                splice_section moduleReference
-                splice_section directoryLayout
-                splice_section flakeInputs
-
-                nix fmt -- README.md > /dev/null 2>&1 || true
-                git add README.md
-
-                [ "$failed" -ne 0 ] && {
-                  echo "Documentation generation failed."
-                  exit 1
-                }
-                exit 0
-              '';
-            })
-            + "/bin/update-docs"
-          );
-          stages = [ "pre-commit" ];
-          pass_filenames = false;
-        };
+        # update-docs hook removed — generated docs are now build artifacts
+        # via `nix build .#docs` (parts/_build/docs.nix). No auto-commit
+        # of OPTIONS.md, options.json, or templates.
       };
 
       devShells.default = config.pre-commit.devShell;

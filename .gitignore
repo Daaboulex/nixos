@@ -74,7 +74,12 @@ docs/Roadmap.md
 /.codex
 /.nrb-update.lock
 docs/SECURITY-AUDIT.md
+# ── Generated documentation (build artifacts via `nix build .#docs`) ──
+docs/OPTIONS.md
 docs/options.json
+docs/host-template.nix.example
+docs/hm-host-template.nix.example
+docs/book/
 
 # ── Syncthing conflict debris ────────────────────────────────────
 *.sync-conflict-*

@@ -28,9 +28,9 @@
     codex-cli.enable = true;
     cmake.enable = true;
     comma.enable = true;
-    crush.enable = true;
+    crush.enable = false;
     coolercontrol.enable = false;
-    corecycler.enable = false;
+    corecycler.enable = true;
     csvlens.enable = true;
     curl.enable = true;
     delta.enable = true;
@@ -180,8 +180,6 @@
             "(?d)**/.claude/"
             "(?d)**/.gemini/"
             "(?d)**/.codex/"
-            "(?d)**/.crush/"
-            "(?d)**/.opencode/"
             "(?d)**/.pi/"
 
             # ── Per-machine AI runtime state (NOT session data) ──
@@ -243,12 +241,19 @@
             "(?d)handoffs/sessions/*.json"
             "(?d)handoffs/projects/*.json"
             # ── Per-machine runtime state ──
+            "(?d)runtime/"
             "**/active-sessions*.jsonl"
             "**/.autosave-recovery.log"
             "(?d).auto-push-last"
             "(?d)telemetry-epoch.json"
             "(?d)*.lock"
             "(?d)**/.frontmatter-cache.json"
+            # ── Dream/consolidation state (per-machine) ──
+            "(?d).dream-last"
+            "(?d).dream-session-count"
+            "(?d).dream-lock"
+            "(?d).research-last"
+            "(?d).research-session-count"
             # ── Syncthing own artifacts ──
             "(?d).stversions/"
             # ── Obsidian vault metadata — per-machine, must not sync ──
@@ -282,7 +287,7 @@
     obsidian.enable = true;
     occt.enable = false;
     okular.enable = true;
-    opencode.enable = true;
+    opencode.enable = false;
     openviking.enable = false;
     pi.enable = true;
     pastel.enable = true;

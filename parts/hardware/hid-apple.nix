@@ -9,11 +9,11 @@ let
       ...
     }:
     let
-      cfg = config.myModules.macbook.hidApple;
+      cfg = config.myModules.hardware.hidApple;
     in
     {
       _class = "nixos";
-      options.myModules.macbook.hidApple = {
+      options.myModules.hardware.hidApple = {
         enable = lib.mkOption {
           type = lib.types.bool;
           default = true;
@@ -44,6 +44,6 @@ let
     };
 in
 {
-  flake.modules.nixos.macbook-hid-apple = mod;
+  flake.modules.nixos.hardware-hid-apple = mod;
 
 }

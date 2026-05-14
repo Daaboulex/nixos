@@ -1,7 +1,7 @@
 # keyboard — MacBook keyboard remap (Cmd→Ctrl via xkb).
 #
 # Remaps the ⌘ Cmd key to Ctrl via xkb. Assumes the NixOS side sets
-# `myModules.macbook.hidApple.swapOptCmd = false` so that physical Cmd
+# `myModules.hardware.hidApple.swapOptCmd = false` so that physical Cmd
 # emits KEY_LEFTMETA at the kernel level — this xkb option then swaps
 # Left Meta with Left Ctrl, producing Cmd → Ctrl end-to-end.
 #

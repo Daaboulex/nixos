@@ -37,7 +37,7 @@
     # Boot
     # --------------------------------------------------------------------------
     boot = {
-      boot = {
+      loader = {
         enable = true;
         loader = "systemd-boot"; # (default)
         secureBoot = {
@@ -111,9 +111,7 @@
     nix.remoteBuilder = {
       server = {
         enable = true;
-        authorizedKeys = [
-          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIM4usrlyb46Vu1Bx+AXLCqg4A9fq6zKFkB9YKhkc38SP remotebuild-mac-to-ryzen"
-        ];
+        inherit (site.hosts.ryzen-9950x3d.ssh.remoteBuilder) authorizedKeys;
       };
       client.enable = false; # desktop doesn't offload — it's the builder
     };
@@ -262,14 +260,11 @@
       };
       ssh = {
         enable = true;
-        trustedKeys = [
-          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIM5DIyEj88eLxYvf4UrvdWJ4mbPPVUtBT9LqIp5mRS7h laptop"
-          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKmK9yl3ndTzn5Qt42njlROMMf2LzOCjwzQwob1mrP9p desktop"
-        ];
+        inherit (site.hosts.ryzen-9950x3d.ssh) trustedKeys;
         fail2banIgnoreIPs = [
           "127.0.0.1/8"
           "::1/128"
-          "192.168.2.0/24"
+          site.network.subnet
         ];
       };
       agenix = {

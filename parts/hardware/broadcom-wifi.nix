@@ -1,4 +1,4 @@
-# wifi — Broadcom BCM4331 WiFi via b43 driver (MacBook Pro 9,2).
+# broadcom-wifi — Broadcom BCM4331 WiFi via b43 driver (MacBook Pro 9,2).
 { inputs, ... }:
 let
   mod =
@@ -9,11 +9,11 @@ let
       ...
     }:
     let
-      cfg = config.myModules.macbook.wifi;
+      cfg = config.myModules.hardware.broadcomWifi;
     in
     {
       _class = "nixos";
-      options.myModules.macbook.wifi = {
+      options.myModules.hardware.broadcomWifi = {
         enable = lib.mkEnableOption "Broadcom BCM4331 WiFi via b43 driver (MacBook Pro 9,2)";
       };
       config = lib.mkIf cfg.enable {
@@ -70,6 +70,6 @@ let
     };
 in
 {
-  flake.modules.nixos.macbook-wifi = mod;
+  flake.modules.nixos.hardware-broadcom-wifi = mod;
 
 }

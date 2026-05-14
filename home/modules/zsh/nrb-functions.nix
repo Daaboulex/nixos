@@ -679,7 +679,7 @@
         if (( ''${#_builder_uris[@]} > 0 )); then
           _msg_step "Checking remote builders..."
           for _uri in "''${_builder_uris[@]}"; do
-            if timeout 5 nix store info --store "$_uri" 2>/dev/null; then
+            if timeout 15 nix store info --store "$_uri" 2>/dev/null; then
               _msg_dim "  $_uri reachable"
               _any_reachable=1
             else

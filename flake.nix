@@ -225,6 +225,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # nixos-avf — NixOS on Android Virtualization Framework (Pixel 9 Pro builder VM)
+    nixos-avf = {
+      url = "github:nix-community/nixos-avf/trunk";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
   };
 
   # ============================================================================

@@ -104,6 +104,41 @@
         toplevel-macbook-pro-9-2 =
           inputs.self.nixosConfigurations.macbook-pro-9-2.config.system.build.toplevel;
 
+        consumer-nixos-import =
+          let
+            testCfg = inputs.nixpkgs.lib.nixosSystem {
+              inherit system;
+              modules = [
+                inputs.self.modules.nixos.hardware-pipewire
+                { myModules.hardware.pipewire.enable = true; }
+              ];
+            };
+          in
+          pkgs.runCommand "consumer-nixos-import" { } ''
+            echo "NixOS module import: hardware-pipewire evaluated successfully"
+            echo "pipewire.enable = ${builtins.toString testCfg.config.myModules.hardware.pipewire.enable}"
+            touch $out
+          '';
+
+        consumer-hm-module-count =
+          let
+            moduleNames = builtins.attrNames inputs.self.homeModules;
+            count = builtins.length moduleNames;
+          in
+          pkgs.runCommand "consumer-hm-module-count"
+            {
+              inherit count;
+            }
+            ''
+              echo "homeModules exports $count modules"
+              if [ "$count" -lt 100 ]; then
+                echo "FAIL: expected 100+ homeModules, got $count"
+                exit 1
+              fi
+              echo "OK: $count homeModules exported"
+              touch $out
+            '';
+
         # Verify nix daemon + user creation in one VM boot (merged from
         # vm-nix-settings + vm-users — identical base modules, one boot).
         vm-core = pkgs.testers.nixosTest {

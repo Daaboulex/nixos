@@ -2,10 +2,10 @@
 #
 # exhaustiveness-exclude:
 #   hardware-cpu-intel hardware-gpu-intel hardware-gpu-nvidia
-#   macbook-hid-apple macbook-mbpfan macbook-patches macbook-wifi
+#   hardware-hid-apple hardware-mbpfan hardware-broadcom-wifi
 #   sensors-it87
 #
-# Modules above are Intel/NVIDIA/MacBook-specific and intentionally not
+# Modules above are Intel/NVIDIA/Apple-specific and intentionally not
 # imported on the Ryzen workstation. The nixos-exhaustiveness hook
 # skips them for this host.
 { inputs, ... }:
@@ -26,7 +26,7 @@
         {
           imports = [
             # Boot
-            inputs.self.modules.nixos.boot-boot
+            inputs.self.modules.nixos.boot-loader
             inputs.self.modules.nixos.boot-hibernate
             inputs.self.modules.nixos.boot-impermanence
             inputs.self.modules.nixos.boot-kernel

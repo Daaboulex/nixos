@@ -8,7 +8,7 @@
 | -------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------ |
 | **STYLE.md** (this)                    | code style rules + option conventions + §13a placement       | "how do I write this module's code?"             |
 | **[ARCHITECTURE.md](ARCHITECTURE.md)** | directory layout + parts-vs-home boundary + scope categories | "where does this new module go?"                 |
-| **[BUILD.md](BUILD.md)**               | formatters, hooks, checks, tests, doc auto-regen             | "what runs on `git commit` / `nix flake check`?" |
+| **[DEVELOPMENT.md](DEVELOPMENT.md)**   | formatters, hooks, checks, tests, doc auto-regen             | "what runs on `git commit` / `nix flake check`?" |
 
 **Philosophy.** Self-contained, self-named, dendritic, non-interdependent modules. Every file either declares options + config, or is a pure helper function. No cross-module imports. Shared state flows through `myModules.*` options, never through `specialArgs` or file imports.
 
@@ -124,12 +124,12 @@ import ../../lib/mkSimplePackage.nix {
 
 ### 2.1 Naming
 
-- Path: `myModules.<area>.<feature>.<field>`. `<area>` ∈ {`boot`, `hardware`, `services`, `security`, `tuning`, `gaming`, `macbook`, `desktop`, `home`, …}.
+- Path: `myModules.<area>.<feature>.<field>`. `<area>` ∈ {`boot`, `hardware`, `services`, `security`, `tuning`, `gaming`, `desktop`, `home`, …}.
 - Leaf names: `camelCase`. Multi-word with hyphens only when mirroring an upstream option (`x11-bell`).
 - Booleans: positive sense (`enableHardening`, not `disableHardening`).
 - **File names:** `parts/**/*.nix`, `home/modules/*/`, `scripts/*.{sh,nix}` → kebab-case. Underscore prefix (`_build`, `_vms-lib.nix`) reserved for internal-helper files excluded from auto-discovery.
 - **Doc file names** (`docs/*.md`): **ALLCAPS-KEBAB.md** exclusively.
-  No lowercase filenames. See `docs/DOC-STYLE.md` §1 for rationale.
+  No lowercase filenames.
 
 ### 2.2 Declarations
 
@@ -416,8 +416,6 @@ Tokens, patterns, and context-aware exemptions defined in `~/.ai-context/scripts
 
 Enforced for `Daaboulex/nixos` by the `check-scrub-tokens` pre-commit hook (`parts/_build/git-hooks.nix` → `parts/_build/checks/check-scrub-tokens.nix`). Hook reads `forbidden_tokens` + `forbidden_patterns` + `allow_in_docs` + `context_allowlist`, fails commit on any unallowed hit, exits 0 if config absent (fresh clone). Bypass: `git commit --no-verify` (single-maintainer trust model; CI gate deferred per ROADMAP Phase Q).
 
-See `docs/REPO-STANDARD.md` §"Why these rules exist" for the complementary scaffold-lockdown contract on satellite `repos/*`.
-
 ---
 
 ## 9. Secrets (already adopted)
@@ -439,7 +437,7 @@ Repo uses **agenix**. Standards:
 Format: `<type>(<scope>): <subject>`
 
 - `type` ∈ `feat`, `fix`, `refactor`, `perf`, `chore`, `docs`, `test`, `revert`.
-- `scope` is the top-level area (`hm`, `macbook`, `hosts`, `services`, `boot`, `hm,neovim`, …).
+- `scope` is the top-level area (`hm`, `hardware`, `hosts`, `services`, `boot`, `hm,neovim`, …).
 - `subject` imperative, ≤ 72 chars, no trailing period.
 
 ### 10.2 Body
@@ -507,7 +505,7 @@ Reserved top-level keys (MUST NOT collide):
 ```text
 myModules.boot         myModules.hardware     myModules.services
 myModules.security     myModules.tuning       myModules.gaming
-myModules.macbook      myModules.desktop      myModules.home
+myModules.desktop      myModules.home
 myModules.host         myModules.theme        myModules.primaryUser
 myModules.nix          myModules.users        myModules.storage
 myModules.sensors      myModules.input        myModules.diagnostics
@@ -548,22 +546,22 @@ placement.
 
 **Primary classifier: mechanism / layer, not intent.** Tiebreaker ladder (upstream NixOS convention — first match wins):
 
-| Order | Question                                             | Scope                               |
-| ----- | ---------------------------------------------------- | ----------------------------------- |
-| 1     | Hardware-specific (GPU, CPU, sensor, peripheral)?    | `hardware` (or `macbook` if vendor) |
-| 2     | Bootloader / kernel / initramfs / LUKS?              | `boot`                              |
-| 3     | Kernel-tuning / scheduler / sysctl / mitigations?    | `tuning`                            |
-| 4     | Observability / diagnostics tooling?                 | `diagnostics`                       |
-| 5     | Virtualization (host or guest)?                      | `vfio`                              |
-| 6     | Userspace daemon (always-on)?                        | `services`                          |
-| 7     | Security mechanism (MAC, auth, audit, PAM, secrets)? | `security`                          |
-| 8     | Input / peripheral handling?                         | `input`                             |
-| 9     | Desktop session / compositor?                        | `desktop`                           |
-| 10    | Sensor / hwmon driver?                               | `sensors`                           |
-| 11    | Storage / filesystem / backup?                       | `storage`                           |
-| 12    | Nix itself (daemon, builder, sandbox)?               | `nix`                               |
-| 13    | Schema-wide (host identity, user accounts)?          | top-level `parts/<name>.nix`        |
-| 14    | User-facing program / CLI / TUI / GUI?               | `home/modules/<name>/` (HM side)    |
+| Order | Question                                             | Scope                            |
+| ----- | ---------------------------------------------------- | -------------------------------- |
+| 1     | Hardware-specific (GPU, CPU, sensor, peripheral)?    | `hardware`                       |
+| 2     | Bootloader / kernel / initramfs / LUKS?              | `boot`                           |
+| 3     | Kernel-tuning / scheduler / sysctl / mitigations?    | `tuning`                         |
+| 4     | Observability / diagnostics tooling?                 | `diagnostics`                    |
+| 5     | Virtualization (host or guest)?                      | `vfio`                           |
+| 6     | Userspace daemon (always-on)?                        | `services`                       |
+| 7     | Security mechanism (MAC, auth, audit, PAM, secrets)? | `security`                       |
+| 8     | Input / peripheral handling?                         | `input`                          |
+| 9     | Desktop session / compositor?                        | `desktop`                        |
+| 10    | Sensor / hwmon driver?                               | `sensors`                        |
+| 11    | Storage / filesystem / backup?                       | `storage`                        |
+| 12    | Nix itself (daemon, builder, sandbox)?               | `nix`                            |
+| 13    | Schema-wide (host identity, user accounts)?          | top-level `parts/<name>.nix`     |
+| 14    | User-facing program / CLI / TUI / GUI?               | `home/modules/<name>/` (HM side) |
 
 **Tiebreaker: mechanism wins over intent.** A firewall is `services/`, not `security/`, because it touches networking. A session-token storage module is `services/` even if driven by compliance requirements.
 

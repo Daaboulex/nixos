@@ -1,4 +1,4 @@
-# Build Infrastructure
+# Development
 
 How formatting, hooks, checks, tests, and documentation work in this repository.
 
@@ -6,7 +6,7 @@ How formatting, hooks, checks, tests, and documentation work in this repository.
 
 | Doc                                    | Owns                                                                |
 | -------------------------------------- | ------------------------------------------------------------------- |
-| **BUILD.md** (this)                    | operator commands, formatters, hooks, checks, tests, doc auto-regen |
+| **DEVELOPMENT.md** (this)              | operator commands, formatters, hooks, checks, tests, doc auto-regen |
 | **[STYLE.md](STYLE.md)**               | code style rules + option conventions + §13a placement              |
 | **[ARCHITECTURE.md](ARCHITECTURE.md)** | directory layout + parts-vs-home boundary + scope categories        |
 
@@ -119,17 +119,10 @@ All 15 hooks run on every `git commit`. Grouped by concern:
 | `check-scrub-tokens` | any staged file | Scans staged content for forbidden tokens (hostnames, project names, internal paths) that must not appear in the public repo. Config: `scrub-config.json`. |
 | `check-no-ai-files`  | any staged file | Blocks committing AI context files (AGENTS.md, CLAUDE.md, GEMINI.md, .claude/, .gemini/, .codex/). These are symlinks into `.ai-context/` submodule.       |
 
-### Doc auto-regen
-
-| Hook          | Trigger                                     | What it produces                                                                                                                                               |
-| ------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `update-docs` | any staged `parts/` or `home/modules/` file | `docs/OPTIONS.md`, `docs/options.json`, `docs/host-template.nix.example`, `docs/hm-host-template.nix.example`, auto-generated README sections. Re-stages them. |
-
 All custom hooks are `pkgs.writeShellApplication` (not `writeShellScript`) so they get shellcheck at build and `set -euo pipefail` automatically. To bypass for a specific transient issue:
 
 ```bash
 SKIP=nix-eval-check git commit ...   # skip one hook
-SKIP=auto-format,update-docs git commit ...   # skip multiple
 ```
 
 Do NOT bypass with `--no-verify` — that skips ALL hooks and hides real violations.
@@ -159,13 +152,13 @@ nix flake check
 
 **Which command to use:**
 
-| Situation                         | Command                                |
-| --------------------------------- | -------------------------------------- |
-| Daily development (fast feedback) | `nrb --check` or `nix flake check --no-build` |
-| Pre-commit sanity                 | pre-commit hooks handle this automatically |
+| Situation                         | Command                                                     |
+| --------------------------------- | ----------------------------------------------------------- |
+| Daily development (fast feedback) | `nrb --check` or `nix flake check --no-build`               |
+| Pre-commit sanity                 | pre-commit hooks handle this automatically                  |
 | MacBook / slow machines           | `nix flake check --no-build` (never bare `nix flake check`) |
-| CI / full validation              | `nix flake check` (includes all VM tests) |
-| Single VM test                    | `nix build --no-link '.#checks.x86_64-linux.vm-core'` |
+| CI / full validation              | `nix flake check` (includes all VM tests)                   |
+| Single VM test                    | `nix build --no-link '.#checks.x86_64-linux.vm-core'`       |
 
 VM tests boot QEMU VMs with KVM acceleration. Each takes 3-7 min.
 On machines without KVM or with limited RAM, use `--no-build`.
@@ -219,16 +212,16 @@ On machines without KVM or with limited RAM, use `--no-build`.
 
 ### VM Integration Tests
 
-| Check                    | What it proves                                                    |
-| ------------------------ | ----------------------------------------------------------------- |
-| `vm-core`                | Nix daemon + flakes + cgroups + user creation + groups + zsh      |
-| `vm-ssh`                 | SSH hardening, fail2ban, firewall port                            |
-| `vm-networking`          | NetworkManager + systemd-resolved + DNS-over-TLS (opportunistic)  |
-| `vm-hardware-pipewire`   | PipeWire starts, LADSPA config wired                              |
-| `vm-security-agenix`     | agenix + age CLI tools available                                  |
-| `vm-boot-impermanence`   | Bind mount from /persist verified via findmnt                     |
-| `smoke-v2`               | v2-tier (MBP): NM + Syncthing active                             |
-| `smoke-v4`               | v4-tier (Ryzen): NM + Syncthing active                           |
+| Check                  | What it proves                                                   |
+| ---------------------- | ---------------------------------------------------------------- |
+| `vm-core`              | Nix daemon + flakes + cgroups + user creation + groups + zsh     |
+| `vm-ssh`               | SSH hardening, fail2ban, firewall port                           |
+| `vm-networking`        | NetworkManager + systemd-resolved + DNS-over-TLS (opportunistic) |
+| `vm-hardware-pipewire` | PipeWire starts, LADSPA config wired                             |
+| `vm-security-agenix`   | agenix + age CLI tools available                                 |
+| `vm-boot-impermanence` | Bind mount from /persist verified via findmnt                    |
+| `smoke-v2`             | v2-tier (MBP): NM + Syncthing active                             |
+| `smoke-v4`             | v4-tier (Ryzen): NM + Syncthing active                           |
 
 ---
 
@@ -246,27 +239,14 @@ Auto-loaded by direnv when you `cd` into the repo (via `.envrc`).
 
 ## Documentation Generation
 
-Three Nix expressions in `scripts/` generate docs from live option definitions:
-
-### `generate-docs.nix` → `docs/OPTIONS.md`
-
-Extracts all `myModules.*` options (NixOS-level) from every host's option tree, deduplicates by path, groups by category. Also introspects Home Manager config to list all `myModules.home.*` modules with their sub-options.
-
-### `generate-host-template.nix` → `docs/host-template.nix.example`
-
-Generates a NixOS host config scaffold with every `myModules.*` option commented out, showing types and defaults. Merges options from all hosts.
-
-### `generate-hm-template.nix` → `docs/hm-host-template.nix.example`
-
-Generates a Home Manager host config scaffold with every `myModules.home.*` toggle and sub-options. Dynamically generated from the actual module tree.
-
-Run all manually:
+Documentation is generated as build artifacts via `nix build .#docs`. The `scripts/generate-all-docs.nix` expression produces option reference, module catalog, and host templates from live option definitions in a single eval.
 
 ```bash
-bash scripts/update-docs.sh
+nix build .#docs         # Build mdBook documentation site
+nix run .#docs-serve     # Local preview server
 ```
 
-Or let the `update-docs` hook handle it automatically on commit.
+Generated files (OPTIONS.md, options.json, templates) are gitignored — they are always derivable from the code.
 
 ---
 
@@ -309,7 +289,7 @@ git commit
     ├─ hm-exhaustiveness       HM modules wired in every host
     ├─ nix-eval-check          Every nixosConfigurations.* evals
     ├─ nixos-exhaustiveness    parts/ modules imported in every host (or excluded)
-    └─ update-docs             Regenerates OPTIONS.md + templates + README sections
+    (docs are build artifacts via `nix build .#docs`, not committed)
     │
     ▼
 Commit succeeds (or is rejected with clear error)
@@ -319,3 +299,37 @@ nix flake check                Re-validates everything + runs VM tests
 ```
 
 No manual `nix fmt` needed. No stale docs. No missing module toggles. No broken configs.
+
+---
+
+## Manual Test Checklists
+
+Modules requiring real hardware, network, or desktop sessions that cannot be reproduced in a VM.
+
+### Portmaster + Mullvad Stack
+
+Run after any change to `parts/security/portmaster*.nix`, `parts/services/mullvad.nix`, or `parts/hardware/networking.nix`:
+
+1. `mullvad status` → Connected
+2. `sudo iptables -t mangle -S PORTMASTER-INGEST-OUTPUT | head -1` → contains `0x6d6f6c65`
+3. Browse any site → works
+4. `resolvectl status | grep DNSOverTLS` → shows `opportunistic`
+5. `mullvad disconnect` → browse any site → still works (Quad9 fallback)
+6. `mullvad connect` → browse → works within 5s
+
+### PipeWire + DeepFilterNet Denoise
+
+Run after any change to `parts/hardware/pipewire.nix` or `home/modules/goxlr/denoise.nix`:
+
+1. `systemctl --user status pipewire` → active
+2. `wpctl status` → shows filter-chain nodes (DeepFilter)
+3. GoXLR mic input → speak → verify noise reduction active
+4. No crackling/artifacts at idle
+
+### Kernel (CachyOS + LTO)
+
+Run after `nix flake update cachyos-kernel`:
+
+1. `uname -r` → contains `cachyos` or `lto`
+2. `dmesg | grep -i "kernel\|bore\|bpf"` → no errors
+3. `cat /proc/version` → matches expected

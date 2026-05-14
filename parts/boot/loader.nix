@@ -1,4 +1,4 @@
-# boot — systemd-boot loader, Plymouth splash, and initrd configuration.
+# loader — systemd-boot loader, Plymouth splash, and initrd configuration.
 { inputs, ... }:
 let
   mod =
@@ -9,11 +9,11 @@ let
       ...
     }:
     let
-      cfg = config.myModules.boot.boot;
+      cfg = config.myModules.boot.loader;
     in
     {
       _class = "nixos";
-      options.myModules.boot.boot = {
+      options.myModules.boot.loader = {
         enable = lib.mkEnableOption "Boot configuration";
 
         loader = lib.mkOption {
@@ -101,6 +101,6 @@ let
     };
 in
 {
-  flake.modules.nixos.boot-boot = mod;
+  flake.modules.nixos.boot-loader = mod;
 
 }

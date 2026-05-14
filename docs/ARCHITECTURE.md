@@ -4,11 +4,11 @@ Structural rules for this flake. Answers "where does a new module go?"
 
 **See also** — the three project-standard docs have distinct scopes:
 
-| Doc                        | Owns                                                         |
-| -------------------------- | ------------------------------------------------------------ |
-| **ARCHITECTURE.md** (this) | directory layout + parts-vs-home boundary + scope categories |
-| **[STYLE.md](STYLE.md)**   | code style rules + option conventions + §13a placement       |
-| **[BUILD.md](BUILD.md)**   | formatters, hooks, checks, tests, doc auto-regen             |
+| Doc                                  | Owns                                                         |
+| ------------------------------------ | ------------------------------------------------------------ |
+| **ARCHITECTURE.md** (this)           | directory layout + parts-vs-home boundary + scope categories |
+| **[STYLE.md](STYLE.md)**             | code style rules + option conventions + §13a placement       |
+| **[DEVELOPMENT.md](DEVELOPMENT.md)** | formatters, hooks, checks, tests, doc auto-regen             |
 
 Together these three are the project's standard.
 
@@ -72,7 +72,7 @@ categories:
 | `parts/gaming/`      | Gaming stack — steam, gamescope, gamemode, rocksmith.                                                                                                                                                                                                                                                                                                                                                        |
 | `parts/hardware/`    | Physical-device drivers + daemons that talk to hardware — CPU (amd/intel), GPU (amd/intel/nvidia), graphics, networking, power, bluetooth, pipewire, usbmuxd, acpid, upower, USB power, coolercontrol (AIO pump/fan), goxlr (external USB mixer). Bloated at ~18 files but every entry IS hardware-related; no clean split exists. If it grows past 25, consider subdirs (`hardware/cpu/`, `hardware/gpu/`). |
 | `parts/input/`       | Peripherals and input stack — libinput (touchpad), ratbagd (mice), yeetmouse, Ducky keyboard, Stream Deck.                                                                                                                                                                                                                                                                                                   |
-| `parts/macbook/`     | Apple-specific fixes — applesmc/hid-apple patches, mbpfan, Broadcom WiFi. Host-specific category; OK as-is because the patches don't apply to any other host.                                                                                                                                                                                                                                                |
+| (removed)            | `parts/macbook/` absorbed into `parts/hardware/` — mechanism-first taxonomy, no vendor exceptions.                                                                                                                                                                                                                                                                                                           |
 | `parts/nix/`         | Nix daemon, nix-ld, remote-builder.                                                                                                                                                                                                                                                                                                                                                                          |
 | `parts/security/`    | sshd, agenix, portmaster, hardening.                                                                                                                                                                                                                                                                                                                                                                         |
 | `parts/sensors/`     | Hwmon drivers — nct6775, it87, zenpower, ryzen-smu, msr.                                                                                                                                                                                                                                                                                                                                                     |

@@ -1,0 +1,11 @@
+[book]
+title = "NixOS Flake Configuration"
+authors = ["Fahlke"]
+language = "en"
+src = "src"
+
+[build]
+build-dir = "book"
+
+[output.html]
+git-repository-url = "https://github.com/Daaboulex/nixos"

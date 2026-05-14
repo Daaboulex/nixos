@@ -29,7 +29,7 @@
         {
           imports = [
             # Boot
-            inputs.self.modules.nixos.boot-boot
+            inputs.self.modules.nixos.boot-loader
             inputs.self.modules.nixos.boot-hibernate
             inputs.self.modules.nixos.boot-impermanence
             inputs.self.modules.nixos.boot-kernel
@@ -94,11 +94,10 @@
             # Input
             inputs.self.modules.nixos.input-libinput
 
-            # MacBook
-            inputs.self.modules.nixos.macbook-hid-apple
-            inputs.self.modules.nixos.macbook-mbpfan
-            inputs.self.modules.nixos.macbook-patches
-            inputs.self.modules.nixos.macbook-wifi
+            # Apple hardware
+            inputs.self.modules.nixos.hardware-hid-apple
+            inputs.self.modules.nixos.hardware-mbpfan
+            inputs.self.modules.nixos.hardware-broadcom-wifi
             inputs.self.modules.nixos.vfio-base
 
             # External modules

@@ -1,0 +1,67 @@
+# flake-module — nixosConfiguration for pixel-9-pro (AVF Linux VM on Pixel 9 Pro).
+#
+# exhaustiveness-exclude:
+#   boot-loader boot-hibernate boot-impermanence boot-kernel
+#   desktop-displays desktop-flatpak desktop-plasma
+#   diagnostics-turbostat
+#   gaming-gamemode gaming-gamescope gaming-rocksmith gaming-steam
+#   hardware-acpid hardware-bluetooth hardware-coolercontrol hardware-core
+#   hardware-cpu-amd hardware-cpu-intel hardware-goxlr hardware-gpu-amd
+#   hardware-gpu-intel hardware-gpu-nvidia hardware-graphics hardware-networking
+#   hardware-pipewire hardware-power hardware-udev-access hardware-upower
+#   hardware-usb-power hardware-usbmuxd
+#   input-ducky-one-x-mini input-libinput input-ratbagd input-streamcontroller
+#   input-yeetmouse
+#   hardware-hid-apple hardware-mbpfan hardware-broadcom-wifi
+#   nix-nix-ld
+#   security-agenix security-portmaster
+#   security-portmaster-mullvad-compat
+#   sensors-it87 sensors-msr sensors-nct6775 sensors-ryzen-smu sensors-zenpower
+#   services-cups services-earlyoom services-geoclue
+#   services-mullvad services-sunshine services-syncthing
+#   storage-btrbk storage-filesystems storage-fstrim
+#   tuning-cachyos tuning-corecycler tuning-performance tuning-sysctls
+#   vfio-base vfio-device-binding vfio-evdev vfio-hugepages vfio-kvmfr
+#   vfio-session-gpu vfio-vms
+#
+# This is a minimal AVF VM — most NixOS modules are excluded. Only nix
+# daemon, SSH, and user config are needed. Hardware is virtual (crosvm).
+{ inputs, ... }:
+{
+  flake.nixosConfigurations.pixel-9-pro = inputs.nixpkgs.lib.nixosSystem {
+    system = "aarch64-linux";
+    specialArgs = {
+      inherit inputs;
+      myLib = inputs.self.lib;
+      site = import inputs.site;
+    };
+    modules = [
+      # Host config
+      ./default.nix
+
+      # nixos-avf hardware module (kernel, virtio, filesystems, networking)
+      inputs.nixos-avf.nixosModules.avf
+
+      # Nix
+      inputs.self.modules.nixos.host
+      inputs.self.modules.nixos.nix-nix
+      inputs.self.modules.nixos.nix-remote-builder
+
+      # Users
+      inputs.self.modules.nixos.users
+
+      # Services
+      inputs.self.modules.nixos.services-avahi
+
+      # Security
+      inputs.self.modules.nixos.security-ssh
+      inputs.self.modules.nixos.security-hardening
+
+      # Overlays
+      {
+        nixpkgs.config.allowUnfree = true;
+        nixpkgs.overlays = [ inputs.self.overlays.default ];
+      }
+    ];
+  };
+}

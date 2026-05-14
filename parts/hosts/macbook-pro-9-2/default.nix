@@ -38,7 +38,7 @@
     # Boot
     # --------------------------------------------------------------------------
     boot = {
-      boot = {
+      loader = {
         enable = true;
         loader = "systemd-boot"; # (default)
         secureBoot.enable = false; # MacBook Pro 9,2 firmware doesn't support custom keys
@@ -82,7 +82,7 @@
         speedFactor = 20; # Zen 5 16C/32T ~20× i5-3210M 2C/4T compile wall-clock
         # Ryzen's ed25519 host public key (cat /etc/ssh/ssh_host_ed25519_key.pub).
         # Rotates rarely; update here + nrb if ryzen reinstalls.
-        hostPublicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE/jG7luSfcKBrQtez0W8eZ8X0fgr2R6YStna/dEKdGT";
+        inherit (site.hosts.macbook-pro-9-2.ssh.remoteBuilder) hostPublicKey;
         extraHostNames = [
           "ryzen-9950x3d"
           site.network.hosts.ryzen-9950x3d.ip
@@ -221,7 +221,7 @@
         # full-folder scan runs at boot. Delay by 120 s so KDE settles first.
         startDelay = 120;
         devices.ryzen-9950x3d.id = site.hosts.ryzen-9950x3d.syncthing.deviceId;
-        devices.fcse01.id = "DM6NT2D-66G4QOQ-7VKQCVV-NQKJKBN-R2TDJFX-TVNZ4BO-ZXO67VY-VKNLBQ7";
+        devices.fcse01.id = site.hosts.fcse01.syncthing.deviceId;
         folders = {
           documents = {
             path = "/home/user/Documents";
@@ -256,15 +256,11 @@
       };
       ssh = {
         enable = true;
-        trustedKeys = [
-          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIM5DIyEj88eLxYvf4UrvdWJ4mbPPVUtBT9LqIp5mRS7h laptop"
-          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKmK9yl3ndTzn5Qt42njlROMMf2LzOCjwzQwob1mrP9p desktop"
-          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDtj4kjDkPU8L62T6sB3CWcBeVVel43PyI7Y8uf45BCb fcse01"
-        ];
+        inherit (site.hosts.macbook-pro-9-2.ssh) trustedKeys;
         fail2banIgnoreIPs = [
           "127.0.0.1/8"
           "::1/128"
-          "192.168.2.0/24"
+          site.network.subnet
         ];
       };
       agenix = {
@@ -424,31 +420,20 @@
     diagnostics.turbostat.enable = true; # per-core freq + thermal for libinput-lag investigations
 
     # --------------------------------------------------------------------------
-    # MacBook
+    # Apple hardware
     # --------------------------------------------------------------------------
-    macbook = {
-      # Out-of-tree applesmc + at24 patches are OFF on main (xanmod).
-      # xanmod already carries equivalent backlight/SMC fixes upstream,
-      # and this patch file was authored against the mainline-6.19
-      # layout — trying to apply it on top of xanmod rejects the hunks
-      # (6 of 7 hunks FAILED, 2026-04-20).
-      # The cachyos specialisation below re-enables patches via
-      # lib.mkForce because the cachyos-lto kernel ships a plainer
-      # mainline applesmc that DOES need these fixes on Apple hardware.
-      patches.enable = false;
-      mbpfan = {
-        enable = true;
-        lowTemp = 45; # Start ramping fan at 45 C
-        highTemp = 65; # High fan speed at 65 C
-        maxTemp = 80; # Maximum temperature
-        pollingInterval = 1; # Check every second
-      };
-      hidApple = {
-        fnMode = 1; # MBP 9,2 has inverted fnmode — 1 = media keys default, Fn for F-keys
-        swapOptCmd = false; # Keep Cmd as Meta — xkb ctrl:swap_lwin_lctl then maps Meta → Ctrl
-      };
-      wifi.enable = true; # Broadcom BCM4331 via in-tree b43 + b43Firmware_6_30_163_46
+    hardware.mbpfan = {
+      enable = true;
+      lowTemp = 45; # Start ramping fan at 45 C
+      highTemp = 65; # High fan speed at 65 C
+      maxTemp = 80; # Maximum temperature
+      pollingInterval = 1; # Check every second
     };
+    hardware.hidApple = {
+      fnMode = 1; # MBP 9,2 has inverted fnmode — 1 = media keys default, Fn for F-keys
+      swapOptCmd = false; # Keep Cmd as Meta — xkb ctrl:swap_lwin_lctl then maps Meta → Ctrl
+    };
+    hardware.broadcomWifi.enable = true; # Broadcom BCM4331 via in-tree b43 + b43Firmware_6_30_163_46
 
     input.libinput = {
       enable = true;
@@ -573,9 +558,10 @@
     loader.timeout = lib.mkForce 10;
 
     # Broadcom BCM4331 WiFi: driver + bus blacklist handled by
-    # myModules.macbook.wifi (parts/macbook/wifi.nix). That module uses the
-    # b43 (ssb) driver path, so b43 MUST NOT be blacklisted here. bcma is
-    # blacklisted by the wifi module (ssb claims the card instead).
+    # myModules.hardware.broadcomWifi (parts/hardware/broadcom-wifi.nix).
+    # That module uses the b43 (ssb) driver path, so b43 MUST NOT be
+    # blacklisted here. bcma is blacklisted by the wifi module (ssb
+    # claims the card instead).
 
     blacklistedKernelModules = [
       "iTCO_wdt" # Watchdog timer — not needed, causes errors
@@ -976,7 +962,7 @@
       # Until then the cachyos boot gets vanilla applesmc — keyboard
       # backlight may behave differently on the cachyos entry; xanmod
       # main still has its own upstream applesmc fixes.
-      myModules.macbook.patches.enable = lib.mkForce false;
+      # applesmc patches removed — upstream kernel 7.0+ has all fixes.
       # Why: APPEND to the auto-generated label (nixpkgs default is
       # "<release>.<date>.<commit>", e.g. "26.05.20260414.4bd9165")
       # instead of replacing it. Boot menu then shows
