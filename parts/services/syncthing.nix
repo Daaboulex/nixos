@@ -37,6 +37,11 @@ let
                   type = lib.types.str;
                   description = "Syncthing device ID";
                 };
+                addresses = lib.mkOption {
+                  type = lib.types.listOf lib.types.str;
+                  default = [ "dynamic" ];
+                  description = "Device addresses (dynamic = auto-discovery, or explicit tcp://host:port)";
+                };
               };
             }
           );
@@ -101,7 +106,7 @@ let
           overrideFolders = true;
 
           settings = {
-            devices = lib.mapAttrs (_: dev: { inherit (dev) id; }) cfg.devices;
+            devices = lib.mapAttrs (_: dev: { inherit (dev) id addresses; }) cfg.devices;
 
             folders = lib.mapAttrs (_: folder: {
               inherit (folder)

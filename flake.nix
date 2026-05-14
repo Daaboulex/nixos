@@ -44,6 +44,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # rEFInd — declarative rEFInd bootloader with typed options, security validation
+    refind-nix = {
+      url = "github:Daaboulex/refind-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # YeetMouse — kernel mouse acceleration driver with GUI
     yeetmouse-nix = {
       url = "github:Daaboulex/yeetmouse-nix";

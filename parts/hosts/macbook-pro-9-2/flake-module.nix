@@ -131,6 +131,7 @@
       # External modules
       inputs.nix-flatpak.nixosModules.nix-flatpak
       inputs.lanzaboote.nixosModules.lanzaboote
+      inputs.refind-nix.nixosModules.default
       inputs.agenix.nixosModules.default
       # Disko: declarative disk layout for new installations
       # Import disko module for `disko` CLI availability; the disk layout in
@@ -145,7 +146,10 @@
       {
         nixpkgs.hostPlatform = "x86_64-linux";
         nixpkgs.config.allowUnfree = true;
-        nixpkgs.overlays = [ inputs.self.overlays.default ];
+        nixpkgs.overlays = [
+          inputs.self.overlays.default
+          inputs.refind-nix.overlays.default
+        ];
       }
 
       # Single CachyOS kernel — no specialisations (configured in default.nix)

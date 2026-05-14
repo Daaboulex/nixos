@@ -45,8 +45,20 @@
 
     services.syncthing = {
       enable = true;
-      devices.ryzen-9950x3d.id = site.hosts.ryzen-9950x3d.syncthing.deviceId;
-      devices.macbook-pro-9-2.id = site.hosts.macbook-pro-9-2.syncthing.deviceId;
+      devices.ryzen-9950x3d = {
+        id = site.hosts.ryzen-9950x3d.syncthing.deviceId;
+        addresses = [
+          "tcp://ryzen-9950x3d.local:22000"
+          "dynamic"
+        ];
+      };
+      devices.macbook-pro-9-2 = {
+        id = site.hosts.macbook-pro-9-2.syncthing.deviceId;
+        addresses = [
+          "tcp://macbook-pro-9-2.local:22000"
+          "dynamic"
+        ];
+      };
       folders = {
         documents = {
           path = "/home/droid/Documents";

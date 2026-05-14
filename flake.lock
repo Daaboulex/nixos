@@ -601,6 +601,22 @@
         "type": "github"
       }
     },
+    "flake-compat_24": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1767039857,
+        "narHash": "sha256-vNpUSpF5Nuw8xvDLj2KCwwksIbjua2LZCqhV1LNRDns=",
+        "owner": "NixOS",
+        "repo": "flake-compat",
+        "rev": "5edf11c44bc78a0d334f6334cdaf7d60d732daab",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "flake-compat",
+        "type": "github"
+      }
+    },
     "flake-compat_3": {
       "flake": false,
       "locked": {
@@ -953,7 +969,7 @@
         "flake-compat": "flake-compat_18",
         "gitignore": "gitignore_17",
         "nixpkgs": [
-          "ripgrep-nix",
+          "refind-nix",
           "nixpkgs"
         ]
       },
@@ -976,7 +992,7 @@
         "flake-compat": "flake-compat_19",
         "gitignore": "gitignore_18",
         "nixpkgs": [
-          "rocksmith-nix",
+          "ripgrep-nix",
           "nixpkgs"
         ]
       },
@@ -999,7 +1015,7 @@
         "flake-compat": "flake-compat_20",
         "gitignore": "gitignore_19",
         "nixpkgs": [
-          "streamcontroller-nix",
+          "rocksmith-nix",
           "nixpkgs"
         ]
       },
@@ -1022,7 +1038,7 @@
         "flake-compat": "flake-compat_21",
         "gitignore": "gitignore_20",
         "nixpkgs": [
-          "vfio-stealth",
+          "streamcontroller-nix",
           "nixpkgs"
         ]
       },
@@ -1045,7 +1061,7 @@
         "flake-compat": "flake-compat_22",
         "gitignore": "gitignore_21",
         "nixpkgs": [
-          "vkbasalt-overlay",
+          "vfio-stealth",
           "nixpkgs"
         ]
       },
@@ -1090,6 +1106,29 @@
       "inputs": {
         "flake-compat": "flake-compat_23",
         "gitignore": "gitignore_22",
+        "nixpkgs": [
+          "vkbasalt-overlay",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1776796298,
+        "narHash": "sha256-PcRvlWayisPSjd0UcRQbhG8Oqw78AcPE6x872cPRHN8=",
+        "owner": "cachix",
+        "repo": "git-hooks.nix",
+        "rev": "3cfd774b0a530725a077e17354fbdb87ea1c4aad",
+        "type": "github"
+      },
+      "original": {
+        "owner": "cachix",
+        "repo": "git-hooks.nix",
+        "type": "github"
+      }
+    },
+    "git-hooks_21": {
+      "inputs": {
+        "flake-compat": "flake-compat_24",
+        "gitignore": "gitignore_23",
         "nixpkgs": [
           "yeetmouse-nix",
           "nixpkgs"
@@ -1449,7 +1488,7 @@
     "gitignore_17": {
       "inputs": {
         "nixpkgs": [
-          "ripgrep-nix",
+          "refind-nix",
           "git-hooks",
           "nixpkgs"
         ]
@@ -1471,7 +1510,7 @@
     "gitignore_18": {
       "inputs": {
         "nixpkgs": [
-          "rocksmith-nix",
+          "ripgrep-nix",
           "git-hooks",
           "nixpkgs"
         ]
@@ -1493,7 +1532,7 @@
     "gitignore_19": {
       "inputs": {
         "nixpkgs": [
-          "streamcontroller-nix",
+          "rocksmith-nix",
           "git-hooks",
           "nixpkgs"
         ]
@@ -1537,7 +1576,7 @@
     "gitignore_20": {
       "inputs": {
         "nixpkgs": [
-          "vfio-stealth",
+          "streamcontroller-nix",
           "git-hooks",
           "nixpkgs"
         ]
@@ -1559,7 +1598,7 @@
     "gitignore_21": {
       "inputs": {
         "nixpkgs": [
-          "vkbasalt-overlay",
+          "vfio-stealth",
           "git-hooks",
           "nixpkgs"
         ]
@@ -1579,6 +1618,28 @@
       }
     },
     "gitignore_22": {
+      "inputs": {
+        "nixpkgs": [
+          "vkbasalt-overlay",
+          "git-hooks",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1709087332,
+        "narHash": "sha256-HG2cCnktfHsKV0s4XW83gU3F57gaTljL9KNSuG6bnQs=",
+        "owner": "hercules-ci",
+        "repo": "gitignore.nix",
+        "rev": "637db329424fd7e46cf4185293b9cc8c88c95394",
+        "type": "github"
+      },
+      "original": {
+        "owner": "hercules-ci",
+        "repo": "gitignore.nix",
+        "type": "github"
+      }
+    },
+    "gitignore_23": {
       "inputs": {
         "nixpkgs": [
           "yeetmouse-nix",
@@ -2328,9 +2389,30 @@
         "type": "github"
       }
     },
-    "ripgrep-nix": {
+    "refind-nix": {
       "inputs": {
         "git-hooks": "git-hooks_15",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1778792277,
+        "narHash": "sha256-s2PO9AwA7gyI9x5wBCjcCNzXXcDtuLzocvmR2aISt+E=",
+        "owner": "Daaboulex",
+        "repo": "refind-nix",
+        "rev": "081f5406a62de81ae85da01397d768895a7b8f40",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Daaboulex",
+        "repo": "refind-nix",
+        "type": "github"
+      }
+    },
+    "ripgrep-nix": {
+      "inputs": {
+        "git-hooks": "git-hooks_16",
         "nixpkgs": [
           "nixpkgs"
         ]
@@ -2351,7 +2433,7 @@
     },
     "rocksmith-nix": {
       "inputs": {
-        "git-hooks": "git-hooks_16",
+        "git-hooks": "git-hooks_17",
         "linux-rocksmith": "linux-rocksmith",
         "nixpkgs": [
           "nixpkgs"
@@ -2404,6 +2486,7 @@
         "openviking": "openviking",
         "plasma-manager": "plasma-manager",
         "portmaster": "portmaster",
+        "refind-nix": "refind-nix",
         "ripgrep-nix": "ripgrep-nix",
         "rocksmith-nix": "rocksmith-nix",
         "site": "site",
@@ -2455,11 +2538,11 @@
     "site": {
       "flake": false,
       "locked": {
-        "lastModified": 1778788218,
-        "narHash": "sha256-6gROFgo3xcrPSXkEI1UypIFLm4awIR2F5V2qTGsAsi8=",
+        "lastModified": 1778792298,
+        "narHash": "sha256-xS/JFUgEluAbhs0odf3Xfzm+aBv9qVPWa8LLtPJpz14=",
         "ref": "refs/heads/master",
-        "rev": "cf7117c07ad60cfd7b11b65d121d2e7e868d6e0c",
-        "revCount": 7,
+        "rev": "8c98d4c8a8689ecca4bb8179aaa3d55ad9c1b3a0",
+        "revCount": 8,
         "type": "git",
         "url": "file:///home/user/Documents/site"
       },
@@ -2470,7 +2553,7 @@
     },
     "streamcontroller-nix": {
       "inputs": {
-        "git-hooks": "git-hooks_17",
+        "git-hooks": "git-hooks_18",
         "nixpkgs": [
           "nixpkgs"
         ]
@@ -2637,7 +2720,7 @@
       "inputs": {
         "autovirt": "autovirt",
         "better-timing": "better-timing",
-        "git-hooks": "git-hooks_18",
+        "git-hooks": "git-hooks_19",
         "nixpkgs": [
           "nixpkgs"
         ]
@@ -2674,7 +2757,7 @@
     },
     "vkbasalt-overlay": {
       "inputs": {
-        "git-hooks": "git-hooks_19",
+        "git-hooks": "git-hooks_20",
         "nixpkgs": [
           "nixpkgs"
         ]
@@ -2711,7 +2794,7 @@
     },
     "yeetmouse-nix": {
       "inputs": {
-        "git-hooks": "git-hooks_20",
+        "git-hooks": "git-hooks_21",
         "nixpkgs": [
           "nixpkgs"
         ],

@@ -40,9 +40,25 @@
     boot = {
       loader = {
         enable = true;
-        loader = "systemd-boot"; # (default)
+        loader = "refind";
         secureBoot.enable = false; # MacBook Pro 9,2 firmware doesn't support custom keys
         plymouth.enable = true;
+        refind = {
+          timeout = 10;
+          maxGenerations = 10;
+          theme = pkgs.refind-theme-minimal;
+          hideUI = [
+            "hints"
+            "arrows"
+            "badges"
+          ];
+          showTools = [
+            "shutdown"
+            "reboot"
+            "firmware"
+            "apple_recovery"
+          ];
+        };
       };
       impermanence.enable = false;
       hibernate = {
@@ -706,38 +722,10 @@
     LIBVA_DRIVER_NAME = "i965";
   };
 
-  # Default boot entry = CachyOS LTO-v2 specialisation.
-  # This nixpkgs rev (26.05) doesn't expose `boot.loader.systemd-boot.default`
-  # as a first-class option, so we rewrite `/boot/loader/loader.conf` in the
-  # post-install hook. The sed picks the newest cachyos-tagged entry as the
-  # default; on each nrb the new generation's `-cachyos.conf` entry wins.
-  # Press ↑/↓ at the menu within boot.loader.timeout (10s on this host) to
-  # override and boot xanmod (or any older generation) instead.
-  #
-  # Absolute /nix/store paths for coreutils + grep + sed because the
-  # systemd-boot install script runs with a minimal PATH that doesn't
-  # include /run/current-system/sw/bin yet.
-  boot.loader.systemd-boot.extraInstallCommands = ''
-    # NixOS names specialisation entries `nixos-generation-N-specialisation-<name>.conf`
-    # (confirmed on this host: `/boot/loader/entries/nixos-generation-52-specialisation-cachyos.conf`).
-    # Match the full `-specialisation-cachyos.conf` suffix — an earlier regex
-    # used just `-cachyos.conf` and silently matched nothing, leaving the
-    # loader's `default` line pinned to the xanmod entry.
-    cachyos_entry=$(
-      ${pkgs.coreutils}/bin/ls -1 /boot/loader/entries/ 2>/dev/null \
-        | ${pkgs.gnugrep}/bin/grep -E '^nixos-generation-[0-9]+-specialisation-cachyos\.conf$' \
-        | ${pkgs.coreutils}/bin/sort -V \
-        | ${pkgs.coreutils}/bin/tail -1
-    )
-    if [ -n "$cachyos_entry" ]; then
-      ${pkgs.gnused}/bin/sed -i "s|^default .*|default $cachyos_entry|" /boot/loader/loader.conf
-    fi
-  '';
-
-  # systemd-boot editor disabled — prevents an attacker with physical access
-  # from adding kernel params (e.g. init=/bin/sh) to bypass login. Also
-  # avoids a 2s boot-menu pause.
-  boot.loader.systemd-boot.editor = false;
+  # Apple firmware is picky about NVRAM — install to fallback EFI path instead.
+  boot.loader.refind.efiInstallAsRemovable = true;
+  # Disable canTouchEfiVariables since we're using removable install.
+  boot.loader.efi.canTouchEfiVariables = lib.mkForce false;
 
   # vm.compaction_proactiveness = 0 now set by myModules.tuning.sysctls
   # (imported via flake-module.nix). Rationale stays the same: compaction

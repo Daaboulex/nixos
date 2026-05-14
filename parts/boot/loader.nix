@@ -1,4 +1,4 @@
-# loader — systemd-boot loader, Plymouth splash, and initrd configuration.
+# loader — boot manager (systemd-boot, rEFInd, GRUB), Plymouth splash, and initrd.
 { inputs, ... }:
 let
   mod =
@@ -19,6 +19,7 @@ let
         loader = lib.mkOption {
           type = lib.types.enum [
             "systemd-boot"
+            "refind"
             "grub"
             "none"
           ];
@@ -32,6 +33,54 @@ let
             type = lib.types.path;
             default = "/var/lib/sbctl";
             description = "Path to PKI bundle";
+          };
+        };
+
+        refind = {
+          timeout = lib.mkOption {
+            type = lib.types.ints.unsigned;
+            default = 5;
+            description = "Boot timeout seconds";
+          };
+          maxGenerations = lib.mkOption {
+            type = lib.types.ints.positive;
+            default = 10;
+            description = "Max NixOS generations to keep in boot menu";
+          };
+          resolution = lib.mkOption {
+            type = lib.types.nullOr lib.types.str;
+            default = null;
+            example = "1920x1080";
+            description = "Screen resolution (null = firmware default)";
+          };
+          theme = lib.mkOption {
+            type = lib.types.nullOr lib.types.package;
+            default = null;
+            description = "rEFInd theme package (e.g. pkgs.refind-theme-minimal)";
+          };
+          hideUI = lib.mkOption {
+            type = lib.types.listOf lib.types.str;
+            default = [
+              "hints"
+              "arrows"
+              "label"
+              "badges"
+            ];
+            description = "UI elements to hide";
+          };
+          showTools = lib.mkOption {
+            type = lib.types.listOf lib.types.str;
+            default = [
+              "shutdown"
+              "reboot"
+              "firmware"
+            ];
+            description = "Tool entries to show";
+          };
+          extraEntries = lib.mkOption {
+            type = lib.types.listOf lib.types.attrs;
+            default = [ ];
+            description = "Manual boot entries (name, loader, ostype, etc.)";
           };
         };
 
@@ -62,13 +111,24 @@ let
       config = lib.mkIf cfg.enable {
         boot.initrd.systemd.enable = cfg.initrd.enable;
 
-        # Systemd-boot
-        boot.loader.systemd-boot.enable = lib.mkIf (
-          cfg.loader == "systemd-boot" && !cfg.secureBoot.enable
-        ) true;
-        boot.loader.systemd-boot.configurationLimit = 10;
-        boot.loader.efi.canTouchEfiVariables = true;
-        boot.loader.timeout = 5;
+        # Systemd-boot (explicitly false when using another loader)
+        boot.loader.systemd-boot.enable = cfg.loader == "systemd-boot" && !cfg.secureBoot.enable;
+        boot.loader.systemd-boot.configurationLimit = lib.mkIf (cfg.loader == "systemd-boot") 10;
+        boot.loader.efi.canTouchEfiVariables = lib.mkDefault true;
+        boot.loader.timeout = lib.mkDefault cfg.refind.timeout;
+
+        # rEFInd
+        boot.loader.refind = lib.mkIf (cfg.loader == "refind") {
+          enable = true;
+          inherit (cfg.refind)
+            timeout
+            maxGenerations
+            resolution
+            theme
+            hideUI
+            showTools
+            ;
+        };
 
         # GRUB
         boot.loader.grub.enable = lib.mkIf (cfg.loader == "grub") true;
@@ -81,8 +141,10 @@ let
         boot.plymouth.enable = lib.mkIf cfg.plymouth.enable true;
         boot.plymouth.theme = lib.mkIf cfg.plymouth.enable cfg.plymouth.theme;
 
-        # Console resolution
-        boot.loader.systemd-boot.consoleMode = lib.mkIf (cfg.consoleMode != null) cfg.consoleMode;
+        # Console resolution (systemd-boot only)
+        boot.loader.systemd-boot.consoleMode = lib.mkIf (
+          cfg.loader == "systemd-boot" && cfg.consoleMode != null
+        ) cfg.consoleMode;
 
         # Kernel parameters for clean boot
         boot.kernelParams = lib.optionals cfg.plymouth.enable [
@@ -95,12 +157,11 @@ let
 
         environment.systemPackages = [
           pkgs.efibootmgr
-        ] # manage EFI boot entries / order (needs sudo)
+        ]
         ++ lib.optionals cfg.secureBoot.enable [ pkgs.sbctl ];
       };
     };
 in
 {
   flake.modules.nixos.boot-loader = mod;
-
 }

@@ -164,6 +164,7 @@
       # External modules
       inputs.nix-flatpak.nixosModules.nix-flatpak
       inputs.lanzaboote.nixosModules.lanzaboote
+      inputs.refind-nix.nixosModules.default
       inputs.agenix.nixosModules.default
       # Disko: declarative disk layout for new installations
       # Import disko module for `disko` CLI availability; the disk layout in
