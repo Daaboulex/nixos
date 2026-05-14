@@ -12,8 +12,8 @@
   programs.ripgrep.package = pkgs.ripgrep;
 
   # Git identity
-  programs.git.userName = "Daaboulex";
-  programs.git.userEmail = "39669593+Daaboulex@users.noreply.github.com";
+  programs.git.settings.user.name = "Daaboulex";
+  programs.git.settings.user.email = "39669593+Daaboulex@users.noreply.github.com";
 
   # HM Module Toggles — exhaustive, alphabetical
   myModules.home = {
