@@ -1,6 +1,6 @@
 [book]
 title = "NixOS Flake Configuration"
-authors = ["Fahlke"]
+authors = ["Daaboulex"]
 language = "en"
 src = "src"
 

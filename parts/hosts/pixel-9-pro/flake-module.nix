@@ -57,10 +57,29 @@
       # Security (hardening excluded — conflicts with AVF's sudo/security defaults)
       inputs.self.modules.nixos.security-ssh
 
-      # Overlays
+      # Home Manager
+      ../../../home/home.nix
+      inputs.home-manager.nixosModules.home-manager
+      {
+        home-manager.useGlobalPkgs = true;
+        home-manager.useUserPackages = true;
+        home-manager.extraSpecialArgs = {
+          inherit inputs;
+          myLib = inputs.self.lib;
+          site = import inputs.site;
+        };
+        home-manager.sharedModules = [
+          inputs.lmstudio.homeManagerModules.default
+          inputs.rocksmith-nix.homeManagerModules.default
+        ];
+      }
+
+      # Overlays — shared overlay includes x86_64-specific inputs
+      # (gaming, GPU, desktop) that don't support aarch64. Pixel
+      # doesn't need them; use empty overlay set.
       {
         nixpkgs.config.allowUnfree = true;
-        nixpkgs.overlays = [ inputs.self.overlays.default ];
+        nixpkgs.overlays = [ ];
       }
     ];
   };
