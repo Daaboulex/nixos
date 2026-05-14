@@ -64,8 +64,10 @@ worktrees
 /.crush/
 /.pi/
 
-# ── Planning artifacts must live in .ai-context/.superpowers/ ────
-# Enforced by check-no-roadmap-in-docs hook; gitignore here is belt-and-braces.
+# ── AI planning artifacts (session-generated, not documentation) ──
+# Must live in .ai-context/, not docs/. Enforced by gitignore + hooks.
+docs/brainstorms/
+docs/plans/
 docs/ROADMAP.md
 docs/roadmap.md
 docs/Roadmap.md
