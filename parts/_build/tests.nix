@@ -96,14 +96,9 @@
               touch "$out"
             '';
 
-        # Toplevel host-system builds — `nix flake check` now builds each
-        # host's full system closure, catching module-level regressions
-        # that eval-only checks miss (missing deps, broken derivations,
-        # service-unit validation, etc.).
-        toplevel-ryzen-9950x3d = inputs.self.nixosConfigurations.ryzen-9950x3d.config.system.build.toplevel;
-        toplevel-macbook-pro-9-2 =
-          inputs.self.nixosConfigurations.macbook-pro-9-2.config.system.build.toplevel;
-        toplevel-pixel-9-pro = inputs.self.nixosConfigurations.pixel-9-pro.config.system.build.toplevel;
+        # Toplevel host evals live in CI workflow (nix eval), not here.
+        # nix flake check --no-build can't handle IFD in system closures
+        # (references.nix is an import-from-derivation). nix eval can.
 
         consumer-nixos-import =
           let

@@ -14,7 +14,15 @@ jobs:
       - uses: cachix/install-nix-action@v31
         with:
           nix_path: nixpkgs=channel:nixos-unstable
-      - run: nix flake check -L --no-build --override-input site path:./ci/site-stub
+      - name: Flake checks (module tests, consumer tests)
+        run: nix flake check -L --no-build --override-input site path:./ci/site-stub
+      - name: Evaluate all host configurations
+        run: |
+          for host in ryzen-9950x3d macbook-pro-9-2 pixel-9-pro; do
+            printf "  %-25s " "$host"
+            nix eval ".#nixosConfigurations.$host.config.system.build.toplevel.drvPath" \
+              --override-input site path:./ci/site-stub >/dev/null && echo "OK" || echo "FAIL"
+          done
 
   docs:
     runs-on: ubuntu-latest
