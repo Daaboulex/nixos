@@ -238,7 +238,13 @@
         startDelay = 120;
         devices.ryzen-9950x3d.id = site.hosts.ryzen-9950x3d.syncthing.deviceId;
         devices.fcse01.id = site.hosts.fcse01.syncthing.deviceId;
-        devices.pixel-9-pro.id = site.hosts.pixel-9-pro.syncthing.deviceId;
+        devices.pixel-9-pro = {
+          id = site.hosts.pixel-9-pro.syncthing.deviceId;
+          addresses = [
+            "tcp://localhost:22001"
+            "dynamic"
+          ];
+        };
         folders = {
           documents = {
             path = "/home/user/Documents";
