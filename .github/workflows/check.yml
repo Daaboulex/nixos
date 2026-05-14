@@ -17,11 +17,12 @@ jobs:
           failed=0
           for host in ryzen-9950x3d macbook-pro-9-2 pixel-9-pro; do
             printf "  %-25s " "$host"
-            if nix eval ".#nixosConfigurations.$host.config.system.build.toplevel.drvPath" \
-              --override-input site path:./ci/site-stub 2>/dev/null; then
+            if output=$(nix eval ".#nixosConfigurations.$host.config.system.build.toplevel.drvPath" \
+              --override-input site path:./ci/site-stub 2>&1); then
               echo "OK"
             else
               echo "FAIL"
+              echo "$output" | tail -10 | sed 's/^/    /'
               failed=1
             fi
           done
