@@ -501,8 +501,10 @@
         SERIAL="${serial}"
 
         resolve_vm_ip() {
+          # Filter for avf_tap_fixed entries with a real MAC (not 00:00:00:00:00:00)
+          # to skip stale ARP entries from previous VM instances
           $ADB -s "$1" shell "cat /proc/net/arp" 2>/dev/null \
-            | ${pkgs.gawk}/bin/awk '/avf_tap_fixed/{print $1; exit}'
+            | ${pkgs.gawk}/bin/awk '/avf_tap_fixed/ && $4 != "00:00:00:00:00:00" {print $1; exit}'
         }
 
         try_connect() {
