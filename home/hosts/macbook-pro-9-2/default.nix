@@ -502,8 +502,9 @@
 
         resolve_vm_ip() {
           # Filter for avf_tap_fixed entries with a real MAC (not 00:00:00:00:00:00)
-          # to skip stale ARP entries from previous VM instances
-          $ADB -s "$1" shell "cat /proc/net/arp" 2>/dev/null \
+          # to skip stale ARP entries from previous VM instances.
+          # -T: no PTY (binary-clean output)
+          $ADB -s "$1" shell -T "cat /proc/net/arp" 2>/dev/null \
             | ${pkgs.gawk}/bin/awk '/avf_tap_fixed/ && $4 != "00:00:00:00:00:00" {print $1; exit}'
         }
 
@@ -511,13 +512,14 @@
           local vm_ip
           vm_ip=$(resolve_vm_ip "$1")
           if [ -n "$vm_ip" ]; then
-            exec $ADB -s "$1" shell nc -w 10 "$vm_ip" 2222
+            exec $ADB -s "$1" shell -T nc -w 10 "$vm_ip" 2222
           fi
         }
 
         # Prefer USB device by serial — test actual shell access (not just get-state,
-        # which succeeds even when ADB auth has expired on locked screen)
-        if $ADB -s "$SERIAL" shell echo ok 2>/dev/null | grep -q ok; then
+        # which succeeds even when ADB auth has expired on locked screen).
+        # -T disables PTY allocation — critical for binary-clean SSH transport.
+        if $ADB -s "$SERIAL" shell -T echo ok 2>/dev/null | grep -q ok; then
           try_connect "$SERIAL"
           echo "pixel-proxy: USB connected but VM not running (no avf_tap_fixed in ARP)" >&2
           exit 1

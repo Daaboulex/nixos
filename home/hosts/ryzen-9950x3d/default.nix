@@ -674,10 +674,10 @@ in
           "${pkgs.writeShellScript "adb-proxy-pixel" ''
             ADB=${pkgs.android-tools}/bin/adb
             SERIAL="${serial}"
-            vm_ip=$($ADB -s "$SERIAL" shell "cat /proc/net/arp" 2>/dev/null \
+            vm_ip=$($ADB -s "$SERIAL" shell -T "cat /proc/net/arp" 2>/dev/null \
               | ${pkgs.gawk}/bin/awk '/avf_tap_fixed/ && $4 != "00:00:00:00:00:00" {print $1; exit}')
             if [ -n "$vm_ip" ]; then
-              exec $ADB -s "$SERIAL" shell nc -w 10 "$vm_ip" 2222
+              exec $ADB -s "$SERIAL" shell -T nc -w 10 "$vm_ip" 2222
             fi
             echo "pixel-proxy: no VM found (check USB + Terminal app)" >&2
             exit 1
