@@ -258,21 +258,62 @@
           fi
           _msg_ok "Flake synced"
 
-          _msg_step "Building + activating on $_dt_ssh ..."
-          local _remote_cmd='sudo nixos-rebuild switch'
-          _remote_cmd+=' --flake "path:$HOME/Documents/nix#'"$_dt"'"'
+          # Build + activate via systemd-run so the command survives SSH drops.
+          # nixos-rebuild switch restarts sshd during activation, which would
+          # kill a bare SSH command. systemd-run creates a transient service
+          # that continues independently.
+          _msg_step "Building + activating on $_dt_ssh (via systemd-run) ..."
+          local _rebuild_cmd='nixos-rebuild switch'
+          _rebuild_cmd+=' --flake "path:$HOME/Documents/nix#'"$_dt"'"'
           if (( _site_synced )); then
-            _remote_cmd+=' --override-input site "path:$HOME/Documents/site"'
+            _rebuild_cmd+=' --override-input site "path:$HOME/Documents/site"'
           fi
           if [[ -n "$trace_flag" ]]; then
-            _remote_cmd+=" $trace_flag"
+            _rebuild_cmd+=" $trace_flag"
           fi
 
-          if ! ssh -t "$_dt_ssh" "$_remote_cmd"; then
-            _msg_fail "Remote build/activation failed on $_dt"
-            _msg_dim "  On $_dt, run: sudo nixos-rebuild switch --rollback"
-            _deploy_cleanup; return 1
-          fi
+          # Launch as transient systemd service on the remote
+          ssh "$_dt_ssh" "sudo systemd-run \
+            --unit=nrb-deploy \
+            --description='nrb cross-arch deploy' \
+            --property=Type=oneshot \
+            --property=RemainAfterExit=yes \
+            -- sh -c '$_rebuild_cmd'" 2>/dev/null
+
+          # Poll for completion (reconnects if SSH drops during sshd restart)
+          _msg_dim "  Waiting for remote build (survives SSH drops)..."
+          local _polls=0
+          while true; do
+            sleep 10
+            (( _polls++ ))
+            local _state
+            _state=$(ssh -o ConnectTimeout=15 -o BatchMode=yes "$_dt_ssh" \
+              "systemctl show nrb-deploy --property=ActiveState --value" 2>/dev/null) || {
+              # SSH failed (sshd restarting) — retry
+              (( _polls % 6 == 0 )) && _msg_dim "  Still waiting... (''${_polls}0s, SSH reconnecting)"
+              continue
+            }
+            case "$_state" in
+              activating) (( _polls % 6 == 0 )) && _msg_dim "  Building... (''${_polls}0s)" ;;
+              active)     break ;;  # RemainAfterExit=yes → active means finished successfully
+              failed)
+                _msg_fail "Remote build/activation failed on $_dt"
+                ssh "$_dt_ssh" "journalctl -u nrb-deploy --no-pager -n 20" 2>/dev/null | \
+                  while IFS= read -r line; do _msg_dim "  $line"; done
+                _msg_dim "  On $_dt, run: sudo nixos-rebuild switch --rollback"
+                ssh "$_dt_ssh" "sudo systemctl reset-failed nrb-deploy" 2>/dev/null
+                _deploy_cleanup; return 1 ;;
+              inactive|"")
+                # Service doesn't exist yet or already cleaned up
+                if (( _polls > 60 )); then
+                  _msg_fail "Deploy timed out (600s) — check pixel manually"
+                  _deploy_cleanup; return 1
+                fi ;;
+            esac
+          done
+
+          # Clean up the transient service
+          ssh "$_dt_ssh" "sudo systemctl reset-failed nrb-deploy" 2>/dev/null
 
           _deploy_cleanup
           _msg_ok "Deployed to $_dt (cross-arch, built on target)"
