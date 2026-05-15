@@ -17,6 +17,18 @@ let
       options.myModules.services.syncthing = {
         enable = lib.mkEnableOption "Syncthing continuous file synchronization";
 
+        relaysEnabled = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = "Use Syncthing relay servers when direct connections fail (needed for NAT'd devices)";
+        };
+
+        globalAnnounceEnabled = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = "Register with global discovery servers (needed for NAT'd devices)";
+        };
+
         startDelay = lib.mkOption {
           type = lib.types.ints.unsigned;
           default = 0;
@@ -123,8 +135,8 @@ let
 
             options = {
               urAccepted = -1; # Disable usage reporting
-              relaysEnabled = false; # LAN only — no relay servers
-              globalAnnounceEnabled = false; # LAN only — no global discovery
+              inherit (cfg) relaysEnabled;
+              inherit (cfg) globalAnnounceEnabled;
               localAnnounceEnabled = true; # Find peers on local network
             };
           };

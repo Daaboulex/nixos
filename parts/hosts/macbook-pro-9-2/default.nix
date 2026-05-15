@@ -236,6 +236,8 @@
         # Kingston A400 (DRAM-less SATA) + btrfs = metadata storm when the
         # full-folder scan runs at boot. Delay by 120 s so KDE settles first.
         startDelay = 120;
+        relaysEnabled = true;
+        globalAnnounceEnabled = true;
         devices.ryzen-9950x3d.id = site.hosts.ryzen-9950x3d.syncthing.deviceId;
         devices.fcse01.id = site.hosts.fcse01.syncthing.deviceId;
         devices.pixel-9-pro = {
@@ -845,7 +847,29 @@
   services.udev.extraRules = ''
     ACTION=="add|change", KERNEL=="sd[a-z]", ATTR{queue/rotational}=="0", ATTR{queue/scheduler}="mq-deadline"
     ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x8086", ATTR{device}=="0x1e31", ATTR{power/wakeup}="disabled"
+    ${lib.concatMapStringsSep "\n    " (
+      pid:
+      ''ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", ATTR{idProduct}=="${pid}", TAG+="systemd", ENV{SYSTEMD_WANTS}="pixel-adb-forward.service"''
+    ) site.hosts.pixel-9-pro.adb.usbProductIds}
   '';
+
+  systemd.services.pixel-adb-forward =
+    let
+      serial = site.hosts.pixel-9-pro.adb.serial;
+    in
+    {
+      description = "ADB port forwards for Pixel 9 Pro (SSH + Syncthing)";
+      after = [ "network.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStartPre = "${pkgs.coreutils}/bin/sleep 3";
+        ExecStart = pkgs.writeShellScript "pixel-forwards" ''
+          ${pkgs.android-tools}/bin/adb -s ${serial} forward tcp:2222 tcp:2222
+          ${pkgs.android-tools}/bin/adb -s ${serial} forward tcp:22001 tcp:22000
+        '';
+        User = config.myModules.primaryUser;
+      };
+    };
   # XHC1 udev rule: Ivy Bridge Panther Point xHCI (8086:1e31) has broken PCI
   # INT A routing on MBP 9,2 ("PCI INT A: no GSI" at boot) and a firmware
   # bug where port-status-change bits aren't cleared after S3, causing the

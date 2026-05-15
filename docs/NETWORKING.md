@@ -135,6 +135,75 @@ so any UI-introduced drift is corrected before the bootstrap race.
   overrides
 - `feedback_portmaster_*.md` — incident-driven constraints
 
+## Pixel 9 Pro — AVF VM Networking
+
+The pixel runs NixOS inside an Android Virtualization Framework (AVF) VM.
+The VM sits behind Android NAT (`10.255.231.x/24`) — outbound works,
+inbound from the network is blocked.
+
+### Why ADB ProxyCommand
+
+The Android Terminal app's port forwarding binds to `127.0.0.1` on the
+phone only (confirmed in AOSP source: `PortsStateManager.kt`). Direct
+SSH from WiFi is not possible. The standard workaround is ADB as a
+transport — `adb shell nc <vm-ip> 2222` reaches the VM directly,
+bypassing the localhost-only forward.
+
+The SSH ProxyCommand resolves the VM IP dynamically from the phone's
+ARP table (`/proc/net/arp`, `avf_tap_fixed` interface) so it survives
+DHCP reassignment. USB ADB is preferred by serial; wireless ADB is
+auto-discovered via mDNS (`_adb-tls-connect._tcp`).
+
+### Why Syncthing uses relay
+
+The VM cannot be reached directly from the LAN (Android NAT). Syncthing
+relay servers bridge both sides via outbound connections — no ADB needed.
+`relaysEnabled` and `globalAnnounceEnabled` are set on all hosts that
+peer with the pixel. All relay traffic is E2E encrypted (TLS 1.3);
+relay servers see only ciphertext.
+
+A udev rule auto-creates ADB port forwards on USB plug-in for direct
+(faster) Syncthing when the phone is physically connected.
+
+### VM lifecycle
+
+Android's Low Memory Killer can SIGKILL the VM with no graceful
+shutdown. Persistence settings on the phone (Doze exempt, unrestricted
+battery, "Stay awake" when USB-connected) reduce but don't eliminate
+this. The VM's NixOS config uses zram + disk swap + aggressive cache
+pressure to stay within the 4 GB RAM ceiling.
+
+### Deploying to the pixel
+
+Syncthing syncs the working tree but not `.git/`. To deploy:
+
+```sh
+# rsync nix + site repos to pixel ($SITE_DIR = local site input path)
+rsync -avz --delete --exclude='.git' --exclude='.direnv' --exclude='repos/' \
+  --exclude='.claude/' --exclude='.gemini/' --exclude='.codex/' \
+  -e 'ssh pixel-9-pro' ~/Documents/nix/ droid@pixel-9-pro:~/Documents/nix/
+
+rsync -avz --delete --exclude='.git' \
+  -e 'ssh pixel-9-pro' "$SITE_DIR/" droid@pixel-9-pro:~/Documents/"$(basename "$SITE_DIR")"/
+
+# rebuild on pixel
+ssh pixel-9-pro 'sudo nixos-rebuild switch \
+  --flake "path:$HOME/Documents/nix#pixel-9-pro" \
+  --override-input site "path:$HOME/Documents/'"$(basename "$SITE_DIR")"'"'
+```
+
+The pixel has its own `.git/` (initialized separately, tracking
+`origin/main`). After the git repo is set up, `nrb` works natively
+on the pixel — it detects the `path:` scheme and site input override
+automatically.
+
+### Related modules
+
+- `parts/hosts/pixel-9-pro/` — NixOS host config (SSH, firewall, AVF overrides)
+- `home/hosts/pixel-9-pro/` — HM config (lean CLI toolset)
+- `parts/services/syncthing.nix` — `relaysEnabled` / `globalAnnounceEnabled` options
+- `site/hosts/pixel-9-pro.nix` — ADB serial, USB product IDs (private)
+
 ---
 
-_Last verified: 2026-05-05._
+_Last verified: 2026-05-15._

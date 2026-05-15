@@ -234,6 +234,8 @@
       };
       syncthing = {
         enable = true;
+        relaysEnabled = true;
+        globalAnnounceEnabled = true;
         devices.macbook-pro-9-2.id = site.hosts.macbook-pro-9-2.syncthing.deviceId;
         devices.pixel-9-pro.id = site.hosts.pixel-9-pro.syncthing.deviceId;
         folders = {

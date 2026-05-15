@@ -45,6 +45,8 @@
 
     services.syncthing = {
       enable = true;
+      relaysEnabled = true;
+      globalAnnounceEnabled = true;
       devices.ryzen-9950x3d = {
         id = site.hosts.ryzen-9950x3d.syncthing.deviceId;
         addresses = [
@@ -133,11 +135,11 @@
   # Journal — cap at 50M to save disk + reduce I/O
   services.journald.extraConfig = "SystemMaxUse=50M";
 
-  # Firewall — SSH on 2222 only
+  # Firewall — SSH only
   networking.firewall.allowedTCPPorts = [ 2222 ];
 
   # Override ssh.nix's fail2ban — 4 GB AVF VM can't spare the RAM
   services.fail2ban.enable = lib.mkForce false;
 
-  system.stateVersion = "25.11";
+  system.stateVersion = "26.05";
 }

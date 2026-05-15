@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  site,
   ...
 }:
 
@@ -119,7 +120,7 @@ in
     models.enable = true;
     moonlight.enable = true;
     atuin.enable = true;
-    atuin.sync = false; # Disabled — self-host atuin-server before re-enabling
+    atuin.sync = false; # Local only — enable when self-hosted atuin-server is set up
     mullvad.enable = true;
     mullvad.autostart = true; # GUI starts in tray on login; does NOT auto-connect
     syncthing = {
@@ -271,6 +272,8 @@ in
             "(?d).dream-lock"
             "(?d).research-last"
             "(?d).research-session-count"
+            # ── Archived brainstorm files (~1.8 MB, not needed cross-machine) ──
+            "(?d).superpowers/"
             # ── Syncthing own artifacts ──
             "(?d).stversions/"
             # ── Obsidian vault metadata — per-machine, must not sync ──
@@ -657,6 +660,18 @@ in
         hostname = "macbook-pro-9-2.local";
         user = "user";
         identityFile = "~/.ssh/id_ed25519";
+        extraOptions = {
+          StrictHostKeyChecking = "accept-new";
+        };
+      };
+      # Pixel VM — via ADB bridge to AVF VM
+      "pixel-9-pro" = {
+        user = "droid";
+        proxyCommand =
+          let
+            serial = site.hosts.pixel-9-pro.adb.serial;
+          in
+          "adb -s ${serial} shell 'nc $(cat /proc/net/arp | awk \"/avf_tap/{print \\$1}\") 2222'";
         extraOptions = {
           StrictHostKeyChecking = "accept-new";
         };

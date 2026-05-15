@@ -2,6 +2,7 @@
   config,
   pkgs,
   lib,
+  site,
   ...
 }:
 
@@ -102,7 +103,7 @@
     models.enable = false;
     moonlight.enable = false;
     atuin.enable = true;
-    atuin.sync = false; # Disabled — self-host atuin-server before re-enabling
+    atuin.sync = false; # Local only — enable when self-hosted atuin-server is set up
     mullvad.enable = true;
     mullvad.autostart = true; # GUI starts in tray on login; does NOT auto-connect
     syncthing = {
@@ -254,6 +255,8 @@
             "(?d).dream-lock"
             "(?d).research-last"
             "(?d).research-session-count"
+            # ── Archived brainstorm files (~1.8 MB, not needed cross-machine) ──
+            "(?d).superpowers/"
             # ── Syncthing own artifacts ──
             "(?d).stversions/"
             # ── Obsidian vault metadata — per-machine, must not sync ──
@@ -481,6 +484,47 @@
     "org.signal.Signal"
     "org.videolan.VLC"
   ];
+
+  # SSH client — pixel-9-pro via ADB bridge to AVF VM.
+  # ProxyCommand auto-discovers the phone via mDNS if no ADB device is connected.
+  # Works over USB (automatic) and wireless debugging (mDNS auto-connect).
+  programs.ssh.enable = true;
+  programs.ssh.enableDefaultConfig = false;
+  programs.ssh.matchBlocks.pixel-9-pro = {
+    user = "droid";
+    proxyCommand =
+      let
+        serial = site.hosts.pixel-9-pro.adb.serial;
+      in
+      "${pkgs.writeShellScript "adb-proxy-pixel" ''
+        ADB=${pkgs.android-tools}/bin/adb
+        SERIAL="${serial}"
+
+        # Resolve VM IP from phone's ARP table (only device on avf_tap_fixed)
+        resolve_vm_ip() {
+          $ADB -s "$1" shell "cat /proc/net/arp" 2>/dev/null \
+            | ${pkgs.gawk}/bin/awk '/avf_tap_fixed/{print $1; exit}'
+        }
+
+        # Prefer USB device by serial. If not present, discover wirelessly.
+        if $ADB -s "$SERIAL" get-state >/dev/null 2>&1; then
+          VM_IP=$(resolve_vm_ip "$SERIAL")
+          [ -n "$VM_IP" ] && exec $ADB -s "$SERIAL" shell nc "$VM_IP" 2222
+        fi
+
+        # No USB — find wireless ADB via mDNS and connect
+        addr=$(${pkgs.avahi}/bin/avahi-browse -tpr _adb-tls-connect._tcp 2>/dev/null \
+          | ${pkgs.gawk}/bin/awk -F';' '/^=/{print $8":"$9; exit}')
+        if [ -n "$addr" ]; then
+          $ADB connect "$addr" >/dev/null 2>&1
+          VM_IP=$(resolve_vm_ip "$addr")
+          [ -n "$VM_IP" ] && exec $ADB -s "$addr" shell nc "$VM_IP" 2222
+        fi
+
+        echo "No ADB device or VM not running" >&2
+        exit 1
+      ''}";
+  };
 
   # App-specific overrides
   services.flatpak.overrides = {

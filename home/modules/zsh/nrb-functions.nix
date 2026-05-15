@@ -12,6 +12,20 @@
       local trace_flag="" dry=0 boot=0 update=0 update_no_kernel=0 check=0 target="" deploy_target=""
       local flake_dir="''${FLAKE_DIR:-${flakeDir}}"
 
+      # Flake reference — git when repo is functional, path: otherwise.
+      # Syncthing-synced trees have working files but may lack .git/.
+      local flake_ref="$flake_dir"
+      if [[ -d "$flake_dir" ]] && ! git -C "$flake_dir" rev-parse HEAD &>/dev/null 2>&1; then
+        flake_ref="path:$flake_dir"
+      fi
+
+      # Input overrides — site input hardcodes /home/user/Documents/site.
+      # On machines with a different $HOME, override to $HOME equivalent.
+      local -a _input_overrides=()
+      if [[ "$HOME" != "/home/user" && -d "$HOME/Documents/site" ]]; then
+        _input_overrides+=(--override-input site "path:$HOME/Documents/site")
+      fi
+
       # Terminal rendering — respect NO_COLOR, detect capabilities
       local _c_reset="" _c_bold="" _c_dim="" _c_red="" _c_green="" _c_yellow="" _c_blue="" _c_cyan=""
       local _i_ok="OK" _i_fail="FAIL" _i_warn="!!" _i_info=">>" _i_arrow="->"
@@ -104,7 +118,7 @@
             echo "NixOS Configurations:"
             echo ""
             nix --extra-experimental-features 'nix-command flakes' \
-              eval "$flake_dir#nixosConfigurations" --apply 'x: builtins.attrNames x' --json 2>/dev/null \
+              eval "$flake_ref#nixosConfigurations" "''${_input_overrides[@]}" --apply 'x: builtins.attrNames x' --json 2>/dev/null \
               | $_jq -r '.[]' | while read -r name; do
                 if [[ "$name" == "$(hostname)" ]]; then
                   marker="  (current — nrb)"
@@ -115,8 +129,8 @@
 
                 # Show specialisations for each config
                 specs=$(nix --extra-experimental-features 'nix-command flakes' \
-                  eval "$flake_dir#nixosConfigurations.$name.config.specialisation" \
-                  --apply 'x: builtins.attrNames x' --json 2>/dev/null || echo "[]")
+                  eval "$flake_ref#nixosConfigurations.$name.config.specialisation" \
+                  "''${_input_overrides[@]}" --apply 'x: builtins.attrNames x' --json 2>/dev/null || echo "[]")
                 if [[ "$specs" != "[]" ]]; then
                   echo "$specs" | $_jq -r '.[]' | while read -r spec; do
                     echo "    + $spec  (boot variant)"
@@ -205,9 +219,9 @@
         fi
 
         # Build (uses $_dt for the nix config name, $_dt_ssh for SSH)
-        _msg_step "Building $flake_dir#nixosConfigurations.$_dt ..."
-        if ! nix build "''${flake_dir}#nixosConfigurations.''${_dt}.config.system.build.toplevel" \
-          -o "$_build_dir/result" $trace_flag; then
+        _msg_step "Building $flake_ref#nixosConfigurations.$_dt ..."
+        if ! nix build "''${flake_ref}#nixosConfigurations.''${_dt}.config.system.build.toplevel" \
+          -o "$_build_dir/result" "''${_input_overrides[@]}" $trace_flag; then
           _msg_fail "Build failed for $_dt"
           _deploy_cleanup; return 1
         fi
@@ -388,7 +402,7 @@
 
         # JSON-escape host-derived strings so paths containing spaces
         # or quotes never corrupt the inlined nix expression.
-        _escaped_dir=$(printf '%s' "$flake_dir" | ${pkgs.jq}/bin/jq -Rr @json)
+        _escaped_dir=$(printf '%s' "$flake_ref" | ${pkgs.jq}/bin/jq -Rr @json)
         _escaped_host=$(printf '%s' "$hostname" | ${pkgs.jq}/bin/jq -Rr @json)
 
         # Inline nix expression that returns the full {default+specs} map.
@@ -621,7 +635,7 @@
       fi
 
       # Dirty tree warning (check after update since --update modifies flake.lock)
-      if command -v git &>/dev/null && [[ -d "$flake_dir/.git" ]]; then
+      if command -v git &>/dev/null && git -C "$flake_dir" rev-parse HEAD &>/dev/null 2>&1; then
         local dirty_files
         dirty_files=$(git -C "$flake_dir" diff --name-only -- flake.lock flake.nix 2>/dev/null)
         if [[ -n "$dirty_files" ]]; then
@@ -697,7 +711,7 @@
       fi
 
       # Build
-      _msg_step "Building $flake_dir#nixosConfigurations.$hostname ..."
+      _msg_step "Building $flake_ref#nixosConfigurations.$hostname ..."
       local start_time=$SECONDS
 
       local build_path _build_rc=0
@@ -710,15 +724,15 @@
 
       if command -v nom &>/dev/null; then
         nom build \
-          "$flake_dir/.#nixosConfigurations.$hostname.config.system.build.toplevel" \
+          "$flake_ref#nixosConfigurations.$hostname.config.system.build.toplevel" \
           --print-out-paths --no-link \
-          "''${_jobs_override[@]}" $trace_flag \
+          "''${_input_overrides[@]}" "''${_jobs_override[@]}" $trace_flag \
           > "$_build_out" || _build_rc=$?
       else
         nix --extra-experimental-features 'nix-command flakes' \
-          build "$flake_dir/.#nixosConfigurations.$hostname.config.system.build.toplevel" \
+          build "$flake_ref#nixosConfigurations.$hostname.config.system.build.toplevel" \
           --print-out-paths --no-link \
-          "''${_jobs_override[@]}" $trace_flag \
+          "''${_input_overrides[@]}" "''${_jobs_override[@]}" $trace_flag \
           > "$_build_out" || _build_rc=$?
       fi
 
@@ -969,6 +983,14 @@
   nrbCheck = ''
     nrb-check() {
       local flake_dir="''${FLAKE_DIR:-${flakeDir}}"
+      local flake_ref="$flake_dir"
+      if [[ -d "$flake_dir" ]] && ! git -C "$flake_dir" rev-parse HEAD &>/dev/null 2>&1; then
+        flake_ref="path:$flake_dir"
+      fi
+      local -a _input_overrides=()
+      if [[ "$HOME" != "/home/user" && -d "$HOME/Documents/site" ]]; then
+        _input_overrides+=(--override-input site "path:$HOME/Documents/site")
+      fi
       local _jq="${pkgs.jq}/bin/jq"
       local trace_flag=""
       local configs_json name eval_output specs_json spec spec_output
@@ -982,7 +1004,7 @@
 
       # Discover all nixosConfigurations dynamically
       configs_json=$(nix --extra-experimental-features 'nix-command flakes' \
-        eval "$flake_dir#nixosConfigurations" --apply 'x: builtins.attrNames x' --json 2>/dev/null)
+        eval "$flake_ref#nixosConfigurations" "''${_input_overrides[@]}" --apply 'x: builtins.attrNames x' --json 2>/dev/null)
       if [[ -z "$configs_json" || "$configs_json" == "[]" ]]; then
         echo "ERROR: No nixosConfigurations found in $flake_dir"
         return 1
@@ -998,15 +1020,15 @@
         printf "  %-30s " "$name"
 
         if eval_output=$(nix --extra-experimental-features 'nix-command flakes' \
-          eval "$flake_dir#nixosConfigurations.$name.config.system.build.toplevel.drvPath" \
-          $trace_flag 2>&1); then
+          eval "$flake_ref#nixosConfigurations.$name.config.system.build.toplevel.drvPath" \
+          "''${_input_overrides[@]}" $trace_flag 2>&1); then
           echo "OK"
           (( passed++ ))
 
           # Discover and individually evaluate each specialisation
           specs_json=$(nix --extra-experimental-features 'nix-command flakes' \
-            eval "$flake_dir#nixosConfigurations.$name.config.specialisation" \
-            --apply 'x: builtins.attrNames x' --json 2>/dev/null || echo "[]")
+            eval "$flake_ref#nixosConfigurations.$name.config.specialisation" \
+            "''${_input_overrides[@]}" --apply 'x: builtins.attrNames x' --json 2>/dev/null || echo "[]")
 
           if [[ "$specs_json" != "[]" ]]; then
             spec_names=()
@@ -1018,8 +1040,8 @@
               (( total++ ))
               printf "    %-26s " "+ $spec"
               if spec_output=$(nix --extra-experimental-features 'nix-command flakes' \
-                eval "$flake_dir#nixosConfigurations.$name.config.specialisation.$spec.configuration.system.build.toplevel.drvPath" \
-                $trace_flag 2>&1); then
+                eval "$flake_ref#nixosConfigurations.$name.config.specialisation.$spec.configuration.system.build.toplevel.drvPath" \
+                "''${_input_overrides[@]}" $trace_flag 2>&1); then
                 echo "OK"
                 (( passed++ ))
               else
@@ -1045,6 +1067,14 @@
   nrbInfo = ''
     nrb-info() {
       local flake_dir="''${FLAKE_DIR:-${flakeDir}}"
+      local flake_ref="$flake_dir"
+      if [[ -d "$flake_dir" ]] && ! git -C "$flake_dir" rev-parse HEAD &>/dev/null 2>&1; then
+        flake_ref="path:$flake_dir"
+      fi
+      local -a _input_overrides=()
+      if [[ "$HOME" != "/home/user" && -d "$HOME/Documents/site" ]]; then
+        _input_overrides+=(--override-input site "path:$HOME/Documents/site")
+      fi
       local _jq="${pkgs.jq}/bin/jq"
       local hostname booted_spec="" gen hm_gen store_size
       local name marker specs spec smarker
@@ -1088,7 +1118,7 @@
       # Available configs + specialisations
       echo "Configurations:"
       nix --extra-experimental-features 'nix-command flakes' \
-        eval "$flake_dir#nixosConfigurations" --apply 'x: builtins.attrNames x' --json 2>/dev/null \
+        eval "$flake_ref#nixosConfigurations" "''${_input_overrides[@]}" --apply 'x: builtins.attrNames x' --json 2>/dev/null \
         | $_jq -r '.[]' | while read -r name; do
           marker=""
           [[ "$name" == "$hostname" ]] && marker="  (active)"
@@ -1096,8 +1126,8 @@
 
           # Show specialisations
           specs=$(nix --extra-experimental-features 'nix-command flakes' \
-            eval "$flake_dir#nixosConfigurations.$name.config.specialisation" \
-            --apply 'x: builtins.attrNames x' --json 2>/dev/null || echo "[]")
+            eval "$flake_ref#nixosConfigurations.$name.config.specialisation" \
+            "''${_input_overrides[@]}" --apply 'x: builtins.attrNames x' --json 2>/dev/null || echo "[]")
           if [[ "$specs" != "[]" ]]; then
             echo "$specs" | $_jq -r '.[]' | while read -r spec; do
               smarker=""
