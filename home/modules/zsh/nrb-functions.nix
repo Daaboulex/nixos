@@ -155,12 +155,9 @@
         return 1
       fi
 
-      # ADV-002: --deploy incompatible with --boot, --update, --update-no-kernel
+      # ADV-002: --deploy incompatible with --update, --update-no-kernel
+      # (--boot and --dry are supported for cross-arch deploy)
       if [[ -n "$deploy_target" ]]; then
-        if (( boot )); then
-          _msg_fail "--deploy does not support --boot"
-          return 1
-        fi
         if (( update )); then
           _msg_fail "--deploy does not support --update (run nrb --update separately first)"
           return 1
@@ -176,14 +173,6 @@
       # Cross-arch: rsync flake to target, build + activate on target.
       # Requires: passwordless SSH + NOPASSWD sudo on target.
       if [[ -n "$deploy_target" ]]; then
-        if (( dry )); then
-          _msg_fail "--deploy does not support --dry (remote activation is all-or-nothing)"
-          return 1
-        fi
-        if (( check )); then
-          _msg_fail "--deploy does not support --check (use nrb --check separately)"
-          return 1
-        fi
         local _dt="$deploy_target"
         local _dt_ssh=""
         local _build_dir
@@ -262,8 +251,19 @@
           # nixos-rebuild switch restarts sshd during activation, which would
           # kill a bare SSH command. systemd-run creates a transient service
           # that continues independently.
-          _msg_step "Building + activating on $_dt_ssh (via systemd-run) ..."
-          local _rebuild_cmd='/run/current-system/sw/bin/nixos-rebuild switch'
+          # Determine nixos-rebuild action from flags
+          local _action="switch"
+          if (( dry ));  then _action="dry-activate"; fi
+          if (( boot )); then _action="boot"; fi
+          if (( check )); then _action="dry-build"; fi
+
+          local _action_label="Building + activating"
+          [[ "$_action" == "dry-activate" ]] && _action_label="Dry run (build + diff)"
+          [[ "$_action" == "boot" ]]         && _action_label="Building for next boot"
+          [[ "$_action" == "dry-build" ]]    && _action_label="Evaluating (dry build)"
+
+          _msg_step "$_action_label on $_dt_ssh (via systemd-run) ..."
+          local _rebuild_cmd="/run/current-system/sw/bin/nixos-rebuild $_action"
           _rebuild_cmd+=' --flake "path:$HOME/Documents/nix#'"$_dt"'"'
           if (( _site_synced )); then
             _rebuild_cmd+=' --override-input site "path:$HOME/Documents/site"'
@@ -316,11 +316,33 @@
           ssh "$_dt_ssh" "sudo systemctl reset-failed nrb-deploy" 2>/dev/null
 
           _deploy_cleanup
-          _msg_ok "Deployed to $_dt (cross-arch, built on target)"
+          if [[ "$_action" == "switch" ]]; then
+            _msg_ok "Deployed to $_dt (cross-arch, built on target)"
+          elif [[ "$_action" == "boot" ]]; then
+            _msg_ok "Built for $_dt — activates on next VM restart"
+          elif [[ "$_action" == "dry-activate" ]]; then
+            _msg_ok "Dry run complete for $_dt (no changes applied)"
+          elif [[ "$_action" == "dry-build" ]]; then
+            _msg_ok "Evaluation complete for $_dt"
+          fi
           return 0
         fi
 
         # ── Same-architecture deploy (build locally, push closure) ──
+        # --dry, --boot, --check only supported for cross-arch (remote nixos-rebuild).
+        # Same-arch uses nrb-activate which is activate-only, no dry/boot mode.
+        if (( dry )); then
+          _msg_fail "--deploy --dry only supported for cross-arch targets"
+          _deploy_cleanup; return 1
+        fi
+        if (( boot )); then
+          _msg_fail "--deploy --boot only supported for cross-arch targets"
+          _deploy_cleanup; return 1
+        fi
+        if (( check )); then
+          _msg_fail "--deploy --check only supported for cross-arch targets (use nrb --check)"
+          _deploy_cleanup; return 1
+        fi
         _msg_step "Deploy mode: building $_dt config locally, deploying via SSH"
 
         # Build (uses $_dt for the nix config name, $_dt_ssh for SSH)
