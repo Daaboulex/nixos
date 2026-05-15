@@ -172,9 +172,9 @@
       fi
 
       # ── Remote deploy mode ──
-      # Build target config locally, copy closure to target, activate via SSH.
-      # Profile-linked + bootloader-updated on the remote. Proper NixOS workflow.
-      # Requires: passwordless SSH + NOPASSWD sudo on target for nix-env + switch.
+      # Same-arch: build locally, copy closure, activate via nrb-activate.
+      # Cross-arch: rsync flake to target, build + activate on target.
+      # Requires: passwordless SSH + NOPASSWD sudo on target.
       if [[ -n "$deploy_target" ]]; then
         if (( dry )); then
           _msg_fail "--deploy does not support --dry (remote activation is all-or-nothing)"
@@ -193,12 +193,13 @@
         }
         _deploy_cleanup() { rm -rf "$_build_dir" 2>/dev/null; trap - INT TERM HUP; }
         trap '_deploy_cleanup' INT TERM HUP
-        _msg_step "Deploy mode: building $_dt config locally, deploying via SSH"
 
-        # Resolve target — try bare hostname, then .local (mDNS), then IP from ssh_config
+        # Resolve target — try bare hostname (triggers ~/.ssh/config
+        # ProxyCommand for ADB-bridged hosts), then .local (mDNS).
+        # 15 s timeout: ADB ProxyCommand needs time to discover + connect.
         local _try
         for _try in "$_dt" "''${_dt}.local"; do
-          if ssh -o ConnectTimeout=5 -o BatchMode=yes "$_try" true 2>/dev/null; then
+          if ssh -o ConnectTimeout=15 -o BatchMode=yes "$_try" true 2>/dev/null; then
             _dt_ssh="$_try"
             break
           fi
@@ -207,16 +208,61 @@
           _msg_fail "Cannot reach $_dt via SSH"
           _msg_dim "  Tried: $_dt, ''${_dt}.local"
           _msg_dim "  Ensure target is on the network and SSH key auth is configured."
+          _msg_dim "  For ADB-bridged hosts: check that the phone is connected and VM is running."
           _deploy_cleanup; return 1
         fi
         [[ "$_dt_ssh" != "$_dt" ]] && _msg_dim "  resolved via $_dt_ssh"
 
         # Verify sudo works without password on target
-        if ! ssh -o ConnectTimeout=5 "$_dt_ssh" 'sudo -n /run/current-system/sw/bin/true' 2>/dev/null; then
+        if ! ssh -o ConnectTimeout=15 "$_dt_ssh" 'sudo -n /run/current-system/sw/bin/true' 2>/dev/null; then
           _msg_fail "$_dt requires NOPASSWD sudo for deploy"
-          _msg_dim "  Target must have myModules.security.hardening.enable = true (provides nrb-activate)"
           _deploy_cleanup; return 1
         fi
+
+        # Detect architecture — cross-arch targets build on target, not locally.
+        local _local_arch _remote_arch
+        _local_arch=$(uname -m)
+        _remote_arch=$(ssh -o ConnectTimeout=15 -o BatchMode=yes "$_dt_ssh" uname -m 2>/dev/null)
+
+        if [[ -n "$_remote_arch" && "$_local_arch" != "$_remote_arch" ]]; then
+          # ── Cross-architecture deploy (rsync + remote build) ──
+          _msg_step "Cross-arch deploy: $_local_arch → $_remote_arch (building on target)"
+
+          _msg_step "Syncing flake to $_dt_ssh ..."
+          if ! rsync -az --delete \
+            --exclude='.git' --exclude='.direnv' --exclude='repos/' \
+            --exclude='.claude/' --exclude='.gemini/' --exclude='.codex/' \
+            -e "ssh" "$flake_dir/" "$_dt_ssh:~/Documents/nix/"; then
+            _msg_fail "rsync failed"
+            _deploy_cleanup; return 1
+          fi
+          local _site_dir="$HOME/Documents/site"
+          if [[ -d "$_site_dir" ]]; then
+            rsync -az --delete --exclude='.git' \
+              -e "ssh" "$_site_dir/" "$_dt_ssh:Documents/site/" 2>/dev/null
+          fi
+          _msg_ok "Flake synced"
+
+          _msg_step "Building + activating on $_dt_ssh ..."
+          local _remote_cmd='sudo nixos-rebuild switch'
+          _remote_cmd+=' --flake "path:$HOME/Documents/nix#'"$_dt"'"'
+          _remote_cmd+=' --override-input site "path:$HOME/Documents/site"'
+          if [[ -n "$trace_flag" ]]; then
+            _remote_cmd+=" $trace_flag"
+          fi
+
+          if ! ssh -t "$_dt_ssh" "$_remote_cmd"; then
+            _msg_fail "Remote build/activation failed on $_dt"
+            _deploy_cleanup; return 1
+          fi
+
+          _deploy_cleanup
+          _msg_ok "Deployed to $_dt (cross-arch, built on target)"
+          return 0
+        fi
+
+        # ── Same-architecture deploy (build locally, push closure) ──
+        _msg_step "Deploy mode: building $_dt config locally, deploying via SSH"
 
         # Build (uses $_dt for the nix config name, $_dt_ssh for SSH)
         _msg_step "Building $flake_ref#nixosConfigurations.$_dt ..."
@@ -240,8 +286,6 @@
         trap '_deploy_cleanup' INT TERM HUP
 
         # Activate on target — split into two steps for safe rollback.
-        # Step 1: link profile. Step 2: activate. If step 2 fails,
-        # rollback the profile so next boot doesn't use the broken config.
         _msg_step "Linking profile on $_dt ..."
         if ! ssh -t "$_dt_ssh" "sudo nrb-activate set-profile '$_store_path'"; then
           _msg_fail "Profile link failed on $_dt — no changes made"
