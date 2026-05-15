@@ -228,31 +228,49 @@
           # ── Cross-architecture deploy (rsync + remote build) ──
           _msg_step "Cross-arch deploy: $_local_arch → $_remote_arch (building on target)"
 
+          # Remote disk space check
+          local _remote_avail
+          _remote_avail=$(ssh "$_dt_ssh" "df -BM --output=avail /nix/store 2>/dev/null | tail -1 | tr -d ' M'" 2>/dev/null)
+          if [[ -n "$_remote_avail" ]] && (( _remote_avail < 2048 )); then
+            _msg_fail "Only ''${_remote_avail}MB free on $_dt /nix/store — need at least 2GB"
+            _deploy_cleanup; return 1
+          fi
+
           _msg_step "Syncing flake to $_dt_ssh ..."
-          if ! rsync -az --delete \
+          if ! rsync -az --delete --partial \
             --exclude='.git' --exclude='.direnv' --exclude='repos/' \
-            --exclude='.claude/' --exclude='.gemini/' --exclude='.codex/' \
+            --exclude='.claude/' --exclude='.gemini/' --exclude='.codex/' --exclude='.pi/' \
+            --exclude='.ai-context' --exclude='result' --exclude='result-*' \
+            --exclude='.pre-commit-config.yaml' --exclude='.nrb-update.lock' \
             -e "ssh" "$flake_dir/" "$_dt_ssh:~/Documents/nix/"; then
             _msg_fail "rsync failed"
             _deploy_cleanup; return 1
           fi
           local _site_dir="$HOME/Documents/site"
+          local _site_synced=0
           if [[ -d "$_site_dir" ]]; then
-            rsync -az --delete --exclude='.git' \
-              -e "ssh" "$_site_dir/" "$_dt_ssh:Documents/site/" 2>/dev/null
+            if rsync -az --delete --exclude='.git' \
+              -e "ssh" "$_site_dir/" "$_dt_ssh:Documents/site/"; then
+              _site_synced=1
+            else
+              _msg_warn "Site rsync failed — building without site override"
+            fi
           fi
           _msg_ok "Flake synced"
 
           _msg_step "Building + activating on $_dt_ssh ..."
           local _remote_cmd='sudo nixos-rebuild switch'
           _remote_cmd+=' --flake "path:$HOME/Documents/nix#'"$_dt"'"'
-          _remote_cmd+=' --override-input site "path:$HOME/Documents/site"'
+          if (( _site_synced )); then
+            _remote_cmd+=' --override-input site "path:$HOME/Documents/site"'
+          fi
           if [[ -n "$trace_flag" ]]; then
             _remote_cmd+=" $trace_flag"
           fi
 
           if ! ssh -t "$_dt_ssh" "$_remote_cmd"; then
             _msg_fail "Remote build/activation failed on $_dt"
+            _msg_dim "  On $_dt, run: sudo nixos-rebuild switch --rollback"
             _deploy_cleanup; return 1
           fi
 

@@ -500,28 +500,42 @@
         ADB=${pkgs.android-tools}/bin/adb
         SERIAL="${serial}"
 
-        # Resolve VM IP from phone's ARP table (only device on avf_tap_fixed)
         resolve_vm_ip() {
           $ADB -s "$1" shell "cat /proc/net/arp" 2>/dev/null \
             | ${pkgs.gawk}/bin/awk '/avf_tap_fixed/{print $1; exit}'
         }
 
-        # Prefer USB device by serial. If not present, discover wirelessly.
-        if $ADB -s "$SERIAL" get-state >/dev/null 2>&1; then
-          VM_IP=$(resolve_vm_ip "$SERIAL")
-          [ -n "$VM_IP" ] && exec $ADB -s "$SERIAL" shell nc "$VM_IP" 2222
+        try_connect() {
+          local vm_ip
+          vm_ip=$(resolve_vm_ip "$1")
+          if [ -n "$vm_ip" ]; then
+            exec $ADB -s "$1" shell nc -w 10 "$vm_ip" 2222
+          fi
+        }
+
+        # Prefer USB device by serial — test actual shell access (not just get-state,
+        # which succeeds even when ADB auth has expired on locked screen)
+        if $ADB -s "$SERIAL" shell echo ok 2>/dev/null | grep -q ok; then
+          try_connect "$SERIAL"
+          echo "pixel-proxy: USB connected but VM not running (no avf_tap_fixed in ARP)" >&2
+          exit 1
         fi
 
-        # No USB — find wireless ADB via mDNS and connect
-        addr=$(${pkgs.avahi}/bin/avahi-browse -tpr _adb-tls-connect._tcp 2>/dev/null \
+        # No USB — find wireless ADB via mDNS (5s timeout guards against avahi hang)
+        addr=$(${pkgs.coreutils}/bin/timeout 5 \
+          ${pkgs.avahi}/bin/avahi-browse -tpr _adb-tls-connect._tcp 2>/dev/null \
           | ${pkgs.gawk}/bin/awk -F';' '/^=/{print $8":"$9; exit}')
         if [ -n "$addr" ]; then
-          $ADB connect "$addr" >/dev/null 2>&1
-          VM_IP=$(resolve_vm_ip "$addr")
-          [ -n "$VM_IP" ] && exec $ADB -s "$addr" shell nc "$VM_IP" 2222
+          if ${pkgs.coreutils}/bin/timeout 10 $ADB connect "$addr" 2>&1 | grep -q connected; then
+            try_connect "$addr"
+            echo "pixel-proxy: wireless ADB connected but VM not running" >&2
+            exit 1
+          fi
+          echo "pixel-proxy: wireless ADB connect to $addr failed" >&2
+          exit 1
         fi
 
-        echo "No ADB device or VM not running" >&2
+        echo "pixel-proxy: no ADB device found (USB or wireless)" >&2
         exit 1
       ''}";
   };

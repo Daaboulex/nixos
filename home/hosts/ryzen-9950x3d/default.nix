@@ -671,7 +671,17 @@ in
           let
             serial = site.hosts.pixel-9-pro.adb.serial;
           in
-          "adb -s ${serial} shell 'nc $(cat /proc/net/arp | awk \"/avf_tap/{print \\$1}\") 2222'";
+          "${pkgs.writeShellScript "adb-proxy-pixel" ''
+            ADB=${pkgs.android-tools}/bin/adb
+            SERIAL="${serial}"
+            vm_ip=$($ADB -s "$SERIAL" shell "cat /proc/net/arp" 2>/dev/null \
+              | ${pkgs.gawk}/bin/awk '/avf_tap_fixed/{print $1; exit}')
+            if [ -n "$vm_ip" ]; then
+              exec $ADB -s "$SERIAL" shell nc -w 10 "$vm_ip" 2222
+            fi
+            echo "pixel-proxy: no VM found (check USB + Terminal app)" >&2
+            exit 1
+          ''}";
         extraOptions = {
           StrictHostKeyChecking = "accept-new";
         };
