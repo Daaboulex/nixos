@@ -673,13 +673,13 @@ in
           in
           "${pkgs.writeShellScript "adb-proxy-pixel" ''
             ADB=${pkgs.android-tools}/bin/adb
+            NC=${pkgs.libressl.nc}/bin/nc
             SERIAL="${serial}"
-            vm_ip=$($ADB -s "$SERIAL" shell -T "cat /proc/net/arp" 2>/dev/null \
-              | ${pkgs.gawk}/bin/awk '/avf_tap_fixed/ && $4 != "00:00:00:00:00:00" {print $1; exit}')
-            if [ -n "$vm_ip" ]; then
-              exec $ADB -s "$SERIAL" shell -T nc -w 10 "$vm_ip" 2222
+            if $ADB -s "$SERIAL" get-state 2>/dev/null | grep -q device; then
+              $ADB -s "$SERIAL" forward tcp:2222 tcp:2222 2>/dev/null
+              exec $NC -w 10 localhost 2222
             fi
-            echo "pixel-proxy: no VM found (check USB + Terminal app)" >&2
+            echo "pixel-proxy: no ADB device found (check USB + Terminal app)" >&2
             exit 1
           ''}";
         extraOptions = {

@@ -498,31 +498,19 @@
       in
       "${pkgs.writeShellScript "adb-proxy-pixel" ''
         ADB=${pkgs.android-tools}/bin/adb
+        NC=${pkgs.libressl.nc}/bin/nc
         SERIAL="${serial}"
+        LOCAL_PORT=2222
 
-        resolve_vm_ip() {
-          # Filter for avf_tap_fixed entries with a real MAC (not 00:00:00:00:00:00)
-          # to skip stale ARP entries from previous VM instances.
-          # -T: no PTY (binary-clean output)
-          $ADB -s "$1" shell -T "cat /proc/net/arp" 2>/dev/null \
-            | ${pkgs.gawk}/bin/awk '/avf_tap_fixed/ && $4 != "00:00:00:00:00:00" {print $1; exit}'
-        }
+        # Use ADB port forwarding (not adb shell nc) for binary-clean transport.
+        # adb shell corrupts SSH binary packets even with -T in some conditions.
+        # ADB forward creates a proper TCP socket — same proven path as
+        # "ssh -p 2222 droid@localhost".
 
-        try_connect() {
-          local vm_ip
-          vm_ip=$(resolve_vm_ip "$1")
-          if [ -n "$vm_ip" ]; then
-            exec $ADB -s "$1" shell -T nc -w 10 "$vm_ip" 2222
-          fi
-        }
-
-        # Prefer USB device by serial — test actual shell access (not just get-state,
-        # which succeeds even when ADB auth has expired on locked screen).
-        # -T disables PTY allocation — critical for binary-clean SSH transport.
-        if $ADB -s "$SERIAL" shell -T echo ok 2>/dev/null | grep -q ok; then
-          try_connect "$SERIAL"
-          echo "pixel-proxy: USB connected but VM not running (no avf_tap_fixed in ARP)" >&2
-          exit 1
+        # Prefer USB device by serial
+        if $ADB -s "$SERIAL" get-state 2>/dev/null | grep -q device; then
+          $ADB -s "$SERIAL" forward tcp:$LOCAL_PORT tcp:2222 2>/dev/null
+          exec $NC -w 10 localhost $LOCAL_PORT
         fi
 
         # No USB — find wireless ADB via mDNS (5s timeout guards against avahi hang)
@@ -531,9 +519,8 @@
           | ${pkgs.gawk}/bin/awk -F';' '/^=/{print $8":"$9; exit}')
         if [ -n "$addr" ]; then
           if ${pkgs.coreutils}/bin/timeout 10 $ADB connect "$addr" 2>&1 | grep -q connected; then
-            try_connect "$addr"
-            echo "pixel-proxy: wireless ADB connected but VM not running" >&2
-            exit 1
+            $ADB -s "$addr" forward tcp:$LOCAL_PORT tcp:2222 2>/dev/null
+            exec $NC -w 10 localhost $LOCAL_PORT
           fi
           echo "pixel-proxy: wireless ADB connect to $addr failed" >&2
           exit 1
