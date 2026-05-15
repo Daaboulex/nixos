@@ -300,11 +300,10 @@
 
               # Poll for completion (reconnects if SSH drops during sshd restart)
               _msg_dim "  Waiting for remote build (survives SSH drops)..."
-              local _polls=0
+              local _polls=0 _state=""
               while true; do
                 sleep 10
                 (( _polls++ ))
-                local _state
                 _state=$(ssh -o ConnectTimeout=15 -o BatchMode=yes "$_dt_ssh" \
                   "systemctl show nrb-deploy --property=ActiveState --value" 2>/dev/null) || {
                   # SSH failed (sshd restarting) — retry

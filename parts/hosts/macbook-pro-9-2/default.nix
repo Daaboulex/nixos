@@ -242,10 +242,7 @@
         devices.fcse01.id = site.hosts.fcse01.syncthing.deviceId;
         devices.pixel-9-pro = {
           id = site.hosts.pixel-9-pro.syncthing.deviceId;
-          addresses = [
-            "tcp://localhost:22001"
-            "dynamic"
-          ];
+          addresses = [ "dynamic" ];
         };
         folders = {
           documents = {
@@ -858,7 +855,7 @@
       serial = site.hosts.pixel-9-pro.adb.serial;
     in
     {
-      description = "ADB port forwards for Pixel 9 Pro (SSH + Syncthing)";
+      description = "ADB port forward for Pixel 9 Pro (SSH)";
       after = [ "network.target" ];
       serviceConfig = {
         Type = "oneshot";
@@ -874,7 +871,6 @@
         ExecStart = pkgs.writeShellScript "pixel-forwards" ''
           set -euo pipefail
           ${pkgs.android-tools}/bin/adb -s ${serial} forward tcp:22220 tcp:2222
-          ${pkgs.android-tools}/bin/adb -s ${serial} forward tcp:22001 tcp:22000
         '';
         Restart = "on-failure";
         RestartSec = 5;
