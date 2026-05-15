@@ -862,11 +862,22 @@
       after = [ "network.target" ];
       serviceConfig = {
         Type = "oneshot";
-        ExecStartPre = "${pkgs.coreutils}/bin/sleep 3";
+        ExecStartPre = pkgs.writeShellScript "wait-for-adb" ''
+          set -euo pipefail
+          for i in $(seq 1 10); do
+            ${pkgs.android-tools}/bin/adb -s ${serial} get-state 2>/dev/null | grep -q device && exit 0
+            sleep 1
+          done
+          echo "ADB device ${serial} not ready after 10s" >&2
+          exit 1
+        '';
         ExecStart = pkgs.writeShellScript "pixel-forwards" ''
+          set -euo pipefail
           ${pkgs.android-tools}/bin/adb -s ${serial} forward tcp:2222 tcp:2222
           ${pkgs.android-tools}/bin/adb -s ${serial} forward tcp:22001 tcp:22000
         '';
+        Restart = "on-failure";
+        RestartSec = 5;
         User = config.myModules.primaryUser;
       };
     };
