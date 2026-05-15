@@ -873,7 +873,7 @@
         '';
         ExecStart = pkgs.writeShellScript "pixel-forwards" ''
           set -euo pipefail
-          ${pkgs.android-tools}/bin/adb -s ${serial} forward tcp:2222 tcp:2222
+          ${pkgs.android-tools}/bin/adb -s ${serial} forward tcp:22220 tcp:2222
           ${pkgs.android-tools}/bin/adb -s ${serial} forward tcp:22001 tcp:22000
         '';
         Restart = "on-failure";

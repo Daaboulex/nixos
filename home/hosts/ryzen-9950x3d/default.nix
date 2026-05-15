@@ -672,14 +672,24 @@ in
             serial = site.hosts.pixel-9-pro.adb.serial;
           in
           "${pkgs.writeShellScript "adb-proxy-pixel" ''
+            set -uo pipefail
             ADB=${pkgs.android-tools}/bin/adb
             NC=${pkgs.libressl.nc}/bin/nc
+            TIMEOUT=${pkgs.coreutils}/bin/timeout
             SERIAL="${serial}"
-            if $ADB -s "$SERIAL" get-state 2>/dev/null | grep -q device; then
-              $ADB -s "$SERIAL" forward tcp:2222 tcp:2222 2>/dev/null
-              exec $NC -w 10 localhost 2222
-            fi
-            echo "pixel-proxy: no ADB device found (check USB + Terminal app)" >&2
+            PORT=22220
+
+            state=$($TIMEOUT 5 $ADB -s "$SERIAL" get-state 2>&1) || true
+            case "$state" in
+              *device*)
+                if $ADB -s "$SERIAL" forward tcp:$PORT tcp:2222 2>/dev/null; then
+                  exec $NC -w 10 localhost $PORT
+                fi
+                echo "pixel-proxy: adb forward failed" >&2; exit 1 ;;
+              *unauthorized*) echo "pixel-proxy: phone unauthorized — unlock and tap Allow" >&2; exit 1 ;;
+              *offline*)      echo "pixel-proxy: phone offline — reconnect USB" >&2; exit 1 ;;
+            esac
+            echo "pixel-proxy: no ADB device (check USB + Terminal app)" >&2
             exit 1
           ''}";
         extraOptions = {

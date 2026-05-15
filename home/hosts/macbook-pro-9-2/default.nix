@@ -497,36 +497,47 @@
         serial = site.hosts.pixel-9-pro.adb.serial;
       in
       "${pkgs.writeShellScript "adb-proxy-pixel" ''
+        set -uo pipefail
         ADB=${pkgs.android-tools}/bin/adb
         NC=${pkgs.libressl.nc}/bin/nc
+        TIMEOUT=${pkgs.coreutils}/bin/timeout
         SERIAL="${serial}"
-        LOCAL_PORT=2222
+        PORT=22220
 
-        # Use ADB port forwarding (not adb shell nc) for binary-clean transport.
-        # adb shell corrupts SSH binary packets even with -T in some conditions.
-        # ADB forward creates a proper TCP socket — same proven path as
-        # "ssh -p 2222 droid@localhost".
+        # ADB port forwarding for binary-clean SSH transport.
+        # adb shell corrupts binary packets. ADB forward creates a proper TCP
+        # socket — same mechanism as "ssh -p 2222 droid@localhost".
+        # Port 22220 avoids conflicts with the udev Syncthing forward on 22001
+        # and any other listener on 2222.
 
-        # Prefer USB device by serial
-        if $ADB -s "$SERIAL" get-state 2>/dev/null | grep -q device; then
-          $ADB -s "$SERIAL" forward tcp:$LOCAL_PORT tcp:2222 2>/dev/null
-          exec $NC -w 10 localhost $LOCAL_PORT
-        fi
+        setup_forward() {
+          if ! $ADB -s "$1" forward tcp:$PORT tcp:2222 2>/dev/null; then
+            echo "pixel-proxy: adb forward failed for $1" >&2
+            return 1
+          fi
+          exec $NC -w 10 localhost $PORT
+        }
 
-        # No USB — find wireless ADB via mDNS (5s timeout guards against avahi hang)
-        addr=$(${pkgs.coreutils}/bin/timeout 5 \
-          ${pkgs.avahi}/bin/avahi-browse -tpr _adb-tls-connect._tcp 2>/dev/null \
+        # 1. Try USB device by serial (5s timeout guards against hung ADB daemon)
+        state=$($TIMEOUT 5 $ADB -s "$SERIAL" get-state 2>&1) || true
+        case "$state" in
+          *device*)     setup_forward "$SERIAL" ;;
+          *unauthorized*) echo "pixel-proxy: phone USB connected but unauthorized — unlock phone and tap Allow" >&2; exit 1 ;;
+          *offline*)    echo "pixel-proxy: phone USB connected but offline — reconnect USB" >&2; exit 1 ;;
+        esac
+
+        # 2. No USB — find wireless ADB via mDNS
+        addr=$($TIMEOUT 5 ${pkgs.avahi}/bin/avahi-browse -tpr _adb-tls-connect._tcp 2>/dev/null \
           | ${pkgs.gawk}/bin/awk -F';' '/^=/{print $8":"$9; exit}')
         if [ -n "$addr" ]; then
-          if ${pkgs.coreutils}/bin/timeout 10 $ADB connect "$addr" 2>&1 | grep -q connected; then
-            $ADB -s "$addr" forward tcp:$LOCAL_PORT tcp:2222 2>/dev/null
-            exec $NC -w 10 localhost $LOCAL_PORT
+          if $TIMEOUT 10 $ADB connect "$addr" 2>&1 | grep -q connected; then
+            setup_forward "$addr"
           fi
-          echo "pixel-proxy: wireless ADB connect to $addr failed" >&2
+          echo "pixel-proxy: wireless ADB found ($addr) but connect failed" >&2
           exit 1
         fi
 
-        echo "pixel-proxy: no ADB device found (USB or wireless)" >&2
+        echo "pixel-proxy: no ADB device (USB or wireless). Check: cable, USB debugging ON, Terminal app running." >&2
         exit 1
       ''}";
   };
