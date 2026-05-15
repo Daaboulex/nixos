@@ -1,5 +1,9 @@
 {
   syncthing.deviceId = "CI-STUB-PIXEL-00000000-0000000-0000000-0000000-000000";
+  adb = {
+    serial = "CISTUB0000000000";
+    usbProductIds = [ "0000" ];
+  };
   builder = {
     system = "aarch64-linux";
     sshUser = "droid";
