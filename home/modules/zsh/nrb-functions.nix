@@ -277,7 +277,8 @@
               # commands through ssh → sudo → systemd-run → shell layers.
               local _script="/tmp/nrb-deploy.sh"
               local _script_body="#!/run/current-system/sw/bin/bash
-    set -euo pipefail
+    set -eo pipefail
+    export HOME=$_remote_home
     source /etc/set-environment
     /run/current-system/sw/bin/nixos-rebuild $_action --flake path:$_remote_home/Documents/nix#$_dt"
               if (( _site_synced )); then
