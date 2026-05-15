@@ -263,7 +263,7 @@
           # kill a bare SSH command. systemd-run creates a transient service
           # that continues independently.
           _msg_step "Building + activating on $_dt_ssh (via systemd-run) ..."
-          local _rebuild_cmd='nixos-rebuild switch'
+          local _rebuild_cmd='/run/current-system/sw/bin/nixos-rebuild switch'
           _rebuild_cmd+=' --flake "path:$HOME/Documents/nix#'"$_dt"'"'
           if (( _site_synced )); then
             _rebuild_cmd+=' --override-input site "path:$HOME/Documents/site"'
