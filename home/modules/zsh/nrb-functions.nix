@@ -15,7 +15,7 @@
       # Flake reference — git when repo is functional, path: otherwise.
       # Syncthing-synced trees have working files but may lack .git/.
       local flake_ref="$flake_dir"
-      if [[ -d "$flake_dir" ]] && ! git -C "$flake_dir" rev-parse HEAD &>/dev/null 2>&1; then
+      if [[ -d "$flake_dir" ]] && ! git -C "$flake_dir" rev-parse HEAD &>/dev/null; then
         flake_ref="path:$flake_dir"
       fi
 
@@ -296,7 +296,7 @@
         # Copy closure to target
         _msg_step "Copying closure to $_dt_ssh ..."
         if ! _with_spinner "copying closure to $_dt_ssh" \
-          env NIX_SSHOPTS="-o ConnectTimeout=30" nix copy --to "ssh://''${_dt_ssh}" "$_store_path"; then
+          env NIX_SSHOPTS="-F $HOME/.ssh/config -o ConnectTimeout=30" nix copy --to "ssh://''${_dt_ssh}" "$_store_path"; then
           _msg_fail "Failed to copy closure to $_dt_ssh"
           _deploy_cleanup; return 1
         fi
@@ -462,30 +462,23 @@
 
         cp "$flake_dir/flake.lock" "$_lock_backup"
 
-        # JSON-escape host-derived strings so paths containing spaces
-        # or quotes never corrupt the inlined nix expression.
-        _escaped_dir=$(printf '%s' "$flake_ref" | ${pkgs.jq}/bin/jq -Rr @json)
-        _escaped_host=$(printf '%s' "$hostname" | ${pkgs.jq}/bin/jq -Rr @json)
-
-        # Inline nix expression that returns the full {default+specs} map.
-        _mk_kern_expr="
-          let
-            self = builtins.getFlake $_escaped_dir;
-            host = self.nixosConfigurations.$_escaped_host;
-            specs = host.config.specialisation or {};
-          in
-            { default = host.config.boot.kernelPackages.kernel.drvPath; }
-            // builtins.mapAttrs
-                 (_: s: s.configuration.boot.kernelPackages.kernel.drvPath)
-                 specs
-        "
-
+        # Kernel map: {default: drvPath, <spec>: drvPath, ...}
+        # Uses installable syntax (not builtins.getFlake) so --override-input
+        # is honored on hosts where $HOME differs from the flake author's.
         _mk_kern_map() {
-          # Tee stderr to log for diagnosis. stdout (the JSON map) is
-          # returned via command substitution; errors land in the log.
           nix --extra-experimental-features 'nix-command flakes' \
-            eval --json --impure --option eval-cache false \
-            --expr "$_mk_kern_expr" 2>>"$_eval_log"
+            eval --json --option eval-cache false \
+            "$flake_ref#nixosConfigurations.$hostname" \
+            "''${_input_overrides[@]}" \
+            --apply '
+              host: let
+                specs = host.config.specialisation or {};
+              in
+                { default = host.config.boot.kernelPackages.kernel.drvPath; }
+                // builtins.mapAttrs
+                     (_: s: s.configuration.boot.kernelPackages.kernel.drvPath)
+                     specs
+            ' 2>>"$_eval_log"
         }
         _kern_map_eq() {
           # Canonicalise via jq sort so attribute order doesn't matter.
@@ -526,7 +519,7 @@
           # Maps differ — check if changed kernels are all cached
           local -a _changed_keys _uncached
           _changed_keys=( $(${pkgs.jq}/bin/jq -nr --argjson a "$_base" --argjson b "$_new" '
-            [$a | keys_unsorted[] | select($a[.] != $b[.])] | .[]') )
+            [($a + $b) | keys[] | select(($a[.] // "") != ($b[.] // ""))] | .[]') )
           for _k in "''${_changed_keys[@]}"; do
             local _new_drv=$(echo "$_new" | ${pkgs.jq}/bin/jq -r --arg k "$_k" '.[$k]')
             if ! _kern_is_cached "$_new_drv"; then
@@ -593,7 +586,7 @@
         else
           local _affected
           _affected=$(${pkgs.jq}/bin/jq -nr --argjson a "$_baseline" --argjson b "$_new" '
-            [$a | keys_unsorted[] | select($a[.] != $b[.])] | join(",")')
+            [($a + $b) | keys[] | select(($a[.] // "") != ($b[.] // ""))] | join(",")')
           _msg_warn "  kernel(s) would rebuild: $_affected — isolating culprit inputs..."
 
           # Single-pass jq: load both locks as two documents, compute
@@ -639,7 +632,7 @@
               fi
             else
               _input_affected=$(${pkgs.jq}/bin/jq -nr --argjson a "$_baseline" --argjson b "$_test" '
-                [$a | keys_unsorted[] | select($a[.] != $b[.])] | join(",")')
+                [($a + $b) | keys[] | select(($a[.] // "") != ($b[.] // ""))] | join(",")')
               _unsafe+=("$_input")
               printf "      %-30s rebuilds: %s — skipping\n" "$_input" "$_input_affected"
             fi
@@ -675,6 +668,7 @@
             if ! _kern_map_eq_or_cached "$_baseline" "$_post_batch"; then
               _msg_warn "Batch combination triggers kernel rebuild — restoring baseline"
               _msg_dim "  Individual inputs were safe but combination is not"
+              _msg_dim "  No inputs updated. Building with current lock."
               cp "$_lock_backup" "$flake_dir/flake.lock"
               _nrb_cleanup
               echo ""
@@ -697,7 +691,7 @@
       fi
 
       # Dirty tree warning (check after update since --update modifies flake.lock)
-      if command -v git &>/dev/null && git -C "$flake_dir" rev-parse HEAD &>/dev/null 2>&1; then
+      if command -v git &>/dev/null && git -C "$flake_dir" rev-parse HEAD &>/dev/null; then
         local dirty_files
         dirty_files=$(git -C "$flake_dir" diff --name-only -- flake.lock flake.nix 2>/dev/null)
         if [[ -n "$dirty_files" ]]; then
@@ -1046,7 +1040,7 @@
     nrb-check() {
       local flake_dir="''${FLAKE_DIR:-${flakeDir}}"
       local flake_ref="$flake_dir"
-      if [[ -d "$flake_dir" ]] && ! git -C "$flake_dir" rev-parse HEAD &>/dev/null 2>&1; then
+      if [[ -d "$flake_dir" ]] && ! git -C "$flake_dir" rev-parse HEAD &>/dev/null; then
         flake_ref="path:$flake_dir"
       fi
       local -a _input_overrides=()
@@ -1130,7 +1124,7 @@
     nrb-info() {
       local flake_dir="''${FLAKE_DIR:-${flakeDir}}"
       local flake_ref="$flake_dir"
-      if [[ -d "$flake_dir" ]] && ! git -C "$flake_dir" rev-parse HEAD &>/dev/null 2>&1; then
+      if [[ -d "$flake_dir" ]] && ! git -C "$flake_dir" rev-parse HEAD &>/dev/null; then
         flake_ref="path:$flake_dir"
       fi
       local -a _input_overrides=()
