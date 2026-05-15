@@ -262,15 +262,26 @@
           [[ "$_action" == "boot" ]]         && _action_label="Building for next boot"
           [[ "$_action" == "dry-build" ]]    && _action_label="Evaluating (dry build)"
 
+          # Resolve remote $HOME — systemd-run has a clean env without $HOME
+          local _remote_home
+          _remote_home=$(ssh "$_dt_ssh" 'echo $HOME' 2>/dev/null)
+          if [[ -z "$_remote_home" ]]; then
+            _msg_fail "Could not determine remote home directory"
+            _deploy_cleanup; return 1
+          fi
+
           _msg_step "$_action_label on $_dt_ssh (via systemd-run) ..."
           local _rebuild_cmd="/run/current-system/sw/bin/nixos-rebuild $_action"
-          _rebuild_cmd+=' --flake "path:$HOME/Documents/nix#'"$_dt"'"'
+          _rebuild_cmd+=" --flake \"path:$_remote_home/Documents/nix#$_dt\""
           if (( _site_synced )); then
-            _rebuild_cmd+=' --override-input site "path:$HOME/Documents/site"'
+            _rebuild_cmd+=" --override-input site \"path:$_remote_home/Documents/site\""
           fi
           if [[ -n "$trace_flag" ]]; then
             _rebuild_cmd+=" $trace_flag"
           fi
+
+          # Clean up any stale failed service from a previous run
+          ssh "$_dt_ssh" "sudo systemctl reset-failed nrb-deploy" 2>/dev/null
 
           # Launch as transient systemd service on the remote
           ssh "$_dt_ssh" "sudo systemd-run \
