@@ -283,13 +283,16 @@
           # Clean up any stale failed service from a previous run
           ssh "$_dt_ssh" "sudo systemctl reset-failed nrb-deploy" 2>/dev/null
 
-          # Launch as transient systemd service on the remote
+          # Launch as transient systemd service on the remote.
+          # /run/current-system/sw/bin/bash -lc sources /etc/profile which
+          # loads the full NixOS PATH. Without it, nixos-rebuild's Python
+          # subprocess can't find standard tools (test, env, etc.).
           ssh "$_dt_ssh" "sudo systemd-run \
             --unit=nrb-deploy \
             --description='nrb cross-arch deploy' \
             --property=Type=oneshot \
             --property=RemainAfterExit=yes \
-            -- sh -c '$_rebuild_cmd'" 2>/dev/null
+            -- /run/current-system/sw/bin/bash -lc '$_rebuild_cmd'" 2>/dev/null
 
           # Poll for completion (reconnects if SSH drops during sshd restart)
           _msg_dim "  Waiting for remote build (survives SSH drops)..."
