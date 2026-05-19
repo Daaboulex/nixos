@@ -312,18 +312,31 @@ bump — always confirm CI after.
 20 of 21 repos green or freshly green; **coolercontrol** was the one red
 (fixed above). openviking/portmaster/eden remain blocked on bespoke work.
 
-**Still open (Wave 4 + decisions):**
+### Drift resolution — final
 
-- CI drift-check — each package repo's `ci.yml` should verify its
-  `update.sh`/`update.yml` still match the canonical (compare against
-  `raw.githubusercontent.com/Daaboulex/nixos/main/repo-standard/`).
-- `docs/STYLE.md` cross-reference to `repo-standard/`.
-- **openviking** — 0.3.17 is a major upstream rewrite: AGFS moved from a
-  Go server (`third_party/agfs/agfs-server`) to a Rust crate
-  (`crates/ragfs`). openviking-nix's `agfs.nix` (`buildGoModule`) is
-  obsolete; needs a packaging port, not a version bump.
-- **eden** bespoke updater — `deps/default.nix` has ~25 CPM dep hashes
-  that change with eden's commit; needs a CPM-manifest-aware updater.
-- `vkBasalt_overlay_wayland` local clone has no `.git` (cosmetic).
+- **lsfg-vk** ✅ bumped (updater fix + `update.json` owner/branch).
+- **portmaster** ✅ bumped 2.1.7→2.1.19 (parameterized-version +
+  cargo `vendor-staging` extractor fixes).
+- **coolercontrol** ✅ CI green (npmDepsHash corrected — `ff27aea`).
+- **openviking / eden** — blocked on focused packaging work, below.
+
+Every drift the updater _can_ fix is fixed; the rest is genuine
+repackaging, precisely scoped here.
+
+**Still open — focused follow-ups:**
+
+- **openviking 0.3.17 port** — a major upstream restructure. 0.3.17 is a
+  unified Rust Cargo workspace (`crates/{ov_cli,ragfs,ragfs-python}`);
+  `ragfs` is the Rust rewrite of the old Go AGFS. Port plan: delete
+  `agfs.nix` (`buildGoModule`, obsolete); build the Cargo workspace
+  (single `cargoHash`, no more Go `vendorHash`); `ragfs-python` is
+  PyO3/maturin; rework `package.nix`'s prebuilt-dep copying. ~3-4 `.nix`
+  files; needs iterative local builds.
+- **eden bespoke updater** — `deps/default.nix` carries ~25 CPM
+  dependency hashes that change with eden's commit; needs a
+  CPM-manifest-aware `update.sh` (`type: custom`).
+- **CI drift-check** — a `ci.yml` step per repo comparing `update.sh`
+  against the canonical (`raw.githubusercontent.com/.../repo-standard/`).
 - Promote `repo-standard/` to its own repo once stabilised, so other
   projects consume it as a flake input (single source of truth).
+- `vkBasalt_overlay_wayland` local clone has no `.git` (cosmetic).
