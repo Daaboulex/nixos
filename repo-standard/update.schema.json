@@ -13,6 +13,7 @@
     "upstream": {
       "type": "object",
       "required": ["type"],
+      "additionalProperties": false,
       "properties": {
         "type": {
           "enum": [
@@ -36,7 +37,43 @@
           "type": "string",
           "description": "Branch for *-commit types (default: main)."
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": ["type"],
+            "properties": {
+              "type": {
+                "enum": ["github-release", "github-tag", "github-commit"]
+              }
+            }
+          },
+          "then": { "required": ["owner", "repo"] }
+        },
+        {
+          "if": {
+            "required": ["type"],
+            "properties": {
+              "type": { "enum": ["gitlab-tag", "gitlab-commit"] }
+            }
+          },
+          "then": { "required": ["project"] }
+        },
+        {
+          "if": {
+            "required": ["type"],
+            "properties": { "type": { "const": "gitea-commit" } }
+          },
+          "then": { "required": ["host", "owner", "repo"] }
+        },
+        {
+          "if": {
+            "required": ["type"],
+            "properties": { "type": { "const": "git-ls-remote" } }
+          },
+          "then": { "required": ["url"] }
+        }
+      ]
     },
     "packageFile": {
       "type": "string",
@@ -51,6 +88,10 @@
       "type": "string",
       "default": "version",
       "description": "Attribute name to match — handles `version = \"x\"` and parameterized `<attr> ? \"x\"`."
+    },
+    "revFile": {
+      "type": "string",
+      "description": "File holding the package src `rev` literal for commit-tracked upstreams (default: versionFile). Set it when several `rev = \"...\"` literals exist so the package src rev is bumped, not a dependency's."
     },
     "versionScheme": {
       "enum": ["literal", "unstable-date"],

@@ -11,15 +11,15 @@ audit and design.
 
 ## Files
 
-| File                 | Synced to (per repo)                | Purpose                               |
-| -------------------- | ----------------------------------- | ------------------------------------- |
-| `update.sh`          | `scripts/update.sh`                 | Detect + apply upstream updates       |
-| `update.yml`         | `.github/workflows/update.yml`      | Scheduled Update workflow             |
-| `drift-check.yml`    | `.github/workflows/drift-check.yml` | CI: `update.sh` matches the canonical |
-| `cachix.yml`         | `.github/workflows/cachix.yml`      | Opt-in Cachix binary-cache push       |
-| `update.schema.json` | _(not synced — reference)_          | JSON Schema for `update.json`         |
-| `sync.sh`            | _(not synced — run from here)_      | Push canonical files into repos       |
-| `README.md`          | _(this file)_                       | The standard, documented              |
+| File                 | Synced to (per repo)                | Purpose                              |
+| -------------------- | ----------------------------------- | ------------------------------------ |
+| `update.sh`          | `scripts/update.sh`                 | Detect + apply upstream updates      |
+| `update.yml`         | `.github/workflows/update.yml`      | Scheduled Update workflow            |
+| `drift-check.yml`    | `.github/workflows/drift-check.yml` | CI: synced files match the canonical |
+| `cachix.yml`         | `.github/workflows/cachix.yml`      | Opt-in Cachix binary-cache push      |
+| `update.schema.json` | _(not synced — reference)_          | JSON Schema for `update.json`        |
+| `sync.sh`            | _(not synced — run from here)_      | Push canonical files into repos      |
+| `README.md`          | _(this file)_                       | The standard, documented             |
 
 ## `sync.sh`
 
@@ -30,10 +30,11 @@ repo-standard/sync.sh --check    # report drift only, exit 1 if any
 ```
 
 Each repo commits + pushes its own changes. The synced `drift-check.yml`
-workflow fails CI if a repo's `scripts/update.sh` diverges from the canonical
-— it compares the sha256 against
-`raw.githubusercontent.com/Daaboulex/nixos/main/repo-standard/update.sh`
-(`custom`-type repos keep a bespoke script and are skipped). Run
+workflow fails CI if any synced file (`scripts/update.sh` + the three
+canonical workflows) diverges from the canonical — it compares each file's
+sha256 against
+`raw.githubusercontent.com/Daaboulex/nixos/main/repo-standard/`
+(`custom`-type repos keep a bespoke `update.sh` and skip that one file). Run
 `sync.sh --check` for the same check locally.
 
 ## `.github/update.json` schema
@@ -47,6 +48,8 @@ workflow fails CI if a repo's `scripts/update.sh` diverges from the canonical
                                       //   literal (default: packageFile)
   "versionAttr": "version",           // attribute name to match (default
                                       //   "version"; e.g. "portmasterVersion")
+  "revFile": "package.nix",           // file holding the src `rev` literal
+                                      //   (default: versionFile)
   "versionScheme": "unstable-date",   // optional; "literal" (default) or
                                       //   "unstable-date" (commit-tracked)
   "versionBase": "2.0.0",             // base for "unstable-date" (optional)
@@ -65,6 +68,10 @@ workflow fails CI if a repo's `scripts/update.sh` diverges from the canonical
 - **`versionFile`** decouples the version literal's location from
   `packageFile` (e.g. the literal lives in `flake.nix` while `package.nix`
   only takes it as an argument).
+- **`revFile`** scopes the `rev` literal bump for commit-tracked upstreams
+  (defaults to `versionFile`). Set it explicitly when a repo carries
+  several `rev = "..."` literals — e.g. a bundled dependency's `rev` — so
+  the updater bumps the package's own src `rev`, not a dependency's.
 - **`hashes`** entries list SRI hash fields in evaluation-dependency order
   (source hash first, then vendor hashes). Each entry is either a bare field
   name — auto-located in the first `*.nix` file declaring it — or
