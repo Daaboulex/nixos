@@ -298,9 +298,6 @@ bespoke `update.sh` (canonical `update.yml` only).
     auto-bumping. The common case is proven: lsfg-vk bumped end-to-end.
 
 **Also done:** flake input owner casing normalized
-(`github:daaboulex/`→`Daaboulex/`, 5 inputs).
-
-**Also done:** flake input owner casing normalized
 (`github:daaboulex/`→`Daaboulex/`, 5 inputs). `update.schema.json` added.
 `sync.sh` made project-agnostic (`PKG_REPOS_DIR`, no hardcoded paths).
 
@@ -464,7 +461,9 @@ full 0.3.17 Python dependency closure against nixpkgs (the new
 `package.nix` dep list is a first cut — `lark-oapi`,
 `opentelemetry-instrumentation-*`, `tree-sitter-php`/`-lua` may be missing
 from nixpkgs and need wheels); build the C++ engine + maturin extension.
-Not yet committed/pushed. Open issue `Daaboulex/openviking-nix#3` tracks it.
+Not yet committed/pushed at the time of this note — superseded by the
+Resolution section below: the 0.3.17 port shipped (`openviking-nix@e80ca15`)
+and the tracking issue is closed.
 
 ### eden-nix bespoke updater — investigation
 
@@ -524,3 +523,58 @@ was that nothing drove it. Resolution:
   - `preConfigure`, drop system SDL2), tracked on `eden-nix` issue #9.
     The bespoke updater itself is complete — silent drift is now a
     visible, precisely-diagnosed failure.
+
+---
+
+## Execution Log — 2026-05-19 (third session)
+
+### Review follow-ups — repo-standard hardening (done)
+
+The post-review audit's HIGH/MEDIUM canonical-side findings, fixed in one
+batch (`Daaboulex/nixos@main`, then re-synced fleet-wide):
+
+- **`update.sh` rev scoping** — `unstable-date` rev detection and the
+  commit-tracked rev write no longer `grep -rl 'rev = "'` across every
+  `*.nix` file (which could match a bundled dependency's rev). Both read a
+  configurable `revFile` (default: `versionFile`).
+- **`update.sh` version-write** — the success check now confirms the new
+  value landed on the target attr (`grep -P` with the read-side
+  lookbehind) instead of matching the literal anywhere in the file; the
+  write `sed` gained a `\b` left boundary (not a `|` alternation — `|` is
+  the `s` delimiter) so a short attr cannot match a longer identifier's
+  tail. `verify.args` is split with `read -ra` so a multi-token value is
+  passed as separate argv entries.
+- **`drift-check.yml`** — verifies all four synced canonical files
+  (`update.sh` + the three workflows) against the canonical sha256, not
+  just `update.sh`. "drift-check green" now means what it sounds like.
+- **`cachix.yml`** — skips when `CACHIX_AUTH_TOKEN` is missing, so a repo
+  with the variable but not the secret no longer runs and fails at push.
+- **`update.schema.json`** — `upstream` gains `additionalProperties:false`
+  and per-`type` required-field constraints; new `revFile` property.
+  Validated against the live fleet `update.json`s.
+
+### Fleet re-sync (done)
+
+`cachix.yml` (opt-in binary cache) and the hardened `update.yml` +
+`drift-check.yml` + `update.sh` distributed to all 21 repos via
+`sync.sh` over fresh remote clones. All 21 **drift-check green**.
+`mesa-git-nix`'s `update.json` had two keys the canonical `update.sh`
+ignores (`customScript`, `verify.check: "eval"`) that failed schema
+validation — removed (no behaviour change).
+
+### Other audit follow-ups (done)
+
+- **openviking-nix** `package.nix` `postInstall` — the `ov` /
+  `ragfs_python*.so` presence checks `exit 1` instead of `echo`ing a
+  warning, so a packaging regression fails CI loudly.
+- **eden-nix** `sync-deps.py` — an unresolved URL for a _tracked_ CPM dep
+  is now a hard error (exit 1), not a warning that left the dep silently
+  stale; `resolve_url`'s tag/sha branches return `None` for a non-GitHub
+  `git_host` rather than building a wrong `github.com` archive URL.
+
+### eden SDL3 migration (PR #10)
+
+eden `2026-05-18`'s SDL2→SDL3 move: the SDL3 deps PR compiled clean but
+`installPhase` failed — eden renamed `dist/72-yuzu-input.rules` →
+`dist/72-eden-input.rules` as part of de-yuzu branding; `package.nix`
+`postInstall` still referenced the old name. Fixed on the branch.
