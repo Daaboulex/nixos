@@ -29,9 +29,11 @@ All commits below are pushed. The main `nix` repo working tree is clean.
 ### packaging repos
 
 - **Phase B fleet re-sync** — all 21 `repos/*-nix` re-synced from the
-  canonical (`update.sh` + `update.yml` + new `drift-check.yml`). **All 21
-  drift-check green, all 21 CI green.** Method: fresh shallow clones into
-  `/tmp/fleet/` (never the stale local `repos/*`), commit + push per repo.
+  canonical (`update.sh` + `update.yml` + new `drift-check.yml`). All 21
+  **drift-check green** (note: drift-check verifies only
+  `scripts/update.sh` byte-for-byte — not the synced workflow files) and
+  all 21 **CI green** (full package build). Method: fresh shallow clones
+  into `/tmp/fleet/` (never the stale local `repos/*`), commit + push.
 - **lsfg-vk-nix** — opted into `versionScheme: "unstable-date"`;
   `package.nix` version is `1.0.0-unstable-2026-04-25` (base = the latest
   _stable_ release `v1.0.0`; `compareVersions`-safe).
@@ -98,6 +100,52 @@ All commits below are pushed. The main `nix` repo working tree is clean.
 - eden SDL3: `nix build --dry-run` instantiates clean; CI compile pending.
 - SSH migration: `programs.ssh.settings` evaluates + type-checks on both
   hosts.
+
+## Post-review audit (2026-05-19)
+
+Two independent reviewers (a Codex agent and a Claude agent) audited this
+session. The Claude audit confirmed every "done" claim is genuinely done
+and the `repo-standard/` files are internally consistent. Findings, with
+disposition:
+
+**Fixed this session**
+
+- `update.yml` shell injection — the `Push update` `run:` block
+  interpolated `${{ }}` outputs directly; the failure step's `execSync`
+  built shell strings from `pkg`/`newV`. Both fixed: outputs now pass via
+  `env:`, and the failure step uses `execFileSync('git', [...])` (no
+  shell). Canonical change — distributes with the pending fleet re-sync.
+
+**Open follow-ups (real, not yet fixed)**
+
+- _HIGH_ — `update.sh` `unstable-date`: rev detection greps the first
+  `rev = "` in any `*.nix` file. A multi-source package could match a
+  dependency's rev. (Today's only `unstable-date` repo, lsfg-vk, has one
+  `rev` — latent, not active.)
+- _HIGH_ — `openviking-nix/package.nix` `postInstall` only `echo`es a
+  warning when `ov` / `ragfs_python*.so` are missing; it should `exit 1`
+  so CI fails loudly. (Carried over from the 0.2.10 packaging.)
+- _MEDIUM_ — `drift-check.yml` verifies only `scripts/update.sh`, not the
+  other synced workflow files. Extending it to all canonical files would
+  make "drift-check green" mean what it sounds like.
+- _MEDIUM_ — `update.schema.json` does not model per-`type` required
+  `upstream` fields and lacks `additionalProperties: false` on `upstream`;
+  bad config fails in shell, not at validation.
+- _MEDIUM_ — `cachix.yml` checks `CACHIX_CACHE` but not
+  `CACHIX_AUTH_TOKEN`; if the variable is set without the secret, the job
+  runs and fails at push instead of skipping.
+- _MEDIUM_ — `update.sh` version-write: the success check greps the new
+  version anywhere in the file (not the target attr); the write regex
+  lacks the read-side identifier boundary; `verify.args` is passed as a
+  single argument.
+- _LOW_ — `sync-deps.py` (eden) treats removed deps / fetch failures as
+  warnings with exit 0; `git_host` is ignored for tag/sha URLs (eden's
+  deps are all GitHub today).
+- _cosmetic_ — the spec has a duplicated "flake input owner casing"
+  paragraph and a stale `openviking-nix#3` pointer (issue is closed).
+
+The HIGH/MEDIUM items are genuine hardening follow-ups for a focused
+pass; none breaks current behaviour.
 
 ## Constraints / lessons (carry forward)
 
