@@ -453,8 +453,49 @@ engine deps (croaring, krl, leveldb, rapidjson, spdlog).
    `agfs.nix`); `hashes` becomes source `hash` + the single shared
    `cargoHash`, both in `flake.nix`.
 
-**Remaining (iterative builds):** resolve the `fetchFromGitHub` src hash
-and the workspace `cargoHash`; map the full 0.3.17 Python dependency
-closure against nixpkgs; build the C++ engine + maturin extension. This
-is the focused-build phase — open issue `Daaboulex/openviking-nix#3`
-tracks it.
+**Progress (this session):** `flake.nix`, `ov-cli.nix`, `ragfs-python.nix`,
+`package.nix` written in a fresh clone; `agfs.nix` deleted; `update.json`
+updated (hashes now `hash` + `cargoHash`, both in `flake.nix`). Hashes
+resolved — src `sha256-wJuC5pN3+pMiq4rCNoUeXjO0lWFn6sejMJ6ml0TXf8s=`,
+workspace cargo `sha256-Pv9TeE9c/U46ScI40FHwvXjeYZ7/D3N03pYXEU+uIPQ=`.
+
+**Remaining (iterative builds):** build `ov-cli` + `ragfs-python`; map the
+full 0.3.17 Python dependency closure against nixpkgs (the new
+`package.nix` dep list is a first cut — `lark-oapi`,
+`opentelemetry-instrumentation-*`, `tree-sitter-php`/`-lua` may be missing
+from nixpkgs and need wheels); build the C++ engine + maturin extension.
+Not yet committed/pushed. Open issue `Daaboulex/openviking-nix#3` tracks it.
+
+### eden-nix bespoke updater — investigation
+
+The generic updater bumps eden's `version`/`rev`/src `hash` but cannot
+touch `deps/default.nix` (~23 pre-fetched CPM dependencies). Investigation
+found the dependency manifest is **split**, which is worse than the
+original framing assumed:
+
+- `cpmfile.json` (eden master) has only **12 entries**, and they are
+  almost all the system libraries eden-nix already takes from nixpkgs
+  (`openssl`, `boost`, `fmt`, `lz4`, `nlohmann`, `zlib`, `zstd`, `opus`,
+  `boost_headers`, plus Windows-only `llvm-mingw` and
+  `vulkan-validation-layers`). Only `quazip` overlaps `deps/default.nix`.
+- The other ~22 bundled deps (`xbyak`, `enet`, `mbedtls`, `simpleini`,
+  `cubeb`, `discord-rpc`, `spirv-headers`/`-tools`, `sirit`, `vma`,
+  `unordered-dense`, `gamemode`, `vulkan-headers`/`-utility-libraries`,
+  `frozen`, `mcl`, `libusb`, `nx-tzdb`, `oaknut`, `httplib`, `cpp-jwt`)
+  are declared as classic `CPMAddPackage(...)` calls in eden's CMake
+  files (`externals/CMakeLists.txt` and friends) — **not** in
+  `cpmfile.json`.
+- `package.nix`'s `preConfigure` additionally hardcodes the CPM-cache
+  version path per dep (`copyDep ${deps.cubeb} cubeb/fa02`,
+  `xbyak/7.35.2`, …) — those paths are coupled to each dep's ref and must
+  be regenerated in lockstep with `deps/default.nix`.
+- Refs come in three URL shapes: GitHub release tags
+  (`/archive/refs/tags/<tag>.tar.gz`), GitHub commit SHAs
+  (`/archive/<sha>.tar.gz`), and `git.eden-emu.dev` Gitea release
+  artifacts (`sirit`, `nx-tzdb`).
+
+So a correct `type: custom` `scripts/update.sh` must parse **both**
+`cpmfile.json` and the CMake `CPMAddPackage` calls, prefetch a Nix SRI
+hash per bundled dep, and rewrite `deps/default.nix` **and** the
+`preConfigure` cache paths in `package.nix`. This is a focused
+implementation task; the curated bundle list above is the starting point.
