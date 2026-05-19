@@ -35,7 +35,6 @@ PACKAGE=$(echo "$CONFIG" | jq -r '.package')
 PACKAGE_FILE=$(echo "$CONFIG" | jq -r '.packageFile // "package.nix"')
 VERSION_FILE=$(echo "$CONFIG" | jq -r --arg d "$PACKAGE_FILE" '.versionFile // $d')
 VERSION_ATTR=$(echo "$CONFIG" | jq -r '.versionAttr // "version"')
-HASH_FIELDS=$(echo "$CONFIG" | jq -r '.hashes // [] | .[]')
 
 output "package_name" "$PACKAGE"
 
@@ -229,23 +228,33 @@ else
 fi
 
 # --- Extract hashes (iterative build-fail-parse) ------------------------
-# Each hash field is located in whichever *.nix file declares it (hashes may
-# be spread across flake.nix + sub-package files). update.json MUST list them
-# in evaluation-dependency order: source hash first, then vendor hashes
-# (cargoHash / npmDepsHash / vendorHash).
+# update.json `hashes` entries are either a bare field name (auto-located in
+# the first *.nix file that declares it) or {"field","file"} when the same
+# field name (e.g. `hash`) appears in several files and must be disambiguated.
+# List them in evaluation-dependency order: source hash first, then vendor
+# hashes (cargoHash / npmDepsHash / vendorHash).
 DUMMY_HASH="sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
 
-for FIELD in $HASH_FIELDS; do
-  HASH_FILE=$(grep -rlP "${FIELD}\s*=\s*\"sha256-" --include='*.nix' . 2>/dev/null | head -1 || true)
-  if [ -z "$HASH_FILE" ]; then
-    warn "Could not locate hash field '$FIELD' in any .nix file — skipping"
-    continue
+mapfile -t HASH_ENTRIES < <(echo "$CONFIG" | jq -c '.hashes // [] | .[]')
+for entry in "${HASH_ENTRIES[@]}"; do
+  if [ "$(echo "$entry" | jq -r 'type')" = "string" ]; then
+    FIELD=$(echo "$entry" | jq -r '.')
+    HASH_FILE=$(grep -rlP "${FIELD}\s*=\s*\"sha256-" --include='*.nix' . 2>/dev/null | head -1 || true)
+  else
+    FIELD=$(echo "$entry" | jq -r '.field')
+    HASH_FILE=$(echo "$entry" | jq -r '.file')
+  fi
+  if [ -z "$HASH_FILE" ] || [ ! -f "$HASH_FILE" ]; then
+    err "Hash field '$FIELD': could not resolve a .nix file ('$HASH_FILE')"
+    output "error_type" "hash-extraction"
+    exit 1
   fi
   CURRENT_HASH=$(grep -oP "${FIELD}\s*=\s*\"sha256-\K[^\"]*" "$HASH_FILE" | head -1 || true)
-  [ -z "$CURRENT_HASH" ] && {
-    warn "Field '$FIELD' present but unreadable in $HASH_FILE — skipping"
-    continue
-  }
+  if [ -z "$CURRENT_HASH" ]; then
+    err "Hash field '$FIELD' not found in $HASH_FILE"
+    output "error_type" "hash-extraction"
+    exit 1
+  fi
   log "Extracting hash '$FIELD' (in $HASH_FILE)..."
   sed -i "s|${FIELD} = \"sha256-${CURRENT_HASH}\"|${FIELD} = \"${DUMMY_HASH}\"|" "$HASH_FILE"
   BUILD_OUTPUT=$(nix build .#default 2>&1 || true)

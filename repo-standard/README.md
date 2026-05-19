@@ -40,9 +40,11 @@ run `sync.sh --check` so a drifted copy fails CI.
                                       //   literal (default: packageFile)
   "versionAttr": "version",           // attribute name to match (default
                                       //   "version"; e.g. "portmasterVersion")
-  "hashes": ["hash", "vendorHash"],   // SRI hash fields, in dependency order:
-                                      //   source hash first, then vendor
-                                      //   hashes. Auto-located across *.nix.
+  "hashes": [                         // SRI hash fields, dependency order:
+    "hash",                           //   bare name -> auto-located, or
+    { "field": "vendorHash",          //   {field,file} to disambiguate when
+      "file": "agfs.nix" }            //   a name appears in several files
+  ],
   "verify": { "binary": null, "check": "wrapper" }
 }
 ```
@@ -53,8 +55,12 @@ run `sync.sh --check` so a drifted copy fails CI.
 - **`versionFile`** decouples the version literal's location from
   `packageFile` (e.g. the literal lives in `flake.nix` while `package.nix`
   only takes it as an argument).
-- **`hashes`** entries are auto-located in whichever `*.nix` file declares
-  them — vendor hashes may live in sub-package files.
+- **`hashes`** entries list SRI hash fields in evaluation-dependency order
+  (source hash first, then vendor hashes). Each entry is either a bare field
+  name — auto-located in the first `*.nix` file declaring it — or
+  `{"field","file"}` to disambiguate when a name like `hash` appears in
+  several files (source `hash` in `flake.nix` vs bundled-wheel `hash`s in
+  `package.nix`).
 - For commit-tracked packages prefer **`versionFile: "version.json"`**: the
   updater writes `{version, rev, date}` cleanly instead of clobbering a
   semantic version string with a bare SHA.
