@@ -237,9 +237,12 @@ DUMMY_HASH="sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
 
 mapfile -t HASH_ENTRIES < <(echo "$CONFIG" | jq -c '.hashes // [] | .[]')
 for entry in "${HASH_ENTRIES[@]}"; do
+  # `[?=]` matches both `field = "sha256-..."` and parameterized default
+  # args `field ? "sha256-..."`. The sed capture group preserves whichever
+  # operator was there (turning `?` into `=` would break the function arg).
   if [ "$(echo "$entry" | jq -r 'type')" = "string" ]; then
     FIELD=$(echo "$entry" | jq -r '.')
-    HASH_FILE=$(grep -rlP "${FIELD}\s*=\s*\"sha256-" --include='*.nix' . 2>/dev/null | head -1 || true)
+    HASH_FILE=$(grep -rlP "${FIELD}\s*[?=]\s*\"sha256-" --include='*.nix' . 2>/dev/null | head -1 || true)
   else
     FIELD=$(echo "$entry" | jq -r '.field')
     HASH_FILE=$(echo "$entry" | jq -r '.file')
@@ -249,14 +252,14 @@ for entry in "${HASH_ENTRIES[@]}"; do
     output "error_type" "hash-extraction"
     exit 1
   fi
-  CURRENT_HASH=$(grep -oP "${FIELD}\s*=\s*\"sha256-\K[^\"]*" "$HASH_FILE" | head -1 || true)
+  CURRENT_HASH=$(grep -oP "${FIELD}\s*[?=]\s*\"sha256-\K[^\"]*" "$HASH_FILE" | head -1 || true)
   if [ -z "$CURRENT_HASH" ]; then
     err "Hash field '$FIELD' not found in $HASH_FILE"
     output "error_type" "hash-extraction"
     exit 1
   fi
   log "Extracting hash '$FIELD' (in $HASH_FILE)..."
-  sed -i "s|${FIELD} = \"sha256-${CURRENT_HASH}\"|${FIELD} = \"${DUMMY_HASH}\"|" "$HASH_FILE"
+  sed -i "s|\(${FIELD}[[:space:]]*[?=][[:space:]]*\)\"sha256-${CURRENT_HASH}\"|\1\"${DUMMY_HASH}\"|" "$HASH_FILE"
   BUILD_OUTPUT=$(nix build .#default 2>&1 || true)
   NEW_HASH=$(echo "$BUILD_OUTPUT" | grep -oP 'got:\s+sha256-\K\S+' | head -1 || true)
   if [ -z "$NEW_HASH" ]; then
@@ -264,7 +267,7 @@ for entry in "${HASH_ENTRIES[@]}"; do
     output "error_type" "hash-extraction"
     exit 1
   fi
-  sed -i "s|${FIELD} = \"${DUMMY_HASH}\"|${FIELD} = \"sha256-${NEW_HASH}\"|" "$HASH_FILE"
+  sed -i "s|\(${FIELD}[[:space:]]*[?=][[:space:]]*\)\"${DUMMY_HASH}\"|\1\"sha256-${NEW_HASH}\"|" "$HASH_FILE"
   log "Extracted '$FIELD': sha256-$NEW_HASH"
 done
 
