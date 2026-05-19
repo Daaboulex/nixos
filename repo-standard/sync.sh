@@ -1,18 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Sync canonical standard files into the repos/*-nix clones.
+# Sync the canonical standard files into the packaging-repo clones.
 #
-#   repo-standard/sync.sh            # sync all repos
-#   repo-standard/sync.sh <repo>...  # sync named repos only
-#   repo-standard/sync.sh --check    # report drift, change nothing, exit 1 if any
+#   sync.sh            # sync every repo
+#   sync.sh <repo>...  # sync named repos only
+#   sync.sh --check    # report drift, change nothing, exit 1 if any
 #
-# Each repo commits + pushes its own changes. CI in each repo runs --check
-# against its own copy so the per-repo files can never silently drift again.
+# Project-agnostic: every path is derived, never hardcoded. The
+# packaging-repo directory defaults to <parent-of-repo-standard>/repos and
+# is overridable with PKG_REPOS_DIR so this standard can be reused as-is in
+# other projects. Each repo commits + pushes its own changes; CI runs
+# --check so a per-repo copy can never silently drift from the canonical.
 
 STD="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT="$(cd "$STD/.." && pwd)"
-cd "$ROOT"
+REPOS_DIR="${PKG_REPOS_DIR:-$(cd "$STD/.." && pwd)/repos}"
 
 # canonical file in repo-standard/  ->  destination path inside each repo
 declare -A FILES=(
@@ -30,12 +32,12 @@ for arg in "$@"; do
 done
 if [ ${#targets[@]} -eq 0 ]; then
   while IFS= read -r d; do targets+=("$(basename "$d")"); done \
-    < <(find repos -maxdepth 1 -mindepth 1 -type d 2>/dev/null | sort)
+    < <(find "$REPOS_DIR" -maxdepth 1 -mindepth 1 -type d 2>/dev/null | sort)
 fi
 
 drift=0
 for repo in "${targets[@]}"; do
-  dir="repos/$repo"
+  dir="$REPOS_DIR/$repo"
   [ -e "$dir/.git" ] || {
     echo "skip   $repo (not a git clone)"
     continue
