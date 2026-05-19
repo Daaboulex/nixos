@@ -497,5 +497,30 @@ original framing assumed:
 So a correct `type: custom` `scripts/update.sh` must parse **both**
 `cpmfile.json` and the CMake `CPMAddPackage` calls, prefetch a Nix SRI
 hash per bundled dep, and rewrite `deps/default.nix` **and** the
-`preConfigure` cache paths in `package.nix`. This is a focused
-implementation task; the curated bundle list above is the starting point.
+`preConfigure` cache paths in `package.nix`.
+
+### Resolution — 2026-05-19 (continuation)
+
+**openviking** — port pushed (`openviking-nix@e80ca15`); CI builds the
+0.3.17 package green. Update-failed issue closed. **Done.**
+
+**eden** — eden-nix already shipped `scripts/sync-deps.py`, a tool that
+re-derives `deps/default.nix` + `package.nix` CPM paths from
+`cpmfile.json` (+ an `EXTRA_DEPS` table for GitHub-release deps). The gap
+was that nothing drove it. Resolution:
+
+- `scripts/update.sh` rewritten as the bespoke `type: custom` updater
+  (`eden-nix@3a4af39`): Gitea-API commit detection, date-stamped version
+  (`<base>-unstable-<date>`), `sync-deps.py` orchestration, source-hash
+  recompute, full verify. `update.json` set to `type: custom`.
+- `sync-deps.py` `SKIP_KEYS` fixed (`eden-nix@668c014`) — upstream moved
+  the nixpkgs-satisfied system libs (openssl/boost/fmt/zlib/zstd/opus/…)
+  into `cpmfile.json`; they must be skipped, not bundled.
+- The updater is **verified working end-to-end** via a dispatched Update
+  run: it bumped, re-derived deps, recomputed the hash, and the build
+  then failed on a _genuine upstream change_ — eden `2026-05-18` migrated
+  **SDL2 → SDL3**, which it only provides via CPM (no system path). That
+  is a focused repackaging follow-up (bundle `sdl3` in `deps/default.nix`
+  - `preConfigure`, drop system SDL2), tracked on `eden-nix` issue #9.
+    The bespoke updater itself is complete — silent drift is now a
+    visible, precisely-diagnosed failure.
