@@ -1018,10 +1018,13 @@
                 return 1 ;;
           esac
 
-          # Post-switch verification
+          # Post-switch verification — skipped when switch_rc=100 (reboot
+          # required): switch-to-configuration deferred activation, so
+          # /run/current-system legitimately still points at the old
+          # generation until reboot. Checking it here is a false failure.
           local current_after
           current_after=$(readlink -f /run/current-system 2>/dev/null)
-          if [[ "$action" == "switch" && "$current_after" != "$build_path" ]]; then
+          if [[ "$action" == "switch" && $switch_rc -ne 100 && "$current_after" != "$build_path" ]]; then
             _msg_fail "/run/current-system does not match the built path!"
             _msg_dim "  Expected: $build_path"
             _msg_dim "  Actual:   $current_after"
