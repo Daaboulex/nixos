@@ -1,0 +1,90 @@
+# Nix Packaging Standard — `repo-standard/`
+
+Canonical source of the shared tooling used by every `repos/*-nix` packaging
+repo. **This directory is the single source of truth.** Per-repo copies are
+synced from here by `sync.sh`; never edit a per-repo copy directly.
+
+History: prior to 2026-05-19 there was no canonical copy — each repo carried
+its own `update.sh`, and the copies silently diverged (3+ variants). See
+`docs/specs/2026-05-19-001-nix-packaging-updater-overhaul.md` for the full
+audit and design.
+
+## Files
+
+| File         | Synced to (per repo)           | Purpose                         |
+| ------------ | ------------------------------ | ------------------------------- |
+| `update.sh`  | `scripts/update.sh`            | Detect + apply upstream updates |
+| `update.yml` | `.github/workflows/update.yml` | Scheduled Update workflow       |
+| `sync.sh`    | _(not synced — run from here)_ | Push canonical files into repos |
+| `README.md`  | _(this file)_                  | The standard, documented        |
+
+## `sync.sh`
+
+```bash
+repo-standard/sync.sh            # sync canonical files into all repos
+repo-standard/sync.sh coolercontrol-nix portmaster-nix   # named repos
+repo-standard/sync.sh --check    # report drift only, exit 1 if any
+```
+
+Each repo commits + pushes its own changes. A per-repo `ci.yml` step should
+run `sync.sh --check` so a drifted copy fails CI.
+
+## `.github/update.json` schema
+
+```jsonc
+{
+  "package": "openviking",            // package / repo name
+  "upstream": { "type": "...", ... }, // see upstream types below
+  "packageFile": "package.nix",       // file `nix build .#default` centers on
+  "versionFile": "flake.nix",         // file holding the canonical version
+                                      //   literal (default: packageFile)
+  "versionAttr": "version",           // attribute name to match (default
+                                      //   "version"; e.g. "portmasterVersion")
+  "hashes": ["hash", "vendorHash"],   // SRI hash fields, in dependency order:
+                                      //   source hash first, then vendor
+                                      //   hashes. Auto-located across *.nix.
+  "verify": { "binary": null, "check": "wrapper" }
+}
+```
+
+- **`versionAttr`** matches both `version = "x"` and parameterized
+  `<attr> ? "x"` default-argument forms — so `portmasterVersion ? "2.1.7"`
+  works with `"versionAttr": "portmasterVersion"`.
+- **`versionFile`** decouples the version literal's location from
+  `packageFile` (e.g. the literal lives in `flake.nix` while `package.nix`
+  only takes it as an argument).
+- **`hashes`** entries are auto-located in whichever `*.nix` file declares
+  them — vendor hashes may live in sub-package files.
+- For commit-tracked packages prefer **`versionFile: "version.json"`**: the
+  updater writes `{version, rev, date}` cleanly instead of clobbering a
+  semantic version string with a bare SHA.
+
+### Upstream types
+
+`github-release` · `github-tag` · `github-commit` · `gitlab-tag` ·
+`gitlab-commit` · `gitea-commit` · `git-ls-remote` · `none` · `custom`
+
+`none` — module/multi-component repos with nothing to track.
+`custom` — the repo ships its own `scripts/update.sh` (multi-channel apps
+such as gemini-cli stable/preview/nightly, or non-API sources like OCCT).
+Custom repos are sanctioned exceptions: the canonical `update.sh` exits 0
+early for them; their bespoke script must honour the same exit contract.
+
+## `update.sh` contract
+
+- **exit 0** — no update needed, or update applied + verified.
+- **exit 1** — a real failure (config, version read/write, hash extraction,
+  build, verification) → workflow opens an `update-failed` issue.
+- **exit 2** — network / API error → no issue, retried next run.
+- Outputs (to `$GITHUB_OUTPUT`): `updated`, `old_version`, `new_version`,
+  `package_name`, `upstream_url`, `error_type`.
+- Flow: read version → fetch upstream → compare → write version (+ rev) →
+  extract each hash (build-fail-parse) → verify (eval → build → artifact).
+
+## `update.yml` behaviour
+
+- Success → silent commit + push to the default branch.
+- Failure (`exit 1`) → `update-failed` issue with the build log + a recovery
+  branch; previous failure issues auto-close on the next success.
+- `EXIT_CODE=${PIPESTATUS[0]}` captures `update.sh`'s real exit — **not**
+  `tee`'s. (The historic `$?` bug silently swallowed every failure.)
