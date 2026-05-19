@@ -84,7 +84,7 @@
         },
         "args": { "type": ["string", "null"] },
         "check": {
-          "enum": ["elf", "wrapper", "desktop", "eval"],
+          "enum": ["elf", "wrapper", "desktop"],
           "description": "Artifact check when no binary is run."
         }
       }

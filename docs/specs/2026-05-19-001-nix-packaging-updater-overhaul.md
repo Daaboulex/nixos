@@ -97,6 +97,15 @@ flake.lock-locked rev, never a local working clone.
 
 ## Design
 
+> **Implementation note (2026-05-19).** The design below was the _original_
+> plan. Implementation deliberately simplified it (Simplicity First): there is
+> **no `channels`** layer, **no `versionScheme`**; `update.json` uses flat
+> top-level keys (`versionFile`, `versionAttr`, `hashes`); commit-tracked
+> repos get a bare 7-char SHA as the version; and only `update.sh` +
+> `update.yml` are synced (not `ci.yml`/`maintenance.yml`). The **Execution
+> Log** and the actual `repo-standard/` files are the source of truth for
+> what was built — read the Design as rationale, not as the shipped schema.
+
 ### D1. Canonical home: `<nix-repo>/repo-standard/`
 
 The standard lives **in this nix repo**, not under the `.ai-context` symlink
