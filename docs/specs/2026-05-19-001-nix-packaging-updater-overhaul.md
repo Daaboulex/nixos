@@ -349,3 +349,112 @@ repackaging, precisely scoped here.
 - Promote `repo-standard/` to its own repo once stabilised, so other
   projects consume it as a flake input (single source of truth).
 - `vkBasalt_overlay_wayland` local clone has no `.git` (cosmetic).
+
+---
+
+## Execution Log — 2026-05-19 (continuation session)
+
+### Phase A — repo-standard hardening (done)
+
+Canonical-side fixes from the Codex review. Commits `ec289b5`, `2082549`
+on `Daaboulex/nixos@main`.
+
+- **`update.sh` hash oscillation guard.** An undeclared fixed-output
+  derivation used to be misrouted onto the source `hash` field; the
+  extractor then looped silently to the convergence cap. A new
+  `HF_DONE` map detects a mismatch re-routed onto an already-resolved
+  field and fails immediately with `undeclared hash for derivation X`.
+- **`update.sh` regex escaping.** New `re_esc` helper escapes
+  `VERSION_ATTR` and hash field names before they are interpolated into
+  `grep -P` / `sed`.
+- **`update.sh` versionScheme.** New `versionScheme: "unstable-date"`:
+  commit-tracked repos can write `<versionBase>-unstable-<YYYY-MM-DD>`
+  (orderable by `compareVersions`) instead of a bare SHA; update
+  detection compares the `rev`. Default `literal` keeps the old
+  behaviour. Schema gains `versionScheme` + `versionBase`.
+- **`update.yml` injection hardening.** The two `github-script` steps no
+  longer interpolate `${{ }}` outputs into the JS body — values pass via
+  `env:` and `process.env`.
+- **`drift-check.yml`** (new canonical workflow, synced to every repo):
+  CI fails if `scripts/update.sh` diverges from the canonical (sha256 vs
+  `raw.githubusercontent.com/Daaboulex/nixos/main/`); `custom`-type
+  repos are skipped. This is Task 4 (CI drift-check) — implemented as a
+  standalone synced workflow rather than a per-repo `ci.yml` edit.
+
+Verified: `bash -n`, `shellcheck`, `actionlint`, `typos` all clean.
+
+### Phase B — fleet re-sync (done)
+
+All 21 packaging repos re-synced from the new canonical. Method: shallow
+clones from each remote into `/tmp/fleet/` (the local `repos/*` clones
+are stale — never synced from), `sync.sh`, commit + push per repo. All
+21 **drift-check green** (sync is byte-correct) and all 21 **CI green**.
+
+- **lsfg-vk** opted into `versionScheme: "unstable-date"`. `versionBase`
+  is `1.0.0` — PancakeTAS/lsfg-vk's latest _stable_ release (`v2.0.0-dev`
+  is a pre-release tag; `2.0.0-unstable-X` would wrongly sort newer than
+  a future `2.0.0` via the empty-vs-string `compareVersions` gotcha).
+  `package.nix` version is now `1.0.0-unstable-2026-04-25` (dated to the
+  pinned commit `218820e`).
+
+### openviking-nix 0.3.17 port — investigation complete, plan below
+
+Upstream 0.3.17 (`volcengine/OpenViking`) restructured: AGFS is no longer
+a Go server. The Cargo workspace (`crates/`) has three members:
+
+- `ov_cli` — binary `ov` (Rust CLI; unchanged role).
+- `ragfs` — lib + binaries `ragfs-server`, `ragfs-shell` (the Rust
+  rewrite of the Go AGFS). features: `default=[]`, `s3`, `full`.
+- `ragfs-python` — PyO3 `cdylib` `ragfs_python`, `abi3-py310`,
+  `build-backend = maturin`. Replaces the old CGO `libagfsbinding.so`.
+
+`third_party/agfs` is gone; `third_party/` now holds only C++ vector-
+engine deps (croaring, krl, leveldb, rapidjson, spdlog).
+
+**How the Python build (`setup.py`) consumes the native parts:**
+
+- `ov` — honoured via `OV_PREBUILT_BIN_DIR` env (copy `$DIR/ov` →
+  `openviking/bin/ov`, skip cargo). Same mechanism as 0.2.10.
+- `ragfs_python` — `build_ragfs_python_artifact()` runs `maturin`, extracts
+  `ragfs_python.abi3.*.so` into `openviking/lib/`. **Gotcha:**
+  `_should_require_ragfs_artifact()` returns True when `bdist_wheel` is in
+  `sys.argv` — which `buildPythonApplication` always does. So
+  `OV_SKIP_RAGFS_BUILD=1` alone raises. The package.nix MUST also set
+  `OV_REQUIRE_RAGFS_BUILD=0`, then pre-place `ragfs_python.abi3.so` in
+  `openviking/lib/` (bundled via the `lib/ragfs_python*.so` package-data
+  glob).
+- C++ vector engine — cmake build of `src/`, same as 0.2.10, but the SIMD
+  var changed: `OV_X86_SIMD_LEVEL` → `OV_X86_BUILD_VARIANTS` (default
+  `sse3;avx2;avx512`, multi-variant + runtime dispatch).
+
+**Port plan (per file in openviking-nix):**
+
+1. Delete `agfs.nix`.
+2. `ragfs.nix` (new) — `rustPlatform.buildRustPackage`, `-p ragfs`,
+   builds `ragfs-server` + `ragfs-shell`. Standalone package (the
+   `openviking` package does not need it — AGFS runs in-process via
+   `ragfs_python`).
+3. `ragfs-python.nix` (new) — maturin build of `crates/ragfs-python`,
+   producing the `ragfs_python.abi3.so` extension.
+4. `ov-cli.nix` — unchanged shape; new `cargoHash` for 0.3.17.
+5. `flake.nix` — version `0.3.17`, new src hash; the three crates share
+   one root `Cargo.lock` ⇒ a single shared `cargoDeps`
+   (`rustPlatform.fetchCargoVendor`) referenced by all Rust builds — one
+   `cargoHash` for the repo. Packages: `default=openviking`, `ov-cli`,
+   `ragfs`. Drop `agfs`.
+6. `package.nix` — `OV_PREBUILT_BIN_DIR` for `ov`; pre-place
+   `ragfs_python*.so` + `OV_SKIP_RAGFS_BUILD=1` + `OV_REQUIRE_RAGFS_BUILD=0`;
+   keep the cmake C++ engine build; refresh the dependency list to
+   0.3.17's `pyproject.toml` (~60 runtime deps — many new:
+   `opentelemetry-*`, `argon2-cffi`, `lark-oapi`, `mcp`, `pathspec`,
+   `tree-sitter-php`, `tree-sitter-lua`; tree-sitter grammars not in
+   nixpkgs still come from pre-built wheels).
+7. `update.json` — drop the `vendorHash` entry (it pointed into
+   `agfs.nix`); `hashes` becomes source `hash` + the single shared
+   `cargoHash`, both in `flake.nix`.
+
+**Remaining (iterative builds):** resolve the `fetchFromGitHub` src hash
+and the workspace `cargoHash`; map the full 0.3.17 Python dependency
+closure against nixpkgs; build the C++ engine + maturin extension. This
+is the focused-build phase — open issue `Daaboulex/openviking-nix#3`
+tracks it.
