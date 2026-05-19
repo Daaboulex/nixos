@@ -490,9 +490,9 @@
   # Works over USB (automatic) and wireless debugging (mDNS auto-connect).
   programs.ssh.enable = true;
   programs.ssh.enableDefaultConfig = false;
-  programs.ssh.matchBlocks.pixel-9-pro = {
-    user = "droid";
-    proxyCommand =
+  programs.ssh.settings.pixel-9-pro = {
+    User = "droid";
+    ProxyCommand =
       let
         serial = site.hosts.pixel-9-pro.adb.serial;
       in

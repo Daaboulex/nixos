@@ -642,32 +642,26 @@ in
   programs.ssh = {
     enable = true;
     enableDefaultConfig = false;
-    matchBlocks = {
+    settings = {
       "*" = {
-        extraOptions = {
-          KexAlgorithms = "mlkem768x25519-sha256,curve25519-sha256,curve25519-sha256@libssh.org";
-        };
+        KexAlgorithms = "mlkem768x25519-sha256,curve25519-sha256,curve25519-sha256@libssh.org";
       };
       "macbook" = {
-        hostname = "macbook-pro-9-2.local"; # mDNS — avahi resolves .local hostnames
-        user = "root";
-        identityFile = "~/.ssh/id_ed25519";
-        extraOptions = {
-          StrictHostKeyChecking = "accept-new"; # Auto-accept on first connect, verify after
-        };
+        HostName = "macbook-pro-9-2.local"; # mDNS — avahi resolves .local hostnames
+        User = "root";
+        IdentityFile = "~/.ssh/id_ed25519";
+        StrictHostKeyChecking = "accept-new"; # Auto-accept on first connect, verify after
       };
       "macbook-user" = {
-        hostname = "macbook-pro-9-2.local";
-        user = "user";
-        identityFile = "~/.ssh/id_ed25519";
-        extraOptions = {
-          StrictHostKeyChecking = "accept-new";
-        };
+        HostName = "macbook-pro-9-2.local";
+        User = "user";
+        IdentityFile = "~/.ssh/id_ed25519";
+        StrictHostKeyChecking = "accept-new";
       };
       # Pixel VM — via ADB bridge to AVF VM
       "pixel-9-pro" = {
-        user = "droid";
-        proxyCommand =
+        User = "droid";
+        ProxyCommand =
           let
             serial = site.hosts.pixel-9-pro.adb.serial;
           in
@@ -692,9 +686,7 @@ in
             echo "pixel-proxy: no ADB device (check USB + Terminal app)" >&2
             exit 1
           ''}";
-        extraOptions = {
-          StrictHostKeyChecking = "accept-new";
-        };
+        StrictHostKeyChecking = "accept-new";
       };
     };
   };
