@@ -110,6 +110,30 @@ repo under `github.com/Daaboulex`).
 
 ---
 
+## Verification status (session 3)
+
+- `repo-standard/` files: `bash -n`, `shellcheck`, `actionlint`, `typos`,
+  and `check-jsonschema` all clean. The schema was **negative-tested** —
+  configs missing per-type required fields, or with unknown `upstream`
+  properties, are rejected. The new `\b`-boundary `sed` and `grep -P`
+  version-write patterns were unit-tested.
+- **`revFile` change audited fleet-wide — safe, no regression.** Rev
+  scoping only affects non-`version.json` commit-tracked repos: lsfg-vk
+  (the only `unstable-date` repo) keeps its `rev` in its `versionFile`
+  (`package.nix`) so the `revFile` default resolves correctly;
+  `version.json` repos (yeetmouse, mesa) use the jq rev path;
+  release-tracked repos have no `rev` to bump; cachyos-settings has no
+  `rev` attr at all.
+- All 21 repos: **drift-check green** (confirmed). CI: 16 green confirmed,
+  5 in flight (see below).
+- **Not yet exercised live:** the `update.sh` logic changes (`revFile`
+  scoping, version-write check, `verify.args` split) execute only when a
+  real update is detected — no Update-workflow run has exercised them yet;
+  the first scheduled run per repo is the real proof. The `sync-deps.py`
+  change is `py_compile`-clean + reasoned, not run against a live sync.
+
+---
+
 ## In flight at power-off — FIRST ACTIONS NEXT SESSION
 
 1. **Re-poll fleet CI.** At power-off, 16/21 repos' CI was green; 5 were
