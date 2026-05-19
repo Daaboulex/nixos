@@ -282,10 +282,14 @@ if [ "${#HF_FIELD[@]}" -gt 0 ]; then
       output "error_type" "hash-extraction"
       exit 1
     fi
+    # Map the failing FOD's drv name to a declared hash field. Cargo vendor
+    # FODs vary by nixpkgs version: legacy `*-vendor.tar.gz` / `*cargo*` and
+    # the newer fetchCargoVendor `*-vendor-staging`. Go is always
+    # `*-go-modules`, npm `*-npm-deps`.
     case "$DRV" in
     *go-modules*) WANT="vendorHash" ;;
     *npm-deps* | *-npm-*) WANT="npmDepsHash" ;;
-    *cargo* | *vendor.tar*) WANT="cargoHash" ;;
+    *cargo* | *vendor.tar* | *vendor-staging*) WANT="cargoHash" ;;
     *) WANT="" ;;
     esac
     IDX=-1
