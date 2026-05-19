@@ -20,6 +20,7 @@ REPOS_DIR="${PKG_REPOS_DIR:-$(cd "$STD/.." && pwd)/repos}"
 declare -A FILES=(
   ["update.sh"]="scripts/update.sh"
   ["update.yml"]=".github/workflows/update.yml"
+  ["drift-check.yml"]=".github/workflows/drift-check.yml"
 )
 
 CHECK=0

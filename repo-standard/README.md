@@ -11,12 +11,14 @@ audit and design.
 
 ## Files
 
-| File         | Synced to (per repo)           | Purpose                         |
-| ------------ | ------------------------------ | ------------------------------- |
-| `update.sh`  | `scripts/update.sh`            | Detect + apply upstream updates |
-| `update.yml` | `.github/workflows/update.yml` | Scheduled Update workflow       |
-| `sync.sh`    | _(not synced — run from here)_ | Push canonical files into repos |
-| `README.md`  | _(this file)_                  | The standard, documented        |
+| File                 | Synced to (per repo)                | Purpose                               |
+| -------------------- | ----------------------------------- | ------------------------------------- |
+| `update.sh`          | `scripts/update.sh`                 | Detect + apply upstream updates       |
+| `update.yml`         | `.github/workflows/update.yml`      | Scheduled Update workflow             |
+| `drift-check.yml`    | `.github/workflows/drift-check.yml` | CI: `update.sh` matches the canonical |
+| `update.schema.json` | _(not synced — reference)_          | JSON Schema for `update.json`         |
+| `sync.sh`            | _(not synced — run from here)_      | Push canonical files into repos       |
+| `README.md`          | _(this file)_                       | The standard, documented              |
 
 ## `sync.sh`
 
@@ -26,8 +28,12 @@ repo-standard/sync.sh coolercontrol-nix portmaster-nix   # named repos
 repo-standard/sync.sh --check    # report drift only, exit 1 if any
 ```
 
-Each repo commits + pushes its own changes. A per-repo `ci.yml` step should
-run `sync.sh --check` so a drifted copy fails CI.
+Each repo commits + pushes its own changes. The synced `drift-check.yml`
+workflow fails CI if a repo's `scripts/update.sh` diverges from the canonical
+— it compares the sha256 against
+`raw.githubusercontent.com/Daaboulex/nixos/main/repo-standard/update.sh`
+(`custom`-type repos keep a bespoke script and are skipped). Run
+`sync.sh --check` for the same check locally.
 
 ## `.github/update.json` schema
 
@@ -40,6 +46,9 @@ run `sync.sh --check` so a drifted copy fails CI.
                                       //   literal (default: packageFile)
   "versionAttr": "version",           // attribute name to match (default
                                       //   "version"; e.g. "portmasterVersion")
+  "versionScheme": "unstable-date",   // optional; "literal" (default) or
+                                      //   "unstable-date" (commit-tracked)
+  "versionBase": "2.0.0",             // base for "unstable-date" (optional)
   "hashes": [                         // SRI hash fields, dependency order:
     "hash",                           //   bare name -> auto-located, or
     { "field": "vendorHash",          //   {field,file} to disambiguate when
@@ -64,6 +73,17 @@ run `sync.sh --check` so a drifted copy fails CI.
 - For commit-tracked packages prefer **`versionFile: "version.json"`**: the
   updater writes `{version, rev, date}` cleanly instead of clobbering a
   semantic version string with a bare SHA.
+- **`versionScheme`** controls the written version literal. `literal`
+  (default) writes the upstream string verbatim — a bare 7-char SHA for
+  commit-tracked types. `unstable-date` writes
+  `<versionBase>-unstable-<YYYY-MM-DD>` (the nixpkgs VCS-snapshot
+  convention, orderable by `builtins.compareVersions`); the `rev` attr
+  still tracks every commit, and update detection compares the `rev`, not
+  the date string. `unstable-date` is valid only for commit-tracked
+  upstream types.
+- **`versionBase`** is the base prefix for `unstable-date` (e.g. the last
+  release tag, `"2.0.0"`). If omitted, it is derived by stripping any
+  `-unstable-*` suffix from the current version.
 
 ### Upstream types
 

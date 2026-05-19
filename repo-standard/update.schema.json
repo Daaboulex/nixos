@@ -52,6 +52,15 @@
       "default": "version",
       "description": "Attribute name to match — handles `version = \"x\"` and parameterized `<attr> ? \"x\"`."
     },
+    "versionScheme": {
+      "enum": ["literal", "unstable-date"],
+      "default": "literal",
+      "description": "How the version literal is written. 'literal': the upstream string verbatim (a bare 7-char SHA for commit-tracked repos). 'unstable-date': '<versionBase>-unstable-<YYYY-MM-DD>' (nixpkgs VCS-snapshot convention) — commit-tracked types only; comparison is by rev."
+    },
+    "versionBase": {
+      "type": "string",
+      "description": "Base version prefix for versionScheme 'unstable-date' (e.g. last release '2.0.0'). If omitted, derived by stripping any '-unstable-*' suffix from the current version."
+    },
     "hashes": {
       "type": "array",
       "description": "SRI hash fields in evaluation-dependency order (source first).",
