@@ -246,3 +246,47 @@ repo; decide gemini-cli-nix (wire in as a flake input, or retire the clone).
   issues except sanctioned ones.
 - `update.yml` failure-issue path proven to fire on an induced failure.
 - `docs/STYLE.md` + `repo-standard/README.md` document the v2 standard.
+
+---
+
+## Execution Log — 2026-05-19
+
+**Wave 1 — done.** `repo-standard/` created (`update.sh` v2, `update.yml`,
+`sync.sh`, `README.md`). update.sh v2 handles parameterized versions _and_
+hashes (`<attr> ? "x"`), multi-file `{field,file}` hash placement, and uses
+a dummy-all + iterative build-fail-parse extractor (a version bump
+invalidates every FOD hash at once, so per-field dummying was unsound).
+`update.yml` uses `EXIT_CODE=${PIPESTATUS[0]}`.
+
+**Wave 2 — done.** All 21 package repos synced onto the canonical
+`update.sh` + `update.yml` and pushed. `custom`-type repos kept their
+bespoke `update.sh` (canonical `update.yml` only).
+
+**Wave 3 — partial.**
+
+- `lsfg-vk-nix` — ✅ bumped. `update.json` owner `Starter-Pack-Gaming`→
+  `PancakeTAS`, branch `v2.0.0-dev` (a tag)→`develop`.
+- `eden-nix` — updater now _functional_ (`update.json` `branch: master` —
+  eden's default branch; the `gitea-commit` default `main` 404'd). Bump
+  still fails: eden bundles ~25 CPM dependencies in `deps/default.nix`,
+  each with its own hash, and many change when eden's commit bumps. The
+  generic updater cannot regenerate them. **Follow-up: eden needs a
+  bespoke `update.sh` (`type: custom`) that re-derives `deps/default.nix`
+  from eden's CPM manifest.** Until then the failure is visible as a
+  persistent `update-failed` issue.
+- `openviking-nix` / `portmaster-nix` — migrated to updater v2
+  (`update.json` v2: corrected upstream, `versionAttr`, per-file hashes);
+  re-triggered with the iterative extractor — outcome pending.
+
+**Also done:** flake input owner casing normalized
+(`github:daaboulex/`→`Daaboulex/`, 5 inputs).
+
+**Still open (Wave 4 + decisions):**
+
+- CI drift-check — each package repo's `ci.yml` should verify its
+  `update.sh`/`update.yml` still match the canonical (compare against
+  `raw.githubusercontent.com/Daaboulex/nixos/main/repo-standard/`).
+- `docs/STYLE.md` cross-reference to `repo-standard/`.
+- `update.schema.json` (JSON Schema for `update.json` v2).
+- eden bespoke updater (above).
+- `vkBasalt_overlay_wayland` local clone has no `.git` (cosmetic).
