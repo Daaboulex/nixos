@@ -275,8 +275,18 @@ bespoke `update.sh` (canonical `update.yml` only).
   from eden's CPM manifest.** Until then the failure is visible as a
   persistent `update-failed` issue.
 - `openviking-nix` / `portmaster-nix` — migrated to updater v2
-  (`update.json` v2: corrected upstream, `versionAttr`, per-file hashes);
-  re-triggered with the iterative extractor — outcome pending.
+  (`update.json` v2: corrected upstream, `versionAttr`, per-file hashes).
+  Re-triggered with the iterative extractor; both still fail the bump:
+  - openviking — `agfs-0.3.17-go-modules` will not build (a real Go
+    vendoring failure at the new version, not a hash mismatch).
+  - portmaster — hash extraction does not converge: the build exposes
+    more distinct FODs than the declared hash fields.
+    Both — like eden — are complex multi-language packages with nested /
+    undeclared FODs that the generic updater cannot bump. **The three
+    (openviking, portmaster, eden) need bespoke per-repo update logic.**
+    Their drift is now visible as persistent `update-failed` issues — the
+    silent-drift problem is solved even though these three are not yet
+    auto-bumping. The common case is proven: lsfg-vk bumped end-to-end.
 
 **Also done:** flake input owner casing normalized
 (`github:daaboulex/`→`Daaboulex/`, 5 inputs).
