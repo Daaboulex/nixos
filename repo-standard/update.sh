@@ -21,8 +21,8 @@ err() { echo "::error::$*"; }
 
 # re_esc <str> — backslash-escape every regex metacharacter so a dynamic
 # string (a Nix identifier from update.json) is matched literally in
-# grep -P / sed -E / sed BRE. Nix identifiers only contain [A-Za-z0-9_'-];
-# escaping is defensive, not strictly required, but cheap.
+# grep -P, sed -E, and plain sed expressions. Nix identifiers only contain
+# [A-Za-z0-9_'-]; escaping is defensive, not strictly required, but cheap.
 re_esc() { printf '%s' "$1" | sed 's/[^[:alnum:]_]/\\&/g'; }
 
 # --- Read config ---------------------------------------------------------
@@ -313,9 +313,9 @@ done
 # set_hash <field> <file> <value> — replaces the field's sha256 value,
 # preserving whichever operator (`=` or `?`) was used.
 set_hash() {
-  local fre
-  fre=$(re_esc "$1")
-  sed -i "s|\(${fre}[[:space:]]*[?=][[:space:]]*\)\"sha256-[^\"]*\"|\1\"${3}\"|" "$2"
+  local field_re
+  field_re=$(re_esc "$1")
+  sed -i "s|\(${field_re}[[:space:]]*[?=][[:space:]]*\)\"sha256-[^\"]*\"|\1\"${3}\"|" "$2"
 }
 
 if [ "${#HF_FIELD[@]}" -gt 0 ]; then
