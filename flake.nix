@@ -77,7 +77,7 @@
 
     # Eden - Nintendo Switch emulator (community fork)
     eden = {
-      url = "github:daaboulex/eden-nix";
+      url = "github:Daaboulex/eden-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -89,7 +89,7 @@
 
     # Portmaster - Privacy Application (Local Flake)
     portmaster = {
-      url = "github:daaboulex/portmaster-nix";
+      url = "github:Daaboulex/portmaster-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -101,7 +101,7 @@
 
     # OCCT - Stability Test & Benchmark (Local Flake)
     occt-nix = {
-      url = "github:daaboulex/OCCT-nix";
+      url = "github:Daaboulex/OCCT-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -114,13 +114,13 @@
 
     # Mesa-git - Bleeding-edge Mesa from main branch
     mesa-git-nix = {
-      url = "github:daaboulex/mesa-git-nix";
+      url = "github:Daaboulex/mesa-git-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
     # LSFG-VK - Vulkan Frame Generation (Lossless Scaling)
     lsfg-vk = {
-      url = "github:daaboulex/lsfg-vk-nix";
+      url = "github:Daaboulex/lsfg-vk-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
