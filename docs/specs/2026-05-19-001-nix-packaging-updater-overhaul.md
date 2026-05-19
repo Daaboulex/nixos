@@ -291,12 +291,39 @@ bespoke `update.sh` (canonical `update.yml` only).
 **Also done:** flake input owner casing normalized
 (`github:daaboulex/`→`Daaboulex/`, 5 inputs).
 
+**Also done:** flake input owner casing normalized
+(`github:daaboulex/`→`Daaboulex/`, 5 inputs). `update.schema.json` added.
+`sync.sh` made project-agnostic (`PKG_REPOS_DIR`, no hardcoded paths).
+
+### Finding 11 — the old updater pushed _broken_ bumps (not just silent)
+
+coolercontrol-nix's CI was red: `flake.nix` had `npmDepsHash` **and**
+`cargoHash` set to the _same_ value. The old per-field extractor's
+`head -1 got:` took the hash from the wrong fixed-output derivation, and
+the `$?`-vs-`PIPESTATUS` bug let the failed verification push anyway — so
+a broken 4.3.0 landed on `main`. Fixed (`ff27aea`): `npmDepsHash`
+corrected to the value CI reported; `cargoHash` (`f0Ss…`) was already
+right. The v2 extractor (drv-name→field mapping) + the PIPESTATUS fix
+prevent recurrence. Lesson: a green `Update` run never meant a correct
+bump — always confirm CI after.
+
+### Fleet CI audit (2026-05-19)
+
+20 of 21 repos green or freshly green; **coolercontrol** was the one red
+(fixed above). openviking/portmaster/eden remain blocked on bespoke work.
+
 **Still open (Wave 4 + decisions):**
 
 - CI drift-check — each package repo's `ci.yml` should verify its
   `update.sh`/`update.yml` still match the canonical (compare against
   `raw.githubusercontent.com/Daaboulex/nixos/main/repo-standard/`).
 - `docs/STYLE.md` cross-reference to `repo-standard/`.
-- `update.schema.json` (JSON Schema for `update.json` v2).
-- eden bespoke updater (above).
+- **openviking** — 0.3.17 is a major upstream rewrite: AGFS moved from a
+  Go server (`third_party/agfs/agfs-server`) to a Rust crate
+  (`crates/ragfs`). openviking-nix's `agfs.nix` (`buildGoModule`) is
+  obsolete; needs a packaging port, not a version bump.
+- **eden** bespoke updater — `deps/default.nix` has ~25 CPM dep hashes
+  that change with eden's commit; needs a CPM-manifest-aware updater.
 - `vkBasalt_overlay_wayland` local clone has no `.git` (cosmetic).
+- Promote `repo-standard/` to its own repo once stabilised, so other
+  projects consume it as a flake input (single source of truth).
