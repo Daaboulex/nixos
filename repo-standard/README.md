@@ -16,6 +16,7 @@ audit and design.
 | `update.sh`          | `scripts/update.sh`                 | Detect + apply upstream updates       |
 | `update.yml`         | `.github/workflows/update.yml`      | Scheduled Update workflow             |
 | `drift-check.yml`    | `.github/workflows/drift-check.yml` | CI: `update.sh` matches the canonical |
+| `cachix.yml`         | `.github/workflows/cachix.yml`      | Opt-in Cachix binary-cache push       |
 | `update.schema.json` | _(not synced — reference)_          | JSON Schema for `update.json`         |
 | `sync.sh`            | _(not synced — run from here)_      | Push canonical files into repos       |
 | `README.md`          | _(this file)_                       | The standard, documented              |
@@ -114,3 +115,31 @@ early for them; their bespoke script must honour the same exit contract.
   branch; previous failure issues auto-close on the next success.
 - `EXIT_CODE=${PIPESTATUS[0]}` captures `update.sh`'s real exit — **not**
   `tee`'s. (The historic `$?` bug silently swallowed every failure.)
+
+## Cachix (optional binary cache)
+
+`cachix.yml` pushes a repo's `.#default` build to a [Cachix](https://cachix.org)
+cache on every push to the default branch, so other CI runs and the consuming
+nixos config get binary-cache hits instead of recompiling. It is **opt-in and
+inert by default** — the job no-ops unless the repo (or the org) defines the
+configuration below, and module-only repos (no `.#default`) skip automatically.
+
+One-time setup, per repo or once at the org level:
+
+1. Create a cache at <https://app.cachix.org> (one shared cache for all the
+   packaging repos is the simplest layout).
+2. Add a **variable** `CACHIX_CACHE` = the cache name.
+3. Add a **secret** `CACHIX_AUTH_TOKEN` = a write token
+   (`cachix authtoken` from the cache's settings).
+
+To consume the cache, add it as a substituter in the nixos config:
+
+```nix
+nix.settings = {
+  substituters = [ "https://<cache-name>.cachix.org" ];
+  trusted-public-keys = [ "<cache-name>.cachix.org-1:<public-key>" ];
+};
+```
+
+`cachix.yml` is synced like the other canonical workflows; it carries no
+secrets and is safe to ship to every repo whether or not Cachix is configured.

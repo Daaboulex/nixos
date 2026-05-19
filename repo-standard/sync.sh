@@ -21,6 +21,7 @@ declare -A FILES=(
   ["update.sh"]="scripts/update.sh"
   ["update.yml"]=".github/workflows/update.yml"
   ["drift-check.yml"]=".github/workflows/drift-check.yml"
+  ["cachix.yml"]=".github/workflows/cachix.yml"
 )
 
 CHECK=0
