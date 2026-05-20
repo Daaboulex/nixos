@@ -34,7 +34,19 @@ let
       options.myModules.boot.loader = {
         enable = lib.mkEnableOption "Boot configuration";
 
-        systemdBoot.enable = lib.mkEnableOption "systemd-boot";
+        systemdBoot = {
+          enable = lib.mkEnableOption "systemd-boot";
+          configurationLimit = lib.mkOption {
+            type = lib.types.ints.positive;
+            default = 10;
+            description = ''
+              Max NixOS generations to keep in the systemd-boot menu.
+              Tight on small ESPs (Apple Macs ship 200–512 MB) — every
+              generation costs ~70 MB (kernel + initrd) for the
+              `linux-cachyos` family. Drop to 3–5 on Apple hardware.
+            '';
+          };
+        };
         grub.enable = lib.mkEnableOption "GRUB";
 
         secureBoot = {
@@ -138,7 +150,7 @@ let
         # Systemd-boot — Lanzaboote replaces the install path when secure
         # boot is on, so guard against double-install.
         boot.loader.systemd-boot.enable = cfg.systemdBoot.enable && !cfg.secureBoot.enable;
-        boot.loader.systemd-boot.configurationLimit = lib.mkIf cfg.systemdBoot.enable 10;
+        boot.loader.systemd-boot.configurationLimit = lib.mkIf cfg.systemdBoot.enable cfg.systemdBoot.configurationLimit;
         boot.loader.systemd-boot.consoleMode = lib.mkIf (
           cfg.systemdBoot.enable && cfg.consoleMode != null
         ) cfg.consoleMode;

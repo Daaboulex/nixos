@@ -46,12 +46,17 @@
         # at chime) and chainloads systemd-boot when "NixOS" is selected.
         # Both installers run independently on every rebuild; both
         # menus stay fresh — drift is impossible.
-        systemdBoot.enable = true;
+        systemdBoot = {
+          enable = true;
+          # 511 MB ESP + dual-bootloader install + cachyos-lto kernels (~80 MB
+          # per gen, kernel + initrd). 3 gens leaves ample headroom; 10 fills it.
+          configurationLimit = 3;
+        };
         refind = {
           enable = true;
           efiInstallAsRemovable = true;
           timeout = 10;
-          maxGenerations = 10;
+          maxGenerations = 3;
           theme = pkgs.refind-theme-minimal;
           hideUI = [
             "hints"
@@ -496,14 +501,14 @@
     # --------------------------------------------------------------------------
     boot.kernel = {
       enable = true;
-      # xanmod kept as default kernel on MBP 9,2. The `cachyos` specialisation
-      # below boots a v2-compiled cachyos-lto via the local x86_64-v2 overlay
-      # (parts/_build/cachyos-v2.nix — restores the v2 variants xddxdd PR #50
-      # dropped). Either kernel is Ivy-Bridge safe; xanmod is the daily driver
-      # because v2-cachyos builds from source on every kernel rotation
-      # (no upstream binary cache for v2 since CachyOS upstream + xddxdd
-      # both stopped shipping v2 binaries).
-      variant = "xanmod";
+      # cachyos-lto built for x86-64-v2 (Ivy Bridge HD4000). The v2 variant
+      # is materialized locally via parts/_build/cachyos-v2.nix because
+      # xddxdd PR #50 (2026-05) dropped pre-built v2 binaries upstream.
+      # Kernel rotations compile from source — when ryzen is reachable it
+      # builds via the remote-builder and MBP just pulls; when ryzen is
+      # offline it falls back to a local 2C/4T build (~3 hours). Bring
+      # ryzen up before a kernel bump if you want a fast nrb.
+      variant = "cachyos-lto";
       channel = "latest"; # (default)
       # mArch defaults to "x86-64-v2" via myModules.host.tier = "v2". No explicit override needed.
       extraParams = [
@@ -515,12 +520,7 @@
         # i915.semaphores removed in kernel 4.6 — GPU scheduler replaced hardware semaphores
       ];
       cachyos = {
-        # cpusched only takes effect when variant is a "cachyos-*" kernel.
-        # MBP uses variant = "xanmod" (see above), so this line is inert —
-        # xanmod kernel does NOT ship BORE (CONFIG_SCHED_BORE unset). The
-        # actually-running scheduler on xanmod is EEVDF (kernel default).
-        # Uncomment if you ever switch variant = "cachyos-bore" or similar.
-        # cpusched = "bore";
+        cpusched = "bore"; # BORE scheduler — desktop-interactive tuning
         bbr3 = true; # BBR3 congestion control
         hzTicks = "1000"; # 1000Hz tick rate — snappy desktop
         tickrate = "full"; # Full dynamic ticks — better power saving
@@ -952,78 +952,4 @@
     SystemKeepFree=1G
   '';
 
-  # ============================================================================
-  # Specialisation — CachyOS LTO (v2-compatible) kernel
-  # ============================================================================
-  # Second systemd-boot entry that boots the MacBook on CachyOS mainline
-  # + LTO + BORE — compiled for x86-64-v2 so Ivy Bridge HD4000 boots it.
-  # Overrides: kernel variant, microarch, BORE scheduler, and
-  # system.nixos.label. applesmc+at24 patches stay OFF on both base
-  # (xanmod) and this cachyos-lto-7.0 specialisation — patch file targets
-  # mainline 6.19 layout (6 of 7 hunks fail on 7.0); deferred until
-  # someone re-ports the hunks. xanmod has equivalent fixes inlined;
-  # cachyos boot gets vanilla applesmc with possibly-different keyboard
-  # backlight behaviour.
-  #
-  # OFFLINE WORKFLOW — important:
-  # When ryzen is NOT reachable (travelling, different network, etc.),
-  # flip `myModules.nix.remoteBuilder.client.enable = false` BEFORE
-  # running nrb on mac. That gates out this entire specialisation block
-  # so nix won't try to build the LTO kernel locally (2-3 hours on
-  # 2C/4T i5-3210M). The default xanmod entry keeps working unchanged.
-  # When back on network with ryzen, flip it back to true → ryzen
-  # builds any missing cachyos bits on demand → mac pulls via ssh-ng.
-  #
-  # Build distribution is gated on remote-builder: the specialisation is
-  # ONLY declared when myModules.nix.remoteBuilder.client.enable = true.
-  # So the flow is:
-  #
-  #   remote-builder ON  →  spec declared → ryzen builds the LTO kernel,
-  #                         macbook pulls over SSH, boot menu has both.
-  #   remote-builder OFF →  spec silently vanishes, nrb only builds xanmod,
-  #                         no 3-hour local LTO compile on 2C/4T.
-  #
-  # The guard is pure nix-eval (config.myModules.nix.remoteBuilder...) —
-  # no runtime probing. Going offline: set the flag false BEFORE nrb. Back
-  # online: flip true, nrb, ryzen builds on demand, cached in its store
-  # for future mac rebuilds.
-  #
-  # How to pick at boot (when declared):
-  #   1. reboot
-  #   2. at Mac boot picker (hold ⌥ at chime) → pick EFI boot
-  #   3. at systemd-boot menu → arrow-key to `macbook-pro-9-2-cachyos`
-  #   Revert: arrow-key back to the default entry in systemd-boot.
-  specialisation = lib.mkIf config.myModules.nix.remoteBuilder.client.enable {
-    cachyos.configuration = {
-      myModules.boot.kernel = {
-        # Why: tests CachyOS perf on Ivy Bridge without disturbing proven-
-        # stable xanmod main. User picks per-boot from systemd-boot menu.
-        variant = lib.mkForce "cachyos-lto";
-        # mArch inherited from base — myModules.host.tier = "v2" auto-derives "x86-64-v2".
-        # Why: xanmod ships EEVDF only; BORE takes effect only on cachy.
-        cachyos.cpusched = lib.mkForce "bore";
-      };
-      # Patches DISABLED on cachyos spec: the patch file was authored
-      # against mainline 6.19 source, and 6 of 7 hunks reject on 7.0
-      # (drivers/hwmon/applesmc.c got refactored again 6.19 → 7.0).
-      # Deferred until somebody ports the patch to the 7.0 layout
-      # (review current drivers/hwmon/applesmc.c + rewrite the hunks).
-      # Until then the cachyos boot gets vanilla applesmc — keyboard
-      # backlight may behave differently on the cachyos entry; xanmod
-      # main still has its own upstream applesmc fixes.
-      # applesmc patches removed — upstream kernel 7.0+ has all fixes.
-      # Why: APPEND to the auto-generated label (nixpkgs default is
-      # "<release>.<date>.<commit>", e.g. "26.05.20260414.4bd9165")
-      # instead of replacing it. Boot menu then shows
-      #   `NixOS 26.05.20260414.4bd9165` for main (default boot)
-      #   `NixOS 26.05.20260414.4bd9165-cachyos-lto-v2` for spec
-      # Both entries keep the full generation identity; the suffix
-      # just distinguishes which kernel stack booted.
-      # mkForce applies to the whole string so we rebuild the label
-      # from config.system.nixos (version/rev/date).
-      system.nixos.label = lib.mkForce "${config.system.nixos.release}${
-        config.system.nixos.versionSuffix or ""
-      }-cachyos-lto-v2";
-    };
-  };
 }

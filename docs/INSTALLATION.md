@@ -11,10 +11,10 @@ Step-by-step NixOS installation for both hosts.
 
 ### Available Host Configurations
 
-| Hostname          | Hardware                                                | Kernel Variants                              |
-| ----------------- | ------------------------------------------------------- | -------------------------------------------- |
-| `ryzen-9950x3d`   | Zen 5 desktop, RDNA 4 GPU, 64GB RAM                     | CachyOS-LTO (single config)                  |
-| `macbook-pro-9-2` | 2012 MacBook Pro, Ivy Bridge i5, Intel HD4000, 16GB RAM | Default + xanmod + cachyos (specialisations) |
+| Hostname          | Hardware                                                | Kernel Variants                        |
+| ----------------- | ------------------------------------------------------- | -------------------------------------- |
+| `ryzen-9950x3d`   | Zen 5 desktop, RDNA 4 GPU, 64GB RAM                     | CachyOS-LTO (single config)            |
+| `macbook-pro-9-2` | 2012 MacBook Pro, Ivy Bridge i5, Intel HD4000, 16GB RAM | CachyOS-LTO (x86-64-v2, single config) |
 
 Hosts with specialisations build **all kernel variants** in a single install. Each variant appears as a separate entry in the systemd-boot menu.
 
@@ -364,13 +364,12 @@ Remove the USB drive when prompted (or during BIOS splash).
 
 ### Boot Menu
 
-On first boot, systemd-boot shows available entries:
+On first boot, systemd-boot shows the available generations:
 
-- **NixOS** — default kernel
-- **NixOS (xanmod)** — xanmod specialisation (if the host has one)
-- **NixOS (cachyos)** — CachyOS specialisation (if the host has one)
+- **NixOS** — current generation
+- Previous generations (configured by `boot.loader.systemd-boot.configurationLimit`)
 
-Select the default entry. If it fails to boot, select another variant from the menu — all variants are built during install.
+Select the current entry. If it fails to boot, pick the previous generation from the menu and investigate after.
 
 ## Step 8: Post-Install Setup
 
@@ -500,7 +499,7 @@ ls parts/hosts/
 
 ### Kernel panic on first boot
 
-Select a different specialisation from the boot menu (xanmod or cachyos). Then investigate the default kernel issue after booting successfully. Use `nrb --dry` to test changes before switching.
+Select a previous generation from the systemd-boot menu, boot into it, then investigate the failing kernel build. Use `nrb --dry` to test changes before switching.
 
 ---
 

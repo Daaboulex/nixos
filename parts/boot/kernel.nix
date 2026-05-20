@@ -1,4 +1,4 @@
-# kernel — custom kernel variant selector (xanmod, cachyos, zen, stock).
+# kernel — custom kernel variant selector (cachyos, zen, stock).
 { inputs, ... }:
 let
   mod =
@@ -20,10 +20,6 @@ let
         "hardened" = pkgs.linuxPackages_hardened; # KSPP-recommended hardening
         "zen" = pkgs.linuxPackages_zen; # Zen Kernel — desktop/interactive tuning
         "lqx" = pkgs.linuxPackages_lqx; # Liquorix — low-latency desktop focus
-        "xanmod-stable" = pkgs.linuxPackages_xanmod; # xanmod stable branch
-        "xanmod-latest" = pkgs.linuxPackages_xanmod_latest; # xanmod edge
-        "xanmod-lts" = pkgs.linuxPackages_xanmod_lts; # xanmod LTS branch
-        "xanmod" = pkgs.linuxPackages_xanmod_latest; # alias of xanmod-latest (legacy)
         "rt" = pkgs.linuxPackages_rt; # PREEMPT_RT on LTS
         "rt-latest" = pkgs.linuxPackages_rt_latest; # PREEMPT_RT on mainline
       };

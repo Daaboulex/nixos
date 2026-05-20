@@ -477,10 +477,11 @@
             # Autonomous kernel-safe update. Works against whatever kernels
             # the host actually resolves to at eval time — no hardcoded input
             # names, no skip lists, no user maintenance. Crucially, this
-            # includes EVERY specialisation's kernel: MBP has a default
-            # `xanmod` generation plus a `cachyos-lto-v2` specialisation,
-            # and each uses a different kernel derivation. Rebuilding either
-            # is a 45-90 min penalty, so both are protected.
+            # includes EVERY specialisation's kernel — when a host declares
+            # multiple boot entries that resolve to different kernel
+            # derivations, each is protected individually. Rebuilding a
+            # locally-compiled kernel (e.g. cachyos-lto-v2 on MBP) is a
+            # 45-90 min penalty, so the guard is worth the work.
             #
             # Algorithm:
             #   1. Build JSON map { default: drv, <spec-name>: drv, ... } of
