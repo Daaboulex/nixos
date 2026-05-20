@@ -255,7 +255,7 @@ Generated files (OPTIONS.md, options.json, templates) are gitignored — they ar
 `parts/_build/overlays.nix` composes the per-input `overlays.default`
 attrs into a single `flake.overlays.default` consumed by every host.
 Each external flake input that provides an overlay (vfio-stealth,
-linux-corecycler, mesa-git-nix, claude-code, gemini-cli-nix, etc.) is
+linux-corecycler, mesa-git-nix, claude-code, etc.) is
 listed here in load order; `compose` is a left-fold of `final → prev →
 overlay-output` so later entries can override earlier ones.
 
