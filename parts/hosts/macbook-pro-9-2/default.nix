@@ -40,10 +40,16 @@
     boot = {
       loader = {
         enable = true;
-        loader = "refind";
-        secureBoot.enable = false; # MacBook Pro 9,2 firmware doesn't support custom keys
-        plymouth.enable = true;
+        # Hybrid: systemd-boot owns the NixOS generation menu (NVRAM
+        # entry, refreshed every nrb). rEFInd installs at the Apple
+        # firmware fallback path (/EFI/BOOT/BOOTX64.EFI — picked via ⌥
+        # at chime) and chainloads systemd-boot when "NixOS" is selected.
+        # Both installers run independently on every rebuild; both
+        # menus stay fresh — drift is impossible.
+        systemdBoot.enable = true;
         refind = {
+          enable = true;
+          efiInstallAsRemovable = true;
           timeout = 10;
           maxGenerations = 10;
           theme = pkgs.refind-theme-minimal;
@@ -58,7 +64,18 @@
             "firmware"
             "apple_recovery"
           ];
+          # Chainload entry — picks systemd-boot's gen menu directly.
+          # Add macOS/Windows here later via the same pattern (refind-nix
+          # extraEntries submodule).
+          extraEntries = [
+            {
+              name = "NixOS (systemd-boot)";
+              loader = "/EFI/systemd/systemd-bootx64.efi";
+            }
+          ];
         };
+        secureBoot.enable = false; # MacBook Pro 9,2 firmware doesn't support custom keys
+        plymouth.enable = true;
       };
       impermanence.enable = false;
       hibernate = {

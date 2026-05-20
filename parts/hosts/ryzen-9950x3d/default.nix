@@ -39,7 +39,7 @@
     boot = {
       loader = {
         enable = true;
-        loader = "systemd-boot"; # (default)
+        systemdBoot.enable = true;
         secureBoot = {
           enable = true;
           # pkiBundle = "/var/lib/sbctl"; # (default)

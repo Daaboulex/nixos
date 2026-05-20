@@ -2428,11 +2428,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779198558,
-        "narHash": "sha256-yMkQ59gMY6mohfy0J3Yo75wGOLk5rROtIoWKgC+EzAM=",
+        "lastModified": 1779275537,
+        "narHash": "sha256-WQvpmj6omxAn4xO7hq8xTQPTG9MNlM/EGQur94Sbr6o=",
         "owner": "Daaboulex",
         "repo": "refind-nix",
-        "rev": "e67e2f8b9ce937d399239871c5014f96f8e2c845",
+        "rev": "d5e0d507ccc05c47d7f441a65377e5132142740a",
         "type": "github"
       },
       "original": {

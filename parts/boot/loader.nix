@@ -1,4 +1,22 @@
-# loader — boot manager (systemd-boot, rEFInd, GRUB), Plymouth splash, and initrd.
+# loader — boot manager composition (systemd-boot + rEFInd + GRUB), Plymouth, initrd.
+#
+# Bootloaders are INDEPENDENT enable flags — hosts can mix as needed.
+# Typical patterns:
+#   - Plain Linux host:    systemdBoot.enable = true
+#   - Lanzaboote secured:  systemdBoot.enable = true + secureBoot.enable = true
+#   - Mac (Apple firmware): refind.enable = true (efiInstallAsRemovable + extraEntries)
+#                           + systemdBoot.enable = true (handles NixOS gens; rEFInd chainloads it)
+#   - GRUB-only:           grub.enable = true
+#
+# When both refind.enable and systemdBoot.enable are true, refind-nix's
+# allowCoexistWithSystemdBoot is auto-set so the upstream module's
+# defensive mutex relaxes. The two installers don't fight over a single
+# attribute (refind-nix wires through boot.loader.external.installHook,
+# systemd-boot wires through its own install path) — each runs on every
+# `nixos-rebuild switch`, both menus stay fresh.
+#
+# Hosts using the hybrid declare the chainload directly via refind-nix's
+# extraEntries option (documented refind-nix API — no custom wrapper).
 { inputs, ... }:
 let
   mod =
@@ -16,19 +34,11 @@ let
       options.myModules.boot.loader = {
         enable = lib.mkEnableOption "Boot configuration";
 
-        loader = lib.mkOption {
-          type = lib.types.enum [
-            "systemd-boot"
-            "refind"
-            "grub"
-            "none"
-          ];
-          default = "systemd-boot";
-          description = "Bootloader to use";
-        };
+        systemdBoot.enable = lib.mkEnableOption "systemd-boot";
+        grub.enable = lib.mkEnableOption "GRUB";
 
         secureBoot = {
-          enable = lib.mkEnableOption "Lanzaboote secure boot";
+          enable = lib.mkEnableOption "Lanzaboote secure boot (replaces systemd-boot install path)";
           pkiBundle = lib.mkOption {
             type = lib.types.path;
             default = "/var/lib/sbctl";
@@ -37,6 +47,20 @@ let
         };
 
         refind = {
+          enable = lib.mkEnableOption "rEFInd boot manager";
+
+          efiInstallAsRemovable = lib.mkOption {
+            type = lib.types.bool;
+            default = false;
+            description = ''
+              Install rEFInd at `/EFI/BOOT/BOOTx64.EFI` (the EFI firmware
+              fallback path) instead of `/EFI/refind/refind_x64.efi` +
+              NVRAM entry. Set true on hardware whose firmware ignores or
+              resets `BootOrder` — notably Apple Macs. The fallback path
+              wins regardless of NVRAM state.
+            '';
+          };
+
           timeout = lib.mkOption {
             type = lib.types.ints.unsigned;
             default = 5;
@@ -80,7 +104,7 @@ let
           extraEntries = lib.mkOption {
             type = lib.types.listOf lib.types.attrs;
             default = [ ];
-            description = "Manual boot entries (name, loader, ostype, etc.)";
+            description = "Manual boot entries (passed through to refind-nix)";
           };
         };
 
@@ -111,14 +135,22 @@ let
       config = lib.mkIf cfg.enable {
         boot.initrd.systemd.enable = cfg.initrd.enable;
 
-        # Systemd-boot (explicitly false when using another loader)
-        boot.loader.systemd-boot.enable = cfg.loader == "systemd-boot" && !cfg.secureBoot.enable;
-        boot.loader.systemd-boot.configurationLimit = lib.mkIf (cfg.loader == "systemd-boot") 10;
+        # Systemd-boot — Lanzaboote replaces the install path when secure
+        # boot is on, so guard against double-install.
+        boot.loader.systemd-boot.enable = cfg.systemdBoot.enable && !cfg.secureBoot.enable;
+        boot.loader.systemd-boot.configurationLimit = lib.mkIf cfg.systemdBoot.enable 10;
+        boot.loader.systemd-boot.consoleMode = lib.mkIf (
+          cfg.systemdBoot.enable && cfg.consoleMode != null
+        ) cfg.consoleMode;
+
         boot.loader.efi.canTouchEfiVariables = lib.mkDefault true;
         boot.loader.timeout = lib.mkDefault cfg.refind.timeout;
 
-        # rEFInd
-        boot.loader.refind = lib.mkIf (cfg.loader == "refind") {
+        # rEFInd — auto-opt-in to refind-nix's coexistence flag when
+        # systemd-boot is also enabled (relaxes refind-nix's defensive
+        # mutex assertion). Hosts declare chainload entries via
+        # refind.extraEntries — passed straight through to refind-nix.
+        boot.loader.refind = lib.mkIf cfg.refind.enable {
           enable = true;
           inherit (cfg.refind)
             timeout
@@ -127,24 +159,22 @@ let
             theme
             hideUI
             showTools
+            efiInstallAsRemovable
+            extraEntries
             ;
+          allowCoexistWithSystemdBoot = cfg.systemdBoot.enable;
         };
 
         # GRUB
-        boot.loader.grub.enable = lib.mkIf (cfg.loader == "grub") true;
+        boot.loader.grub.enable = lib.mkIf cfg.grub.enable true;
 
-        # Secure Boot (Lanzaboote)
+        # Secure Boot (Lanzaboote — takes over the systemd-boot install slot)
         boot.lanzaboote.enable = lib.mkIf cfg.secureBoot.enable true;
         boot.lanzaboote.pkiBundle = lib.mkIf cfg.secureBoot.enable cfg.secureBoot.pkiBundle;
 
         # Plymouth
         boot.plymouth.enable = lib.mkIf cfg.plymouth.enable true;
         boot.plymouth.theme = lib.mkIf cfg.plymouth.enable cfg.plymouth.theme;
-
-        # Console resolution (systemd-boot only)
-        boot.loader.systemd-boot.consoleMode = lib.mkIf (
-          cfg.loader == "systemd-boot" && cfg.consoleMode != null
-        ) cfg.consoleMode;
 
         # Kernel parameters for clean boot
         boot.kernelParams = lib.optionals cfg.plymouth.enable [
