@@ -765,20 +765,23 @@
               touch $out
             '';
 
-        eval-mbp-specialisations =
+        eval-mbp-kernel-cachyos-lto =
           let
-            specs = builtins.attrNames (
-              inputs.self.nixosConfigurations.macbook-pro-9-2.config.specialisation or { }
-            );
+            cfg = inputs.self.nixosConfigurations.macbook-pro-9-2.config;
+            variant = cfg.myModules.boot.kernel.variant;
+            sched = cfg.myModules.boot.kernel.cachyos.cpusched;
+            specCount = builtins.length (builtins.attrNames (cfg.specialisation or { }));
           in
-          pkgs.runCommand "eval-mbp-specialisations"
+          pkgs.runCommand "eval-mbp-kernel-cachyos-lto"
             {
-              hasCachyos = builtins.toJSON (builtins.elem "cachyos" specs);
-              count = builtins.toString (builtins.length specs);
+              inherit variant sched;
+              specCount = builtins.toString specCount;
             }
             ''
-              [[ "$hasCachyos" == "true" ]] || { echo "FAIL: cachyos specialisation missing on MBP"; exit 1; }
-              echo "OK: MBP has $count specialisation(s) including cachyos"
+              [[ "$variant" == "cachyos-lto" ]] || { echo "FAIL: MBP kernel variant is '$variant', expected 'cachyos-lto'"; exit 1; }
+              [[ "$sched" == "bore" ]]          || { echo "FAIL: MBP cpusched is '$sched', expected 'bore'"; exit 1; }
+              [[ "$specCount" == "0" ]]         || { echo "FAIL: MBP has $specCount specialisation(s); single-kernel design expects 0"; exit 1; }
+              echo "OK: MBP runs cachyos-lto with BORE, single kernel"
               touch $out
             '';
       };

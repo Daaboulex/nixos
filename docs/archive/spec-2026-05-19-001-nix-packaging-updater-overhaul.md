@@ -1,7 +1,7 @@
 ---
 title: "spec: Nix Packaging Standard — Auto-Updater Overhaul"
 type: spec
-status: active
+status: done
 created: 2026-05-19
 depth: deep
 ---
@@ -85,13 +85,13 @@ flake.lock-locked rev, never a local working clone.
 | goxlr-hm-nix / refind-nix / rocksmith-nix | none           | []                                    | module/multi-component                                                                            |
 | linux-corecycler                          | none           | []                                    | own code; CI verify fixed 2026-05-19                                                              |
 | lmstudio-nix                              | custom         | hash                                  | multi-channel (stable/beta/server) on bespoke script                                              |
-| gemini-cli-nix                            | custom         | []                                    | multi-channel (stable/preview/nightly); **orphan — not a flake input**                            |
+| gemini-cli-nix                            | custom         | []                                    | **retired 2026-05-20** — repo archived, local clone deleted; HM uses `pkgs.llm-agents.gemini-cli` |
 | OCCT-nix                                  | custom         | hash                                  | bespoke (ocbase.com)                                                                              |
 | **openviking-nix**                        | github-release | hash                                  | **DRIFT 0.2.10→0.3.17** — upstream ptr fixed `27ef324`; bump blocked on multi-file hashes (#6,#7) |
 | **portmaster-nix**                        | github-release | hash,vendorHash,npmDepsHash,cargoHash | **DRIFT 2.1.7→2.1.19** — blocked on parameterized version (#4)                                    |
 | **lsfg-vk-nix**                           | github-commit  | hash                                  | minor drift dev25→dev26 — dead ptr (#8) + version-scheme mismatch (#10)                           |
 | **eden-nix**                              | gitea-commit   | hash                                  | rc2-commit vs stable tag `v0.2.0` — tracking-strategy decision (#10)                              |
-| vkBasalt_overlay_wayland                  | none           | []                                    | ⚠️ local dir is **not a git clone** (no `.git`)                                                   |
+| vkBasalt_overlay_wayland                  | none           | []                                    | local clone re-initialized from origin 2026-05-20 — working tree clean                            |
 
 ---
 

@@ -1,4 +1,4 @@
-# Nix Style & Standards (2026-04-15)
+# Nix Style & Standards
 
 **Scope.** Coding standards for this repo (`~/Documents/nix`). Applies to every `.nix` file under `parts/`, `home/`, `flake.nix`, and `docs/*.nix.example` templates. **Does not** apply to `repos/**` (vendored third-party).
 
@@ -394,18 +394,24 @@ Acceptable existing uses of hostname (for `nixdHost` LSP completion attr lookup)
 
 ### 8.2 Pre-commit hooks (git-hooks.nix)
 
-Current full set (source: `parts/_build/git-hooks.nix`): `auto-format`, `check-assertion-format`, `check-behind-remote`, `check-mkforce-comment`, `check-module-docstring`, `check-no-roadmap-in-docs`, `check-no-with-lib`, `check-placement`, `check-scrub-tokens`, `check-secrets-leak`, `hm-exhaustiveness`, `nix-eval-check`, `nixos-exhaustiveness`, `update-docs`. **All custom hooks** MUST be `pkgs.writeShellApplication` (not `writeShellScript`) so they get shellcheck at build and `set -euo pipefail` automatically.
+Current full set (source: `parts/_build/git-hooks.nix` — 14 hooks): `auto-format`, `check-assertion-format`, `check-behind-remote`, `check-mkforce-comment`, `check-module-docstring`, `check-no-ai-files`, `check-no-roadmap-in-docs`, `check-no-with-lib`, `check-placement`, `check-scrub-tokens`, `check-secrets-leak`, `hm-exhaustiveness`, `nix-eval-check`, `nixos-exhaustiveness`. **All custom hooks** MUST be `pkgs.writeShellApplication` (not `writeShellScript`) so they get shellcheck at build and `set -euo pipefail` automatically.
 
-### 8.3 New enforcement (added by this standard)
+### 8.3 Custom-rule hooks
 
-Add the following project-local checks. Each is a `pkgs.writeShellApplication` in `parts/_build/checks/`:
+The following project-local checks live in `parts/_build/checks/` as
+`pkgs.writeShellApplication` derivations and are wired into
+`pre-commit.hooks.<name>` by `parts/_build/git-hooks.nix`:
 
-- **`check-module-docstring`** — every non-helper `.nix` module file has the 6-line comment header. Exempt: files matching `home/lib/`, `parts/_build/`, and files importing `mkSimplePackage`.
-- **`check-mkforce-comment`** — every `lib.mkForce` has a `# Why:` adjacent comment.
-- **`check-assertion-format`** — every `{ assertion = …; message = …; }` message begins with `"myModules.…:"`.
-- **`check-no-with-lib`** — forbid `with lib;`.
-
-Wire into `git-hooks.nix` under `pre-commit.hooks.<name>`.
+- **`check-module-docstring`** — every non-helper `.nix` module file carries the 6-line comment header (§1.1). Exempt: files matching `home/lib/`, `parts/_build/`, and files importing `mkSimplePackage`.
+- **`check-mkforce-comment`** — every `lib.mkForce` outside `parts/hosts/` + `home/hosts/` has a `# Why:` adjacent comment.
+- **`check-assertion-format`** — every `{ assertion = …; message = …; }` message starts with `myModules.<path>:`.
+- **`check-no-with-lib`** — `with lib;` is forbidden anywhere; `lib.` qualifiers are mandatory.
+- **`check-placement`** — directory path must reflect option scope (§13a).
+- **`check-no-ai-files`** — AGENTS.md / CLAUDE.md / GEMINI.md / `.claude/` etc. cannot be committed (they are symlinks into `.ai-context/`).
+- **`check-no-roadmap-in-docs`** — pending-work lists do not live in `docs/`; they belong in plans / specs.
+- **`check-scrub-tokens`** — forbidden tokens (org-internal names, local paths) cannot appear outside the allowlist (`repo-standard/**`, `docs/*` allow-in-docs).
+- **`check-secrets-leak`** — staged content matches no agenix-published public key.
+- **`check-behind-remote`** — the working branch is not behind its tracked upstream.
 
 ### 8.4 CI
 
@@ -588,16 +594,8 @@ placement.
 - **Dendritic**: one file = one concern = one module. No registry files listing everything; auto-import via `readDir` (or `import-tree` after §15).
 - **Non-interdependent**: if you delete any one module, the rest still evaluate. The `enable = false` test is a proxy: disabling module X MUST NOT break module Y.
 
----
-
-## 15. Forward migrations (separate execution plan)
-
-Items identified by the research spec that changed file contents (not just style). Completed items archived here for history; pending items tracked in `.ai-context/.superpowers/`.
-
-1. ✅ `flake.nixosModules.*` → `flake.modules.nixos.*` — complete.
-2. `builtins.readDir` auto-import → `vic/import-tree` with `_`-prefix skip — deferred, current `readDir` approach works.
-3. ✅ Typed `myModules.host.tier` enum replacing implicit hostname gating — complete (drives `kernel.mArch` default).
-4. ✅ `mkSimplePackage` exposed via `flake.lib` — complete (all 6 helpers exposed, pre-applied, injected via `myLib` specialArg).
-5. Delete HM wrappers that only set `programs.X.enable = true;` — per-case; retained where toggle gating adds value.
-6. ✅ `hm-exhaustiveness` hook → `writeShellApplication` — complete.
-7. ✅ New enforcement hooks (§8.3) — complete (check-assertion-format, check-mkforce-comment, check-module-docstring, check-placement, check-no-with-lib, check-no-roadmap-in-docs, check-behind-remote all shipped).
+<!-- §15 (Forward migrations) removed 2026-05-20: completed items had shaped the
+codebase already and didn't need a roadmap-style listing; the two open items
+(builtins.readDir → import-tree, HM wrapper deletion) were captured elsewhere
+(memory `project_import_tree_umbrella_conflict`; HM wrappers are a style-by-
+case decision, not a pending migration). check-no-roadmap-in-docs policy. -->

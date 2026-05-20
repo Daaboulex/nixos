@@ -40,9 +40,9 @@ nrb --list             # Show all configurations + specialisations
 nrb --update --dry     # Update inputs + build + diff only
 ```
 
-`nrb` detects the current host via `hostname` and builds only that one. Hosts with specialisations (e.g. MacBook kernel variants) build all variants in a single `nrb` — they appear as separate boot entries in systemd-boot.
+`nrb` detects the current host via `hostname` and builds only that one. Each host currently runs a single kernel variant; if a host adds specialisations later, every variant builds in a single `nrb` and appears as a separate systemd-boot entry.
 
-Behaviour: build timing, kernel change detection, specialisation listing, `nvd` system diff, Home Manager generation diff, generation display, rollback hint. Auto-regenerates `docs/OPTIONS.md` on successful switch.
+Behaviour: build timing, kernel change detection, specialisation listing, `nvd` system diff, Home Manager generation diff, generation display, rollback hint. On a successful non-`--boot`, non-`--dry` switch, regenerates `docs/OPTIONS.md` in the background via `nix eval --raw --impure --file scripts/generate-docs.nix markdown` (the same path the `update-docs` hook uses). The full mdBook docs site lives behind `nix build .#docs` — `nrb` doesn't touch it.
 
 ### `nrb-check` — evaluate all configs
 
@@ -83,7 +83,7 @@ Configured in `parts/_build/treefmt.nix` via [treefmt-nix](https://github.com/nu
 
 Configured in `parts/_build/git-hooks.nix` via [git-hooks.nix](https://github.com/cachix/git-hooks.nix). Hooks are **auto-installed** into `.git/hooks/` when you run `nix develop`.
 
-All 15 hooks run on every `git commit`. Grouped by concern:
+All 14 hooks run on every `git commit`. Grouped by concern:
 
 ### Formatting + eval
 
@@ -141,7 +141,7 @@ nrb --check
 nix flake check --no-build
 
 # All fast checks — eval canaries + runCommand (~30s):
-nix build --no-link '.#checks.x86_64-linux.eval-'{kernel-cachyos,boot-lanzaboote,security-hardening,services-earlyoom,hardware-networking,nix-flakes,users-zsh,hardware-graphics-mesa-git,portmaster-dns-interception,vfio-iommu-params,scx-scheduler,mullvad-lockdown,networking-dot,nix-trusted-users,kernel-modules-vfio,x3d-vcache-mode,mbp-specialisations}
+nix build --no-link '.#checks.x86_64-linux.eval-'{kernel-cachyos,boot-lanzaboote,security-hardening,services-earlyoom,hardware-networking,nix-flakes,users-zsh,hardware-graphics-mesa-git,portmaster-dns-interception,vfio-iommu-params,scx-scheduler,mullvad-lockdown,networking-dot,nix-trusted-users,kernel-modules-vfio,x3d-vcache-mode,mbp-kernel-cachyos-lto}
 
 # Single check:
 nix build --no-link '.#checks.x86_64-linux.<name>'
@@ -176,25 +176,25 @@ On machines without KVM or with limited RAM, use `--no-build`.
 
 ### Eval Canaries (instant, catch silent regressions)
 
-| Check                              | What it catches                                              |
-| ---------------------------------- | ------------------------------------------------------------ |
-| `eval-kernel-cachyos`              | CachyOS kernel overlay fell back to stock nixpkgs            |
-| `eval-hardware-graphics-mesa-git`  | mesa-git overlay not applied                                 |
-| `eval-boot-lanzaboote`             | Secure boot disabled, systemd-boot conflict, pkiBundle wrong |
-| `eval-security-hardening`          | Hardening module disabled, polkit/rtkit off                  |
-| `eval-services-earlyoom`           | OOM killer disabled                                          |
-| `eval-portmaster-dns-interception` | Mullvad bootstrap deadlock (DNS interception not forced off) |
-| `eval-vfio-iommu-params`           | GPU passthrough broken (amd_iommu/iommu=pt missing)          |
-| `eval-scx-scheduler`               | Wrong sched_ext scheduler (scx_lavd has crash bugs)          |
-| `eval-mullvad-lockdown`            | VPN kill-switch disabled (IP exposure at boot)               |
-| `eval-networking-dot`              | DNS-over-TLS dropped to plaintext                            |
-| `eval-nix-flakes`                  | Flakes/nix-command not in experimental-features              |
-| `eval-nix-trusted-users`           | Primary user not in nix trusted-users                        |
-| `eval-hardware-networking`         | NetworkManager disabled                                      |
-| `eval-users-zsh`                   | Primary user shell not zsh                                   |
-| `eval-kernel-modules-vfio`         | VFIO kernel modules missing                                  |
-| `eval-x3d-vcache-mode`             | X3D V-Cache not in cache mode                                |
-| `eval-mbp-specialisations`         | MBP missing cachyos boot variant                             |
+| Check                              | What it catches                                                |
+| ---------------------------------- | -------------------------------------------------------------- |
+| `eval-kernel-cachyos`              | CachyOS kernel overlay fell back to stock nixpkgs              |
+| `eval-hardware-graphics-mesa-git`  | mesa-git overlay not applied                                   |
+| `eval-boot-lanzaboote`             | Secure boot disabled, systemd-boot conflict, pkiBundle wrong   |
+| `eval-security-hardening`          | Hardening module disabled, polkit/rtkit off                    |
+| `eval-services-earlyoom`           | OOM killer disabled                                            |
+| `eval-portmaster-dns-interception` | Mullvad bootstrap deadlock (DNS interception not forced off)   |
+| `eval-vfio-iommu-params`           | GPU passthrough broken (amd_iommu/iommu=pt missing)            |
+| `eval-scx-scheduler`               | Wrong sched_ext scheduler (scx_lavd has crash bugs)            |
+| `eval-mullvad-lockdown`            | VPN kill-switch disabled (IP exposure at boot)                 |
+| `eval-networking-dot`              | DNS-over-TLS dropped to plaintext                              |
+| `eval-nix-flakes`                  | Flakes/nix-command not in experimental-features                |
+| `eval-nix-trusted-users`           | Primary user not in nix trusted-users                          |
+| `eval-hardware-networking`         | NetworkManager disabled                                        |
+| `eval-users-zsh`                   | Primary user shell not zsh                                     |
+| `eval-kernel-modules-vfio`         | VFIO kernel modules missing                                    |
+| `eval-x3d-vcache-mode`             | X3D V-Cache not in cache mode                                  |
+| `eval-mbp-kernel-cachyos-lto`      | MBP kernel drift (variant, BORE scheduler, no specialisations) |
 
 ### nrb Tests (flag validation + timing)
 

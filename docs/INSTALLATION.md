@@ -16,7 +16,10 @@ Step-by-step NixOS installation for both hosts.
 | `ryzen-9950x3d`   | Zen 5 desktop, RDNA 4 GPU, 64GB RAM                     | CachyOS-LTO (single config)            |
 | `macbook-pro-9-2` | 2012 MacBook Pro, Ivy Bridge i5, Intel HD4000, 16GB RAM | CachyOS-LTO (x86-64-v2, single config) |
 
-Hosts with specialisations build **all kernel variants** in a single install. Each variant appears as a separate entry in the systemd-boot menu.
+Each host builds a single kernel variant. The 2026-05-20 refactor removed the
+MBP's xanmod-default + cachyos-lto-specialisation pair in favour of a single
+cachyos-lto-v2 kernel (the ESP fills faster with two kernels on a 511 MB
+Apple ESP; `boot.loader.systemd-boot.configurationLimit = 3` caps rotation).
 
 ---
 
