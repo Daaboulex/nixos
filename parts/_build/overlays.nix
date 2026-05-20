@@ -18,7 +18,11 @@
     compose [
       inputs.vfio-stealth.overlays.default
       inputs.linux-corecycler.overlays.default
-      inputs.nix-cachyos-kernel.overlays.pinned
+      # Wraps inputs.nix-cachyos-kernel.overlays.pinned and stacks x86_64-v2
+      # variants on top (xddxdd PR #50 dropped pre-built v2). The compose
+      # pattern in this file (`acc // (o final prev)`) shallow-merges, so
+      # we can't add v2 in a sibling overlay — see cachyos-v2.nix header.
+      (import ./cachyos-v2.nix { inherit inputs; })
       inputs.tidalcycles.overlays.default
       inputs.antigravity.overlays.default
       inputs.portmaster.overlays.default

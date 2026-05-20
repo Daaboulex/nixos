@@ -479,10 +479,13 @@
     # --------------------------------------------------------------------------
     boot.kernel = {
       enable = true;
-      # xanmod kept on MBP 9,2: CachyOS mainline / -lto / -bore / -rc / -hardened
-      # are built for x86-64-v3 (AVX2) since the 2025 v3 bump → will NOT boot on
-      # Ivy Bridge. If the user wants CachyOS later, switch to `linux-cachyos-lts`
-      # or `linux-cachyos-server` (both still v2-compatible).
+      # xanmod kept as default kernel on MBP 9,2. The `cachyos` specialisation
+      # below boots a v2-compiled cachyos-lto via the local x86_64-v2 overlay
+      # (parts/_build/cachyos-v2.nix — restores the v2 variants xddxdd PR #50
+      # dropped). Either kernel is Ivy-Bridge safe; xanmod is the daily driver
+      # because v2-cachyos builds from source on every kernel rotation
+      # (no upstream binary cache for v2 since CachyOS upstream + xddxdd
+      # both stopped shipping v2 binaries).
       variant = "xanmod";
       channel = "latest"; # (default)
       # mArch defaults to "x86-64-v2" via myModules.host.tier = "v2". No explicit override needed.

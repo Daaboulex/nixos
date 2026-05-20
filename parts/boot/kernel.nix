@@ -55,13 +55,16 @@ let
             table; CachyOS variants go through the CachyOS override path and
             pick up `channel` + `mArch` + `cachyos.*` sub-options.
 
-            **Ivy Bridge (x86-64-v2) compatibility**: CachyOS kernels
-            default to x86-64-v3 (AVX2 required) since the 2025 v3 bump.
-            Setting `mArch = "x86-64-v2"` routes to the v2-compiled
-            variant. Upstream `cachyos-settings-nix` publishes both
-            `linux-cachyos-lts-lto-x86_64-v2` and `linux-cachyos-latest-
-            lto-x86_64-v2` — both Ivy-Bridge safe. `cachyos-rc` has no
-            per-arch variants (channel=rc short-circuits the suffix).
+            **Ivy Bridge (x86-64-v2) compatibility**: setting `mArch =
+            "x86-64-v2"` routes to the v2-compiled variant. xddxdd
+            PR #50 (2026-05) dropped pre-built v2 variants upstream; we
+            re-materialize them locally via `parts/_build/cachyos-v2.nix`
+            (uses xddxdd's `mkCachyKernel` at HEAD with our own
+            `cachyos-kernel` + `cachyos-kernel-patches` inputs), so all
+            four `linux-cachyos-{latest,latest-lto,lts,lts-lto}-x86_64-v2`
+            attrs remain available. v2 kernels build locally (no upstream
+            cache). `cachyos-rc` has no per-arch variants (channel=rc
+            short-circuits the suffix).
           '';
         };
 

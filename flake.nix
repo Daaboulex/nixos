@@ -23,6 +23,21 @@
       # Do not override its nixpkgs input, otherwise there can be mismatch between patches and kernel version
     };
 
+    # CachyOS upstream kernel source + patches — first-class inputs so the
+    # local cachyos-v2 overlay (parts/_build/cachyos-v2.nix) can rebuild the
+    # x86_64-v2 variants that xddxdd dropped in PR #50 (2026-05). xddxdd's
+    # mkCachyKernel function is imported from `inputs.nix-cachyos-kernel` at
+    # HEAD; the kernel source + patch tree are pulled here so we control the
+    # rev independently of xddxdd's internal pins.
+    cachyos-kernel = {
+      url = "github:CachyOS/linux-cachyos";
+      flake = false;
+    };
+    cachyos-kernel-patches = {
+      url = "github:CachyOS/kernel-patches";
+      flake = false;
+    };
+
     # TidalCycles - Live coding music environment
     tidalcycles = {
       url = "github:mitchmindtree/tidalcycles.nix";
