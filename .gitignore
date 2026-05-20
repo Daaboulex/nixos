@@ -107,3 +107,6 @@ bunfig.toml
 .yarnrc
 .yarnrc.yml
 openspec/
+
+# AI context — symlink to .ai-context/AGENTS.md, never tracked
+AGENTS.md
