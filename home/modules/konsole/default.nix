@@ -46,7 +46,7 @@ in
             };
             "Scrolling" = {
               HistoryMode = lib.mkDefault 2; # Unlimited
-              ScrollBarPosition = lib.mkDefault 2; # Hidden
+              ScrollBarPosition = lib.mkDefault 1; # Hidden
             };
             "Terminal Features" = {
               BlinkingCursorEnabled = lib.mkDefault true;
