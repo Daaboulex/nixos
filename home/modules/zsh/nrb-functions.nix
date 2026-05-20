@@ -810,10 +810,22 @@
             trap '_nrb_kill_sudo' INT TERM
           fi
 
-          # Remote builder reachability check. Uses nix store info to test
-          # connectivity via the daemon's SSH config (same keys as actual builds).
-          # When all builders are unreachable, injects --builders "" so
-          # nix skips SSH attempts entirely (avoids ~2min TCP timeout per derivation).
+          # Remote builder reachability check — TCP-on-22 probe.
+          #
+          # The earlier implementation used `nix store info --store <uri>`,
+          # which performs SSH auth as the CALLING USER. The actual builds
+          # offload via nix-daemon (root), which uses /root/.ssh/<key> per
+          # nix.buildMachines config. Those two identities don't match —
+          # the user-shell ssh probe always failed (couldn't read /root's
+          # key), so nrb would inject `--builders ""` and disable offload
+          # even when the builder was actually reachable. Real-world
+          # symptom: nrb always built locally despite working builders.
+          #
+          # TCP-on-22 matches the probe's actual intent ("can nix-daemon
+          # reach this host?") without requiring identity material the
+          # user-shell doesn't have. SSH auth is configured declaratively
+          # in NixOS (nix.buildMachines.<X>.sshKey) — trust the config to
+          # be correct; let nix-daemon error out loudly if it isn't.
           local -a _jobs_override=()
           if [[ -f /etc/nix/machines ]] && [[ -s /etc/nix/machines ]]; then
             local -a _builder_uris=()
@@ -828,8 +840,19 @@
             local _any_reachable=0
             if (( ''${#_builder_uris[@]} > 0 )); then
               _msg_step "Checking remote builders..."
+              local _host _port
               for _uri in "''${_builder_uris[@]}"; do
-                if timeout 15 nix store info --store "$_uri" 2>/dev/null; then
+                # Extract host:port from ssh[-ng]://user@host[:port]/...
+                _host=''${_uri#*://}
+                _host=''${_host#*@}
+                _host=''${_host%%/*}
+                _port=22
+                if [[ "$_host" == *:* ]]; then
+                  _port=''${_host##*:}
+                  _host=''${_host%:*}
+                fi
+                # /dev/tcp probe — pure shell, no SSH, no key needed.
+                if timeout 5 bash -c "exec 3<>/dev/tcp/$_host/$_port" 2>/dev/null; then
                   _msg_dim "  $_uri reachable"
                   _any_reachable=1
                 else
