@@ -578,3 +578,37 @@ eden `2026-05-18`'s SDL2→SDL3 move: the SDL3 deps PR compiled clean but
 `installPhase` failed — eden renamed `dist/72-yuzu-input.rules` →
 `dist/72-eden-input.rules` as part of de-yuzu branding; `package.nix`
 `postInstall` still referenced the old name. Fixed on the branch.
+
+---
+
+## Session 4 — 2026-05-20 (closeout)
+
+### Task 5 — `repo-standard/` promoted to its own repo (done)
+
+The canonical standard now lives at
+**[github.com/Daaboulex/nix-packaging-standard](https://github.com/Daaboulex/nix-packaging-standard)**
+(initial commit `b76366d`).
+
+- `drift-check.yml` `BASE` URL re-pointed:
+  `raw.githubusercontent.com/Daaboulex/nix-packaging-standard/main/`
+  (no `/repo-standard/` path segment — files are at repo root now).
+- `sync.sh` takes `PKG_REPOS_DIR` explicitly (was implicit
+  `<parent-of-repo-standard>/repos`) so the standard is genuinely repo-agnostic.
+- `repo-standard/` directory **deleted** from main `nixos` repo.
+- All 21 packaging repos re-synced + pushed in one wave; drift-check CI
+  confirmed green against the new URL on every repo's just-pushed HEAD.
+
+### Cachix removed (done)
+
+Free-tier (5 GB storage / 50 GB/mo bandwidth) is too small for the fleet
+(mesa-git, eden, portmaster, kernel, electron apps); remote builders cover
+cross-machine rebuilds; the inert `cachix.yml` added 21 files + a
+drift-check entry without payoff.
+
+- `cachix.yml` dropped from the canonical set (`sync.sh` + `drift-check.yml`
+  FILES maps no longer include it).
+- `.github/workflows/cachix.yml` `git rm`'d in each of the 21 packaging repos.
+- README's Cachix section removed.
+
+Re-introduce if a paid binary cache ever lands — restoration is a single
+`cachix.yml` add + `sync.sh` FILES-map entry + 21-repo re-sync.

@@ -4,12 +4,12 @@
 
 **See also** — the three project-standard docs have distinct scopes:
 
-| Doc                                              | Owns                                                         | Answers                                            |
-| ------------------------------------------------ | ------------------------------------------------------------ | -------------------------------------------------- |
-| **STYLE.md** (this)                              | code style rules + option conventions + §13a placement       | "how do I write this module's code?"               |
-| **[ARCHITECTURE.md](ARCHITECTURE.md)**           | directory layout + parts-vs-home boundary + scope categories | "where does this new module go?"                   |
-| **[DEVELOPMENT.md](DEVELOPMENT.md)**             | formatters, hooks, checks, tests, doc auto-regen             | "what runs on `git commit` / `nix flake check`?"   |
-| **[repo-standard/](../repo-standard/README.md)** | the `repos/*` packaging-repo auto-updater + sync tooling     | "how does a `repos/*` packaging repo auto-update?" |
+| Doc                                                                               | Owns                                                                    | Answers                                            |
+| --------------------------------------------------------------------------------- | ----------------------------------------------------------------------- | -------------------------------------------------- |
+| **STYLE.md** (this)                                                               | code style rules + option conventions + §13a placement                  | "how do I write this module's code?"               |
+| **[ARCHITECTURE.md](ARCHITECTURE.md)**                                            | directory layout + parts-vs-home boundary + scope categories            | "where does this new module go?"                   |
+| **[DEVELOPMENT.md](DEVELOPMENT.md)**                                              | formatters, hooks, checks, tests, doc auto-regen                        | "what runs on `git commit` / `nix flake check`?"   |
+| **[nix-packaging-standard](https://github.com/Daaboulex/nix-packaging-standard)** | the `repos/*` packaging-repo auto-updater + sync tooling (its own repo) | "how does a `repos/*` packaging repo auto-update?" |
 
 **Philosophy.** Self-contained, self-named, dendritic, non-interdependent modules. Every file either declares options + config, or is a pure helper function. No cross-module imports. Shared state flows through `myModules.*` options, never through `specialArgs` or file imports.
 
