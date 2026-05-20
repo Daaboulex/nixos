@@ -153,21 +153,27 @@ repo under `github.com/Daaboulex`).
 
 ## Open follow-ups (not blocking; deliberate)
 
-1. **Task 5 — promote `repo-standard/` to its own repo**
-   (`Daaboulex/nix-packaging-standard`) so projects consume it as a flake
-   input. **Deferred on purpose:** doing it re-points `drift-check.yml`'s
-   canonical URL and forces another full 21-repo re-sync — do it once
-   `repo-standard/` is stable (it now is). Batch any further `repo-standard/`
-   edits with this.
-2. **`sync-deps.py` cosmetic warnings (eden-nix)** — `spirv-tools` and `mcl`
-   are in `deps/default.nix` but not `cpmfile.json` (they are `CPMAddPackage`
-   deps in eden's CMake, not the JSON manifest). The "POSSIBLY REMOVED"
-   warning fires for them every run; correct as a warning, not an error.
-3. **`nrb` intermittent "no text output" bug** — still needs a reproduction.
-4. **`gemini-cli-nix`** — orphan, not wired as a flake input (the
-   `gemini-cli` HM option resolves to `pkgs.llm-agents.gemini-cli`). Open
-   decision: wire it in or retire the clone.
-5. **`vkBasalt_overlay_wayland`** — local dir is not a git clone (no `.git`).
+### Resolved in session 4 (2026-05-20)
+
+- **Task 5** — `repo-standard/` promoted to its own repo
+  `Daaboulex/nix-packaging-standard@b76366d`; fleet re-synced; main nix
+  commit `8afc20c`.
+- **Cachix removed** — dropped from the canonical set in the same wave
+  (free-tier doesn't fit the fleet, remote builders cover the need).
+- **`sync-deps.py` cosmetic warnings** — fixed in eden-nix `af7998b`:
+  `CPM_INLINE_DEPS = {"spirv-tools", "mcl"}` added as a peer of
+  `EXTRA_DEPS` in the absence check so the two false positives no
+  longer fire each Update run.
+- **`gemini-cli-nix`** — retired: GitHub repo archived, local clone
+  deleted. HM option resolves to `pkgs.llm-agents.gemini-cli` upstream.
+
+### Still open
+
+- **`vkBasalt_overlay_wayland`** — local dir at `repos/vkBasalt_overlay_wayland`
+  is missing `.git` but has unsynced dev work (builddir/, src/). Re-cloning
+  would discard local state. Decision belongs to user: re-init `.git` in
+  place + add `github:Daaboulex/vkBasalt_overlay_wayland` as origin, then
+  reconcile any divergence.
 
 ### Cachix — needs a user action to activate
 
