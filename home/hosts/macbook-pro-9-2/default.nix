@@ -111,13 +111,12 @@
       folders = {
         documents = {
           path = "/home/user/Documents";
-          # Patterns extracted to home/modules/syncthing/ignore-patterns.nix
-          # (NIX-1 fix — was 94 lines duplicated across ryzen + macbook).
-          ignorePatterns = (import ../../modules/syncthing/ignore-patterns.nix).documents;
+          # Standard patterns live in the syncthing module — single source.
+          ignorePatterns = config.myModules.home.syncthing.defaultIgnorePatterns.documents;
         };
         ai-context = {
           path = "/home/user/.ai-context";
-          ignorePatterns = (import ../../modules/syncthing/ignore-patterns.nix).ai-context;
+          ignorePatterns = config.myModules.home.syncthing.defaultIgnorePatterns.ai-context;
         };
       };
     };
