@@ -96,7 +96,7 @@ in
     programs.ghostty = myLib.mergeSettings {
       defaults = {
         enable = true;
-        clearDefaultKeybinds = false; # Linux defaults are already Ctrl+Shift+* (KDE-style)
+        clearDefaultKeybinds = false; # keep Ghostty's safe defaults (incl. performable escape passthrough)
         enableZshIntegration = lib.mkDefault true;
 
         settings = {
@@ -104,7 +104,8 @@ in
           window-decoration = lib.mkDefault "server"; # KWin Breeze SSD, not the libadwaita CSD header
           window-theme = lib.mkDefault "dark"; # AdwStyleManager dark; matches Breeze Dark + silences gtk-prefer-dark warning
           gtk-single-instance = lib.mkDefault true; # one process — instant new windows/tabs
-          gtk-tabs-location = lib.mkDefault "bottom"; # mirror Konsole TabBarPosition=Bottom
+          window-show-tab-bar = lib.mkDefault "never"; # no libadwaita tab bar — zellij renders the tabbed view in-cell
+          working-directory = lib.mkDefault "home"; # new windows open in $HOME, not the single-instance process cwd
           window-padding-x = lib.mkDefault 6;
           window-padding-y = lib.mkDefault 4;
           window-padding-balance = lib.mkDefault true;

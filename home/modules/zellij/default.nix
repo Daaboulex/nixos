@@ -20,13 +20,22 @@ in
     programs.zellij = myLib.mergeSettings {
       defaults = {
         enable = true;
-        enableZshIntegration = lib.mkDefault false;
+        enableZshIntegration = lib.mkDefault true;
+        exitShellOnExit = lib.mkDefault true; # one `exit` leaves zellij AND the launching shell (no double-exit)
         settings = {
           default_layout = "compact";
+          default_mode = "locked"; # zellij grabs nothing but Ctrl+g until unlocked → no key clashes with nvim/fzf/zsh
           pane_frames = false;
           simplified_ui = false;
           mouse_mode = true;
           copy_on_select = true;
+          show_release_notes = false; # no version-bump popup on startup
+          show_startup_tips = false; # no tip-of-the-day popup either
+
+          # --- Developer QoL ---
+          scroll_buffer_size = 10000; # bounded scrollback per pane
+          styled_underlines = true; # pass through undercurls (nvim LSP diagnostics)
+          copy_command = "${pkgs.wl-clipboard}/bin/wl-copy"; # selection → Wayland system clipboard (self-contained)
         }
         # scrollback_editor → nvim only when neovim is enabled (else zellij's
         # $EDITOR default; guarded cross-module ref, AUDIT.md §19).
