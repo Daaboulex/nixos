@@ -1,0 +1,38 @@
+# LACT config — declarative source of truth for /etc/lact/config.yaml (RX 9070 XT).
+# Nix owns this file (read-only /etc symlink); edit HERE, not the GUI — GUI saves
+# will not persist. The gpus key is vendor:device-subvendor:subdevice-pciaddr; if the
+# 9070 XT ever moves PCIe slots, re-capture it. Held verbatim (not generated from a Nix
+# attrset) because LACT's parser is strict about the fan-curve int keys + float format.
+version: 5
+daemon:
+  log_level: info
+  admin_group: wheel
+  disable_clocks_cleanup: false
+apply_settings_timer: 5
+gpus:
+  1002:7550-1DA2:E489-0000:03:00.0:
+    fan_control_enabled: false
+    fan_control_settings:
+      mode: curve
+      static_speed: 0.5
+      temperature_key: edge
+      interval_ms: 500
+      curve:
+        33: 0.29
+        47: 0.37
+        59: 0.51
+        67: 0.71
+        74: 1.0
+      spindown_delay_ms: 5000
+      change_threshold: 2
+    pmfw_options:
+      target_temperature: 50
+      zero_rpm: false
+    power_cap: 310.0
+    performance_level: auto
+    max_memory_clock: 1309
+    gpu_clock_offsets:
+      0: 0
+    voltage_offset: -70
+current_profile: null
+auto_switch_profiles: false

@@ -1,0 +1,104 @@
+# ── NixOS build outputs ──────────────────────────────────────────
+result
+result-*
+
+# ── Working notes (contain live system output, not for tracking) ──
+TODO.md
+
+# ── Secrets & infrastructure identity ────────────────────────────
+# Classification (enforced by check-secrets-leak hook + this gitignore):
+#
+#   TRACKED (public-safe):
+#     secrets/secrets.nix — agenix public-key encryption rules only
+#
+#   GITIGNORED (infrastructure topology lives in repos/site, not here):
+#     secrets/*.age — encrypted secret blobs
+#
+#   GITIGNORED (cryptographic material):
+#     *.key, *.pem, *_rsa, *_ed25519, *_ecdsa — private keys
+#     .env, .env.* — environment secrets
+#
+# Rule: if unsure whether a file belongs in git, it does NOT.
+# Only secrets/secrets.nix is negated. Everything else blocked.
+secrets/*
+!secrets/secrets.nix
+*.key
+*.pem
+*_rsa
+*_ed25519
+*_ecdsa
+*.dec
+*.unencrypted.yaml
+.env
+.env.*
+
+# ── External package repos (independent git repos, see CLAUDE.md) ──
+repos
+
+# ── direnv + pre-commit state (machine-specific, generated) ──────
+.direnv/
+.pre-commit-config.yaml
+
+# ── GSD worktree management ──────────────────────────────────────
+.worktrees/
+worktrees
+
+# ── AI context (symlink to ~/.ai-context/project-state/nix/) ─────
+# Not tracked — local symlink created per-machine, synced via Syncthing.
+# No trailing slash: matches the symlink itself (not just directory contents).
+.ai-context
+
+# ── Root-level AI symlinks + tool dirs ───────────────────────────
+# Relative symlinks resolved through .ai-context/. Never tracked.
+/AGENTS.md
+/CLAUDE.md
+/GEMINI.md
+/DEBT.md
+/.claude/
+/.gemini/
+/.codex/
+/.planning/
+/.opencode/
+/.crush/
+/.pi/
+
+# ── AI planning artifacts (session-generated, not documentation) ──
+# Must live in .ai-context/, not docs/. Enforced by gitignore + hooks.
+docs/brainstorms/
+docs/plans/
+docs/ROADMAP.md
+docs/roadmap.md
+docs/Roadmap.md
+
+# ── AI tool artifacts ────────────────────────────────────────────
+/.codex
+/.nrb-update.lock
+docs/SECURITY-AUDIT.md
+
+# ── Syncthing conflict debris ────────────────────────────────────
+*.sync-conflict-*
+
+# ── Editor + OS cruft ────────────────────────────────────────────
+*.swp
+*.swo
+*~
+*.bak
+*.tmp
+.DS_Store
+.vscode/
+.idea/
+
+# ── JS tooling (this is not a JS project; ignore defensively) ────
+node_modules/
+package.json
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+bunfig.toml
+.npmrc
+.yarnrc
+.yarnrc.yml
+openspec/
+
+# AI context — symlink to .ai-context/AGENTS.md, never tracked
+AGENTS.md

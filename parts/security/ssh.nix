@@ -1,0 +1,96 @@
+# ssh — OpenSSH server with key-only auth and hardened crypto defaults.
+{ inputs, ... }:
+let
+  mod =
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
+    let
+      cfg = config.myModules.security.ssh;
+    in
+    {
+      _class = "nixos";
+      options.myModules.security.ssh = {
+        enable = lib.mkEnableOption "Secure SSH server configuration";
+        trustedKeys = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [ ];
+          description = "List of trusted SSH public keys";
+        };
+        fail2banIgnoreIPs = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [
+            "127.0.0.1/8"
+            "::1/128"
+          ];
+          description = "IP ranges to never ban (add your LAN/VPN subnets)";
+        };
+      };
+
+      config = lib.mkIf cfg.enable {
+        services.openssh = {
+          enable = true;
+          extraConfig = "AuthorizedKeysFile %h/.ssh/authorized_keys /etc/ssh/authorized_keys.d/%u";
+          settings = {
+            PasswordAuthentication = false;
+            KbdInteractiveAuthentication = false;
+            ChallengeResponseAuthentication = false;
+            PermitEmptyPasswords = false;
+            PermitRootLogin = "no";
+            AllowUsers = [
+              config.myModules.primaryUser
+            ];
+            MaxAuthTries = 3;
+            MaxSessions = 10;
+            Ciphers = [
+              "chacha20-poly1305@openssh.com"
+              "aes256-gcm@openssh.com"
+              "aes128-gcm@openssh.com"
+            ];
+            KexAlgorithms = [
+              "mlkem768x25519-sha256" # Post-quantum hybrid (ML-KEM + X25519) — silences OpenSSH 10+ warning
+              "curve25519-sha256"
+              "curve25519-sha256@libssh.org"
+              "diffie-hellman-group16-sha512"
+              "diffie-hellman-group18-sha512"
+            ];
+            Macs = [
+              "hmac-sha2-512-etm@openssh.com"
+              "hmac-sha2-256-etm@openssh.com"
+            ];
+            ClientAliveInterval = 300;
+            ClientAliveCountMax = 2;
+            X11Forwarding = false;
+            AllowTcpForwarding = "no";
+            AllowStreamLocalForwarding = "no";
+            AllowAgentForwarding = false;
+            GatewayPorts = "no";
+          };
+        };
+
+        users.users.${config.myModules.primaryUser}.openssh.authorizedKeys.keys = cfg.trustedKeys;
+        networking.firewall.allowedTCPPorts = [ 22 ];
+
+        services.fail2ban = {
+          enable = true;
+          maxretry = 3;
+          ignoreIP = cfg.fail2banIgnoreIPs;
+          jails.sshd.settings = {
+            enabled = true;
+            port = "ssh";
+            filter = "sshd";
+            maxretry = 3;
+            findtime = 600;
+            bantime = 3600;
+          };
+        };
+      };
+    };
+in
+{
+  flake.modules.nixos.security-ssh = mod;
+
+}

@@ -1,0 +1,63 @@
+# power — power management configuration (suspend, lid, button events).
+{ inputs, ... }:
+let
+  mod =
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
+    let
+      cfg = config.myModules.hardware.power;
+    in
+    {
+      _class = "nixos";
+      options.myModules.hardware.power = {
+        enable = lib.mkEnableOption "Power management configuration";
+        # TLP power management — a capability (enable if you want TLP), NOT a
+        # host-class label. Battery/AC-oriented, so typically laptops, but the
+        # toggle names the tool, not the machine: a power-conscious desktop
+        # could opt in too.
+        tlp = lib.mkEnableOption "TLP power management (battery charge thresholds + AC/BAT CPU/platform/wifi profiles)";
+      };
+
+      config = lib.mkIf cfg.enable {
+        # Why: power-profiles-daemon conflicts with our cpufreq governor setup
+        # (performance.nix owns the governor choice; scx_lavd owns runtime power
+        # decisions). mkForce wins over nixpkgs' default-true to prevent either
+        # side from silently toggling the other's state.
+        services.power-profiles-daemon.enable = lib.mkForce false;
+
+        # NOTE: governor is NOT set here. The performance module's
+        # `powerManagement.cpuFreqGovernor = lib.mkDefault cfg.governor` is the
+        # single source of truth. This avoids priority conflicts where mkIf
+        # (normal priority) would override mkDefault.
+
+        # TLP — battery charge limits + AC/BAT CPU/platform/wifi profiles.
+        services.tlp = lib.mkIf cfg.tlp {
+          enable = true;
+          settings = {
+            START_CHARGE_THRESH_BAT0 = 20;
+            STOP_CHARGE_THRESH_BAT0 = 80;
+            CPU_SCALING_GOVERNOR_ON_AC = "performance";
+            CPU_SCALING_GOVERNOR_ON_BAT = "powersave";
+            CPU_ENERGY_PERF_POLICY_ON_AC = "performance";
+            CPU_ENERGY_PERF_POLICY_ON_BAT = "power";
+            PLATFORM_PROFILE_ON_AC = "performance";
+            PLATFORM_PROFILE_ON_BAT = "low-power";
+            WIFI_PWR_ON_AC = "off";
+            WIFI_PWR_ON_BAT = "on";
+            USB_AUTOSUSPEND = 1;
+            RUNTIME_PM_ON_AC = "on";
+            RUNTIME_PM_ON_BAT = "auto";
+          };
+        };
+
+      };
+    };
+in
+{
+  flake.modules.nixos.hardware-power = mod;
+
+}
