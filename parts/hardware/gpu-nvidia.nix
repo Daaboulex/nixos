@@ -21,6 +21,19 @@ let
       _class = "nixos";
       options.myModules.hardware.gpuNvidia = {
         enable = lib.mkEnableOption "Nvidia Graphics configuration";
+        initrd.enable = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = ''
+            Load the nvidia DRM modules in the initrd so Plymouth (and the
+            early-boot fbcon / LUKS prompt) render on an nvidia-driven head.
+            Needed only where nvidia scans out the host display BEFORE the
+            stage-2 switch-root — e.g. the vfio-amd profile, where the 9070 XT
+            is vfio-bound and the 1660S is the host's only display. amdgpu-driven
+            profiles (normal / vfio-nvidia) don't need it: gpu-amd already loads
+            amdgpu early, and nvidia in compute mode drives no display there.
+          '';
+        };
         profile = {
           mode = lib.mkOption {
             type = lib.types.enum [
@@ -122,6 +135,17 @@ let
                 forceFullCompositionPipeline = false;
                 inherit (cfg.profile) videoAcceleration;
               };
+            # Early KMS on an nvidia head (Plymouth / fbcon / LUKS) — see initrd.enable.
+            # modeset=1 is already set by hardware.nvidia.modesetting; fbdev=1 is the
+            # framebuffer the splash actually draws on. Both gated so normal/compute
+            # profiles keep a slim, amdgpu-only initrd.
+            boot.initrd.kernelModules = lib.mkIf cfg.initrd.enable [
+              "nvidia"
+              "nvidia_modeset"
+              "nvidia_uvm"
+              "nvidia_drm"
+            ];
+            boot.kernelParams = lib.mkIf cfg.initrd.enable [ "nvidia-drm.fbdev=1" ];
           }
           (lib.mkIf cfg.profile.nvregEnable {
             boot.extraModprobeConfig = ''

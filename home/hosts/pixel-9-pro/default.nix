@@ -6,7 +6,7 @@
 }:
 
 {
-  home.stateVersion = "26.05";
+  home.stateVersion = "26.11";
 
   # Override overlay packages — shared overlay is x86_64-only
   programs.ripgrep.package = pkgs.ripgrep;

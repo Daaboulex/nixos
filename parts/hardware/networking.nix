@@ -6,6 +6,7 @@ let
       config,
       lib,
       pkgs,
+      site,
       ...
     }:
     let
@@ -87,6 +88,37 @@ let
             queries .local out the tunnel ("resolve") nor advertises into it ("yes").
           '';
         };
+        homeWifi.enable = lib.mkEnableOption ''
+          the declarative home WiFi profile. SSID comes from the fleet registry
+          (`site.network.wifi.ssid`); the PSK comes from the agenix `wifi` secret
+          (env var WIFI_PSK), never entering the Nix store. NetworkManager stores
+          PSKs agent-owned (KWallet) by default, so autoconnect has no secret
+          before login and retry-loops forever; this writes a system-owned keyfile
+          via NM `ensureProfiles` instead. Requires the agenix `wifi` secret
+        '';
+
+        lanBridge = {
+          enable = lib.mkEnableOption ''
+            a LAN bridge (`name`, default br0) that enslaves the wired `uplink`
+            so libvirt guests can attach to it for real LAN IPs. The bridge
+            inherits the uplink's MAC (DHCP lease preserved) and STP is off (no
+            boot forwarding delay). Bridged guest frames bypass host netfilter
+            (`bridge-nf-call-*=0`) so guest traffic is not filtered by the host
+            firewall/VPN. Enable per-profile — e.g. only in VFIO specialisations;
+            a host with no bridged guests does not need it
+          '';
+          uplink = lib.mkOption {
+            type = lib.types.str;
+            default = "";
+            example = "enp14s0";
+            description = "Wired interface enslaved into the bridge (host-specific). Required when lanBridge.enable.";
+          };
+          name = lib.mkOption {
+            type = lib.types.str;
+            default = "br0";
+            description = "Bridge interface name that guests attach to.";
+          };
+        };
       };
 
       config = lib.mkIf cfg.enable {
@@ -105,6 +137,64 @@ let
               1
             else
               2;
+          # Home WiFi as a system-owned keyfile (PSK from the agenix `wifi`
+          # secret via env substitution → never in the Nix store). Guard the
+          # secret path so a misconfigured host fails on the assertion below
+          # with a clear message instead of a cryptic "attribute missing".
+          networkmanager.ensureProfiles = lib.mkMerge [
+            (lib.mkIf cfg.homeWifi.enable {
+              environmentFiles = lib.optional (config.age.secrets ? wifi) config.age.secrets.wifi.path;
+              profiles.home-wifi = {
+                connection = {
+                  id = site.network.wifi.ssid;
+                  type = "wifi";
+                  autoconnect = true;
+                };
+                wifi = {
+                  mode = "infrastructure";
+                  ssid = site.network.wifi.ssid;
+                  # Active-probe for the SSID by name. The BCM4331/b43 passive scan
+                  # catches this AP's SSID only intermittently (its beacon drops out
+                  # of scans while the co-located SSID stays), so a passive-only
+                  # profile fails with "network could not be found". Probing finds it.
+                  hidden = true;
+                };
+                wifi-security = {
+                  key-mgmt = "wpa-psk";
+                  psk = "$WIFI_PSK";
+                };
+              };
+            })
+            (lib.mkIf cfg.lanBridge.enable {
+              # br0 bridge + an ethernet slave that enslaves the uplink. STP off
+              # (single uplink, no loop) → no forwarding delay at boot. The bridge
+              # inherits the uplink's MAC, so the DHCP lease is preserved.
+              profiles.${cfg.lanBridge.name} = {
+                connection = {
+                  id = cfg.lanBridge.name;
+                  type = "bridge";
+                  interface-name = cfg.lanBridge.name;
+                  autoconnect = true;
+                  autoconnect-priority = 100;
+                  autoconnect-slaves = 1;
+                };
+                bridge.stp = false;
+                ipv4.method = "auto";
+                ipv6.method = "auto";
+              };
+              profiles."${cfg.lanBridge.name}-${cfg.lanBridge.uplink}" = {
+                connection = {
+                  id = "${cfg.lanBridge.name}-${cfg.lanBridge.uplink}";
+                  type = "ethernet";
+                  interface-name = cfg.lanBridge.uplink;
+                  master = cfg.lanBridge.name;
+                  slave-type = "bridge";
+                  autoconnect = true;
+                  autoconnect-priority = 100;
+                };
+              };
+            })
+          ];
           firewall = {
             enable = true;
             allowedTCPPorts = cfg.openPorts;
@@ -114,6 +204,16 @@ let
             allowedUDPPorts = lib.optionals (cfg.multicastDns != "no") [ 5353 ];
           };
           inherit (cfg) nameservers;
+        };
+
+        # Bridged guest frames bypass host netfilter so the guest's firewall/VPN
+        # is its own concern, not the host's (the host still filters its own
+        # traffic — only L2-forwarded bridge frames skip iptables).
+        boot.kernelModules = lib.mkIf cfg.lanBridge.enable [ "br_netfilter" ];
+        boot.kernel.sysctl = lib.mkIf cfg.lanBridge.enable {
+          "net.bridge.bridge-nf-call-iptables" = 0;
+          "net.bridge.bridge-nf-call-ip6tables" = 0;
+          "net.bridge.bridge-nf-call-arptables" = 0;
         };
 
         # systemd-resolved with DoT closes the app-DNS plaintext leak that
@@ -152,6 +252,22 @@ let
             ];
           };
         };
+
+        assertions =
+          lib.optionals cfg.homeWifi.enable [
+            {
+              assertion = config.age.secrets ? wifi;
+              message = "myModules.hardware.networking.homeWifi: needs the agenix `wifi` secret — add `myModules.security.agenix.secrets.wifi = { };` to this host.";
+            }
+            {
+              assertion = (site.network.wifi.ssid or "") != "";
+              message = "myModules.hardware.networking.homeWifi: needs `site.network.wifi.ssid` set in the fleet registry.";
+            }
+          ]
+          ++ lib.optional cfg.lanBridge.enable {
+            assertion = cfg.lanBridge.uplink != "";
+            message = "myModules.hardware.networking.lanBridge.uplink: set the wired interface to enslave into ${cfg.lanBridge.name} when lanBridge.enable.";
+          };
 
       };
     };

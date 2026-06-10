@@ -18,6 +18,12 @@ let
       options.myModules.vfio = {
         enable = lib.mkEnableOption "VFIO GPU passthrough with stealth VM management";
 
+        passthrough.enable = lib.mkEnableOption "the GPU-passthrough machinery (static vfio-pci capture, pcie_aspm=off, root QEMU). OFF in the normal profile — libvirtd stays up for emulated VMs; the VFIO specialisations force it on. IOMMU + the host-wide stealth kernel patch are independent and stay on regardless";
+
+        perVmStealthSerials = lib.mkEnableOption "name-derived per-VM SMBIOS system + baseboard serials instead of the shared host serials. OFF for single-VM profiles (one VM ⇒ the faithful host serial is correct). ON for vfio-all, where two VMs run at once and identical board/BIOS serials are a fidelity tell";
+
+        autostart = lib.mkEnableOption "autostart every enabled VM at boot (NixVirt active=true + libvirt autostart flag) and let libvirt-guests gracefully ACPI-shut them on host poweroff. OFF for single-VM profiles (VMs are started by hand after login). ON for vfio-all — the thin headless host boots straight into both Windows guests";
+
         # --- Machine Configuration ---
         machineType = lib.mkOption {
           type = lib.types.str;
@@ -46,13 +52,7 @@ let
         hostCpuMask = lib.mkOption {
           type = lib.types.str;
           default = "0xffffffff";
-          description = "Hex bitmask of host-only CPUs (CCD1 cores). Used to restrict scx scheduler during VM runtime. Example: 0xff00ff00 for cores 8-15 + threads 24-31 on a dual-CCD Zen 5.";
-        };
-        hostGpuDriver = lib.mkOption {
-          type = lib.types.str;
-          default = "amdgpu";
-          example = "nouveau";
-          description = "Host GPU driver used for recovery rebinding when a passthrough device is stuck on vfio-pci from a prior run. Set to 'nouveau' or 'nvidia' for NVIDIA hosts, 'i915' for Intel. Defaults to 'amdgpu'.";
+          description = "Hex bitmask of host-only CPUs. Used to restrict the scx scheduler during VM runtime; set per host to the cores NOT given to guests. Example: 0xff00ff00 for cores 8-15 + threads 24-31 on a dual-CCD Zen 5.";
         };
 
         acsOverride = lib.mkOption {
@@ -75,6 +75,32 @@ let
             device left in the faked-split group. Verify after reboot:
             `dmesg | grep "Overriding ACS"`.
           '';
+        };
+
+        protectedDiskAddrs = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [ ];
+          example = [ "0000:04:00.0" ];
+          description = "PCI addresses of host-critical disks (root/boot/nix/home/swap). An eval-time assertion refuses any VM that lists one in pciPassthrough — a typo-catcher complementing the runtime protectedDiskGuard (which resolves live findmnt and survives a BDF renumber). GPUs use vfio-pci.ids; disks are passed by address, so this is the disk safety net.";
+        };
+
+        criticalMounts = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [
+            "/"
+            "/boot"
+            "/nix"
+            "/nix/store"
+            "/home"
+          ];
+          description = "Host mount points whose backing block devices the runtime protectedDiskGuard refuses to pass through (swap is always checked too). Default = the FHS-critical set; a host with a different layout overrides it — keeps the guard generic, with no mount paths baked into the module.";
+        };
+
+        ovmf.package = lib.mkOption {
+          type = lib.types.package;
+          default = pkgs.OVMFFull.fd;
+          defaultText = lib.literalExpression "pkgs.OVMFFull.fd";
+          description = "OVMF firmware for UEFI guests. Its FV/ dir must carry OVMF_CODE.ms.fd + the Microsoft-keys-enrolled OVMF_VARS.ms.fd, used as the Secure-Boot loader + nvram template (so the guest boots with SB on at first boot — a Win11 requirement). Defaults to the standard secboot OVMFFull; a host may point this at a custom secboot OVMF build it provides.";
         };
       };
 
@@ -102,14 +128,34 @@ let
               softdep snd_hda_intel pre: vfio-pci
             '';
 
-            boot.kernelParams = [
-              # video=efifb:off REMOVED — kills iGPU fallback framebuffer during
-              # GPU unbind transitions, causing unrecoverable black screens.
-              # The iGPU needs its framebuffer for VT console fallback.
-              "pcie_aspm=off" # Disable ASPM for passthrough devices (stability)
-            ]
-            ++ lib.optional (cfg.acsOverride != null) "pcie_acs_override=${cfg.acsOverride}";
+            # video=efifb:off is deliberately NOT set — the iGPU framebuffer is the
+            # console / LUKS-passphrase fallback during early boot.
+            boot.kernelParams =
+              # ASPM off only under passthrough (device stability); a needless idle-power
+              # + latency cost in the normal profile, so gated on passthrough.enable.
+              lib.optional cfg.passthrough.enable "pcie_aspm=off"
+              ++ lib.optional (cfg.acsOverride != null) "pcie_acs_override=${cfg.acsOverride}";
           }
+
+          # ── No sleep under passthrough ──
+          # A passed-through GPU on vfio-pci + DMA-locked hugepages cannot survive a host
+          # sleep/resume — resume hangs the host and the running guests die. Hard-block every
+          # path: mask the sleep targets (nothing can start them) and tell logind to ignore
+          # the idle/key triggers so it never even tries. All gated on passthrough (off in normal).
+          (lib.mkIf cfg.passthrough.enable {
+            systemd.targets = {
+              sleep.enable = false;
+              suspend.enable = false;
+              hibernate.enable = false;
+              hybrid-sleep.enable = false;
+              suspend-then-hibernate.enable = false;
+            };
+            services.logind.settings.Login = {
+              IdleAction = "ignore";
+              HandleSuspendKey = "ignore";
+              HandleHibernateKey = "ignore";
+            };
+          })
 
           # ── Libvirt + QEMU ──
           {
@@ -120,8 +166,6 @@ let
                   if cfg.stealth.enable then
                     pkgs.qemu-stealth.override {
                       edidManufacturer = cfg.stealth.edid.manufacturer;
-                      edidModelAbbrev = cfg.stealth.edid.modelAbbrev;
-                      edidModel = cfg.stealth.edid.model;
                       edidSerial = cfg.stealth.edid.serial;
                       edidProductCode = cfg.stealth.edid.productCode;
                       edidDpi = cfg.stealth.edid.dpi;
@@ -135,8 +179,26 @@ let
                     }
                   else
                     pkgs.qemu;
-                runAsRoot = true;
-                swtpm.enable = true;
+                # Root QEMU only for passthrough (PCI detach / hugepages); emulated
+                # VMs in the normal profile run unprivileged.
+                runAsRoot = cfg.passthrough.enable;
+                swtpm = {
+                  enable = true;
+                  # Why: the module closure carries a second equal-priority
+                  # definition of swtpm.package (it surfaces inside the VFIO
+                  # specialisations as "defined multiple times"); mkForce makes
+                  # the stealth-aware choice win instead of conflicting.
+                  package = lib.mkForce (
+                    if cfg.stealth.enable && cfg.stealth.tpm.harden then
+                      pkgs.swtpm.override {
+                        libtpms = pkgs.libtpms.overrideAttrs (old: {
+                          postPatch = (old.postPatch or "") + config.myModules.vfio.stealth._libtpmsIdentityPatch;
+                        });
+                      }
+                    else
+                      pkgs.swtpm
+                  );
+                };
                 verbatimConfig =
                   let
                     evdevPaths = lib.filter (p: p != null) [
@@ -151,8 +213,9 @@ let
                       "/dev/null", "/dev/full", "/dev/zero",
                       "/dev/random", "/dev/urandom",
                       "/dev/ptmx", "/dev/kvm",
-                      "/dev/kvmfr0",
-                      "/dev/vfio/vfio"${lib.optionalString (evdevPaths != [ ]) ",\n      ${evdevEntries}"}
+                      "/dev/vfio/vfio"${lib.optionalString cfg.kvmfr.enable ",\n      \"/dev/kvmfr0\""}${
+                        lib.optionalString (evdevPaths != [ ]) ",\n      ${evdevEntries}"
+                      }
                     ]
                   '';
               };
@@ -189,18 +252,32 @@ let
               '';
             };
 
-            systemd.services.libvirt-guests.serviceConfig = {
-              # Why: libvirt-guests upstream auto-starts/resumes flagged VMs at
-              # boot. VFIO passthrough claims the GPU before the user logs in,
-              # so an auto-resumed VM would leave the host with no display.
-              # Empty + /bin/true disables the start phase without masking the
-              # unit.
+            systemd.services.libvirt-guests.serviceConfig = lib.mkIf (!cfg.autostart) {
+              # Why: libvirt-guests upstream auto-starts/resumes flagged VMs at boot.
+              # In the single-VM profiles the user starts the VM by hand AFTER login
+              # (passthrough claims the dGPU before login, so an auto-resumed VM in a
+              # profile that renders on a passed GPU would be wrong) → neuter the start
+              # phase (empty + /bin/true) without masking the unit, so ExecStop still
+              # runs the graceful ACPI shutdown on host poweroff. Under autostart
+              # (vfio-all) the unit's normal lifecycle is kept (see the block below).
               ExecStart = lib.mkForce [
                 ""
                 "${pkgs.coreutils}/bin/true"
               ];
             };
           }
+
+          # ── Autostart power model (vfio-all) ──
+          # The unit's normal lifecycle is kept: ON_BOOT=ignore (the per-domain
+          # autostart flag + NixVirt active=true do the starting), ON_SHUTDOWN=shutdown
+          # gives a parallel ACPI-first poweroff of both guests on host shutdown.
+          (lib.mkIf cfg.autostart {
+            virtualisation.libvirtd = {
+              onBoot = "ignore";
+              onShutdown = "shutdown";
+              parallelShutdown = 2;
+            };
+          })
 
           # ── Ananicy-cpp override: promote QEMU from Heavy_CPU to high priority ──
           (lib.mkIf cfg.anancyOverride {

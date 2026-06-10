@@ -1,13 +1,15 @@
 # mkExhaustivenessCheck — factory for "every host must reference every
-# module in dir X" pre-commit hooks.
+# module in dir X" gates.
 #
-# Consumer: nixos-exhaustiveness — parts/hosts/*/flake-module.nix must
-# reference every parts/**/*.nix module (catches "added a module, forgot
-# to wire it up").
+# Consumer: nixos-exhaustiveness (see ./nixos-exhaustiveness.nix) —
+# parts/hosts/*/flake-module.nix must reference every parts/**/*.nix module
+# (catches "added a module, forgot to wire it up").
 #
-# An hm-exhaustiveness variant also used this; it was removed when host HM
-# configs dropped the forced-exhaustive enable lists (absence = off). With
-# one consumer left, this could fold back into git-hooks.nix if desired.
+# Invocation modes of the generated binary:
+#   - (none) : gate on staged files only (pre-commit; exits 0 when nothing
+#              relevant is staged).
+#   - --all  : unconditional scan of the working tree (flake check / CI),
+#              where no git index exists.
 
 { pkgs }:
 
@@ -40,8 +42,10 @@ pkgs.writeShellApplication {
     coreutils
   ];
   text = ''
-    staged=$(git diff --cached --name-only -- ${stagedFilter})
-    [ -z "$staged" ] && exit 0
+    if [ "''${1:-}" != "--all" ]; then
+      staged=$(git diff --cached --name-only -- ${stagedFilter})
+      [ -z "$staged" ] && exit 0
+    fi
 
     echo "Checking ${kind} module exhaustiveness..."
     failed=0

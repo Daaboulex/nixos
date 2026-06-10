@@ -5,6 +5,7 @@
   inputs,
   lib,
   site,
+  myLib,
   ...
 }:
 {
@@ -84,7 +85,7 @@
           "nvme_core.default_ps_max_latency_us=0" # Disable NVMe power state transitions (prevents micro-stutters)
           "tsc=reliable" # Pin TSC as clocksource — Zen 5 has invariant TSC
           "amdgpu.freesync_video=1" # FreeSync video mode — still opt-in on kernel 6.19
-          "cma=64M" # Reserve 64MB contiguous DMA for Qualcomm WCN785x QMI firmware (ath12k)
+          "cma=256M" # Contiguous DMA: ath12k WiFi (WCN785x QMI firmware) + USB-audio buffers. 64M exhausted (CmaFree~0) → starved USB-audio (GoXLR/SupremeFX) DMA → retry-thrash stalled their shared bus (mouse hitch).
         ];
         cachyos = {
           cpusched = "bore"; # BORE compiled into kernel as fallback; scx_bpfland overlays it via BPF when loaded
@@ -183,7 +184,7 @@
           # Escape hatch: `systemctl stop mullvad-daemon` temporarily
           # restores clearnet access if at a captive portal (hotel WiFi).
           autoConnect = true;
-          lockdownMode = true; # kill switch ON — no clearnet when tunnel down
+          lockdownMode = false; # kill switch OFF (intentional) — clearnet survives a tunnel drop
           lan = true; # local subnet still reachable (printer, LAN peers)
           betaProgram = false;
           updateDefaultLocation = false;
@@ -395,6 +396,9 @@
         # to plaintext 100.64.0.23 inside the tunnel. Strict DoT would
         # SERVFAIL on that plaintext upstream during tunnel transitions.
         dnsOverTls = "opportunistic";
+        # Wired uplink to enslave into br0 when a VFIO profile enables lanBridge
+        # (passthrough VMs then get real LAN IPs); inert in normal (lanBridge off).
+        lanBridge.uplink = "enp14s0";
       };
       pipewire = {
         enable = true;
@@ -438,7 +442,7 @@
           # The 1660S is PASSED to a VM only in the vfio-nvidia specialisation, which
           # disables this whole driver (see that block) so the card is free for vfio-pci.
           # We never live-unbind a loaded nvidia driver: persistenced + nvidia-drm modeset
-          # hold the device, which is exactly what made the #10 dynamic detach fail.
+          # hold the device, so a live unbind would fail — vfio-nvidia disables it instead.
           mode = "compute";
           packageChannel = "beta"; # better odds against the bleeding-edge 7.0 kernel
           persistenced = true; # keep initialized for CUDA/LLM responsiveness (default + vfio-amd only)
@@ -522,6 +526,13 @@
       displays = {
         enable = true;
         phantomUuids = [ "a460df66-ee57-4a8f-ba9b-4a877908e962" ];
+        # Stable per-GPU DRM aliases (/dev/dri/by-gpu/{igpu,amd,nvidia}) for cardN-free
+        # KWIN_DRM_DEVICES selection. RE-VERIFY these PCI BDFs after any hardware change.
+        gpuAliases = {
+          igpu = "0000:7c:00.0"; # Raphael iGPU
+          amd = "0000:03:00.0"; # RX 9070 XT
+          nvidia = "0000:05:00.0"; # GTX 1660 SUPER
+        };
         monitors = {
           main = {
             connector = "DP-1";
@@ -531,14 +542,12 @@
               refreshRate = 239757;
             };
             position = {
-              x = 0;
-              y = 0;
+              x = 1080;
+              y = 840;
             };
             priority = 1;
             vrr = "automatic";
-            edidHash = "9f311191c8a8ef17808acd6e824be682";
-            edidIdentifier = "DEL 41313 811028053 18 2021 0";
-            uuid = "3527f744-8931-4a23-a80e-55a2c9ec0fbe";
+            inherit (site.hosts.ryzen-9950x3d.displays.monitors.main) edidHash edidIdentifier uuid;
             tiling.layout = ''{"layoutDirection":"horizontal","tiles":[{"width":0.5},{"width":0.5}]}'';
           };
           portrait = {
@@ -549,47 +558,37 @@
               refreshRate = 239761;
             };
             position = {
-              x = 1920;
-              y = -127;
+              x = 0;
+              y = 0;
             };
             priority = 2;
-            rotation = "right";
+            rotation = "left";
             vrr = "automatic";
-            edidHash = "32829c0ae88c33a9e3a9f349597d76af";
-            edidIdentifier = "DEL 41219 810371157 26 2017 0";
-            uuid = "069d4759-61df-4d8b-809e-cbb11fb33857";
+            inherit (site.hosts.ryzen-9950x3d.displays.monitors.portrait) edidHash edidIdentifier uuid;
             tiling.layout = ''{"layoutDirection":"vertical","tiles":[{"height":0.333},{"height":0.334},{"height":0.333}]}'';
           };
-          crt = {
-            connector = "HDMI-A-1"; # GPU HDMI
-            alternateConnectors = [ "HDMI-A-3" ]; # Motherboard HDMI (fallback)
+          # Same portrait Dell as DP-2, but on the 1660S's HDMI-A-2 in the VFIO profiles
+          # (the 9070 XT that drives DP-1/DP-2 is captured by vfio-pci, so those heads go
+          # dark and the panel is re-cabled to the 1660S). edidHash/uuid differ from DP-2 —
+          # the panel reports a slightly different EDID over HDMI vs DP. Without this entry
+          # SDDM + the session default to landscape on this head. Inert in non-VFIO profiles
+          # (HDMI-A-2 isn't connected there).
+          portrait-vfio = {
+            connector = "HDMI-A-2";
             mode = {
-              width = 1280;
-              height = 1024;
-              refreshRate = 75025;
+              width = 1920;
+              height = 1080;
+              refreshRate = 239761;
             };
             position = {
               x = 0;
-              y = 56;
+              y = 0;
             };
-            priority = 3;
-            enabled = false;
-            vrr = "never";
-            uuid = "6b146127-4137-452c-a823-3f9b7ef75b14"; # CRT EDID-derived UUID (stable across ports)
-            alternateUuids = [ "c808e708-83c0-4558-b83c-62dc0cae958f" ]; # Old kscreen UUID (stale)
-            tiling.layout = ''{"layoutDirection":"horizontal","tiles":[{"width":1.0}]}'';
-            toggle = {
-              enable = true;
-              scriptName = "crt-toggle";
-              repositions."DP-1" = {
-                x = 1280;
-                y = 0;
-              };
-              repositions."DP-2" = {
-                x = 3200;
-                y = -127;
-              };
-            };
+            priority = 1;
+            rotation = "left";
+            vrr = "automatic";
+            inherit (site.hosts.ryzen-9950x3d.displays.monitors.portrait-vfio) edidHash edidIdentifier uuid;
+            tiling.layout = ''{"layoutDirection":"vertical","tiles":[{"height":0.333},{"height":0.334},{"height":0.333}]}'';
           };
         };
       };
@@ -624,7 +623,15 @@
     # --------------------------------------------------------------------------
     vfio = {
       enable = true;
-      bindMethod = "dynamic"; # Libvirt hooks bind/unbind on VM start/stop
+      # Host-critical disks — the eval-time guard refuses any VM that passes one in
+      # pciPassthrough (typo net; the runtime protectedDiskGuard handles live BDF
+      # renumber). 04:00.0 is the LUKS cryptroot (/boot + /, /nix, /home).
+      protectedDiskAddrs = [ "0000:04:00.0" ];
+      bindMethod = "dynamic"; # inert at base (normal has no passthrough); VFIO specs force "static"
+      # Stealth OVMF (Secure Boot + MS-keys varstore) for the UEFI guests — overrides the
+      # module default (standard OVMFFull). The vfio-stealth overlay (overlays.nix) exposes
+      # ovmf-stealth; its .fd output ships OVMF_CODE.ms.fd + the MS-keys OVMF_VARS.ms.fd.
+      ovmf.package = pkgs.ovmf-stealth.fd;
       restrictScxToHost = true; # Restrict scx to CCD1 (hostCpuMask) during VM — keeps scheduler on host cores
       hostCpuMask = "0xff00ff00"; # CCD1: cores 8-15 + threads 24-31
       # ACS override is deliberately NOT set here. It fakes PCIe ACS isolation (a
@@ -636,21 +643,19 @@
       # group so only 0f is handed to the guest. The NVMe can't move to the clean
       # CPU-lane slot (group 18 shares lanes with PCIEX16_2 → would disable the 2nd
       # GPU). cachyos-lto carries the patch (verified: pcie_acs_override in-kernel).
-      # KWin GPU selection: dual-GPU by default (both iGPU + dGPU outputs active).
-      # iGPU listed FIRST = primary render device. dGPU outputs (DP-1, DP-2, HDMI-A-1)
-      # light up normally for Linux display.
-      #
-      # VFIO trade-off: KDE Bug 515835 (ASSIGNED, unfixed) — if KWin holds dGPU
-      # outputs and dGPU is unbound (VM start), wl_output race kills Wayland clients.
-      # Mitigation: `specialisation.vfio` below overrides to iGPU-only. Reboot into
-      # that specialisation (SDDM session menu or boot menu) BEFORE starting a VM.
-      #
-      # NOTE: KWIN_DRM_DEVICES uses ':' as separator — PCI paths contain ':' and break
-      # the parser. Use /dev/dri/cardN, not /dev/dri/by-path/pci-…. amdgpu enumerates
-      # deterministically here (iGPU=card0, dGPU=card1).
+      # KWin render-GPU selection (KWIN_DRM_DEVICES), by STABLE PCI aliases (gpuAliases →
+      # /dev/dri/by-gpu/*), NOT cardN: cardN renumbers when a GPU is captured by vfio-pci
+      # (a passed GPU loses its DRM node), which would point KWIN_DRM_DEVICES at the wrong
+      # / a missing card and trip an SDDM login loop. The aliases are ':'-free so they
+      # survive the KWIN_DRM_DEVICES ':' separator. ORDER = priority: the FIRST device is
+      # the primary render GPU. Normal lists the 9070 XT first so it renders the desktop it
+      # drives (DP-1/DP-2) natively — the iGPU is a secondary reserve (no monitor is cabled
+      # to it; available for the motherboard HDMI). The 1660S is excluded → its HDMI stays
+      # dark. The VFIO specialisations override per profile; under static binding the passed
+      # GPU has no alias, so each list names only GPUs that are present.
       sessionGpuDevices = [
-        "/dev/dri/card0" # iGPU — primary render (Zen 5, HDMI-A-3)
-        "/dev/dri/card1" # dGPU — RX 9070 XT (DP-1/DP-2/HDMI-A-1)
+        "/dev/dri/by-gpu/amd" # RX 9070 XT (03:00.0) — primary render + DP-1/DP-2 outputs
+        "/dev/dri/by-gpu/igpu" # iGPU (7c:00.0) — secondary reserve (mobo HDMI; no monitor cabled)
       ];
       stealth =
         let
@@ -658,6 +663,10 @@
         in
         {
           enable = true;
+          # qemu-stealth hides the Hyper-V CPUID from the guest, so libvirt's post-launch
+          # hyperv verify aborts any enlightenment ("host doesn't support hyperv vpindex")
+          # and the guest couldn't use them anyway. "hidden" emits no hyperv block.
+          hypervMode = "hidden";
           cpuidPassthrough.enable = true;
           smbios = {
             inherit (hw.smbios)
@@ -684,13 +693,12 @@
           edid = {
             inherit (hw.edid)
               manufacturer
-              modelAbbrev
               productCode
               dpi
               week
               year
               ;
-            inherit (hw.monitor) model serial;
+            inherit (hw.monitor) serial;
           };
           disk = {
             inherit (hw.disk) model serial opticalModel;
@@ -716,15 +724,18 @@
         mousePath = "/dev/input/by-id/usb-Logitech_USB_Receiver-if02-event-mouse";
         # Toggle host/guest: press both Ctrl keys simultaneously (grab_all=on)
       };
-      # Windows 11 Gaming VM
-      # GPU passthrough: RX 9070 XT drives all 3 monitors (DP-1, DP-2, HDMI-A-1)
-      # When VM starts: all monitors on the 9070 XT switch to Windows automatically
-      # When VM stops: GPU returns to host, monitors show Linux again
-      # Host management while VM runs: SSH, or plug a monitor into motherboard HDMI-A-3 (iGPU)
-      # Looking Glass: view VM output on iGPU display without separate monitor
+      # win11-amd — gaming VM (RX 9070 XT → CCD0 V-Cache). Defined here enable=false;
+      # specialisation.vfio-amd flips it on. The 9070 XT is captured by vfio-pci at boot
+      # (committed for the boot session, not released on VM stop); manage the host via
+      # SSH or the iGPU motherboard HDMI.
       vms.win11-amd = {
         enable = false; # Normal/Default = no VM; enabled only by specialisation.vfio-amd
         uuid = "f298e20c-32ad-4921-87f0-164a211125c9";
+        # Bridged onto br0 (the VFIO specialisations enable lanBridge) → real LAN IP.
+        network = {
+          type = "bridge";
+          bridge = "br0";
+        };
         memory.count = 32;
         vcpu = {
           count = 16;
@@ -770,30 +781,36 @@
         pciPassthrough = [ "0000:0f:00.0" ]; # Windows NVMe (Samsung 9100 PRO 2TB, nvme0n1)
         # Unmount the Windows partition before NVMe passthrough, remount after VM stops
         mountsToUnmount = [ "/mnt/Windows SSD" ];
-        # ASUS SupremeFX onboard audio (internal USB, 0b05:1b7c)
-        # Optical out → GoXLR input, so VM audio mixes with Linux audio on GoXLR
+        # Audio BRIDGE, not a peripheral grab: the VM outputs to the SupremeFX onboard
+        # audio, whose optical S/PDIF out feeds the host GoXLR as an input — so VM audio is
+        # mixed + controlled on the GoXLR. GoXLR + Stream Deck are NOT passed; they stay on
+        # the HOST (goxlr-utility / streamcontroller). Keyboard + mouse reach the VM via evdev.
+        # (SupremeFX placement amd-vs-nvidia is the open audio question — see plan §U.)
         usbPassthrough = [
           {
             vendorId = 2821; # 0x0b05 ASUS
-            productId = 7036; # 0x1b7c SupremeFX
+            productId = 7036; # 0x1b7c SupremeFX onboard audio (optical → host GoXLR)
           }
         ];
         gpu = {
-          # Passthrough: the RX 9070 XT (03:00.0) is unbound to vfio-pci on VM start.
-          # Active ONLY in specialisation.vfio-amd, where the 1660S drives the display
-          # so the 9070 XT can be released cleanly (releaseConsole stays false — a
-          # non-passed GPU keeps the console/KWin).
+          # Active only in specialisation.vfio-amd + vfio-all (enable=false at base).
           mode = "passthrough";
           pciAddress = "0000:03:00.0"; # RX 9070 XT VGA (IOMMU Group 16)
           audioAddress = "0000:03:00.1"; # RX 9070 XT Audio (IOMMU Group 17)
-          # Why: dual-GPU host, iGPU (7c:00.0, card0) drives the console + KWin.
-          # Only the dGPU (03:00.0, card1) is passed through. The dGPU holds
-          # no vtcon/efi-framebuffer attachment, so the single-GPU unbind dance
-          # (chvt 3 → vtcon unbind → efi-fb unbind) would blank the iGPU display
-          # and cause a host black-screen. KWIN_DRM_DEVICES=card0 + the
-          # fallback-display + process-abort safety checks already guarantee
-          # the dGPU carries no open DRM contexts when passthrough begins.
-          releaseConsole = false;
+          # Captured by vfio-pci.ids at boot under bindMethod=static (vfio-amd /
+          # vfio-all). 9070 XT = VGA 1002:7550 + HDMI/DP audio 1002:ab40.
+          staticIds = [
+            "1002:7550"
+            "1002:ab40"
+          ];
+          # Clean VBIOS override — the 9070 XT is the board's BIOS-primary GPU
+          # (boot_vga=1), so its option ROM is shadowed/init'd at host POST and the
+          # guest reads a dirty image → can't bring up the display engine (black
+          # screen on every output). This is a pristine pre-shadow dump (NAVI48 XTX,
+          # ATOMBIOS VER023.008.000.068, UEFI GOP REV 003.009.001.023.008) read off
+          # the PCI ROM BAR while the card was on vfio-pci/reset, so OVMF + the guest
+          # driver initialise from a clean ROM. Emits <rom file=…/> on the hostdev.
+          romFile = "${./vbios/9070xt.rom}";
         };
         # win11-amd gets CCD0 = 8c/16t (the 96MB V-Cache CCD — see vcpu.pinning
         # below), so spoof as Ryzen 7 9850X3D — the real 2026 "soft refresh" of
@@ -808,6 +825,98 @@
           maxSpeed = 5600; # 9850X3D max boost 5.6 GHz
           currentSpeed = 4700; # 9850X3D base 4.7 GHz
         };
+      };
+
+      # Windows 11 security-research sandbox VM (GTX 1660S → CCD1). Defined
+      # here (enable=false) so both VMs live at base with identical protections;
+      # specialisation.vfio-nvidia flips enable=true.
+      vms.win11-nvidia = {
+        enable = false;
+        uuid = "97d5e852-5b66-4081-9142-9cdd96bb716a";
+        # Bridged onto br0 (the VFIO specialisations enable lanBridge) → real LAN IP.
+        network = {
+          type = "bridge";
+          bridge = "br0";
+        };
+        memory.count = 32;
+        vcpu = {
+          count = 16;
+          # CCD1: physical cores 8-15 + SMT threads 24-31 (the non-V-Cache CCD)
+          pinning = [
+            8
+            9
+            10
+            11
+            12
+            13
+            14
+            15
+            24
+            25
+            26
+            27
+            28
+            29
+            30
+            31
+          ];
+          emulatorPin = "0-1"; # QEMU emulator threads on CCD0 (host side)
+          iothreadPin = "2"; # IO thread on a CCD0 host core
+        };
+        gpu = {
+          mode = "passthrough";
+          pciAddress = "0000:05:00.0"; # GTX 1660S VGA (IOMMU group 19)
+          audioAddress = "0000:05:00.1"; # 1660S HDMI/DP audio
+          # 1660S USB-C controller (05:00.2, group 21) + serial (05:00.3). Verify
+          # each func's IOMMU group is isolated at deploy — groups can shift when
+          # GPU drivers or ACS settings change.
+          extraFunctions = [
+            "0000:05:00.2"
+            "0000:05:00.3"
+          ];
+          # Captured by vfio-pci.ids at boot under bindMethod=static. All four 1660S
+          # functions: VGA + HD-audio + USB 3.1 + USB-C UCSI.
+          staticIds = [
+            "10de:21c4"
+            "10de:1aeb"
+            "10de:1aec"
+            "10de:1aed"
+          ];
+          # Clean VBIOS (TU116 — legacy + UEFI GOP image both present). This card is
+          # NOT boot_vga, so its ROM isn't shadowed and passthrough works without an
+          # override — supplied for symmetry with the 9070 XT and as a Code-43
+          # belt-and-suspenders beside kvm-hidden. Read off the PCI ROM BAR.
+          romFile = "${./vbios/1660s.rom}";
+        };
+        # Disk: 0b (the 1 TB PM9C1a) — nvidia uses 0b in every profile it appears
+        # (vfio-nvidia + vfio-all); amd keeps the 2 TB 0f. One mental model, real-NVMe
+        # passthrough (max stealth, distinct real disk serial per VM). 0b is NOT a host
+        # mount (no fileSystems entry — the prior btrfs is disposable), so nothing to
+        # unmount. Plus the GREATHTEK USB controller (7c:00.4, isolated IOMMU grp 34)
+        # passed WHOLE so arbitrary devices on its port reach the guest with native
+        # hotplug (the 2nd-person swap port) — a hub passed by vendor:product would NOT
+        # forward its children. PREREQ (#11): Windows installed on 0b.
+        pciPassthrough = [
+          "0000:0b:00.0" # Windows NVMe (Samsung PM9C1a 1TB)
+          "0000:7c:00.4" # GREATHTEK USB controller (whole-controller passthrough)
+        ];
+        # Spoof CCD1 as a non-V-Cache Ryzen 7 9700X (8c, 32 MB L3).
+        cpuIdentity = {
+          modelId = "AMD Ryzen 7 9700X 8-Core Processor";
+          maxSpeed = 5500; # 9700X boost
+          currentSpeed = 3800; # 9700X base
+        };
+        cache.l3 = 32768; # 32 MB — CCD1 has no V-Cache (per-VM cache from Step 1)
+        # Audio bridge: SupremeFX → this VM; its optical S/PDIF out feeds the host GoXLR
+        # (vfio-nvidia: host mixes it) or serves as the 2nd person's sound card (vfio-all).
+        # The GREATHTEK swap-port is the whole-controller PCI passthrough above (NOT a USB
+        # hostdev — passing the hub by id would not forward devices plugged into it).
+        usbPassthrough = [
+          {
+            vendorId = 2821; # 0x0b05 ASUS
+            productId = 7036; # 0x1b7c SupremeFX onboard audio (optical → GoXLR / 2nd-person)
+          }
+        ];
       };
     };
 
@@ -884,6 +993,12 @@
   # ============================================================================
   services.udev.extraRules = ''
     ACTION=="add|change", SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", KERNEL=="nvme[0-9]*n[0-9]*", ATTR{queue/rq_affinity}="2", ATTR{queue/nr_requests}="2048"
+    # Ducky One X Mini (wireless, 3233:001d) — never autosuspend. The keyboard's
+    # evdev node must stay live: when it re-enumerates/power-saves, QEMU's held
+    # input-linux fd goes stale → "input_linux_event: read: No such device" →
+    # the keyboard stops passing to the guest (the mouse keeps working). USB
+    # power-control "on" = autosuspend disabled, node stays present.
+    ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="3233", ATTR{idProduct}=="001d", TEST=="power/control", ATTR{power/control}="on"
   '';
 
   # ============================================================================
@@ -932,6 +1047,7 @@
       "mac_hid" # macOS HID emulation — not needed
       "mousedev" # Legacy mouse device — not needed on Wayland
       "eeepc_wmi" # ASUS Eee PC WMI — loaded via ASUS WMI chain, not needed
+      "ucsi_ccg" # 1660S VirtualLink USB-C controller (i2c 9-0008 / 05:00.3) — nothing cabled to it; probe always times out (-110) → boot-log noise. Passed-through in nvidia/all profiles anyway.
     ];
   };
 
@@ -984,130 +1100,9 @@
     ];
   };
 
-  # ============================================================================
-  # Specialisation — vfio-amd (max-power gaming VM)
-  # ============================================================================
-  # Boot entry "ryzen-9950x3d-vfio-amd". The GTX 1660S drives the desktop (cabled
-  # to the monitors — use the monitor's input switch as a KVM); the RX 9070 XT is
-  # unbound on VM start → win11-amd (CCD0 V-Cache). KWin renders on the 1660S
-  # (card2) so the 9070 XT (card1) can be released without tripping KDE Bug 515835.
-  # evdev Ctrl+Ctrl shares the keyboard/mouse host↔guest.
-  specialisation.vfio-amd.configuration = {
-    # 1660S (card2) = primary render/display; iGPU (card0) = spare. The passed
-    # 9070 XT (card1) MUST be absent from KWIN_DRM_DEVICES.
-    myModules.vfio.sessionGpuDevices = lib.mkForce [
-      "/dev/dri/card2"
-      "/dev/dri/card0"
-    ];
-    # win11-amd is CCD0 (V-Cache) → host stays on CCD1 (base hostCpuMask, no override).
-    # No Looking Glass (disabled globally) — view the VM by switching the monitor
-    # input to the 9070 XT (which the VM drives).
-    myModules.vfio.vms.win11-amd.enable = lib.mkForce true;
-    # ACS override ON here only (never in normal): win11-amd passes the 0f NVMe,
-    # which shares IOMMU group 22 — the split hands ONLY 0f to the guest. Fakes
-    # PCIe isolation (guest NVMe DMA can reach the other group-22 devices), so keep
-    # nothing sensitive on the 990 EVO (0b).
-    myModules.vfio.acsOverride = "downstream,multifunction";
-  };
-
-  # ============================================================================
-  # Specialisation — vfio-nvidia (security-research sandbox)
-  # ============================================================================
-  # Boot entry "ryzen-9950x3d-vfio-nvidia". The RX 9070 XT keeps driving the
-  # display (KWin untouched); the GTX 1660S is unbound dynamically on VM start →
-  # win11-nvidia. Purpose: a VM-detection-resistant sandbox (real 1660S + the real
-  # Windows install on the 0f NVMe via ACS) for analysing evasive apps. Each VM is
-  # scoped to its own profile.
-  specialisation.vfio-nvidia.configuration = {
-    # win11-nvidia runs on CCD1 (no V-Cache) → keep scx/host on CCD0 (0x00ff00ff)
-    # while the VM owns CCD1 (base value 0xff00ff00 is for the CCD0 win11-amd VM).
-    myModules.vfio.hostCpuMask = lib.mkForce "0x00ff00ff";
-    # ROOT-CAUSE FIX for "Unmanaged PCI device 0000:05:00.0 must be manually detached":
-    # the nvidia driver (+ nvidia-persistenced + nvidia-drm modeset) held the 1660S, so the
-    # dynamic prepare-hook's unbind failed and libvirt (managed='no') refused to start. The
-    # 1660S is being PASSED to this VM, so the host needs no nvidia driver — drop it and
-    # blacklist nouveau so the card sits UNCLAIMED at boot. The hook then binds an unclaimed
-    # device to vfio-pci with nothing to fight. (default + vfio-amd keep nvidia loaded.)
-    myModules.hardware.gpuNvidia.enable = lib.mkForce false;
-    boot.blacklistedKernelModules = [ "nouveau" ];
-    # ACS override ON here only (never in normal): win11-nvidia passes the 0f NVMe
-    # (shares IOMMU group 22). Same fake-isolation tradeoff as vfio-amd — keep
-    # nothing sensitive on the 990 EVO (0b).
-    myModules.vfio.acsOverride = "downstream,multifunction";
-    # No Looking Glass (disabled globally — ivshmem 1af4 is a detectable VM tell).
-    # The 1660S is passed to the VM → view the sandbox by switching the monitor
-    # input to the 1660S (both dGPUs are cabled). Max-stealth.
-    myModules.vfio.vms.win11-nvidia = {
-      uuid = "97d5e852-5b66-4081-9142-9cdd96bb716a";
-      memory.count = 32;
-      vcpu = {
-        count = 16;
-        # CCD1: physical cores 8-15 + SMT threads 24-31 (the non-V-Cache CCD)
-        pinning = [
-          8
-          9
-          10
-          11
-          12
-          13
-          14
-          15
-          24
-          25
-          26
-          27
-          28
-          29
-          30
-          31
-        ];
-        emulatorPin = "0-1"; # QEMU emulator threads on CCD0 (host side)
-        iothreadPin = "2"; # IO thread on a CCD0 host core
-      };
-      gpu = {
-        mode = "passthrough";
-        pciAddress = "0000:05:00.0"; # GTX 1660S VGA (IOMMU group 19)
-        audioAddress = "0000:05:00.1"; # 1660S HDMI/DP audio
-        # 1660S USB-C controller (05:00.2, group 21) + serial (05:00.3). Verify
-        # each func's IOMMU group is isolated at deploy — groups can shift when
-        # GPU drivers or ACS settings change.
-        extraFunctions = [
-          "0000:05:00.2"
-          "0000:05:00.3"
-        ];
-        # No hostDriver override: nvidia is disabled in this profile and nouveau is
-        # blacklisted (above), so the 1660S is unclaimed at boot. The hook records "none"
-        # as its pre-passthrough driver and leaves it unclaimed on VM stop — nothing to
-        # rebind, no driver to fight on unbind.
-        releaseConsole = false; # dual-GPU: the 9070 XT keeps the console/display
-      };
-      # Real Windows on the Samsung 9100 PRO (0f) via ACS — max stealth. Same disk
-      # as win11-amd; the two VMs never run together (different boot profiles).
-      pciPassthrough = [ "0000:0f:00.0" ];
-      mountsToUnmount = [ "/mnt/Windows SSD" ];
-      # Spoof CCD1 as a non-V-Cache Ryzen 7 9700X (8c, 32 MB L3).
-      cpuIdentity = {
-        modelId = "AMD Ryzen 7 9700X 8-Core Processor";
-        maxSpeed = 5500; # 9700X boost
-        currentSpeed = 3800; # 9700X base
-      };
-      cache.l3 = 32768; # 32 MB — CCD1 has no V-Cache (per-VM cache from Step 1)
-      # INPUT: the dedicated GREATHTEK USB hub (Genesys Logic), hotplugged to the
-      # guest — real devices plugged into it carry their REAL names (no spoof needed
-      # here). SURGICAL: only this hub + what's on it goes to the VM; host devices on
-      # other ports are untouched (passing a USB hub ≠ passing the whole controller).
-      # Both hub faces (USB 2.0 + 3.x). At deploy, verify devices plugged into the
-      # hub appear in the guest; if a child doesn't follow, add its vendor:product here.
-      usbPassthrough = [
-        {
-          vendorId = 1507; # 0x05e3 Genesys Logic
-          productId = 1552; # 0x0610 — GREATHTEK hub, USB 2.0 face
-        }
-        {
-          vendorId = 1507; # 0x05e3 Genesys Logic
-          productId = 1574; # 0x0626 — GREATHTEK hub, USB 3.x face
-        }
-      ];
-    };
-  };
+  # ── Specialisations (boot entries) ──
+  # Each lives in ./specialisations/<name>.nix, auto-wired by readDir (the folder is the
+  # manifest — drop a file to add a boot entry; `_`-prefixed files are shared fragments,
+  # not specs). See STANDARD-PLAN.md §S1.
+  specialisation = myLib.mkSpecialisations { dir = ./specialisations; };
 }

@@ -1,0 +1,22 @@
+# gitleaks — secret scanning for this repo (pre-commit hook + CI).
+# Uses the maintained default ruleset (passwords, API keys, tokens, private
+# keys) and allowlists this repo's tracked public material. The gitignored
+# repos/ tree (incl. the private `site` registry) is git-untracked, so gitleaks
+# never scans it; agenix `.age` blobs are ciphertext and also untracked.
+title = "nixos-config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Public, non-secret material tracked in this repo"
+paths = [
+  # CI registry stub — dummy placeholder values, not real identities.
+  '''ci/site-stub/.*''',
+  '''flake\.lock''',
+  '''\.gitleaks\.toml''',
+]
+regexes = [
+  # SSH *public* keys are not secrets (private keys remain flagged).
+  '''ssh-(ed25519|rsa) [A-Za-z0-9+/=]+''',
+]

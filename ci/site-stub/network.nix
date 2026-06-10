@@ -4,6 +4,8 @@
   gateway = "10.0.0.1";
   dns = "10.0.0.1";
 
+  wifi.ssid = "ci-stub-ssid";
+
   hosts = {
     ryzen-9950x3d = {
       ip = "10.0.0.10";

@@ -211,7 +211,7 @@
           # Escape hatch: `systemctl stop mullvad-daemon` temporarily
           # restores clearnet access if at a captive portal (hotel WiFi).
           autoConnect = true;
-          lockdownMode = true; # kill switch ON — no clearnet when tunnel down
+          lockdownMode = false; # kill switch OFF (intentional) — clearnet survives a tunnel drop
           lan = true; # local subnet still reachable (printer, LAN peers)
           betaProgram = false;
           updateDefaultLocation = false;
@@ -316,11 +316,11 @@
       };
       agenix = {
         enable = true;
-        # Secrets declared per-host at runtime (`agenix -e secrets/<name>.age`).
-        # .age files gitignored + Syncthing-synced, not in flake tree.
-        # Add secrets here after encrypting with `agenix -e`:
-        #   secrets.wifi = { };
-        #   secrets.github-token = { };
+        # .age ciphertext is tracked in git (safe — only host private keys
+        # decrypt it; agenix reads it from the flake source). Recipients (fleet
+        # host keys) live in secrets/secrets.nix; edit/rekey via
+        # `agenix -e secrets/<name>.age`.
+        secrets.wifi = { }; # WIFI_PSK=… — consumed by hardware.networking.homeWifi
       };
       portmaster = {
         enable = true;
@@ -363,6 +363,7 @@
         # when the VPN is up. "resolve" = resolve .local only (this host needn't
         # advertise) → no wg0 handling needed. Frees :5353 via avahi disabled below.
         multicastDns = "resolve";
+        homeWifi.enable = true; # declarative home WiFi profile (SSID from site, PSK from agenix)
       };
       pipewire = {
         enable = true;

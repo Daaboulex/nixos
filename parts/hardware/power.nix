@@ -1,4 +1,4 @@
-# power — power management configuration (suspend, lid, button events).
+# power — optional TLP (battery/AC CPU/platform/wifi profiles) + power-profiles-daemon disabled.
 { inputs, ... }:
 let
   mod =

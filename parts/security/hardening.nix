@@ -22,14 +22,23 @@ let
           set -euo pipefail
 
           usage() {
-            echo "Usage: nrb-activate {set-profile|switch|boot|test} /nix/store/<hash>-nixos-system-*" >&2
+            echo "Usage: nrb-activate {set-profile|switch|boot|test} /nix/store/<hash>-nixos-system-* [spec]" >&2
             exit 1
           }
 
-          [[ $# -eq 2 ]] || usage
+          # The 3rd arg (optional) names a specialisation to activate from inside
+          # the validated base closure. set-profile ignores it (the profile is
+          # always the base generation; the spec is a sub-closure of it).
+          [[ $# -eq 2 || $# -eq 3 ]] || usage
 
           action="$1"
           store_path="$2"
+          spec="''${3:-}"
+
+          if [[ -n "$spec" && ! "$spec" =~ ^[a-zA-Z0-9_-]+$ ]]; then
+            echo "nrb-activate: invalid specialisation name '$spec'" >&2
+            exit 1
+          fi
 
           # Validate action
           case "$action" in
@@ -79,7 +88,15 @@ let
               exec nix-env -p /nix/var/nix/profiles/system --set "$real_path"
               ;;
             switch|boot|test)
-              exec "$real_path/bin/switch-to-configuration" "$action"
+              activate_path="$real_path"
+              if [[ -n "$spec" ]]; then
+                activate_path="$real_path/specialisation/$spec"
+                if [[ ! -x "$activate_path/bin/switch-to-configuration" ]]; then
+                  echo "nrb-activate: no such specialisation '$spec' in $real_path" >&2
+                  exit 1
+                fi
+              fi
+              exec "$activate_path/bin/switch-to-configuration" "$action"
               ;;
           esac
         '';

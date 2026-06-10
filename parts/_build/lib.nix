@@ -23,5 +23,6 @@ in
     # Lib-applied — consumers call directly without re-passing lib.
     mkSettingsOption = (import ../../lib/mkSettingsOption.nix) { inherit lib; };
     mergeSettings = (import ../../lib/mergeSettings.nix) { inherit lib; };
+    mkSpecialisations = (import ../../lib/mkSpecialisations.nix) { inherit lib; };
   };
 }

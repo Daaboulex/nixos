@@ -43,6 +43,9 @@
             # Internal audit log — full of technical tokens (x86_64, regexes,
             # option paths) that prettier's markdown emphasis rules corrupt.
             "AUDIT.md"
+            # Same rationale — planning/handoff scratch dense with option paths,
+            # PCI BDFs and tables that prettier would reflow unhelpfully.
+            "VFIO-REDESIGN-PLAN.md"
           ];
         };
       };

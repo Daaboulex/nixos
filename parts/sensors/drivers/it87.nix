@@ -14,21 +14,16 @@
   llvmPackages_latest,
 }:
 let
-  kernelNameLower = lib.toLower (kernel.pname or kernel.name or "");
-  kernelVersionLower = lib.toLower (kernel.modDirVersion or "");
-
-  kernelUsesLLVM =
-    (builtins.match ".*cachyos.*" kernelNameLower != null)
-    || (builtins.match ".*cachyos.*" kernelVersionLower != null)
-    || (builtins.any (
-      flag:
-      builtins.match ".*LLVM=1.*" (toString flag) != null
-      || builtins.match ".*CC=clang.*" (toString flag) != null
-    ) (kernel.makeFlags or [ ]));
-
-  buildStdenv = if kernelUsesLLVM then llvmPackages_latest.stdenv else stdenv;
+  llvm = import ./llvm-kernel.nix {
+    inherit
+      lib
+      kernel
+      stdenv
+      llvmPackages_latest
+      ;
+  };
 in
-buildStdenv.mkDerivation {
+llvm.buildStdenv.mkDerivation {
   pname = "it87";
   version = "unstable-2025-12-26";
 
@@ -41,20 +36,14 @@ buildStdenv.mkDerivation {
 
   hardeningDisable = [ "pic" ];
 
-  nativeBuildInputs =
-    kernel.moduleBuildDependencies
-    ++ lib.optionals kernelUsesLLVM [
-      llvmPackages_latest.lld
-    ];
+  nativeBuildInputs = kernel.moduleBuildDependencies ++ llvm.nativeBuildInputs;
 
   makeFlags = [
     "KERNEL_BUILD=${kernel.dev}/lib/modules/${kernel.modDirVersion}/build"
     "INSTALL_MOD_PATH=${placeholder "out"}"
   ]
-  ++ lib.optionals kernelUsesLLVM [
-    "LLVM=1"
-    "CC=clang"
-    "LD=ld.lld"
+  ++ llvm.makeFlags
+  ++ lib.optionals llvm.usesLLVM [
     "KCFLAGS=-Wno-unused-command-line-argument"
   ];
 

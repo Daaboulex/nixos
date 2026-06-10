@@ -7,8 +7,7 @@
 }:
 
 {
-  # Home Manager State Version (moved from dissolved base module)
-  home.stateVersion = "26.05";
+  home.stateVersion = "26.11";
 
   # Enabled modules (alphabetical). Absence = off (mkEnableOption default).
   myModules.home = {

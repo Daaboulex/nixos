@@ -7,8 +7,8 @@
 #   gaming-gamemode gaming-gamescope gaming-rocksmith gaming-steam
 #   hardware-acpid hardware-bluetooth hardware-coolercontrol hardware-core
 #   hardware-cpu-amd hardware-cpu-intel hardware-goxlr hardware-gpu-amd
-#   hardware-gpu-intel hardware-gpu-nvidia hardware-graphics hardware-networking
-#   hardware-pipewire hardware-power hardware-udev-access hardware-upower
+#   hardware-gpu-intel hardware-gpu-nvidia hardware-graphics hardware-multiseat
+#   hardware-networking hardware-pipewire hardware-power hardware-udev-access hardware-upower
 #   hardware-usb-power hardware-usbmuxd
 #   host
 #   input-ducky-one-x-mini input-libinput input-ratbagd input-streamcontroller

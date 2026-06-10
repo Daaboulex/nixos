@@ -178,7 +178,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Site — private infrastructure registry (local-only, Syncthing-synced)
+    # Site — private infrastructure registry, its OWN git repo under repos/
+    # (git-ignored by this flake, Syncthing-synced, never pushed). Fetched as a
+    # separate git repo (not a relative path:) BECAUSE repos/ is git-ignored — a
+    # relative path input would require tracking the private secrets in this
+    # public repo. The absolute path is valid on every fleet host (all user@
+    # /home/user); a host with a different $HOME overrides it via nrb
+    # (--override-input site …). CI overrides this to ci/site-stub.
     site = {
       url = "git+file:///home/user/Documents/nix/repos/site";
       flake = false;

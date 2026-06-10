@@ -10,11 +10,23 @@
       ...
     }:
     let
-      mkExhaustivenessCheck = import ./checks/mkExhaustivenessCheck.nix { inherit pkgs; };
+      nixos-exhaustiveness-bin = import ./checks/nixos-exhaustiveness.nix { inherit pkgs; };
       check-placement-bin = import ./checks/check-placement.nix { inherit pkgs; };
-      check-scrub-tokens-bin = import ./checks/check-scrub-tokens.nix { inherit pkgs; };
       check-dangling-refs-bin = import ./checks/check-dangling-refs.nix { inherit pkgs; };
       check-no-foreign-config-bin = import ./checks/check-no-foreign-config.nix { inherit pkgs; };
+      check-dedup-bin = import ./checks/check-dedup.nix { inherit pkgs; };
+      check-specialisation-placement-bin = import ./checks/check-specialisation-placement.nix {
+        inherit pkgs;
+      };
+      check-no-narration-comments-bin = import ./checks/check-no-narration-comments.nix { inherit pkgs; };
+      check-helper-naming-bin = import ./checks/check-helper-naming.nix { inherit pkgs; };
+      check-no-with-lib-bin = import ./checks/check-no-with-lib.nix { inherit pkgs; };
+      check-no-dated-comments-bin = import ./checks/check-no-dated-comments.nix { inherit pkgs; };
+      check-mkforce-comment-bin = import ./checks/check-mkforce-comment.nix { inherit pkgs; };
+      check-assertion-format-bin = import ./checks/check-assertion-format.nix { inherit pkgs; };
+      check-module-docstring-bin = import ./checks/check-module-docstring.nix { inherit pkgs; };
+      check-secrets-leak-bin = import ./checks/check-secrets-leak.nix { inherit pkgs; };
+      check-no-cross-tree-import-bin = import ./checks/check-no-cross-tree-import.nix { inherit pkgs; };
     in
     {
       # Hooks run alphabetically by attr name; auto-format is named to sort
@@ -109,56 +121,24 @@
 
         # NixOS exhaustiveness — every host flake-module.nix references every
         # parts/**/*.nix module. Catches "added a module, forgot to wire it up".
+        # Configured in checks/nixos-exhaustiveness.nix (shared with the flake
+        # check, which runs it with --all).
         nixos-exhaustiveness = {
           enable = true;
           name = "nixos-exhaustiveness";
-          entry = toString (
-            (mkExhaustivenessCheck {
-              kind = "NixOS";
-              name = "nixos-exhaustiveness";
-              hostGlob = "parts/hosts/*/flake-module.nix";
-              # Every parts/**/*.nix module declares 'flake.modules.nixos.<name> = mod;'.
-              # Extract the <name>, excluding _build and host files themselves.
-              moduleListCmd = "grep -rhE '^\\s*flake\\.modules\\.nixos\\.[a-zA-Z0-9_-]+' parts --include='*.nix' --exclude-dir=_build --exclude-dir=hosts | sed -E 's/^[[:space:]]*flake\\.modules\\.nixos\\.([a-zA-Z0-9_-]+).*/\\1/' | sort -u";
-              expectedPattern = "inputs\\.self\\.modules\\.nixos\\.%s";
-              fixHint = "Host flake-module.nix files must reference every NixOS module under parts/. Add the missing inputs.self.modules.nixos.<name> import alphabetically.";
-              stagedFilter = "'parts/'";
-            })
-            + "/bin/nixos-exhaustiveness"
-          );
+          entry = toString (nixos-exhaustiveness-bin + "/bin/nixos-exhaustiveness");
           stages = [ "pre-commit" ];
           pass_filenames = false;
         };
 
         # ─── Style enforcement hooks ──────────────────────────────────────
 
-        # Forbid `with lib;` anywhere in tracked .nix files.
+        # Forbid `with lib;` anywhere in tracked .nix files. Configured in
+        # checks/check-no-with-lib.nix (shared with the flake check, which runs --all).
         check-no-with-lib = {
           enable = true;
           name = "check-no-with-lib";
-          entry = toString (
-            (pkgs.writeShellApplication {
-              name = "check-no-with-lib";
-              runtimeInputs = with pkgs; [
-                git
-                gnugrep
-              ];
-              text = ''
-                staged=$(git diff --cached --name-only --diff-filter=ACMR -- '*.nix')
-                [ -z "$staged" ] && exit 0
-                failed=0
-                for f in $staged; do
-                  if [ -f "$f" ] && grep -nE '^\s*with\s+lib\s*;' "$f" >/dev/null; then
-                    echo "VIOLATION ($f): 'with lib;' is forbidden — qualify each lib helper (lib.mkOption, lib.mkIf, …)."
-                    grep -nE '^\s*with\s+lib\s*;' "$f" | head -3
-                    failed=1
-                  fi
-                done
-                exit "$failed"
-              '';
-            })
-            + "/bin/check-no-with-lib"
-          );
+          entry = toString (check-no-with-lib-bin + "/bin/check-no-with-lib");
           stages = [ "pre-commit" ];
           pass_filenames = false;
         };
@@ -205,246 +185,79 @@
         };
 
         # Comment standard: no dated change-logs / session narration in comments
-        # (git carries the history). Flags ISO dates (YYYY-MM-DD) in comments of
-        # staged .nix/.sh/.py files. Bare-year source citations (CVE/LKML/model
-        # year) carry no ISO date and pass; reword a flagged line to be timeless.
+        # (git carries the history). Configured in checks/check-no-dated-comments.nix
+        # (shared with the flake check, which runs --all).
         check-no-dated-comments = {
           enable = true;
           name = "check-no-dated-comments";
-          entry = toString (
-            (pkgs.writeShellApplication {
-              name = "check-no-dated-comments";
-              runtimeInputs = with pkgs; [
-                git
-                gnugrep
-              ];
-              text = ''
-                mapfile -t files < <(
-                  git diff --cached --name-only --diff-filter=ACMR \
-                    | grep -E '\.(nix|sh|py)$' || true
-                )
-                [ "''${#files[@]}" -eq 0 ] && exit 0
-                failed=0
-                for f in "''${files[@]}"; do
-                  [ -f "$f" ] || continue
-                  hits=$(grep -nE '#.*[12][0-9]{3}-[01][0-9]-[0-3][0-9]' "$f" \
-                         | grep -v 'stateVersion' || true)
-                  if [ -n "$hits" ]; then
-                    echo "check-no-dated-comments: $f"
-                    echo "$hits"
-                    failed=1
-                  fi
-                done
-                if [ "$failed" -ne 0 ]; then
-                  echo ""
-                  echo "Dated comment(s) found. The comment standard forbids dated change-logs"
-                  echo "and session narration — git carries the history. Reword to timeless"
-                  echo "rationale or drop the ISO date."
-                  exit 1
-                fi
-                exit 0
-              '';
-            })
-            + "/bin/check-no-dated-comments"
-          );
+          entry = toString (check-no-dated-comments-bin + "/bin/check-no-dated-comments");
           stages = [ "pre-commit" ];
           pass_filenames = false;
         };
 
-        # Every `lib.mkForce` must have a `# Why:` comment on the same line
-        # or within the previous 2 lines.
+        # Change-narration / AI-session-narration in comments (the prose form
+        # of the dated-comment ban). Configured in
+        # checks/check-no-narration-comments.nix (shared with the flake check).
+        check-no-narration-comments = {
+          enable = true;
+          name = "check-no-narration-comments";
+          entry = toString (check-no-narration-comments-bin + "/bin/check-no-narration-comments");
+          stages = [ "pre-commit" ];
+          pass_filenames = false;
+        };
+
+        # Every `lib.mkForce` must have an adjacent `# Why:` rationale. Configured
+        # in checks/check-mkforce-comment.nix (shared with the flake check, --all).
         check-mkforce-comment = {
           enable = true;
           name = "check-mkforce-comment";
-          entry = toString (
-            (pkgs.writeShellApplication {
-              name = "check-mkforce-comment";
-              runtimeInputs = with pkgs; [
-                git
-                gawk
-              ];
-              text = ''
-                staged=$(git diff --cached --name-only --diff-filter=ACMR -- '*.nix')
-                [ -z "$staged" ] && exit 0
-                failed=0
-                for f in $staged; do
-                  [ -f "$f" ] || continue
-                  # Host files (parts/hosts/*/, home/hosts/*/) are the final
-                  # authority — their mkForce usages don't need rationale.
-                  case "$f" in
-                    parts/hosts/*|home/hosts/*) continue ;;
-                  esac
-                  # "Why:" covers every mkForce that follows it before the
-                  # next non-comment, non-blank, non-mkForce line. This lets
-                  # a multi-line `# Why: …` block explain an adjacent mkForce
-                  # even when unrelated file-level content (a docstring) sits
-                  # many lines above the block.
-                  missing=$(awk '
-                    /^[[:space:]]*#/ {
-                      if ($0 ~ /# *Why:/) pending_why = 1
-                      next
-                    }
-                    /^[[:space:]]*$/ { next }
-                    /lib\.mkForce/ {
-                      if ($0 ~ /# *Why:/) { pending_why = 0; next }
-                      if (pending_why) next
-                      printf "  %d: %s\n", NR, $0
-                      next
-                    }
-                    { pending_why = 0 }
-                  ' "$f")
-                  if [ -n "$missing" ]; then
-                    echo "VIOLATION ($f): lib.mkForce without adjacent '# Why:' comment:"
-                    echo "$missing"
-                    failed=1
-                  fi
-                done
-                exit "$failed"
-              '';
-            })
-            + "/bin/check-mkforce-comment"
-          );
+          entry = toString (check-mkforce-comment-bin + "/bin/check-mkforce-comment");
           stages = [ "pre-commit" ];
           pass_filenames = false;
         };
 
-        # Every assertion's message must start with "myModules.<path>:".
+        # Every assertion's message must start with "myModules.<path>:". Configured
+        # in checks/check-assertion-format.nix (shared with the flake check, --all).
         check-assertion-format = {
           enable = true;
           name = "check-assertion-format";
-          entry = toString (
-            (pkgs.writeShellApplication {
-              name = "check-assertion-format";
-              runtimeInputs = with pkgs; [
-                git
-                gawk
-              ];
-              text = ''
-                staged=$(git diff --cached --name-only --diff-filter=ACMR -- '*.nix')
-                [ -z "$staged" ] && exit 0
-                failed=0
-                for f in $staged; do
-                  [ -f "$f" ] || continue
-                  # Pair each "assertion = ... ;" block with its next "message = ...".
-                  bad=$(awk '
-                    /^[[:space:]]+assertion[[:space:]]*=/ { want_msg=1; line_num=NR }
-                    want_msg && /^[[:space:]]+message[[:space:]]*=/ {
-                      want_msg=0
-                      # If message is a "..." or '''..''' string literal, capture
-                      # contents on the same and next few lines
-                      buf = $0
-                      for (i=1; i<=4 && getline nl > 0; i++) buf = buf " " nl
-                      # Does buf contain the canonical prefix within the quotes?
-                      if (buf !~ /myModules\./) {
-                        printf "  %d: assertion message does not start with myModules.*\n", line_num
-                      }
-                    }
-                  ' "$f")
-                  if [ -n "$bad" ]; then
-                    echo "VIOLATION ($f): assertion message must start with 'myModules.<path>:':"
-                    echo "$bad"
-                    failed=1
-                  fi
-                done
-                exit "$failed"
-              '';
-            })
-            + "/bin/check-assertion-format"
-          );
+          entry = toString (check-assertion-format-bin + "/bin/check-assertion-format");
           stages = [ "pre-commit" ];
           pass_filenames = false;
         };
 
-        # Every module >10 lines must start with a one-line docstring.
-        # Blocks (exit 1). Exempts lib, parts/_build, sensor drivers,
-        # hardware-configuration.nix, and mkSimplePackage modules.
+        # Every module >10 lines must start with a one-line docstring. Configured
+        # in checks/check-module-docstring.nix (shared with the flake check, --all).
         check-module-docstring = {
           enable = true;
           name = "check-module-docstring";
-          entry = toString (
-            (pkgs.writeShellApplication {
-              name = "check-module-docstring";
-              runtimeInputs = with pkgs; [
-                git
-                coreutils
-                gnugrep
-              ];
-              text = ''
-                staged=$(git diff --cached --name-only --diff-filter=ACMR -- \
-                  'home/modules/*.nix' 'home/modules/**/*.nix' \
-                  'parts/*.nix' 'parts/**/*.nix')
-                [ -z "$staged" ] && exit 0
-                warned=0
-                for f in $staged; do
-                  [ -f "$f" ] || continue
-                  case "$f" in
-                    # Excluded paths:
-                    # - lib/* + parts/_build/* — shared helpers / build utilities
-                    # - parts/sensors/drivers/* — callPackage derivations (Shape C), not modules
-                    # - parts/hosts/*/hardware-configuration.nix — nixos-generate-config output
-                    lib/*|parts/_build/*) continue ;;
-                    parts/sensors/drivers/*) continue ;;
-                    parts/hosts/*/hardware-configuration.nix) continue ;;
-                  esac
-                  if grep -q 'mkSimplePackage' "$f"; then continue; fi
-                  lines=$(wc -l < "$f")
-                  [ "$lines" -lt 10 ] && continue
-                  first=$(grep -m1 -vE '^\s*$' "$f" || true)
-                  if [ -z "$first" ] || [ "''${first###}" = "$first" ]; then
-                    echo "VIOLATION ($f): missing module docstring — prepend '# <name> — <one-line purpose>.'"
-                    warned=1
-                  fi
-                done
-                # To intentionally skip: keep the module under 10 lines, or
-                # use mkSimplePackage.
-                [ "$warned" -ne 0 ] && {
-                  echo ""
-                  echo "Prepend '# <name> — <one-line purpose>.' to the file(s) above."
-                  exit 1
-                }
-                exit 0
-              '';
-            })
-            + "/bin/check-module-docstring"
-          );
+          entry = toString (check-module-docstring-bin + "/bin/check-module-docstring");
           stages = [ "pre-commit" ];
           pass_filenames = false;
         };
 
-        # Block staging secrets/* (except secrets.nix) and any *.age/*.key/
-        # *.pem/private-key material. always_run — the danger doesn't depend
-        # on which files the diff-filter happens to surface.
+        # Nothing secret belongs in this public repo — all secret material lives
+        # in the private `site` registry. Configured in checks/check-secrets-leak.nix
+        # (shared with the flake check, which runs --all over the tree).
         check-secrets-leak = {
           enable = true;
           name = "check-secrets-leak";
-          entry = toString (
-            (pkgs.writeShellApplication {
-              name = "check-secrets-leak";
-              runtimeInputs = [ pkgs.git ];
-              text = ''
-                # Block staging any file in secrets/ except secrets.nix.
-                # Also block .age, .key, .pem, and private key files.
-                failed=0
-                while IFS= read -r f; do
-                  case "$f" in
-                    secrets/secrets.nix) ;; # allowed — public keys only
-                    secrets/*)
-                      echo "BLOCKED: $f — secrets/ files must not be committed (except secrets.nix)"
-                      failed=1 ;;
-                    *.age|*.key|*.pem|*_rsa|*_ed25519|*_ecdsa)
-                      echo "BLOCKED: $f — cryptographic material"
-                      failed=1 ;;
-                  esac
-                done < <(git diff --cached --name-only --diff-filter=ACM)
-                exit $failed
-              '';
-            })
-            + "/bin/check-secrets-leak"
-          );
+          entry = toString (check-secrets-leak-bin + "/bin/check-secrets-leak");
           language = "system";
           stages = [ "pre-commit" ];
           pass_filenames = false;
           always_run = true;
+        };
+
+        # No relative `../…` import crossing the parts/ ↔ home/ tree boundary
+        # (use the flake registry / source instead). Configured in
+        # checks/check-no-cross-tree-import.nix (shared with the flake check).
+        check-no-cross-tree-import = {
+          enable = true;
+          name = "check-no-cross-tree-import";
+          entry = toString (check-no-cross-tree-import-bin + "/bin/check-no-cross-tree-import");
+          stages = [ "pre-commit" ];
+          pass_filenames = false;
         };
 
         # Refuse commits when the local branch is behind its upstream —
@@ -517,6 +330,26 @@
           pass_filenames = false;
         };
 
+        # Specialisations live in specialisations/<name>.nix — a host
+        # default.nix may only contain the mkSpecialisations wiring call.
+        check-specialisation-placement = {
+          enable = true;
+          name = "check-specialisation-placement";
+          entry = toString (check-specialisation-placement-bin + "/bin/check-specialisation-placement");
+          stages = [ "pre-commit" ];
+          pass_filenames = false;
+        };
+
+        # A domain-level parts/<domain>/*.nix is a module or a `_`-prefixed
+        # private helper — nothing else. Configured in checks/check-helper-naming.nix.
+        check-helper-naming = {
+          enable = true;
+          name = "check-helper-naming";
+          entry = toString (check-helper-naming-bin + "/bin/check-helper-naming");
+          stages = [ "pre-commit" ];
+          pass_filenames = false;
+        };
+
         # File path ⟺ option scope path. Hook grabs staged
         # files itself; test derivation invokes the binary with positional
         # args to exercise both paths.
@@ -544,6 +377,18 @@
           enable = true;
           name = "check-no-foreign-config";
           entry = toString (check-no-foreign-config-bin + "/bin/check-no-foreign-config");
+          stages = [ "pre-commit" ];
+          pass_filenames = false;
+        };
+
+        # Copy-paste backstop to the structural single-source discipline: flags
+        # module-level near-duplicate LOGIC blocks (>=50 aligned tokens) to extract
+        # into a shared helper. Hosts/fixtures exempt; the granular manifest is
+        # suppressed by construction; `# dedup-ok` suppresses a reviewed near-dup.
+        check-dedup = {
+          enable = true;
+          name = "check-dedup";
+          entry = toString (check-dedup-bin + "/bin/check-dedup");
           stages = [ "pre-commit" ];
           pass_filenames = false;
         };
@@ -584,14 +429,17 @@
           pass_filenames = false;
         };
 
-        # Content scrub gate — blocks personal/work tokens
-        # in staged diffs, sourced from canonical catalog at
-        # $HOME/.ai-context/scripts/scrub-config.json. Exits 0 if config
-        # absent (fresh-clone resilience).
-        check-scrub-tokens = {
+        # Secret scanning — blocks committing passwords, API keys, tokens, and
+        # private-key material. gitleaks with its maintained default ruleset +
+        # this repo's `.gitleaks.toml` allowlist. Defined explicitly (this
+        # git-hooks.nix version ships no built-in gitleaks entry). `protect
+        # --staged` scans the staged diff. Replaces the bespoke check-scrub-tokens
+        # (which depended on an absent ~/.ai-context catalog).
+        gitleaks = {
           enable = true;
-          name = "check-scrub-tokens";
-          entry = toString (check-scrub-tokens-bin + "/bin/check-scrub-tokens");
+          name = "gitleaks";
+          entry = "${pkgs.gitleaks}/bin/gitleaks protect --staged --redact --no-banner --config .gitleaks.toml";
+          language = "system";
           stages = [ "pre-commit" ];
           pass_filenames = false;
         };

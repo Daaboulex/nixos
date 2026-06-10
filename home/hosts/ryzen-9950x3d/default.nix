@@ -19,13 +19,12 @@ in
     ./streamcontroller
   ];
 
-  # Home Manager State Version (moved from dissolved base module)
-  home.stateVersion = "26.05";
+  home.stateVersion = "26.11";
 
   # Enabled modules (alphabetical). Absence = off (mkEnableOption default).
   myModules.home = {
     android.enable = true;
-    antigravity.enable = true;
+    antigravity.enable = false;
     anydesk.enable = true;
     archive.enable = true;
     arkenfox.enable = true;
@@ -40,7 +39,7 @@ in
     cifs-utils.enable = true;
     claude-code.enable = true;
     cmake.enable = true;
-    codex-cli.enable = true;
+    codex-cli.enable = false;
     comma.enable = true;
     coolercontrol.enable = true;
     corecycler.enable = true;
@@ -65,7 +64,7 @@ in
     fzf.enable = true;
     gcc.enable = true;
     gdb.enable = true;
-    gemini-cli.enable = true;
+    gemini-cli.enable = false;
     ghostty.enable = true;
     git.enable = true;
     glow.enable = true;
@@ -93,7 +92,7 @@ in
     llmfit.enable = true;
     lm-sensors.enable = true;
     lmstudio.enable = true;
-    looking-glass.enable = true;
+    looking-glass.enable = false; # Looking Glass unused — never frame-relay; kvmfr/ivshmem also off
     lsfg-vk.enable = true;
     lshw.enable = true;
     lsof.enable = true;
@@ -171,6 +170,10 @@ in
 
   # Module sub-settings / tuning (host-specific).
   myModules.home = {
+    # Native GUI off: its Chromium/webview can't render in the multi-GPU + NVIDIA VFIO
+    # profiles (GBM unsupported → Vulkan fallback → DBus-unresponsive → zombie + wedged
+    # singleton lock). The daemon (coolercontrold) still applies all fan profiles; view/
+    # configure via the browser web UI at https://localhost:11987 (same interface, renders fine).
     coolercontrol.autostart = true;
     goxlr.denoise.enable = true;
     goxlr.eq.enable = true;
@@ -241,7 +244,7 @@ in
 
   # Gaming options (migrated from NixOS)
   myModules.home = {
-    radv.perftest = "transfer_queue"; # Mesa 26 dedicated SDMA transfer-only queue — async DMA uploads (perf win, no efficiency cost; nggc/gpl are already default-on, so "" lost nothing)
+    radv.experimental = "transfer_queue"; # Mesa 26 dedicated SDMA transfer-only queue — async DMA uploads (perf win, no efficiency cost; nggc/gpl are already default-on, so "" lost nothing)
     radv.vulkanDeviceName = "AMD Radeon RX 9070 XT";
     wine.variant = "staging";
     wine.bottles.enable = true;

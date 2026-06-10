@@ -7,9 +7,26 @@
     { pkgs, system, ... }:
     let
       check-placement-bin = import ../_build/checks/check-placement.nix { inherit pkgs; };
-      check-scrub-tokens-bin = import ../_build/checks/check-scrub-tokens.nix { inherit pkgs; };
       check-dangling-refs-bin = import ../_build/checks/check-dangling-refs.nix { inherit pkgs; };
       check-no-foreign-config-bin = import ../_build/checks/check-no-foreign-config.nix { inherit pkgs; };
+      check-dedup-bin = import ../_build/checks/check-dedup.nix { inherit pkgs; };
+      nixos-exhaustiveness-bin = import ../_build/checks/nixos-exhaustiveness.nix { inherit pkgs; };
+      check-specialisation-placement-bin = import ../_build/checks/check-specialisation-placement.nix {
+        inherit pkgs;
+      };
+      check-no-narration-comments-bin = import ../_build/checks/check-no-narration-comments.nix {
+        inherit pkgs;
+      };
+      check-helper-naming-bin = import ../_build/checks/check-helper-naming.nix { inherit pkgs; };
+      check-no-with-lib-bin = import ../_build/checks/check-no-with-lib.nix { inherit pkgs; };
+      check-no-dated-comments-bin = import ../_build/checks/check-no-dated-comments.nix { inherit pkgs; };
+      check-mkforce-comment-bin = import ../_build/checks/check-mkforce-comment.nix { inherit pkgs; };
+      check-assertion-format-bin = import ../_build/checks/check-assertion-format.nix { inherit pkgs; };
+      check-module-docstring-bin = import ../_build/checks/check-module-docstring.nix { inherit pkgs; };
+      check-secrets-leak-bin = import ../_build/checks/check-secrets-leak.nix { inherit pkgs; };
+      check-no-cross-tree-import-bin = import ../_build/checks/check-no-cross-tree-import.nix {
+        inherit pkgs;
+      };
     in
     {
       checks = {
@@ -82,52 +99,6 @@
                 echo "FAIL: check-placement rejected a compliant file."
                 exit 1
               fi
-
-              touch "$out"
-            '';
-
-        # check-scrub-tokens hook — asserts the hook fires on a synthetic
-        # leak (forbidden token + forbidden pattern), passes on
-        # context_allowlisted token. Mirrors check-placement-test shape.
-        check-scrub-tokens-test =
-          pkgs.runCommand "check-scrub-tokens-test"
-            {
-              nativeBuildInputs = [ check-scrub-tokens-bin ];
-              fixtures = ./tests/fixtures;
-            }
-            ''
-              set -euo pipefail
-              work=$(mktemp -d)
-              cd "$work"
-
-              cp "$fixtures"/scrub-leak.txt scrub-leak.txt
-              cp "$fixtures"/scrub-allowlist.txt scrub-allowlist.txt
-              cp "$fixtures"/scrub-pattern.txt scrub-pattern.txt
-              cp "$fixtures"/scrub-config-test.json scrub-config.json
-
-              # Test 1: leak fixture should fail with hit reported
-              if check-scrub-tokens --config scrub-config.json --from-file scrub-leak.txt 2>err.log; then
-                echo "FAIL: scrub-leak.txt did not block (expected exit 1)"
-                cat err.log
-                exit 1
-              fi
-              grep -q 'Development-Mobile' err.log \
-                || { echo "FAIL: leak token not in error output"; cat err.log; exit 1; }
-
-              # Test 2: allowlist fixture should pass
-              if ! check-scrub-tokens --config scrub-config.json --from-file scrub-allowlist.txt; then
-                echo "FAIL: allowlist fixture blocked unexpectedly"
-                exit 1
-              fi
-
-              # Test 3: pattern fixture should fail (private_project_paths)
-              if check-scrub-tokens --config scrub-config.json --from-file scrub-pattern.txt 2>err.log; then
-                echo "FAIL: scrub-pattern.txt did not block (expected exit 1)"
-                cat err.log
-                exit 1
-              fi
-              grep -q 'Acme' err.log \
-                || { echo "FAIL: pattern hit not in error output"; cat err.log; exit 1; }
 
               touch "$out"
             '';
@@ -249,6 +220,564 @@
                 echo "FAIL: own-namespace fixture rejected; expected pass."
                 exit 1
               fi
+              touch "$out"
+            '';
+
+        # check-placement — live gate: scan ALL of parts/ + home/modules for
+        # file-path ⟺ option-scope mismatches. The pre-commit hook sees only
+        # staged files (and --no-verify skips it entirely); this is the
+        # unconditional repo-wide scan.
+        check-placement =
+          pkgs.runCommand "check-placement"
+            {
+              nativeBuildInputs = [ check-placement-bin ];
+              partsSrc = ../../parts;
+              homeSrc = ../../home/modules;
+            }
+            ''
+              set -euo pipefail
+              mkdir -p root/home
+              cp -r "$partsSrc" root/parts
+              cp -r "$homeSrc" root/home/modules
+              cd root
+              mapfile -t files < <(find parts home/modules -name '*.nix' | sort)
+              if ! check-placement "''${files[@]}"; then
+                echo "check-placement: a file's path does not match its option scope (see the scope-picker atop checks/check-placement.nix)."
+                exit 1
+              fi
+              echo "OK: every parts/ + home/modules file matches its option scope"
+              touch "$out"
+            '';
+
+        # check-dedup — live gate: near-duplicate logic scan over every module
+        # tree the pre-commit hook covers (parts, home, lib, ci). Hosts and
+        # test fixtures are exempt inside the scanner itself.
+        check-dedup =
+          pkgs.runCommand "check-dedup"
+            {
+              nativeBuildInputs = [ check-dedup-bin ];
+              partsSrc = ../../parts;
+              homeSrc = ../../home;
+              libSrc = ../../lib;
+              ciSrc = ../../ci;
+            }
+            ''
+              set -euo pipefail
+              mkdir root
+              cp -r "$partsSrc" root/parts
+              cp -r "$homeSrc" root/home
+              cp -r "$libSrc" root/lib
+              cp -r "$ciSrc" root/ci
+              cd root
+              mapfile -t files < <(find parts home lib ci -name '*.nix' | sort)
+              if ! check-dedup "''${files[@]}"; then
+                echo "check-dedup: near-duplicate logic blocks found — extract into a shared helper (or mark a reviewed duplicate with '# dedup-ok')."
+                exit 1
+              fi
+              echo "OK: no near-duplicate logic blocks"
+              touch "$out"
+            '';
+
+        # check-dedup hook — asserts the detector FIRES on a synthetic clone
+        # pair AND honors the `# dedup-ok` suppression. Keeps it non-vacuous.
+        check-dedup-test =
+          pkgs.runCommand "check-dedup-test"
+            {
+              nativeBuildInputs = [ check-dedup-bin ];
+            }
+            ''
+              set -euo pipefail
+              work=$(mktemp -d)
+              cd "$work"
+              mkdir -p home/modules/alpha home/modules/beta
+              for m in alpha beta; do
+                cat > "home/modules/$m/default.nix" <<'EOF'
+              {
+                lib,
+                config,
+                pkgs,
+                ...
+              }:
+              {
+                config.systemd.services.syntheticClone = {
+                  description = "synthetic clone block for the dedup self-test";
+                  wantedBy = [ "multi-user.target" ];
+                  after = [ "network-online.target" ];
+                  serviceConfig = {
+                    ExecStart = "/run/current-system/sw/bin/synthetic --flag-one --flag-two";
+                    Restart = "on-failure";
+                    RestartSec = 7;
+                    MemoryMax = "512M";
+                    CPUQuota = "50%";
+                    ProtectSystem = "strict";
+                    ProtectHome = true;
+                    PrivateTmp = true;
+                  };
+                };
+              }
+              EOF
+              done
+
+              if diag=$(check-dedup home/modules/alpha/default.nix home/modules/beta/default.nix 2>&1); then
+                echo "FAIL: clone pair passed; expected exit 1."
+                echo "$diag"
+                exit 1
+              fi
+              echo "$diag" | grep -q 'alpha/default.nix' \
+                || { echo "FAIL: diagnostic missing file A."; echo "$diag"; exit 1; }
+              echo "$diag" | grep -q 'beta/default.nix' \
+                || { echo "FAIL: diagnostic missing file B."; echo "$diag"; exit 1; }
+
+              # `# dedup-ok` inside one block's span must suppress the report.
+              sed -i '2i # dedup-ok' home/modules/alpha/default.nix
+              if ! check-dedup home/modules/alpha/default.nix home/modules/beta/default.nix; then
+                echo "FAIL: '# dedup-ok' suppression did not pass the clone pair."
+                exit 1
+              fi
+              touch "$out"
+            '';
+
+        # nixos-exhaustiveness — live gate: every host flake-module.nix
+        # references every parts/**/*.nix module. The pre-commit hook gates on
+        # staged files only; this scans the whole tree (--all).
+        nixos-exhaustiveness =
+          pkgs.runCommand "nixos-exhaustiveness"
+            {
+              nativeBuildInputs = [ nixos-exhaustiveness-bin ];
+              partsSrc = ../../parts;
+            }
+            ''
+              set -euo pipefail
+              mkdir root
+              cp -r "$partsSrc" root/parts
+              cd root
+              if ! nixos-exhaustiveness --all; then
+                echo "nixos-exhaustiveness: a host flake-module.nix is missing a module reference (or an exhaustiveness-exclude entry)."
+                exit 1
+              fi
+              touch "$out"
+            '';
+
+        # check-specialisation-placement — live gate: no host default.nix may
+        # define a specialisation inline; specs live in specialisations/<name>.nix
+        # wired by the single myLib.mkSpecialisations call.
+        check-specialisation-placement =
+          pkgs.runCommand "check-specialisation-placement"
+            {
+              nativeBuildInputs = [ check-specialisation-placement-bin ];
+              partsSrc = ../../parts;
+            }
+            ''
+              set -euo pipefail
+              mkdir root
+              cp -r "$partsSrc" root/parts
+              cd root
+              if ! check-specialisation-placement; then
+                echo "check-specialisation-placement: a host default.nix defines a specialisation inline."
+                exit 1
+              fi
+              echo "OK: no inline specialisations in host default.nix files"
+              touch "$out"
+            '';
+
+        # check-specialisation-placement hook — asserts the gate FIRES on an
+        # inline spec AND PASSES the mkSpecialisations wiring. Non-vacuous.
+        check-specialisation-placement-test =
+          pkgs.runCommand "check-specialisation-placement-test"
+            {
+              nativeBuildInputs = [ check-specialisation-placement-bin ];
+            }
+            ''
+              set -euo pipefail
+              work=$(mktemp -d)
+              cd "$work"
+
+              cat > inline-spec.nix <<'EOF'
+              {
+                specialisation.vfio-x.configuration = {
+                  boot.kernelParams = [ "iommu=pt" ];
+                };
+              }
+              EOF
+              if diag=$(check-specialisation-placement inline-spec.nix 2>&1); then
+                echo "FAIL: inline specialisation passed; expected exit 1."
+                echo "$diag"
+                exit 1
+              fi
+              echo "$diag" | grep -q 'specialisation.vfio-x' \
+                || { echo "FAIL: diagnostic missing the inline spec."; echo "$diag"; exit 1; }
+              echo "$diag" | grep -q 'mkSpecialisations' \
+                || { echo "FAIL: diagnostic missing the fix hint."; echo "$diag"; exit 1; }
+
+              cat > wired-spec.nix <<'EOF'
+              {
+                # Reads like config.specialisation.foo and comments about
+                # specialisation.bar must not trip the gate.
+                specialisation = myLib.mkSpecialisations { dir = ./specialisations; };
+              }
+              EOF
+              if ! check-specialisation-placement wired-spec.nix; then
+                echo "FAIL: mkSpecialisations wiring rejected; expected pass."
+                exit 1
+              fi
+              touch "$out"
+            '';
+
+        # check-helper-naming — live gate: every domain-level parts/<domain>/*.nix
+        # is a module or a `_`-prefixed helper.
+        check-helper-naming =
+          pkgs.runCommand "check-helper-naming"
+            {
+              nativeBuildInputs = [ check-helper-naming-bin ];
+              partsSrc = ../../parts;
+            }
+            ''
+              set -euo pipefail
+              mkdir root
+              cp -r "$partsSrc" root/parts
+              cd root
+              if ! check-helper-naming --all; then
+                echo "check-helper-naming: an un-categorised file sits at the parts/<domain>/ level."
+                exit 1
+              fi
+              echo "OK: every domain-level parts file is a module or a _-prefixed helper"
+              touch "$out"
+            '';
+
+        # check-helper-naming hook — asserts it FIRES on a bare helper AND PASSES
+        # a module and a _-prefixed helper. Keeps it non-vacuous.
+        check-helper-naming-test =
+          pkgs.runCommand "check-helper-naming-test"
+            {
+              nativeBuildInputs = [ check-helper-naming-bin ];
+            }
+            ''
+              set -euo pipefail
+              work=$(mktemp -d)
+              cd "$work"
+              mkdir -p parts/widgets
+
+              # A bare, un-categorised helper → must fail.
+              printf '{ x = 1; }\n' > parts/widgets/helper.nix
+              if diag=$(check-helper-naming parts/widgets/helper.nix 2>&1); then
+                echo "FAIL: bare helper passed; expected exit 1."
+                echo "$diag"
+                exit 1
+              fi
+              echo "$diag" | grep -q 'parts/widgets/helper.nix' \
+                || { echo "FAIL: diagnostic missing the file."; echo "$diag"; exit 1; }
+
+              # A _-prefixed helper → must pass.
+              printf '{ x = 1; }\n' > parts/widgets/_helper.nix
+              if ! check-helper-naming parts/widgets/_helper.nix; then
+                echo "FAIL: _-prefixed helper rejected."
+                exit 1
+              fi
+
+              # A real module (flake.modules.* on its own line, as in-tree) → must pass.
+              printf '{\n  flake.modules.nixos.widgets-foo = { };\n}\n' > parts/widgets/foo.nix
+              if ! check-helper-naming parts/widgets/foo.nix; then
+                echo "FAIL: module rejected."
+                exit 1
+              fi
+              touch "$out"
+            '';
+
+        # check-no-narration-comments — live gate: scan every tracked
+        # .nix/.sh/.py for change-narration prose in comments.
+        check-no-narration-comments =
+          pkgs.runCommand "check-no-narration-comments"
+            {
+              nativeBuildInputs = [ check-no-narration-comments-bin ];
+              src = ../../.;
+            }
+            ''
+              set -euo pipefail
+              cp -r "$src" root
+              cd root
+              # The flake source has no .git; feed the file list directly.
+              mapfile -t files < <(
+                find parts home lib ci -type f \
+                  \( -name '*.nix' -o -name '*.sh' -o -name '*.py' \) \
+                  | grep -vE 'tests/fixtures' | sort
+              )
+              if ! check-no-narration-comments "''${files[@]}"; then
+                echo "check-no-narration-comments: change-narration found in a comment."
+                exit 1
+              fi
+              echo "OK: no change-narration comments"
+              touch "$out"
+            '';
+
+        # check-no-narration-comments hook — asserts it FIRES on a narration
+        # comment AND honors the `# narration-ok` waiver. Keeps it non-vacuous.
+        check-no-narration-comments-test =
+          pkgs.runCommand "check-no-narration-comments-test"
+            {
+              nativeBuildInputs = [ check-no-narration-comments-bin ];
+            }
+            ''
+              set -euo pipefail
+              work=$(mktemp -d)
+              cd "$work"
+              printf '{\n  # moved from the dissolved base module\n  x = 1;\n}\n' > bad.nix # narration-ok: gate self-test fixture
+              if diag=$(check-no-narration-comments bad.nix 2>&1); then
+                echo "FAIL: narration comment passed; expected exit 1."
+                echo "$diag"
+                exit 1
+              fi
+              echo "$diag" | grep -q 'bad.nix' \
+                || { echo "FAIL: diagnostic missing the file."; echo "$diag"; exit 1; }
+
+              printf '{\n  # moved from the dissolved base module  # narration-ok: keep\n  x = 1;\n}\n' > waived.nix # narration-ok: gate self-test fixture
+              if ! check-no-narration-comments waived.nix; then
+                echo "FAIL: '# narration-ok' waiver did not pass."
+                exit 1
+              fi
+
+              printf '{\n  # Pins the bridge to the 5GbE uplink (kernel needs it at boot).\n  x = 1;\n}\n' > good.nix
+              if ! check-no-narration-comments good.nix; then
+                echo "FAIL: clean comment rejected."
+                exit 1
+              fi
+              touch "$out"
+            '';
+
+        # nixos-exhaustiveness hook — asserts the gate FIRES when a host omits
+        # a module AND PASSES once the reference exists. Keeps it non-vacuous.
+        nixos-exhaustiveness-test =
+          pkgs.runCommand "nixos-exhaustiveness-test"
+            {
+              nativeBuildInputs = [ nixos-exhaustiveness-bin ];
+            }
+            ''
+              set -euo pipefail
+              work=$(mktemp -d)
+              cd "$work"
+              mkdir -p parts/services parts/hosts/h1
+              cat > parts/services/foo.nix <<'EOF'
+              {
+                flake.modules.nixos.services-foo = { };
+              }
+              EOF
+              printf '{ }\n' > parts/hosts/h1/flake-module.nix
+
+              if diag=$(nixos-exhaustiveness --all 2>&1); then
+                echo "FAIL: host missing a module reference passed; expected exit 1."
+                echo "$diag"
+                exit 1
+              fi
+              echo "$diag" | grep -q 'services-foo' \
+                || { echo "FAIL: diagnostic missing the module name."; echo "$diag"; exit 1; }
+
+              printf '{ imports = [ inputs.self.modules.nixos.services-foo ]; }\n' \
+                > parts/hosts/h1/flake-module.nix
+              if ! nixos-exhaustiveness --all; then
+                echo "FAIL: exhaustive host rejected; expected pass."
+                exit 1
+              fi
+              touch "$out"
+            '';
+
+        # ── Comment-standard / style / security gates — live whole-tree scans ──
+        # Each mirrors a pre-commit hook (staged) via the SAME script run with
+        # --all, plus a failure-injection self-test. This is what makes the
+        # comment standard enforced in CI (the pre-commit side is --no-verify-able).
+
+        check-no-with-lib =
+          pkgs.runCommand "check-no-with-lib"
+            {
+              nativeBuildInputs = [ check-no-with-lib-bin ];
+              partsSrc = ../../parts;
+              homeSrc = ../../home;
+              libSrc = ../../lib;
+              ciSrc = ../../ci;
+            }
+            ''
+              set -euo pipefail
+              mkdir root && cp -r "$partsSrc" root/parts && cp -r "$homeSrc" root/home \
+                && cp -r "$libSrc" root/lib && cp -r "$ciSrc" root/ci
+              cd root
+              if ! check-no-with-lib --all; then echo "check-no-with-lib: 'with lib;' present"; exit 1; fi
+              echo "OK: no 'with lib;'"; touch "$out"
+            '';
+        check-no-with-lib-test =
+          pkgs.runCommand "check-no-with-lib-test" { nativeBuildInputs = [ check-no-with-lib-bin ]; }
+            ''
+              set -euo pipefail
+              work=$(mktemp -d); cd "$work"
+              printf '{ lib, ... }:\nwith lib;\n{ x = 1; }\n' > bad.nix
+              if check-no-with-lib bad.nix; then echo "FAIL: 'with lib;' passed"; exit 1; fi
+              printf '{ lib, ... }:\n{ x = lib.mkIf true 1; }\n' > good.nix
+              if ! check-no-with-lib good.nix; then echo "FAIL: clean file rejected"; exit 1; fi
+              touch "$out"
+            '';
+
+        check-no-dated-comments =
+          pkgs.runCommand "check-no-dated-comments"
+            {
+              nativeBuildInputs = [ check-no-dated-comments-bin ];
+              partsSrc = ../../parts;
+              homeSrc = ../../home;
+              libSrc = ../../lib;
+              ciSrc = ../../ci;
+            }
+            ''
+              set -euo pipefail
+              mkdir root && cp -r "$partsSrc" root/parts && cp -r "$homeSrc" root/home \
+                && cp -r "$libSrc" root/lib && cp -r "$ciSrc" root/ci
+              cd root
+              if ! check-no-dated-comments --all; then echo "check-no-dated-comments: dated comment present"; exit 1; fi
+              echo "OK: no dated comments"; touch "$out"
+            '';
+        check-no-dated-comments-test =
+          pkgs.runCommand "check-no-dated-comments-test"
+            { nativeBuildInputs = [ check-no-dated-comments-bin ]; }
+            ''
+              set -euo pipefail
+              work=$(mktemp -d); cd "$work"
+              printf '{\n  # fixed on 2026-06-10 by hand\n  x = 1;\n}\n' > bad.nix
+              if check-no-dated-comments bad.nix; then echo "FAIL: dated comment passed"; exit 1; fi
+              printf '{\n  # pins the bridge to the 5GbE uplink\n  x = 1;\n}\n' > good.nix
+              if ! check-no-dated-comments good.nix; then echo "FAIL: clean rejected"; exit 1; fi
+              touch "$out"
+            '';
+
+        check-mkforce-comment =
+          pkgs.runCommand "check-mkforce-comment"
+            {
+              nativeBuildInputs = [ check-mkforce-comment-bin ];
+              partsSrc = ../../parts;
+              homeSrc = ../../home;
+              libSrc = ../../lib;
+              ciSrc = ../../ci;
+            }
+            ''
+              set -euo pipefail
+              mkdir root && cp -r "$partsSrc" root/parts && cp -r "$homeSrc" root/home \
+                && cp -r "$libSrc" root/lib && cp -r "$ciSrc" root/ci
+              cd root
+              if ! check-mkforce-comment --all; then echo "check-mkforce-comment: unjustified mkForce"; exit 1; fi
+              echo "OK: every mkForce has a # Why:"; touch "$out"
+            '';
+        check-mkforce-comment-test =
+          pkgs.runCommand "check-mkforce-comment-test" { nativeBuildInputs = [ check-mkforce-comment-bin ]; }
+            ''
+              set -euo pipefail
+              work=$(mktemp -d); cd "$work"
+              printf '{ lib, ... }:\n{\n  services.x.enable = lib.mkForce false;\n}\n' > bad.nix
+              if check-mkforce-comment bad.nix; then echo "FAIL: bare mkForce passed"; exit 1; fi
+              printf '{ lib, ... }:\n{\n  # Why: upstream forces it on; we need it off here.\n  services.x.enable = lib.mkForce false;\n}\n' > good.nix
+              if ! check-mkforce-comment good.nix; then echo "FAIL: justified mkForce rejected"; exit 1; fi
+              touch "$out"
+            '';
+
+        check-assertion-format =
+          pkgs.runCommand "check-assertion-format"
+            {
+              nativeBuildInputs = [ check-assertion-format-bin ];
+              partsSrc = ../../parts;
+              homeSrc = ../../home;
+              libSrc = ../../lib;
+              ciSrc = ../../ci;
+            }
+            ''
+              set -euo pipefail
+              mkdir root && cp -r "$partsSrc" root/parts && cp -r "$homeSrc" root/home \
+                && cp -r "$libSrc" root/lib && cp -r "$ciSrc" root/ci
+              cd root
+              if ! check-assertion-format --all; then echo "check-assertion-format: assertion message missing myModules.*"; exit 1; fi
+              echo "OK: assertion messages name their option"; touch "$out"
+            '';
+        check-assertion-format-test =
+          pkgs.runCommand "check-assertion-format-test"
+            { nativeBuildInputs = [ check-assertion-format-bin ]; }
+            ''
+              set -euo pipefail
+              work=$(mktemp -d); cd "$work"
+              printf '{\n  assertions = [\n    {\n      assertion = false;\n      message = "something broke";\n    }\n  ];\n}\n' > bad.nix
+              if check-assertion-format bad.nix; then echo "FAIL: bad assertion message passed"; exit 1; fi
+              printf '{\n  assertions = [\n    {\n      assertion = false;\n      message = "myModules.x.y: must be set";\n    }\n  ];\n}\n' > good.nix
+              if ! check-assertion-format good.nix; then echo "FAIL: good assertion rejected"; exit 1; fi
+              touch "$out"
+            '';
+
+        check-module-docstring =
+          pkgs.runCommand "check-module-docstring"
+            {
+              nativeBuildInputs = [ check-module-docstring-bin ];
+              partsSrc = ../../parts;
+              homeSrc = ../../home;
+            }
+            ''
+              set -euo pipefail
+              mkdir -p root && cp -r "$partsSrc" root/parts && cp -r "$homeSrc" root/home
+              cd root
+              if ! check-module-docstring --all; then echo "check-module-docstring: module missing docstring"; exit 1; fi
+              echo "OK: modules have docstrings"; touch "$out"
+            '';
+        check-module-docstring-test =
+          pkgs.runCommand "check-module-docstring-test"
+            { nativeBuildInputs = [ check-module-docstring-bin ]; }
+            ''
+              set -euo pipefail
+              work=$(mktemp -d); cd "$work"; mkdir -p parts/widgets
+              # >10 lines, first line not a comment → must fail.
+              { echo '{ lib, ... }:'; echo '{'; for i in $(seq 1 12); do echo "  o$i = $i;"; done; echo '}'; } > parts/widgets/foo.nix
+              if check-module-docstring parts/widgets/foo.nix; then echo "FAIL: undocumented module passed"; exit 1; fi
+              { echo '# foo — a widget.'; echo '{ lib, ... }:'; echo '{'; for i in $(seq 1 12); do echo "  o$i = $i;"; done; echo '}'; } > parts/widgets/bar.nix
+              if ! check-module-docstring parts/widgets/bar.nix; then echo "FAIL: documented module rejected"; exit 1; fi
+              touch "$out"
+            '';
+
+        check-secrets-leak =
+          pkgs.runCommand "check-secrets-leak"
+            {
+              nativeBuildInputs = [ check-secrets-leak-bin ];
+              src = ../../.;
+            }
+            ''
+              set -euo pipefail
+              cp -r "$src" root && cd root
+              if ! check-secrets-leak --all; then echo "check-secrets-leak: forbidden path present"; exit 1; fi
+              echo "OK: no secret material in the tree"; touch "$out"
+            '';
+        check-secrets-leak-test =
+          pkgs.runCommand "check-secrets-leak-test" { nativeBuildInputs = [ check-secrets-leak-bin ]; }
+            ''
+              set -euo pipefail
+              work=$(mktemp -d); cd "$work"
+              : > host.age
+              if check-secrets-leak host.age; then echo "FAIL: .age path passed"; exit 1; fi
+              : > ok.nix
+              if ! check-secrets-leak ok.nix; then echo "FAIL: clean path rejected"; exit 1; fi
+              touch "$out"
+            '';
+
+        check-no-cross-tree-import =
+          pkgs.runCommand "check-no-cross-tree-import"
+            {
+              nativeBuildInputs = [ check-no-cross-tree-import-bin ];
+              partsSrc = ../../parts;
+              homeSrc = ../../home;
+            }
+            ''
+              set -euo pipefail
+              mkdir -p root && cp -r "$partsSrc" root/parts && cp -r "$homeSrc" root/home
+              cd root
+              if ! check-no-cross-tree-import --all; then echo "check-no-cross-tree-import: cross-tree relative import"; exit 1; fi
+              echo "OK: no cross-tree relative imports"; touch "$out"
+            '';
+        check-no-cross-tree-import-test =
+          pkgs.runCommand "check-no-cross-tree-import-test"
+            { nativeBuildInputs = [ check-no-cross-tree-import-bin ]; }
+            ''
+              set -euo pipefail
+              work=$(mktemp -d); cd "$work"; mkdir -p parts/desktop
+              printf '{\n  imports = [ ../../home/modules/foo ];\n}\n' > parts/desktop/bad.nix
+              if check-no-cross-tree-import parts/desktop/bad.nix; then echo "FAIL: cross-tree import passed"; exit 1; fi
+              printf '{\n  imports = [ ../vfio/_lib.nix ];\n}\n' > parts/desktop/ok.nix
+              if ! check-no-cross-tree-import parts/desktop/ok.nix; then echo "FAIL: within-tree relative import rejected"; exit 1; fi
               touch "$out"
             '';
 
@@ -918,6 +1447,216 @@
               [[ "$sched" == "bore" ]]          || { echo "FAIL: MBP cpusched is '$sched', expected 'bore'"; exit 1; }
               [[ "$specCount" == "0" ]]         || { echo "FAIL: MBP has $specCount specialisation(s); single-kernel design expects 0"; exit 1; }
               echo "OK: MBP runs cachyos-lto with BORE, single kernel"
+              touch $out
+            '';
+
+        # eval-no-overlay-rebuild-leak — GENERIC, forward-looking guard: NO global
+        # overlay may REDEFINE an existing nixpkgs package, on any host, ever.
+        # Overriding an existing package rebuilds it AND every dependent from
+        # source (the libtpms -> tpm2-tss -> systemd -> whole-userland incident —
+        # but the rule holds for any package). For every overlay each host applies
+        # we force only the attr NAMES it produces (never their values, so it can
+        # never error on broken/unfree attrs) and flag any name that ALREADY
+        # exists in pristine nixpkgs (= an override). Adds-only overlays (e.g.
+        # mesa-git, which introduces a NEW name) are fine. Genuinely-intentional
+        # global overrides must be listed in `allowed` below, each with a reason.
+        eval-no-overlay-rebuild-leak =
+          let
+            inherit (pkgs) lib;
+            # Reviewed, intentional global package overrides — leaf/app packages
+            # whose override rebuilds only themselves, NOT a foundational lib that
+            # cascades into systemd/glibc/the whole system. A NEW name appearing
+            # in the failure means someone added a global override: if it's a leaf
+            # app, add it here; if it's a library with dependents, SCOPE it instead
+            # (pkgs.X.override / services.*.package) so it can't silently rebuild
+            # half the system. (openldap/vimPlugins have more dependents than the
+            # apps — keep them here only while the override stays cache-cheap.)
+            allowed = [
+              "coolercontrol"
+              "eden"
+              "lmstudio"
+              "lsfg-vk"
+              "mullvad-vpn"
+              "openldap"
+              "streamcontroller"
+              "tidal"
+              "vimPlugins"
+            ];
+            # An overlay "overrides" a package when it returns an attr name that
+            # already exists upstream AND changes its derivation. Attr names are
+            # introspected without forcing values; drvPath is forced only for the
+            # few real candidates, so metadata-only / no-op overlays don't false-
+            # positive and broken/unfree attrs never error.
+            drvOf =
+              set: n:
+              let
+                r = builtins.tryEval set.${n}.drvPath;
+              in
+              if r.success then r.value else null;
+            checkHost =
+              host:
+              let
+                cfg = inputs.self.nixosConfigurations.${host};
+                overlaid = cfg.pkgs;
+                pristine = import overlaid.path { inherit (overlaid) system; };
+                overlays = overlaid.overlays or cfg.config.nixpkgs.overlays;
+                candidatesOf =
+                  ov:
+                  let
+                    r = builtins.tryEval (builtins.attrNames (ov pristine pristine));
+                  in
+                  if r.success then builtins.filter (n: pristine ? ${n}) r.value else [ "<uninspectable-overlay>" ];
+                candidates = lib.unique (lib.concatMap candidatesOf overlays);
+                overridden = builtins.filter (
+                  n:
+                  n == "<uninspectable-overlay>"
+                  || (
+                    let
+                      a = drvOf overlaid n;
+                    in
+                    a != null && a != drvOf pristine n
+                  )
+                ) candidates;
+                violations = lib.subtractLists allowed overridden;
+              in
+              lib.optionalString (violations != [ ]) "\n  ${host}: ${lib.concatStringsSep " " violations}";
+            report = lib.concatMapStrings checkHost (builtins.attrNames inputs.self.nixosConfigurations);
+          in
+          pkgs.runCommand "eval-no-overlay-rebuild-leak" { inherit report; } ''
+            if [ -n "$report" ]; then
+              echo "FAIL: un-allowlisted global overlay override(s):$report"
+              echo "A global override rebuilds that package + every dependent from source"
+              echo "(the libtpms -> tpm2-tss -> systemd -> whole-system incident). If it is a"
+              echo "library with dependents, SCOPE it (pkgs.<p>.override / services.*.package);"
+              echo "if it is an intentional leaf-app override, add the name to 'allowed' in"
+              echo "parts/_build/tests.nix with a note."
+              exit 1
+            fi
+            echo "OK: no un-allowlisted global package overrides on any host"
+            touch $out
+          '';
+
+        # eval-no-overlay-rebuild-leak-test — keeps the guard honest + GENERIC: an
+        # overlay overriding ANY existing package (here `hello`) MUST be caught,
+        # while an adds-only overlay (a fresh name) MUST NOT be flagged.
+        eval-no-overlay-rebuild-leak-test =
+          let
+            pristine = import inputs.self.nixosConfigurations.ryzen-9950x3d.pkgs.path { inherit system; };
+            overriddenBy = ov: builtins.filter (n: pristine ? ${n}) (builtins.attrNames (ov pristine pristine));
+            badOverlay = _final: prev: {
+              hello = prev.hello.overrideAttrs (o: {
+                pname = "${o.pname or "hello"}-leak";
+              });
+            };
+            addOverlay = _final: prev: { my-brand-new-pkg = prev.hello; };
+            caughtBad = overriddenBy badOverlay;
+            flaggedAdd = overriddenBy addOverlay;
+          in
+          pkgs.runCommand "eval-no-overlay-rebuild-leak-test"
+            {
+              bad = builtins.concatStringsSep " " caughtBad;
+              add = builtins.concatStringsSep " " flaggedAdd;
+            }
+            ''
+              echo "override-overlay flagged: [$bad]   adds-only overlay flagged: [$add]"
+              echo "$bad" | grep -qw hello \
+                || { echo "FAIL: override of an existing package NOT caught — gate is vacuous"; exit 1; }
+              [ -z "$add" ] \
+                || { echo "FAIL: adds-only overlay flagged ($add) — false positive"; exit 1; }
+              echo "OK: catches overrides of any existing package, ignores adds-only overlays"
+              touch $out
+            '';
+
+        # eval-multiseat-collisions — the multiseat seat-disjointness guard, kept honest
+        # by failure injection. Feeds the SAME pure detector the module asserts on
+        # (parts/hardware/_multiseat-collisions.nix) a collision-free seat set (must pass)
+        # and a deliberately-colliding one — shared CPU + shared GPU + shared user — which
+        # MUST be caught, so the module's build-time assertions can never silently rot.
+        eval-multiseat-collisions =
+          let
+            inherit (pkgs) lib;
+            detect = import ../hardware/_multiseat-collisions.nix { inherit lib; };
+            mkSeat = a: {
+              isPrimary = a.isPrimary or false;
+              seatId = a.seatId or "seat0";
+              inherit (a) user;
+              cpuset = a.cpuset or null;
+              gpu.pciAddress = a.gpu;
+              audioPciAddress = a.audio or null;
+              usbController = a.usb or null;
+              inputDevices = a.inputDevices or [ ];
+            };
+            good = {
+              a = mkSeat {
+                isPrimary = true;
+                user = "user";
+                cpuset = "0-7,16-23";
+                gpu = "0000:03:00.0";
+                inputDevices = [
+                  {
+                    vendorId = "046d";
+                    productId = "c539";
+                  }
+                ];
+              };
+              b = mkSeat {
+                seatId = "seat1";
+                user = "seat1";
+                cpuset = "8-15,24-31";
+                gpu = "0000:05:00.0";
+                audio = "0000:05:00.1";
+                usb = "0000:7c:00.4";
+                inputDevices = [
+                  {
+                    vendorId = "1532";
+                    productId = "0084";
+                  }
+                ];
+              };
+            };
+            # Inject four collisions at once: CPU 7 in both, same GPU, same user,
+            # same input device (vendor:product).
+            bad = {
+              a = mkSeat {
+                isPrimary = true;
+                user = "user";
+                cpuset = "0-7,16-23";
+                gpu = "0000:03:00.0";
+                inputDevices = [
+                  {
+                    vendorId = "046d";
+                    productId = "c539";
+                  }
+                ];
+              };
+              b = mkSeat {
+                seatId = "seat1";
+                user = "user";
+                cpuset = "7-15";
+                gpu = "0000:03:00.0";
+                inputDevices = [
+                  {
+                    vendorId = "046d";
+                    productId = "c539";
+                  }
+                ];
+              };
+            };
+          in
+          pkgs.runCommand "eval-multiseat-collisions"
+            {
+              good = builtins.concatStringsSep " | " (detect good);
+              bad = builtins.concatStringsSep " | " (detect bad);
+            }
+            ''
+              echo "disjoint seats → [$good]"
+              echo "colliding seats → [$bad]"
+              [ -z "$good" ] || { echo "FAIL: disjoint seats wrongly flagged as colliding: $good"; exit 1; }
+              echo "$bad" | grep -qi "CPU"    || { echo "FAIL: shared CPU not caught"; exit 1; }
+              echo "$bad" | grep -qi "device" || { echo "FAIL: shared GPU/device not caught"; exit 1; }
+              echo "$bad" | grep -qi "user"   || { echo "FAIL: shared login user not caught"; exit 1; }
+              echo "$bad" | grep -qi "input device" || { echo "FAIL: shared input device not caught"; exit 1; }
+              echo "OK: multiseat guard catches shared CPU/device/user/input and passes disjoint seats"
               touch $out
             '';
       };

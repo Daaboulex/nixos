@@ -27,7 +27,9 @@ let
           WARNING: KWIN_DRM_DEVICES uses ':' as separator. Do NOT use /dev/dri/by-path/
           paths — they contain ':' in the PCI address and will be split into garbage,
           causing KWin to fail with "No suitable DRM devices have been found" and
-          trigger an SDDM infinite-login loop. Use /dev/dri/cardN instead.
+          trigger an SDDM infinite-login loop. Prefer the stable ':'-free PCI aliases from
+          myModules.desktop.displays.gpuAliases (/dev/dri/by-gpu/<name>) over /dev/dri/cardN
+          — cardN renumbers when a GPU is captured by vfio-pci.
         '';
       };
 

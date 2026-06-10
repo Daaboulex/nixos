@@ -73,8 +73,11 @@ let
         };
         secretsRoot = lib.mkOption {
           type = lib.types.path;
-          default = inputs.self + /secrets;
-          description = "Directory containing encrypted agenix secret files.";
+          # Secrets live in the private, never-pushed `site` registry — NOT in
+          # this (public) repo. The encrypted *.age blobs sit beside the agenix
+          # rules in repos/site/secrets/.
+          default = inputs.site + /secrets;
+          description = "Directory containing encrypted agenix secret files (private `site` registry).";
         };
         secrets = lib.mkOption {
           type = lib.types.attrsOf secretType;

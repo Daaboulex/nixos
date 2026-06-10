@@ -1,3 +1,4 @@
+{ site, ... }:
 {
   # Host-specific CoolerControl settings — merged over module defaults
   myModules.home.coolercontrol.settings = {
@@ -20,9 +21,11 @@
           function_uid = "02ba5ea0-89cc-4085-808f-c3b1cc97963b";
         };
       };
-      # "Ram" fan curve (Graph): RAM temp (sensor1) → fan5 duty. Was GUI-only.
-      # All UIDs here are stable (profile/function UIDs are CC-internal;
-      # sensor1's device 19e098e3 is the CustomSensors virtual device, stable).
+      # "Ram" fan curve (Graph): nct6799 SYSTIN → fan5 duty. SYSTIN (board temp ~34 °C) is a
+      # STABLE RAM proxy — it tracks the DIMM SPD temps (~32 °C) but, being a platform/Super-I/O
+      # device (not i2c), its CoolerControl UID never shifts. The spd5118 DIMM temps were
+      # abandoned: their i2c BUS number renumbers per boot, so any captured UID goes missing on
+      # the next boot → 100 °C failsafe. nct6799 (00a4da18…) is the same device fan5 lives on.
       ram = {
         uid = "41de40ea-b63b-4d35-9e79-875e491447bc";
         name = "Ram";
@@ -52,8 +55,8 @@
         extra = {
           function_uid = "b2e0203d-04fc-4e20-b4b3-b802f25f7ed1";
           temp_source = {
-            temp_name = "sensor1";
-            device_uid = "19e098e312e1b1b39163a343ea22b6ea17f18ec1a803ffe0ce44f5bacd6076ee";
+            temp_name = "temp1"; # nct6799 SYSTIN (hwmon temp1) — stable board/RAM-proxy temp
+            device_uid = site.hosts.ryzen-9950x3d.coolercontrol.nct6799Uid;
           };
           temp_min = 0.0;
           temp_max = 49.0;
@@ -93,58 +96,12 @@
       };
     };
 
-    # Custom sensor "sensor1": Mix/Max of the 4 RAM DIMM SPD temps (spd5118) →
-    # feeds the "Ram" fan profile (fan5 on the nct6799).
-    #
-    # ⚠ FRAGILE UIDs: CoolerControl derives spd5118 device UIDs from i2c/hwmon
-    # enumeration, which the NVIDIA driver's i2c adapters renumber. These are the
-    # LIVE set with the nvidia driver loaded (normal profile); they will shift if
-    # the i2c/hwmon topology changes (e.g. the 1660S bound to vfio-pci in a VFIO
-    # profile). Re-capture via `GET /devices` if the failsafe returns.
-    customSensors = {
-      sensor1 = {
-        id = "sensor1";
-        cs_type = "Mix";
-        mix_function = "Max";
-        sources = [
-          {
-            temp_source = {
-              temp_name = "temp1";
-              device_uid = "0395e897c5eba35a0215b2ad1bbbed724a753ababd3687dd7bd8486e87515f2c";
-            };
-            weight = 1;
-          }
-          {
-            temp_source = {
-              temp_name = "temp1";
-              device_uid = "a53548590e39153bdd747df79ea58dfa3b432217d37743847498e9375779442f";
-            };
-            weight = 1;
-          }
-          {
-            temp_source = {
-              temp_name = "temp1";
-              device_uid = "d4b5586a00eedabdb9404b4a33dea4a70521d7c33a6c0e7bc770aba9513c41d2";
-            };
-            weight = 1;
-          }
-          {
-            temp_source = {
-              temp_name = "temp1";
-              device_uid = "8ff88c86e9405c3ab3dc87327f236a6510ecde8929bc72761e3a957a7304162d";
-            };
-            weight = 1;
-          }
-        ];
-      };
-    };
-
     # fan5 on the nct6799 follows the "Ram" profile (was GUI-only). The nct6799
     # UID is i2c-enumeration-INDEPENDENT (Super-IO/platform device, unlike the
     # spd5118 i2c sensors) → this fan→profile binding is robust across all profiles.
     devices = {
       ram-fan = {
-        uid = "00a4da18625f56275c89e2fcd25a83c08c5ad3326452fa7e252fcc8a89c92493";
+        uid = site.hosts.ryzen-9950x3d.coolercontrol.nct6799Uid;
         channels = {
           fan5 = {
             profile_uid = "41de40ea-b63b-4d35-9e79-875e491447bc";

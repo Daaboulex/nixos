@@ -1,6 +1,41 @@
 # nrb-functions — NixOS rebuild helper functions (nrb, nrb-check, nrb-info).
 # Extracted for testability. Consumed by home/modules/zsh/default.nix and parts/_build/tests/nrb.nix.
 { pkgs, flakeDir }:
+let
+  # Name of the specialisation the running system booted into, or "" for base.
+  # Source of truth = the boot entry's init= path: a specialisation entry points
+  # init at …/specialisation/<name>/init; a base entry has no such segment. This
+  # is the only place the booted variant is recorded unambiguously (there is no
+  # canonical /etc file, and /run/booted-system/specialisation is a DIRECTORY of
+  # child specs, not the active one).
+  bootedSpec = ''
+    _nrb_booted_spec() {
+      local cmdline init
+      cmdline=$(cat /proc/cmdline 2>/dev/null) || return 0
+      init=$(printf '%s\n' "$cmdline" | grep -oE 'init=[^ ]+' | head -1)
+      [[ "$init" == */specialisation/* ]] || return 0
+      local rest="''${init#*/specialisation/}"
+      printf '%s' "''${rest%%/*}"
+    }
+  '';
+  # Shared prologue for every nrb* function.
+  # flake_ref: git when the repo is functional, path: otherwise (Syncthing-synced
+  # trees have working files but may lack .git/).
+  # site override: flake.nix pins the `site` input to an absolute git+file path
+  # under <flake>/repos/ (a flake-input limitation — local inputs need absolute
+  # URLs). Machines without that checkout override to the local site checkout.
+  prologue = ''
+    local flake_dir="''${FLAKE_DIR:-${flakeDir}}"
+    local flake_ref="$flake_dir"
+    if [[ -d "$flake_dir" ]] && ! git -C "$flake_dir" rev-parse HEAD &>/dev/null; then
+      flake_ref="path:$flake_dir"
+    fi
+    local -a _input_overrides=()
+    if [[ ! -d "$flake_dir/repos/site" && -d "$HOME/Documents/site" ]]; then
+      _input_overrides+=(--override-input site "path:$HOME/Documents/site")
+    fi
+  '';
+in
 {
   nrb = ''
         nrb() {
@@ -10,21 +45,9 @@
           # for cases where null_glob interaction with command substitution differs).
           setopt local_options null_glob no_nomatch pipefail no_monitor
           local trace_flag="" dry=0 boot=0 update=0 update_no_kernel=0 check=0 target="" deploy_target="" sync_target=""
-          local flake_dir="''${FLAKE_DIR:-${flakeDir}}"
-
-          # Flake reference — git when repo is functional, path: otherwise.
-          # Syncthing-synced trees have working files but may lack .git/.
-          local flake_ref="$flake_dir"
-          if [[ -d "$flake_dir" ]] && ! git -C "$flake_dir" rev-parse HEAD &>/dev/null; then
-            flake_ref="path:$flake_dir"
-          fi
-
-          # Input overrides — site input hardcodes /home/user/Documents/site.
-          # On machines with a different $HOME, override to $HOME equivalent.
-          local -a _input_overrides=()
-          if [[ "$HOME" != "/home/user" && -d "$HOME/Documents/site" ]]; then
-            _input_overrides+=(--override-input site "path:$HOME/Documents/site")
-          fi
+          local spec_target="" base_only=0
+          ${bootedSpec}
+          ${prologue}
 
           # Terminal rendering — respect NO_COLOR, detect capabilities
           local _c_reset="" _c_bold="" _c_dim="" _c_red="" _c_green="" _c_yellow="" _c_blue="" _c_cyan=""
@@ -72,6 +95,14 @@
               --update) update=1; shift ;;
               --update-no-kernel) update_no_kernel=1; shift ;;
               --check)  check=1; shift ;;
+              --spec)
+                if [[ -z "''${2:-}" || "$2" == --* ]]; then
+                  echo "ERROR: --spec requires a specialisation name (or 'base')"
+                  return 1
+                fi
+                spec_target="$2"; shift 2
+                ;;
+              --base)   base_only=1; shift ;;
               --host)
                 if [[ -z "''${2:-}" || "$2" == --* ]]; then
                   echo "ERROR: --host requires a hostname argument"
@@ -106,6 +137,8 @@
                 echo "  --boot               Build + activate on next reboot (not immediately)"
                 echo "  --trace              Show full Nix stack trace on errors"
                 echo "  --check              Evaluate all configs without building (fast sanity)"
+                echo "  --spec NAME          Activate specialisation NAME (default: the one you booted)"
+                echo "  --base               Activate the base config, ignoring the booted specialisation"
                 echo "  --host X             Build a specific nixosConfiguration (default: \$HOST)"
                 echo "  --deploy X           Build X's config locally, push + activate on X via SSH"
                 echo "                       Requires: key-based SSH + NOPASSWD sudo on target"
@@ -177,18 +210,43 @@
             fi
           fi
 
+          # ADV-003: --spec/--base select which specialisation to ACTIVATE, which
+          # only happens for local activation of THIS host. Reject the
+          # combinations that would otherwise silently ignore them.
+          if [[ -n "$spec_target" && $base_only -eq 1 ]]; then
+            _msg_fail "--spec and --base cannot be combined"
+            _msg_dim "  --spec NAME activates that specialisation; --base forces the base config."
+            return 1
+          fi
+          if [[ -n "$spec_target" || $base_only -eq 1 ]]; then
+            if [[ -n "$deploy_target" ]]; then
+              _msg_fail "--spec/--base apply to local activation only, not --deploy"
+              _msg_dim "  Activate a specialisation ON the target: ssh $deploy_target, then nrb --spec NAME."
+              return 1
+            fi
+            if (( check )); then
+              _msg_fail "--spec/--base have no effect with --check (eval only, no activation)"
+              return 1
+            fi
+            if [[ -n "$target" && "$target" != "$(hostname)" ]]; then
+              _msg_fail "--spec/--base only apply when activating THIS host"
+              _msg_dim "  --host $target builds another host's config, which is not activated here."
+              return 1
+            fi
+          fi
+
           # ── Config sync mode ──
           # Exact mirror of this flake tree to a chosen SSH target, without
-          # building or activating. Intentionally no hardcoded excludes: a
-          # dendritic/self-contained sync should copy the tree as-is. If a
-          # future policy needs exclusions, make that policy data (a tracked
-          # filter file/module option), not hidden shell literals here.
+          # building or activating. The ONLY exclusion is scratch/ — local working
+          # docs (audits / plans / session handoffs) that are git-ignored and must
+          # not propagate to build targets. Everything else copies as-is, so the
+          # remote stays a faithful build mirror.
           if [[ -n "$sync_target" ]]; then
             if [[ -n "$target" || -n "$deploy_target" ]]; then
               _msg_fail "--sync cannot be combined with --host or --deploy"
               return 1
             fi
-            if (( update || update_no_kernel || check || boot )) || [[ -n "$trace_flag" ]]; then
+            if (( update || update_no_kernel || check || boot || base_only )) || [[ -n "$trace_flag" || -n "$spec_target" ]]; then
               _msg_fail "--sync only supports --dry as a companion flag"
               _msg_dim "  Preview: nrb --sync $sync_target --dry"
               _msg_dim "  Apply:   nrb --sync $sync_target"
@@ -253,6 +311,8 @@
               --partial
               --delay-updates
               --delete-delay
+              # local working docs — git-ignored + unsynced (see scratch/):
+              --exclude=/scratch/
             )
             if (( dry )); then
               _rsync_args+=(--dry-run)
@@ -277,6 +337,16 @@
               _msg_ok "Dry sync preview complete — rerun without --dry to apply"
             else
               _msg_ok "Config exactly synced to $_st_ssh:~/Documents/nix"
+              # Stage all files on the target so the flake (a git tree) SEES them. Nix
+              # ignores UNTRACKED files, so anything newly synced lands untracked and
+              # breaks eval one file at a time ("Path '<f>' is not tracked by Git"). The
+              # target index is throwaway (commits happen on the source); a blanket
+              # `add -A` is safe + idempotent. Non-fatal: warns, never aborts the sync.
+              if ssh -o ConnectTimeout=15 -o BatchMode=yes "$_st_ssh" 'git -C ~/Documents/nix add -A 2>/dev/null'; then
+                _msg_dim "  Staged all files on target (Nix now sees newly-synced files)"
+              else
+                _msg_dim "  ⚠ could not stage on target — run there: git -C ~/Documents/nix add -A"
+              fi
               _msg_dim "  Backup of overwritten/deleted remote files: ~/Documents/.nrb-sync-backups/nix-$_sync_stamp/"
               _msg_dim "  On target: cd ~/Documents/nix && nrb --check"
             fi
@@ -1108,11 +1178,49 @@
             fi
           fi
 
+          # Resolve which variant to activate. Default: preserve the booted
+          # specialisation across the rebuild (rebuilding from vfio-amd should
+          # re-enter vfio-amd, not silently drop to base). --spec overrides it,
+          # --base forces the base. Only meaningful when activating THIS host.
+          local active_spec="" spec_explicit=0
+          if [[ "$hostname" == "$(hostname)" ]]; then
+            if (( base_only )); then
+              active_spec=""
+            elif [[ -n "$spec_target" ]]; then
+              active_spec="$spec_target"; spec_explicit=1
+            else
+              active_spec=$(_nrb_booted_spec)
+            fi
+          fi
+          # `--spec base` is the explicit way to say "the base config".
+          if [[ "$active_spec" == "base" ]]; then
+            active_spec=""
+          fi
+          # The chosen spec must exist in the NEW build. A typo'd --spec is a hard
+          # error; an auto-detected spec that vanished (renamed/removed since boot)
+          # falls back to base, loudly.
+          if [[ -n "$active_spec" && ! -d "$build_path/specialisation/$active_spec" ]]; then
+            local _avail
+            _avail=$(ls "$build_path/specialisation" 2>/dev/null | tr '\n' ' ')
+            if (( spec_explicit )); then
+              _msg_fail "Specialisation '$active_spec' does not exist in $hostname's config."
+              [[ -n "$_avail" ]] && _msg_dim "  Available: $_avail"
+              return 1
+            fi
+            _msg_warn "Booted specialisation '$active_spec' is not in the new build — activating base."
+            [[ -n "$_avail" ]] && _msg_dim "  Available: $_avail"
+            active_spec=""
+          fi
+          if [[ -n "$active_spec" ]]; then
+            _msg_info "Target variant: specialisation '$active_spec'"
+          fi
+
           # Dry run stops here
           if (( dry )); then
             echo ""
             _msg_info "Dry run — not activating."
             _msg_dim "  Built path: $build_path"
+            [[ -n "$active_spec" ]] && _msg_dim "  Would activate specialisation: $active_spec"
             return 0
           fi
 
@@ -1143,7 +1251,7 @@
             _msg_step "Activating new configuration..."
           fi
           local switch_rc=0
-          sudo nrb-activate "$action" "$build_path" || switch_rc=$?
+          sudo nrb-activate "$action" "$build_path" "$active_spec" || switch_rc=$?
           case $switch_rc in
             0)  ;; # success
             2)  _msg_warn "Activation scripts had errors (non-fatal)"
@@ -1161,11 +1269,18 @@
           # required): switch-to-configuration deferred activation, so
           # /run/current-system legitimately still points at the old
           # generation until reboot. Checking it here is a false failure.
-          local current_after
+          local current_after expected_after
           current_after=$(readlink -f /run/current-system 2>/dev/null)
-          if [[ "$action" == "switch" && $switch_rc -ne 100 && "$current_after" != "$build_path" ]]; then
-            _msg_fail "/run/current-system does not match the built path!"
-            _msg_dim "  Expected: $build_path"
+          # A specialisation switch points /run/current-system at the spec's own
+          # closure (build_path/specialisation/<name>), not the base build_path.
+          if [[ -n "$active_spec" ]]; then
+            expected_after=$(readlink -f "$build_path/specialisation/$active_spec" 2>/dev/null)
+          else
+            expected_after="$build_path"
+          fi
+          if [[ "$action" == "switch" && $switch_rc -ne 100 && "$current_after" != "$expected_after" ]]; then
+            _msg_fail "/run/current-system does not match the activated path!"
+            _msg_dim "  Expected: $expected_after"
             _msg_dim "  Actual:   $current_after"
             _msg_dim "  Another switch may have raced. Rollback: sudo nixos-rebuild switch --rollback"
             _nrb_kill_sudo
@@ -1249,15 +1364,7 @@
 
   nrbCheck = ''
     nrb-check() {
-      local flake_dir="''${FLAKE_DIR:-${flakeDir}}"
-      local flake_ref="$flake_dir"
-      if [[ -d "$flake_dir" ]] && ! git -C "$flake_dir" rev-parse HEAD &>/dev/null; then
-        flake_ref="path:$flake_dir"
-      fi
-      local -a _input_overrides=()
-      if [[ "$HOME" != "/home/user" && -d "$HOME/Documents/site" ]]; then
-        _input_overrides+=(--override-input site "path:$HOME/Documents/site")
-      fi
+      ${prologue}
       local _jq="${pkgs.jq}/bin/jq"
       local trace_flag=""
       local configs_json name eval_output specs_json spec spec_output
@@ -1333,15 +1440,8 @@
 
   nrbInfo = ''
     nrb-info() {
-      local flake_dir="''${FLAKE_DIR:-${flakeDir}}"
-      local flake_ref="$flake_dir"
-      if [[ -d "$flake_dir" ]] && ! git -C "$flake_dir" rev-parse HEAD &>/dev/null; then
-        flake_ref="path:$flake_dir"
-      fi
-      local -a _input_overrides=()
-      if [[ "$HOME" != "/home/user" && -d "$HOME/Documents/site" ]]; then
-        _input_overrides+=(--override-input site "path:$HOME/Documents/site")
-      fi
+      ${bootedSpec}
+      ${prologue}
       local _jq="${pkgs.jq}/bin/jq"
       local hostname booted_spec="" gen hm_gen store_size
       local name marker specs spec smarker
@@ -1354,12 +1454,7 @@
       echo "  Kernel:       $(uname -r)"
       echo "  NixOS:        $(nixos-version 2>/dev/null || echo 'unknown')"
 
-      # Detect active specialisation from booted system
-      if [[ -f /run/current-system/etc/nixos-tags ]]; then
-        booted_spec=$(cat /run/current-system/etc/nixos-tags 2>/dev/null | head -1)
-      elif [[ -L /run/booted-system/specialisation ]]; then
-        booted_spec=$(basename "$(readlink /run/booted-system/specialisation)" 2>/dev/null)
-      fi
+      booted_spec=$(_nrb_booted_spec)
       if [[ -n "$booted_spec" ]]; then
         echo "  Active spec:  $booted_spec"
       fi

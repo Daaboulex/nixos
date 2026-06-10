@@ -180,6 +180,19 @@ let
         }
         .${r};
 
+      # Rotation → kernel panel_orientation quirk (boot console / fbcon orientation,
+      # so early-boot text matches a user-rotated panel). Derived from the same
+      # rotation field as the KWin transform — the host declares rotation once and
+      # KWin, SDDM, and the boot console all follow.
+      rotationToPanelOrientation =
+        r:
+        {
+          right = "right_side_up";
+          left = "left_side_up";
+          inverted = "upside_down";
+        }
+        .${r};
+
       # VRR → KWin policy string
       vrrToPolicy =
         v:
@@ -252,13 +265,41 @@ let
           default = { };
           description = "Monitor definitions";
         };
+
+        gpuAliases = lib.mkOption {
+          type = lib.types.attrsOf lib.types.str;
+          default = { };
+          example = {
+            igpu = "0000:7c:00.0";
+            amd = "0000:03:00.0";
+          };
+          description = ''
+            Stable ':'-free /dev/dri/by-gpu/<name> symlinks, created via udev from each
+            GPU's PCI address. Lets KWIN_DRM_DEVICES (myModules.vfio.sessionGpuDevices)
+            select GPUs by a stable name instead of fragile cardN — cardN renumbers when a
+            GPU is captured by vfio-pci (a passed GPU loses its DRM node). A passed GPU
+            then simply has no alias, so per-profile device lists reference only the GPUs
+            actually present. ':'-free so they survive the KWIN_DRM_DEVICES ':' separator.
+          '';
+        };
       };
 
       config = lib.mkIf cfg.enable {
         # Kernel video= params for rotated monitors
         boot.kernelParams = lib.mapAttrsToList (
-          _: m: "video=${m.connector}:panel_orientation=right_side_up"
+          _: m: "video=${m.connector}:panel_orientation=${rotationToPanelOrientation m.rotation}"
         ) rotatedMonitors;
+
+        # Stable PCI-based DRM aliases (/dev/dri/by-gpu/<name>) so KWIN_DRM_DEVICES never
+        # depends on cardN, which renumbers when a GPU is captured by vfio-pci.
+        services.udev.extraRules = lib.mkIf (cfg.gpuAliases != { }) (
+          lib.concatStrings (
+            lib.mapAttrsToList (
+              name: pci:
+              ''SUBSYSTEM=="drm", KERNEL=="card[0-9]", KERNELS=="${pci}", SYMLINK+="dri/by-gpu/${name}"'' + "\n"
+            ) cfg.gpuAliases
+          )
+        );
 
         # SDDM display layout — written via tmpfiles.d (avoids activation read-only FS issues)
         systemd.tmpfiles.rules = lib.mkIf (sddmMonitors != { }) [

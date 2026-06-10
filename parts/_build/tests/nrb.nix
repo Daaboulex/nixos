@@ -173,6 +173,45 @@
               touch $out
             '';
 
+        nrb-flag-spec-base-exclusive =
+          pkgs.runCommand "nrb-flag-spec-base-exclusive" { nativeBuildInputs = [ nrbTest ]; }
+            ''
+              set -euo pipefail
+              if output=$(nrb-test --spec vfio-amd --base 2>&1); then
+                echo "FAIL: --spec with --base not rejected"; echo "$output"; exit 1
+              fi
+              echo "$output" | grep -q "cannot be combined" \
+                || { echo "FAIL: wrong error message"; echo "$output"; exit 1; }
+              echo "OK: --spec --base rejected"
+              touch $out
+            '';
+
+        nrb-flag-spec-deploy-exclusive =
+          pkgs.runCommand "nrb-flag-spec-deploy-exclusive" { nativeBuildInputs = [ nrbTest ]; }
+            ''
+              set -euo pipefail
+              if output=$(nrb-test --spec vfio-amd --deploy bar 2>&1); then
+                echo "FAIL: --spec with --deploy not rejected"; echo "$output"; exit 1
+              fi
+              echo "$output" | grep -q "local activation only" \
+                || { echo "FAIL: wrong error message"; echo "$output"; exit 1; }
+              echo "OK: --spec --deploy rejected"
+              touch $out
+            '';
+
+        nrb-flag-spec-check-exclusive =
+          pkgs.runCommand "nrb-flag-spec-check-exclusive" { nativeBuildInputs = [ nrbTest ]; }
+            ''
+              set -euo pipefail
+              if output=$(nrb-test --base --check 2>&1); then
+                echo "FAIL: --base with --check not rejected"; echo "$output"; exit 1
+              fi
+              echo "$output" | grep -q "no effect with --check" \
+                || { echo "FAIL: wrong error message"; echo "$output"; exit 1; }
+              echo "OK: --base --check rejected"
+              touch $out
+            '';
+
         # Note: --update + --update-no-kernel mutual exclusion (line 307) is checked
         # AFTER hostname/flakeDir/daemon preflight, so it can't be tested in a
         # runCommand sandbox. It's pre-existing behavior, not a new fix.
@@ -195,6 +234,45 @@
             || { echo "FAIL: short hash (31 char) accepted"; exit 1; }
 
           echo "OK: nrb-activate regex validation correct"
+          touch $out
+        '';
+
+        # Specialisation-name validation in nrb-activate's optional 3rd arg
+        # (hardening.nix) — only [a-zA-Z0-9_-]+ may name a sub-closure to
+        # activate, so the arg can never escape the verified base path.
+        nrb-activate-spec-regex-test = pkgs.runCommand "nrb-activate-spec-regex-test" { } ''
+          set -euo pipefail
+          for ok in vfio-amd multiseat vfio_all v123; do
+            [[ "$ok" =~ ^[a-zA-Z0-9_-]+$ ]] \
+              || { echo "FAIL: valid spec '$ok' rejected"; exit 1; }
+          done
+          for bad in "../base" "a/b" "a b" "a;rm" ""; do
+            [[ ! "$bad" =~ ^[a-zA-Z0-9_-]+$ ]] \
+              || { echo "FAIL: invalid spec '$bad' accepted"; exit 1; }
+          done
+          echo "OK: nrb-activate spec-name validation correct"
+          touch $out
+        '';
+
+        # The booted-specialisation detector parses the boot entry's init= path.
+        # Proves: a /specialisation/<name>/ init yields <name>; a base init
+        # yields "".
+        nrb-booted-spec-test = pkgs.runCommand "nrb-booted-spec-test" { } ''
+          set -euo pipefail
+          _detect() {
+            local init rest
+            init=$(printf '%s\n' "$1" | grep -oE 'init=[^ ]+' | head -1)
+            [[ "$init" == */specialisation/* ]] || return 0
+            rest="''${init#*/specialisation/}"
+            printf '%s' "''${rest%%/*}"
+          }
+          spec=$(_detect "initrd=\\efi BOOT_IMAGE=/kernel init=/nix/store/abc-nixos-system-host/specialisation/vfio-amd/init root=fstab")
+          [[ "$spec" == "vfio-amd" ]] \
+            || { echo "FAIL: expected vfio-amd, got '$spec'"; exit 1; }
+          base=$(_detect "BOOT_IMAGE=/kernel init=/nix/store/abc-nixos-system-host/init root=fstab")
+          [[ -z "$base" ]] \
+            || { echo "FAIL: base entry should yield empty, got '$base'"; exit 1; }
+          echo "OK: booted-spec detector correct"
           touch $out
         '';
 

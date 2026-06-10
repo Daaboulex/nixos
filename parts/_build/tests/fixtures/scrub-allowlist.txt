@@ -1,8 +1,0 @@
-diff --git a/flake.nix b/flake.nix
-index abc..def 100644
---- a/flake.nix
-+++ b/flake.nix
-@@ -10,3 +10,4 @@
-   inputs = {
-+    foo-nix.url = "github:Daaboulex/foo-nix";
-   };

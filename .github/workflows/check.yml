@@ -62,9 +62,48 @@ jobs:
           nix build --no-link --print-build-logs \
             --override-input site path:./ci/site-stub \
             .#checks.x86_64-linux.treefmt \
+            .#checks.x86_64-linux.check-placement \
             .#checks.x86_64-linux.check-placement-test \
-            .#checks.x86_64-linux.check-scrub-tokens-test \
             .#checks.x86_64-linux.check-dangling-refs \
             .#checks.x86_64-linux.check-dangling-refs-test \
             .#checks.x86_64-linux.check-no-foreign-config \
-            .#checks.x86_64-linux.check-no-foreign-config-test
+            .#checks.x86_64-linux.check-no-foreign-config-test \
+            .#checks.x86_64-linux.check-dedup \
+            .#checks.x86_64-linux.check-dedup-test \
+            .#checks.x86_64-linux.check-specialisation-placement \
+            .#checks.x86_64-linux.check-specialisation-placement-test \
+            .#checks.x86_64-linux.check-helper-naming \
+            .#checks.x86_64-linux.check-helper-naming-test \
+            .#checks.x86_64-linux.check-no-narration-comments \
+            .#checks.x86_64-linux.check-no-narration-comments-test \
+            .#checks.x86_64-linux.nixos-exhaustiveness \
+            .#checks.x86_64-linux.nixos-exhaustiveness-test \
+            .#checks.x86_64-linux.eval-multiseat-collisions \
+            .#checks.x86_64-linux.nrb-activate-regex-test \
+            .#checks.x86_64-linux.nrb-activate-spec-regex-test \
+            .#checks.x86_64-linux.nrb-booted-spec-test \
+            .#checks.x86_64-linux.nrb-flag-compat-host-deploy \
+            .#checks.x86_64-linux.nrb-flag-spec-base-exclusive \
+            .#checks.x86_64-linux.nrb-flag-spec-deploy-exclusive \
+            .#checks.x86_64-linux.nrb-flag-spec-check-exclusive \
+            .#checks.x86_64-linux.check-no-with-lib \
+            .#checks.x86_64-linux.check-no-with-lib-test \
+            .#checks.x86_64-linux.check-no-dated-comments \
+            .#checks.x86_64-linux.check-no-dated-comments-test \
+            .#checks.x86_64-linux.check-mkforce-comment \
+            .#checks.x86_64-linux.check-mkforce-comment-test \
+            .#checks.x86_64-linux.check-assertion-format \
+            .#checks.x86_64-linux.check-assertion-format-test \
+            .#checks.x86_64-linux.check-module-docstring \
+            .#checks.x86_64-linux.check-module-docstring-test \
+            .#checks.x86_64-linux.check-secrets-leak \
+            .#checks.x86_64-linux.check-secrets-leak-test \
+            .#checks.x86_64-linux.check-no-cross-tree-import \
+            .#checks.x86_64-linux.check-no-cross-tree-import-test
+            # eval-multiseat-collisions is a PURE eval (a function over seat decls,
+            # no nixosConfiguration toplevel / IFD) → unlike the other eval-* checks
+            # it is safe on a hosted runner.
+      - name: Secret scan (gitleaks)
+        # Backstop for the pre-commit gitleaks hook (the gates above exclude
+        # pre-commit). Git mode → respects .gitignore, so repos/ is never scanned.
+        run: nix run nixpkgs#gitleaks -- detect --redact --no-banner --config .gitleaks.toml --source .
