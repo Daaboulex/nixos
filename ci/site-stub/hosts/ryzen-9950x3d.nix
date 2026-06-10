@@ -6,6 +6,23 @@
     remoteBuilder.authorizedKeys = [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIci-stub" ];
   };
   hardware.goxlrSerial = "CI-STUB";
+  # CoolerControl device UID the host's fan profile binds to (dummy hex).
+  coolercontrol.nct6799Uid = "0000000000000000000000000000000000000000000000000000000000000000";
+  # Per-monitor identity the displays config inherits (edidHash/edidIdentifier/
+  # uuid). Dummy values — the host reads these into the Plasma display layout.
+  displays.monitors =
+    let
+      stub = {
+        edidHash = "00000000000000000000000000000000";
+        edidIdentifier = "CIS 00000 000000000 00 0000 0";
+        uuid = "00000000-0000-0000-0000-000000000000";
+      };
+    in
+    {
+      main = stub;
+      portrait = stub;
+      portrait-vfio = stub;
+    };
   # Schema-complete mirror of the real site vfio shape (dummy values) so
   # `nix flake check` can eval the ryzen vfio-stealth specialisations in CI.
   vfio = {
