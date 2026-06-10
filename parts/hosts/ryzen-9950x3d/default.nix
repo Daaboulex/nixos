@@ -85,6 +85,7 @@
           "nvme_core.default_ps_max_latency_us=0" # Disable NVMe power state transitions (prevents micro-stutters)
           "tsc=reliable" # Pin TSC as clocksource — Zen 5 has invariant TSC
           "amdgpu.freesync_video=1" # FreeSync video mode — still opt-in on kernel 6.19
+          "amdgpu.cwsr_enable=0" # CWSR (compute wave save/restore) off — works around a GPU hang/reset during ROCm ML training on the 9070XT
           "cma=256M" # Contiguous DMA: ath12k WiFi (WCN785x QMI firmware) + USB-audio buffers. 64M exhausted (CmaFree~0) → starved USB-audio (GoXLR/SupremeFX) DMA → retry-thrash stalled their shared bus (mouse hitch).
         ];
         cachyos = {
