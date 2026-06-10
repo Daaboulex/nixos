@@ -86,11 +86,11 @@
                 echo "$output"
                 exit 1
               fi
-              echo "$output" | grep -q 'expected scope: myModules.security' \
+              grep -q 'expected scope: myModules.security' <<< "$output" \
                 || { echo "FAIL: diagnostic missing expected scope."; echo "$output"; exit 1; }
-              echo "$output" | grep -q 'actual scope:' \
+              grep -q 'actual scope:' <<< "$output" \
                 || { echo "FAIL: diagnostic missing actual scope line."; echo "$output"; exit 1; }
-              echo "$output" | grep -q 'myModules.services' \
+              grep -q 'myModules.services' <<< "$output" \
                 || { echo "FAIL: diagnostic missing actual scope value."; echo "$output"; exit 1; }
 
               # Sanity: same content under correct path MUST pass.
@@ -149,11 +149,11 @@
                 echo "$diag"
                 exit 1
               fi
-              echo "$diag" | grep -q 'editor → yazi' \
+              grep -q 'editor → yazi' <<< "$diag" \
                 || { echo "FAIL: diagnostic missing consumer→provider."; echo "$diag"; exit 1; }
-              echo "$diag" | grep -q 'enable. guard' \
+              grep -q 'enable. guard' <<< "$diag" \
                 || { echo "FAIL: diagnostic missing the 'no .enable guard' reason."; echo "$diag"; exit 1; }
-              echo "$diag" | grep -q 'fix:' \
+              grep -q 'fix:' <<< "$diag" \
                 || { echo "FAIL: diagnostic missing the fix hint."; echo "$diag"; exit 1; }
 
               install -m 0644 "$ok" home/modules/editor/default.nix
@@ -210,9 +210,9 @@
                 echo "$diag"
                 exit 1
               fi
-              echo "$diag" | grep -q 'myModules.home.konsole' \
+              grep -q 'myModules.home.konsole' <<< "$diag" \
                 || { echo "FAIL: diagnostic missing target namespace."; echo "$diag"; exit 1; }
-              echo "$diag" | grep -q "another module's domain" \
+              grep -q "another module's domain" <<< "$diag" \
                 || { echo "FAIL: diagnostic missing reason."; echo "$diag"; exit 1; }
 
               install -m 0644 "$ok" home/modules/editor/default.nix
@@ -323,9 +323,9 @@
                 echo "$diag"
                 exit 1
               fi
-              echo "$diag" | grep -q 'alpha/default.nix' \
+              grep -q 'alpha/default.nix' <<< "$diag" \
                 || { echo "FAIL: diagnostic missing file A."; echo "$diag"; exit 1; }
-              echo "$diag" | grep -q 'beta/default.nix' \
+              grep -q 'beta/default.nix' <<< "$diag" \
                 || { echo "FAIL: diagnostic missing file B."; echo "$diag"; exit 1; }
 
               # `# dedup-ok` inside one block's span must suppress the report.
@@ -404,9 +404,9 @@
                 echo "$diag"
                 exit 1
               fi
-              echo "$diag" | grep -q 'specialisation.vfio-x' \
+              grep -q 'specialisation.vfio-x' <<< "$diag" \
                 || { echo "FAIL: diagnostic missing the inline spec."; echo "$diag"; exit 1; }
-              echo "$diag" | grep -q 'mkSpecialisations' \
+              grep -q 'mkSpecialisations' <<< "$diag" \
                 || { echo "FAIL: diagnostic missing the fix hint."; echo "$diag"; exit 1; }
 
               cat > wired-spec.nix <<'EOF'
@@ -464,7 +464,7 @@
                 echo "$diag"
                 exit 1
               fi
-              echo "$diag" | grep -q 'parts/widgets/helper.nix' \
+              grep -q 'parts/widgets/helper.nix' <<< "$diag" \
                 || { echo "FAIL: diagnostic missing the file."; echo "$diag"; exit 1; }
 
               # A _-prefixed helper → must pass.
@@ -526,7 +526,7 @@
                 echo "$diag"
                 exit 1
               fi
-              echo "$diag" | grep -q 'bad.nix' \
+              grep -q 'bad.nix' <<< "$diag" \
                 || { echo "FAIL: diagnostic missing the file."; echo "$diag"; exit 1; }
 
               printf '{\n  # moved from the dissolved base module  # narration-ok: keep\n  x = 1;\n}\n' > waived.nix # narration-ok: gate self-test fixture
@@ -567,7 +567,7 @@
                 echo "$diag"
                 exit 1
               fi
-              echo "$diag" | grep -q 'services-foo' \
+              grep -q 'services-foo' <<< "$diag" \
                 || { echo "FAIL: diagnostic missing the module name."; echo "$diag"; exit 1; }
 
               printf '{ imports = [ inputs.self.modules.nixos.services-foo ]; }\n' \
@@ -1559,7 +1559,7 @@
             }
             ''
               echo "override-overlay flagged: [$bad]   adds-only overlay flagged: [$add]"
-              echo "$bad" | grep -qw hello \
+              grep -qw hello <<< "$bad" \
                 || { echo "FAIL: override of an existing package NOT caught — gate is vacuous"; exit 1; }
               [ -z "$add" ] \
                 || { echo "FAIL: adds-only overlay flagged ($add) — false positive"; exit 1; }
@@ -1652,10 +1652,10 @@
               echo "disjoint seats → [$good]"
               echo "colliding seats → [$bad]"
               [ -z "$good" ] || { echo "FAIL: disjoint seats wrongly flagged as colliding: $good"; exit 1; }
-              echo "$bad" | grep -qi "CPU"    || { echo "FAIL: shared CPU not caught"; exit 1; }
-              echo "$bad" | grep -qi "device" || { echo "FAIL: shared GPU/device not caught"; exit 1; }
-              echo "$bad" | grep -qi "user"   || { echo "FAIL: shared login user not caught"; exit 1; }
-              echo "$bad" | grep -qi "input device" || { echo "FAIL: shared input device not caught"; exit 1; }
+              grep -qi "CPU" <<< "$bad" || { echo "FAIL: shared CPU not caught"; exit 1; }
+              grep -qi "device" <<< "$bad" || { echo "FAIL: shared GPU/device not caught"; exit 1; }
+              grep -qi "user" <<< "$bad" || { echo "FAIL: shared login user not caught"; exit 1; }
+              grep -qi "input device" <<< "$bad" || { echo "FAIL: shared input device not caught"; exit 1; }
               echo "OK: multiseat guard catches shared CPU/device/user/input and passes disjoint seats"
               touch $out
             '';

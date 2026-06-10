@@ -38,11 +38,11 @@
               # validation. So nrb must NOT reject --boot here — it proceeds and
               # fails to reach the fake target, which is the expected path.
               output=$(nrb-test --deploy testhost --boot 2>&1) || true
-              if echo "$output" | grep -q "does not support --boot"; then
+              if grep -q "does not support --boot" <<< "$output"; then
                 echo "FAIL: --deploy --boot wrongly rejected at flag validation"
                 echo "$output"; exit 1
               fi
-              echo "$output" | grep -q "Cannot reach testhost" \
+              grep -q "Cannot reach testhost" <<< "$output" \
                 || { echo "FAIL: expected target-resolution attempt, got:"; echo "$output"; exit 1; }
               echo "OK: --deploy --boot accepted (arch restriction enforced post-resolution)"
               touch $out
@@ -60,7 +60,7 @@
                 echo "$output"
                 exit 1
               fi
-              echo "$output" | grep -q "does not support --update" \
+              grep -q "does not support --update" <<< "$output" \
                 || { echo "FAIL: wrong error message"; echo "$output"; exit 1; }
               echo "OK: --deploy --update rejected"
               touch $out
@@ -78,7 +78,7 @@
                 echo "$output"
                 exit 1
               fi
-              echo "$output" | grep -q "does not support --update-no-kernel" \
+              grep -q "does not support --update-no-kernel" <<< "$output" \
                 || { echo "FAIL: wrong error message"; echo "$output"; exit 1; }
               echo "OK: --deploy --update-no-kernel rejected"
               touch $out
@@ -96,7 +96,7 @@
                 echo "$output"
                 exit 1
               fi
-              echo "$output" | grep -q "Unknown flag" \
+              grep -q "Unknown flag" <<< "$output" \
                 || { echo "FAIL: wrong error message"; echo "$output"; exit 1; }
               echo "OK: unknown flag rejected"
               touch $out
@@ -111,9 +111,9 @@
               set -euo pipefail
               nrb-test --help > /dev/null 2>&1 || { echo "FAIL: --help exited nonzero"; exit 1; }
               output=$(nrb-test --help 2>&1)
-              echo "$output" | grep -q "Usage:" \
+              grep -q "Usage:" <<< "$output" \
                 || { echo "FAIL: --help missing Usage:"; echo "$output"; exit 1; }
-              echo "$output" | grep -q -- "--sync" \
+              grep -q -- "--sync" <<< "$output" \
                 || { echo "FAIL: --help missing --sync:"; echo "$output"; exit 1; }
               echo "OK: --help shows usage"
               touch $out
@@ -131,7 +131,7 @@
                 echo "$output"
                 exit 1
               fi
-              echo "$output" | grep -q -- "--sync requires" \
+              grep -q -- "--sync requires" <<< "$output" \
                 || { echo "FAIL: wrong error message"; echo "$output"; exit 1; }
               echo "OK: --sync requires a target"
               touch $out
@@ -149,7 +149,7 @@
                 echo "$output"
                 exit 1
               fi
-              echo "$output" | grep -q -- "--sync cannot be combined" \
+              grep -q -- "--sync cannot be combined" <<< "$output" \
                 || { echo "FAIL: wrong error message"; echo "$output"; exit 1; }
               echo "OK: --sync --deploy rejected"
               touch $out
@@ -167,7 +167,7 @@
                 echo "$output"
                 exit 1
               fi
-              echo "$output" | grep -q "cannot be combined" \
+              grep -q "cannot be combined" <<< "$output" \
                 || { echo "FAIL: wrong error message"; echo "$output"; exit 1; }
               echo "OK: --host --deploy rejected"
               touch $out
@@ -180,7 +180,7 @@
               if output=$(nrb-test --spec vfio-amd --base 2>&1); then
                 echo "FAIL: --spec with --base not rejected"; echo "$output"; exit 1
               fi
-              echo "$output" | grep -q "cannot be combined" \
+              grep -q "cannot be combined" <<< "$output" \
                 || { echo "FAIL: wrong error message"; echo "$output"; exit 1; }
               echo "OK: --spec --base rejected"
               touch $out
@@ -193,7 +193,7 @@
               if output=$(nrb-test --spec vfio-amd --deploy bar 2>&1); then
                 echo "FAIL: --spec with --deploy not rejected"; echo "$output"; exit 1
               fi
-              echo "$output" | grep -q "local activation only" \
+              grep -q "local activation only" <<< "$output" \
                 || { echo "FAIL: wrong error message"; echo "$output"; exit 1; }
               echo "OK: --spec --deploy rejected"
               touch $out
@@ -206,7 +206,7 @@
               if output=$(nrb-test --base --check 2>&1); then
                 echo "FAIL: --base with --check not rejected"; echo "$output"; exit 1
               fi
-              echo "$output" | grep -q "no effect with --check" \
+              grep -q "no effect with --check" <<< "$output" \
                 || { echo "FAIL: wrong error message"; echo "$output"; exit 1; }
               echo "OK: --base --check rejected"
               touch $out
