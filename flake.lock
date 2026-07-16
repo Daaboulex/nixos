@@ -2358,11 +2358,11 @@
         "std": "std_6"
       },
       "locked": {
-        "lastModified": 1783957303,
-        "narHash": "sha256-c+fVFcGP9n3QA7RLQ76ci+rMmKWnocAPIz1vk7nZq2c=",
+        "lastModified": 1784235498,
+        "narHash": "sha256-XalTyiZqbYovIA37v2juske2M8q63K7qDcsERMiu+54=",
         "owner": "Daaboulex",
         "repo": "linux-corecycler",
-        "rev": "82a527d95e799fe6f01b0c831ae90456948ef30d",
+        "rev": "726f6d19c9fab65bece6dc22d132d656197134c9",
         "type": "github"
       },
       "original": {
