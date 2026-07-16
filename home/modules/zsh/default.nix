@@ -103,6 +103,8 @@ in
           # Colored output
           grep = "grep --color=auto";
 
+          # Glob cleanups carry (N): an empty match must expand to nothing --
+          # a bare unmatched glob aborts the whole remaining alias body (zsh NOMATCH).
           lc = ''
             echo "── Logs ──"
             sudo dmesg -C
@@ -113,17 +115,17 @@ in
             sudo systemctl restart systemd-journald.service
 
             echo "── Caches ──"
-            rm -rf "$HOME/.cache/nix/eval-cache-v6/" 2>/dev/null
+            rm -rf "$HOME/.cache/nix/"eval-cache-*(N) 2>/dev/null
             ${pkgs.flatpak}/bin/flatpak uninstall --unused -y 2>/dev/null || true
 
             echo "── Trash ──"
-            gio trash --empty 2>/dev/null || rm -rf "$HOME/.local/share/Trash/"* 2>/dev/null
+            ${pkgs.glib.bin}/bin/gio trash --empty 2>/dev/null || rm -rf "$HOME/.local/share/Trash/"*(N) 2>/dev/null
 
             echo "── Syncthing old versions ──"
             find "$HOME" -maxdepth 3 -name ".stversions" -type d -exec rm -rf {} + 2>/dev/null
 
             echo "── Done ──"
-            df -h /
+            command df -h /
           '';
 
           # Typo fix
@@ -203,8 +205,13 @@ in
           #   keys  fuzzy-browse keybindings.
           # --------------------------------------------------------------------------
           cmds() {
-            local sel
-            sel=$( { alias; print -l ''${(k)functions:#_*}; } | sort \
+            local sel k v
+            # Flatten each alias body to one line: a multi-line alias (lc) would
+            # otherwise scatter its body across the picker as bogus entries.
+            sel=$( {
+                for k v in "''${(@kv)aliases}"; do print -r -- "$k=''${v//$'\n'/; }"; done
+                print -l -- ''${(k)functions:#_*}
+              } | sort \
               | fzf --prompt='cmd> ' --height=70% --layout=reverse ) || return
             print -z -- "''${sel%%[ =]*} "
           }
@@ -293,17 +300,32 @@ in
           ${nrbFns.nrbInfo}
 
           # --------------------------------------------------------------------------
-          # gc — reclaim disk. Bare `gc` runs the SAFE policy that lives once in
+          # gc -- reclaim disk. Bare `gc` runs the SAFE policy that lives once in
           # programs.nh.clean (parts/nix/nix.nix): it triggers that same nh-clean
           # service, which passes --no-gcroots so NO direnv/devenv/nix-shell root is
-          # ever pruned (nothing rebuilds). `gc --deep` opts into pruning gcroots
-          # older than the 7d window to reclaim stale project shells, and asks first
-          # (nh --ask) so you see exactly what goes. Inspect a run: journalctl -u nh-clean.
+          # ever pruned (nothing rebuilds). The service is Type=oneshot and logs only
+          # to the journal, so the blocking start alone shows nothing for minutes;
+          # gc live-streams that run's journal lines to the terminal instead.
+          # `gc --deep` opts into pruning gcroots older than the 7d window to reclaim
+          # stale project shells, and asks first (nh --ask) so you see exactly what
+          # goes. Inspect a past run: journalctl -u nh-clean.
           # --------------------------------------------------------------------------
           gc() {
-            case "$1" in
+            setopt local_options no_monitor
+            case "''${1:-}" in
               "")
+                local _since _jpid _rc
+                _since=$(date '+%Y-%m-%d %H:%M:%S')
+                journalctl -u nh-clean.service --since "$_since" -f -o cat &
+                _jpid=$!
+                trap 'kill "$_jpid" 2>/dev/null; trap - INT TERM; return 130' INT TERM
                 sudo systemctl start nh-clean.service
+                _rc=$?
+                sleep 1   # let the follower flush the run's final journal lines
+                trap - INT TERM
+                kill "$_jpid" 2>/dev/null
+                wait "$_jpid" 2>/dev/null
+                return $_rc
                 ;;
               --deep)
                 # Drops --no-gcroots so direnv/devShell roots >7d are collected;
@@ -312,7 +334,7 @@ in
                 sudo nh clean all --keep 5 --keep-since 7d --ask
                 ;;
               *)
-                print -u2 "gc: unknown option '$1' (use: gc | gc --deep)"
+                print -u2 "gc: unknown option ''${1:-} (use: gc | gc --deep)"
                 return 2
                 ;;
             esac
