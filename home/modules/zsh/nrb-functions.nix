@@ -1,0 +1,1694 @@
+# nrb-functions — NixOS rebuild helper functions (nrb, nrb-check, nrb-info).
+# Extracted for testability. Consumed by home/modules/zsh/default.nix and parts/_build/tests/nrb.nix.
+{ pkgs, flakeDir }:
+let
+  # Name of the specialisation the running system booted into, or "" for base.
+  # Source of truth = the boot entry's init= path: a specialisation entry points
+  # init at …/specialisation/<name>/init; a base entry has no such segment. This
+  # is the only place the booted variant is recorded unambiguously (there is no
+  # canonical /etc file, and /run/booted-system/specialisation is a DIRECTORY of
+  # child specs, not the active one).
+  bootedSpec = ''
+    _nrb_booted_spec() {
+      local cmdline init
+      cmdline=$(cat /proc/cmdline 2>/dev/null) || return 0
+      init=$(printf '%s\n' "$cmdline" | grep -oE 'init=[^ ]+' | head -1)
+      [[ "$init" == */specialisation/* ]] || return 0
+      local rest="''${init#*/specialisation/}"
+      printf '%s' "''${rest%%/*}"
+    }
+  '';
+  # Shared by nrb --list and nrb-info: enumerate nixosConfigurations and
+  # their specialisations. $1 picks the marker style: "list" (current /
+  # deploy-target hints) or "info" (active host + booted spec; the caller
+  # sets $hostname and $booted_spec).
+  listConfigs = ''
+    _nrb_list_configs() {
+      local _mode="$1" _jq="${pkgs.jq}/bin/jq" name marker specs spec smarker
+      nix --extra-experimental-features 'nix-command flakes' \
+        eval "$flake_ref#nixosConfigurations" "''${_input_overrides[@]}" --apply 'x: builtins.attrNames x' --json 2>/dev/null \
+        | $_jq -r '.[]' | while read -r name; do
+          marker=""
+          if [[ "$_mode" == "list" ]]; then
+            if [[ "$name" == "$(hostname)" ]]; then
+              marker="  (current — nrb)"
+            else
+              marker="  (deploy target — nrb --deploy $name)"
+            fi
+          else
+            [[ "$name" == "$hostname" ]] && marker="  (active)"
+          fi
+          echo "  $name$marker"
+
+          specs=$(nix --extra-experimental-features 'nix-command flakes' \
+            eval "$flake_ref#nixosConfigurations.$name.config.specialisation" \
+            "''${_input_overrides[@]}" --apply 'x: builtins.attrNames x' --json 2>/dev/null || echo "[]")
+          if [[ "$specs" != "[]" ]]; then
+            echo "$specs" | $_jq -r '.[]' | while read -r spec; do
+              if [[ "$_mode" == "list" ]]; then
+                echo "    + $spec  (boot variant)"
+              else
+                smarker=""
+                [[ "$spec" == "$booted_spec" ]] && smarker="  (booted)"
+                echo "    + $spec$smarker"
+              fi
+            done
+          fi
+        done
+    }
+  '';
+  # Resolve an SSH target: the bare name first (honors ~/.ssh/config
+  # ProxyCommand for ADB-bridged hosts), then .local (mDNS). 15 s timeout:
+  # ADB ProxyCommand needs time to discover + connect. Sets _resolved_ssh
+  # ("" and rc 1 when unreachable).
+  resolveSsh = ''
+    _nrb_resolve_ssh() {
+      local _t="$1" _try
+      _resolved_ssh=""
+      for _try in "$_t" "''${_t}.local"; do
+        if ssh -o ConnectTimeout=15 -o BatchMode=yes "$_try" true 2>/dev/null; then
+          _resolved_ssh="$_try"
+          return 0
+        fi
+      done
+      return 1
+    }
+  '';
+  # Shared prologue for every nrb* function.
+  # flake_ref: git when the repo is functional, path: otherwise (Syncthing-synced
+  # trees have working files but may lack .git/).
+  # site override: flake.nix pins the `site` input to an absolute git+file path
+  # under <flake>/repos/ (a flake-input limitation — local inputs need absolute
+  # URLs). Machines without that checkout override to the local site checkout.
+  prologue = ''
+    local flake_dir="''${FLAKE_DIR:-${flakeDir}}"
+    local flake_ref="$flake_dir"
+    if [[ -d "$flake_dir" ]] && ! git -C "$flake_dir" rev-parse HEAD &>/dev/null; then
+      flake_ref="path:$flake_dir"
+    fi
+    local -a _input_overrides=()
+    if [[ ! -d "$flake_dir/repos/site" && -d "$HOME/Documents/site" ]]; then
+      _input_overrides+=(--override-input site "path:$HOME/Documents/site")
+    fi
+  '';
+in
+{
+  nrb = ''
+        nrb() {
+          # Function-local option scope — restored on return.
+          # null_glob: unmatched globs expand to empty (not an error).
+          # no_nomatch: literal pass-through if glob has no matches (defensive
+          # for cases where null_glob interaction with command substitution differs).
+          setopt local_options null_glob no_nomatch pipefail no_monitor
+          local trace_flag="" dry=0 boot=0 update=0 update_no_kernel=0 check=0 target="" deploy_target="" sync_target="" install_host="" install_target=""
+          local spec_target="" base_only=0
+          ${bootedSpec}
+          ${listConfigs}
+          ${resolveSsh}
+          ${prologue}
+
+          # Terminal rendering — respect NO_COLOR, detect capabilities
+          local _c_reset="" _c_bold="" _c_dim="" _c_red="" _c_green="" _c_yellow="" _c_blue="" _c_cyan=""
+          local _i_ok="OK" _i_fail="FAIL" _i_warn="!!" _i_info=">>" _i_arrow="->"
+          if [[ -z "''${NO_COLOR:-}" && -t 1 && "''${TERM:-}" != "dumb" ]]; then
+            _c_reset=$'\033[0m' _c_bold=$'\033[1m' _c_dim=$'\033[2m'
+            _c_red=$'\033[31m' _c_green=$'\033[32m' _c_yellow=$'\033[33m'
+            _c_blue=$'\033[34m' _c_cyan=$'\033[36m'
+            if [[ "$(locale charmap 2>/dev/null)" == "UTF-8" ]]; then
+              _i_ok="✔" _i_fail="✘" _i_warn="⚠" _i_info="▶" _i_arrow="→"
+            fi
+          fi
+          _msg_ok()   { echo -e "''${_c_green}''${_i_ok}''${_c_reset} $*"; }
+          _msg_fail() { echo -e "''${_c_red}''${_i_fail}''${_c_reset} $*" >&2; }
+          _msg_warn() { echo -e "''${_c_yellow}''${_i_warn}''${_c_reset} $*" >&2; }
+          _msg_info() { echo -e "''${_c_blue}''${_i_info}''${_c_reset} $*"; }
+          _msg_step() { echo -e "''${_c_bold}''${_i_arrow}''${_c_reset} $*"; }
+          _msg_dim()  { echo -e "''${_c_dim}$*''${_c_reset}"; }
+          # Run a command with an inline spinner showing elapsed time.
+          # Usage: _with_spinner "label" command arg1 arg2 ...
+          # stdout/stderr of the command are inherited (not swallowed).
+          _with_spinner() {
+            local _lbl="$1"; shift
+            "$@" &
+            local _pid=$! _elapsed=0
+            local -a _frames=('⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏')
+            [[ -z "$_c_reset" ]] && _frames=('-' '\' '|' '/')
+            trap "kill $_pid 2>/dev/null; printf '\r\033[K'; trap - INT TERM; return 130" INT TERM
+            while kill -0 "$_pid" 2>/dev/null; do
+              printf "\r  ''${_c_dim}%s %s (%ds)''${_c_reset}  " "''${_frames[$(( _elapsed % ''${#_frames[@]} + 1 ))]}" "$_lbl" "$_elapsed"
+              sleep 1
+              (( _elapsed++ ))
+            done
+            trap - INT TERM
+            printf "\r\033[K"
+            wait "$_pid"
+          }
+
+          # Parse flags
+          while [[ $# -gt 0 ]]; do
+            case "$1" in
+              --trace)  trace_flag="--show-trace"; shift ;;
+              --dry)    dry=1; shift ;;
+              --boot)   boot=1; shift ;;
+              --update) update=1; shift ;;
+              --update-no-kernel) update_no_kernel=1; shift ;;
+              --check)  check=1; shift ;;
+              --spec)
+                if [[ -z "''${2:-}" || "$2" == --* ]]; then
+                  echo "ERROR: --spec requires a specialisation name (or 'base')"
+                  return 1
+                fi
+                spec_target="$2"; shift 2
+                ;;
+              --base)   base_only=1; shift ;;
+              --host)
+                if [[ -z "''${2:-}" || "$2" == --* ]]; then
+                  echo "ERROR: --host requires a hostname argument"
+                  return 1
+                fi
+                target="$2"; shift 2
+                ;;
+              --deploy)
+                if [[ -z "''${2:-}" || "$2" == --* ]]; then
+                  echo "ERROR: --deploy requires a hostname argument"
+                  return 1
+                fi
+                deploy_target="$2"; shift 2
+                ;;
+              --sync)
+                if [[ -z "''${2:-}" || "$2" == --* ]]; then
+                  echo "ERROR: --sync requires a hostname/SSH target argument"
+                  return 1
+                fi
+                sync_target="$2"; shift 2
+                ;;
+              --install)
+                if [[ -z "''${2:-}" || "$2" == --* || -z "''${3:-}" || "$3" == --* ]]; then
+                  echo "ERROR: --install requires <host> and <root@target> (or the literal vm-test)"
+                  return 1
+                fi
+                install_host="$2"; install_target="$3"; shift 3
+                ;;
+              --help|-h)
+                echo "nrb — NixOS Rebuild Helper"
+                echo ""
+                echo "Usage: nrb [FLAGS]"
+                echo ""
+                echo "Flags:"
+                echo "  --update             Update all flake inputs before building"
+                echo "  --update-no-kernel   Update inputs that won't trigger a kernel rebuild"
+                echo "                       (auto-detects kernel deps — no hardcoded skip list)"
+                echo "  --dry                Build + show diff, don't activate"
+                echo "  --boot               Build + activate on next reboot (not immediately)"
+                echo "  --trace              Show full Nix stack trace on errors"
+                echo "  --check              Evaluate all configs without building (fast sanity)"
+                echo "  --spec NAME          Activate specialisation NAME (default: the one you booted)"
+                echo "  --base               Activate the base config, ignoring the booted specialisation"
+                echo "  --host X             Build a specific nixosConfiguration (default: \$HOST)"
+                echo "  --deploy X           Build X's config locally, push + activate on X via SSH"
+                echo "                       Requires: key-based SSH + NOPASSWD sudo on target"
+                echo "  --sync X             Exact checksum-mirror this flake tree to X:~/Documents/nix"
+                echo "                       Use with --dry to preview; a real sync first snapshots the"
+                echo "                       whole remote tree (tar.zst, keeps last 5) for one-command revert"
+                echo "  --install X root@Y   Bare-metal (re)install host X onto Y via nixos-anywhere:"
+                echo "                       kexec -> disko (system disk ONLY; backup drive untouched)"
+                echo "                       -> install. Seeds escrowed identity + secrets seed from the"
+                echo "                       site registry; prompts for the LUKS passphrase (never stored)."
+                echo "                       Use 'vm-test' as the target for a no-hardware rehearsal."
+                echo "  --list               Show all available configurations and deploy targets"
+                echo "  --help, -h           Show this help message"
+                echo ""
+                echo "Flags can be combined: nrb --update --dry --trace"
+                echo ""
+                echo "Related commands:"
+                echo "  nrb-check    Standalone config evaluator (same as nrb --check)"
+                echo "  nrb-info     Show current system state, generations, and configs"
+                return 0
+                ;;
+              --list)
+                echo "NixOS Configurations:"
+                echo ""
+                _nrb_list_configs list
+                return 0
+                ;;
+              *)
+                echo "Unknown flag: $1 (try nrb --help)"
+                return 1
+                ;;
+            esac
+          done
+
+          local hostname="''${target:-$(hostname)}"
+
+          # ADV-001: --host and --deploy are mutually exclusive
+          if [[ -n "$target" && -n "$deploy_target" ]]; then
+            _msg_fail "--host and --deploy cannot be combined"
+            _msg_dim "  --host builds for THIS machine. --deploy builds and pushes to ANOTHER machine."
+            return 1
+          fi
+
+          # ADV-002: --deploy incompatible with --update, --update-no-kernel
+          # (--boot and --dry are supported for cross-arch deploy)
+          if [[ -n "$deploy_target" ]]; then
+            if (( update )); then
+              _msg_fail "--deploy does not support --update (run nrb --update separately first)"
+              return 1
+            fi
+            if (( update_no_kernel )); then
+              _msg_fail "--deploy does not support --update-no-kernel (run it separately first)"
+              return 1
+            fi
+          fi
+
+          # ADV-003: --spec/--base select which specialisation to ACTIVATE, which
+          # only happens for local activation of THIS host. Reject the
+          # combinations that would otherwise silently ignore them.
+          if [[ -n "$spec_target" && $base_only -eq 1 ]]; then
+            _msg_fail "--spec and --base cannot be combined"
+            _msg_dim "  --spec NAME activates that specialisation; --base forces the base config."
+            return 1
+          fi
+          if [[ -n "$spec_target" || $base_only -eq 1 ]]; then
+            if [[ -n "$deploy_target" ]]; then
+              _msg_fail "--spec/--base apply to local activation only, not --deploy"
+              _msg_dim "  Activate a specialisation ON the target: ssh $deploy_target, then nrb --spec NAME."
+              return 1
+            fi
+            if (( check )); then
+              _msg_fail "--spec/--base have no effect with --check (eval only, no activation)"
+              return 1
+            fi
+            if [[ -n "$target" && "$target" != "$(hostname)" ]]; then
+              _msg_fail "--spec/--base only apply when activating THIS host"
+              _msg_dim "  --host $target builds another host's config, which is not activated here."
+              return 1
+            fi
+          fi
+
+          # ── Config sync mode ──
+          # Exact mirror of this flake tree to a chosen SSH target, without
+          # building or activating. The ONLY exclusion is scratch/ — local working
+          # docs (audits / plans / session handoffs) that are git-ignored and must
+          # not propagate to build targets. Everything else copies as-is, so the
+          # remote stays a faithful build mirror.
+          if [[ -n "$sync_target" ]]; then
+            if [[ -n "$target" || -n "$deploy_target" || -n "$install_host" ]]; then
+              _msg_fail "--sync cannot be combined with --host, --deploy, or --install"
+              return 1
+            fi
+            if (( update || update_no_kernel || check || boot || base_only )) || [[ -n "$trace_flag" || -n "$spec_target" ]]; then
+              _msg_fail "--sync only supports --dry as a companion flag"
+              _msg_dim "  Preview: nrb --sync $sync_target --dry"
+              _msg_dim "  Apply:   nrb --sync $sync_target"
+              return 1
+            fi
+            if [[ ! -d "$flake_dir" ]]; then
+              _msg_fail "Flake directory not found: $flake_dir"
+              return 1
+            fi
+            if [[ ! -f "$flake_dir/flake.nix" ]]; then
+              _msg_fail "No flake.nix in $flake_dir"
+              return 1
+            fi
+
+            local _st="$sync_target" _st_ssh=""
+            _nrb_resolve_ssh "$_st" && _st_ssh="$_resolved_ssh"
+            if [[ -z "$_st_ssh" ]]; then
+              _msg_fail "Cannot reach $_st via SSH"
+              _msg_dim "  Tried: $_st, ''${_st}.local"
+              _msg_dim "  Since ssh works for you, try: nrb --sync ryzen-9950x3d.local --dry"
+              return 1
+            fi
+            [[ "$_st_ssh" != "$_st" ]] && _msg_dim "  resolved via $_st_ssh"
+
+            local _sync_stamp
+            _sync_stamp=$(date +%Y%m%d-%H%M%S)
+
+            if (( dry )); then
+              _msg_step "Preview target: $_st_ssh:~/Documents/nix (no remote changes)"
+            else
+              _msg_step "Preparing $_st_ssh:~/Documents/nix"
+              if ! ssh "$_st_ssh" '
+                set -e
+                mkdir -p Documents/nix Documents/.nrb-sync-backups
+                if [ -e Documents/nix/flake.nix ]; then
+                  exit 0
+                fi
+                if [ -z "$(find Documents/nix -mindepth 1 -maxdepth 1 -print -quit 2>/dev/null)" ]; then
+                  exit 0
+                fi
+                echo "Documents/nix exists, is non-empty, and has no flake.nix" >&2
+                exit 1
+              '; then
+                _msg_fail "Refusing to exact-sync into an unrecognized ~/Documents/nix on $_st_ssh"
+                _msg_dim "  Move it aside or add a flake.nix there, then rerun."
+                return 1
+              fi
+
+              # Full-tree pre-sync snapshot: one compressed artifact = one
+              # coherent revert point (per-file rsync --backup-dir only kept
+              # the changed files, which cannot restore a working whole).
+              # No snapshot -> no sync.
+              _msg_step "Snapshotting remote tree before sync (tar.zst, keeps last 5)"
+              if ! ssh "$_st_ssh" "
+                set -e
+                mkdir -p Documents/.nrb-sync-backups
+                if [ -e Documents/nix/flake.nix ]; then
+                  tar --zstd -cf Documents/.nrb-sync-backups/nix-$_sync_stamp.tar.zst -C Documents nix
+                fi
+                ls -1t Documents/.nrb-sync-backups/nix-*.tar.zst 2>/dev/null | tail -n +6 | xargs -r rm --
+              "; then
+                _msg_fail "Remote snapshot failed -- aborting sync, remote tree untouched"
+                return 1
+              fi
+            fi
+
+            local -a _rsync_args=(
+              -aH
+              --checksum
+              --whole-file
+              --human-readable
+              --itemize-changes
+              --stats
+              --partial
+              --delay-updates
+              --delete-delay
+              # local working docs — git-ignored + unsynced (see scratch/):
+              --exclude=/scratch/
+            )
+            if (( dry )); then
+              _rsync_args+=(--dry-run)
+              _msg_step "Previewing exact checksum sync to $_st_ssh (no changes will be made)"
+            else
+              _msg_step "Exact checksum-syncing flake to $_st_ssh"
+            fi
+
+            _msg_dim "  Source: $flake_dir/"
+            _msg_dim "  Target: $_st_ssh:~/Documents/nix/"
+            _msg_dim "  Safety: --checksum --delay-updates --delete-delay + pre-sync snapshot"
+            if ! rsync "''${_rsync_args[@]}" -e "ssh" "$flake_dir/" "$_st_ssh:Documents/nix/"; then
+              _msg_fail "rsync failed"
+              return 1
+            fi
+
+            if (( dry )); then
+              _msg_ok "Dry sync preview complete — rerun without --dry to apply"
+            else
+              _msg_ok "Config exactly synced to $_st_ssh:~/Documents/nix"
+              # Stage all files on the target so the flake (a git tree) SEES them. Nix
+              # ignores UNTRACKED files, so anything newly synced lands untracked and
+              # breaks eval one file at a time ("Path '<f>' is not tracked by Git"). The
+              # target index is throwaway (commits happen on the source); a blanket
+              # `add -A` is safe + idempotent. Non-fatal: warns, never aborts the sync.
+              if ssh -o ConnectTimeout=15 -o BatchMode=yes "$_st_ssh" 'git -C ~/Documents/nix add -A 2>/dev/null'; then
+                _msg_dim "  Staged all files on target (Nix now sees newly-synced files)"
+              else
+                _msg_dim "  ⚠ could not stage on target — run there: git -C ~/Documents/nix add -A"
+              fi
+              _msg_dim "  Pre-sync snapshot: ~/Documents/.nrb-sync-backups/nix-$_sync_stamp.tar.zst"
+              _msg_dim "  Revert: ssh $_st_ssh 'rm -rf Documents/nix && tar --zstd -xf Documents/.nrb-sync-backups/nix-$_sync_stamp.tar.zst -C Documents'"
+              _msg_dim "  On target: cd ~/Documents/nix && nrb --check"
+            fi
+            return 0
+          fi
+
+          # ── Bare-metal install mode ──
+          # nixos-anywhere against a booted target (its own installer USB or any
+          # Linux with root SSH): kexec -> disko (the system disk ONLY; the
+          # backup drive is never in disko's scope) -> install. Identity and
+          # /etc/secrets are seeded from the site escrow, so the machine is
+          # fully itself on first boot: agenix decrypts, registry pins valid.
+          if [[ -n "$install_host" ]]; then
+            if [[ -n "$target" || -n "$deploy_target" || -n "$sync_target" ]]; then
+              _msg_fail "--install cannot be combined with --host, --deploy, or --sync"
+              return 1
+            fi
+            if (( update || update_no_kernel || check || boot || base_only || dry )) || [[ -n "$trace_flag" || -n "$spec_target" ]]; then
+              _msg_fail "--install takes no companion flags (use the vm-test target for a rehearsal)"
+              return 1
+            fi
+            if [[ ! -f "$flake_dir/flake.nix" ]]; then
+              _msg_fail "No flake.nix in $flake_dir"
+              return 1
+            fi
+            local _h="$install_host" _req
+            local _hostdir="$flake_dir/parts/hosts/$_h"
+            for _req in disko.nix hardware-configuration.nix flake-module.nix; do
+              if [[ ! -f "$_hostdir/$_req" ]]; then
+                _msg_fail "$_h is not installable: missing parts/hosts/$_h/$_req (deploy contract)"
+                return 1
+              fi
+            done
+
+            # Rehearsal: build the config + run disko inside a VM. No target,
+            # no site secrets, nothing touched.
+            if [[ "$install_target" == "vm-test" ]]; then
+              _msg_step "Rehearsing $_h install in a VM (nixos-anywhere --vm-test)"
+              nix run github:nix-community/nixos-anywhere/1.13.0 -- --flake "$flake_dir#$_h" --vm-test
+              return $?
+            fi
+            if [[ "$install_target" != root@* ]]; then
+              _msg_fail "--install target must be root@<host-or-ip> (got: $install_target), or the literal 'vm-test'"
+              return 1
+            fi
+
+            local _site="$flake_dir/repos/site"
+            local _blob="$_site/secrets/$_h-hostkey.age"
+            local _seedblob="$_site/secrets/$_h-secrets-seed.tar.age"
+            # This host's own identity decrypts the escrow; /var/lib/ssh is
+            # the relocated home (security-ssh module), /etc/ssh the
+            # pre-relocation fallback.
+            local _identity="/var/lib/ssh/ssh_host_ed25519_key"
+            [[ -e "$_identity" ]] || _identity="/etc/ssh/ssh_host_ed25519_key"
+            if [[ ! -d "$_site/secrets" ]]; then
+              _msg_fail "Private site registry not present at repos/site -- installs run only from a machine holding it"
+              return 1
+            fi
+            if [[ ! -f "$_blob" ]]; then
+              _msg_fail "Missing escrowed host identity: $_blob"
+              _msg_dim "  Escrow it first (see site/secrets/secrets.nix for the recipients and ceremony)"
+              return 1
+            fi
+            if ! command -v age >/dev/null 2>&1; then
+              _msg_fail "age not in PATH (needed to decrypt the escrowed identity)"
+              return 1
+            fi
+            if ! ssh -o ConnectTimeout=15 -o BatchMode=yes "$install_target" true 2>/dev/null; then
+              _msg_fail "Cannot reach $install_target via SSH (root key auth required)"
+              return 1
+            fi
+
+            local _tmp
+            _tmp=$(mktemp -d "''${XDG_RUNTIME_DIR:-/tmp}/nrb-install-XXXXXX") || return 1
+            chmod 700 "$_tmp"
+            # Key material lives only under XDG_RUNTIME_DIR (tmpfs) and only
+            # for the duration of this run.
+            trap 'command rm -rf "$_tmp"' EXIT INT TERM
+
+            mkdir -p "$_tmp/files/var/lib/ssh"
+            _msg_step "Decrypting escrowed identity for $_h (sudo: this host's SSH key is the age identity)"
+            if ! sudo age -d -i "$_identity" "$_blob" > "$_tmp/files/var/lib/ssh/ssh_host_ed25519_key"; then
+              _msg_fail "Could not decrypt $_blob with $_identity -- is this machine a recipient?"
+              return 1
+            fi
+            chmod 600 "$_tmp/files/var/lib/ssh/ssh_host_ed25519_key"
+            if ! ssh-keygen -y -f "$_tmp/files/var/lib/ssh/ssh_host_ed25519_key" > "$_tmp/files/var/lib/ssh/ssh_host_ed25519_key.pub"; then
+              _msg_fail "Escrowed key is not a valid ed25519 private key"
+              return 1
+            fi
+            chmod 644 "$_tmp/files/var/lib/ssh/ssh_host_ed25519_key.pub"
+
+            if [[ -f "$_seedblob" ]]; then
+              _msg_step "Seeding /var/lib/secrets from escrow"
+              if ! sudo age -d -i "$_identity" "$_seedblob" | tar -C "$_tmp/files" -xf -; then
+                _msg_fail "Could not decrypt/extract $_seedblob"
+                return 1
+              fi
+            fi
+
+            local _pass1 _pass2
+            while true; do
+              read -rs "_pass1?LUKS passphrase for the $_h root disk: "; echo
+              read -rs "_pass2?Repeat passphrase: "; echo
+              [[ -n "$_pass1" && "$_pass1" == "$_pass2" ]] && break
+              _msg_fail "Empty or mismatched passphrase, try again"
+            done
+            # Newline-free on purpose: LUKS keyslot bytes must equal what is
+            # typed at the boot prompt.
+            printf '%s' "$_pass1" > "$_tmp/cryptroot.key"
+            _pass1="" _pass2=""
+
+            _msg_step "This WIPES the system disk of $install_target and installs $_h"
+            _msg_dim  "  Scope: the disko.nix 'main' device only; all other disks untouched"
+            local _confirm
+            read -r "_confirm?Type the host name ($_h) to proceed: "
+            if [[ "$_confirm" != "$_h" ]]; then
+              _msg_fail "Aborted -- nothing touched"
+              return 1
+            fi
+
+            _msg_step "Running nixos-anywhere (kexec -> disko -> install)"
+            if ! nix run github:nix-community/nixos-anywhere/1.13.0 -- \
+                --flake "$flake_dir#$_h" \
+                --target-host "$install_target" \
+                --disk-encryption-keys /tmp/cryptroot.key "$_tmp/cryptroot.key" \
+                --extra-files "$_tmp/files"; then
+              _msg_fail "nixos-anywhere failed -- target may be mid-install; fix the cause and rerun"
+              return 1
+            fi
+            _msg_ok "$_h installed on $install_target"
+            _msg_dim "  First boot: LUKS passphrase as typed; identity + agenix secrets live"
+            _msg_dim "  Then on the new system: cd ~/Documents/nix && nrb --check"
+            return 0
+          fi
+
+          # ── Remote deploy mode ──
+          # Same-arch: build locally, copy closure, activate via nrb-activate.
+          # Cross-arch: rsync flake to target, build + activate on target.
+          # Requires: passwordless SSH + NOPASSWD sudo on target.
+          if [[ -n "$deploy_target" ]]; then
+            local _dt="$deploy_target"
+            local _dt_ssh=""
+            local _build_dir
+            _build_dir=$(mktemp -d) || {
+              _msg_fail "Cannot create temp dir for deploy"
+              return 1
+            }
+            _deploy_cleanup() { rm -rf "$_build_dir" 2>/dev/null; trap - INT TERM HUP; }
+            trap '_deploy_cleanup' INT TERM HUP
+
+            _nrb_resolve_ssh "$_dt" && _dt_ssh="$_resolved_ssh"
+            if [[ -z "$_dt_ssh" ]]; then
+              _msg_fail "Cannot reach $_dt via SSH"
+              _msg_dim "  Tried: $_dt, ''${_dt}.local"
+              _msg_dim "  Ensure target is on the network and SSH key auth is configured."
+              _msg_dim "  For ADB-bridged hosts: check that the phone is connected and VM is running."
+              _deploy_cleanup; return 1
+            fi
+            [[ "$_dt_ssh" != "$_dt" ]] && _msg_dim "  resolved via $_dt_ssh"
+
+            # Verify sudo works without password on target
+            if ! ssh -o ConnectTimeout=15 "$_dt_ssh" 'sudo -n /run/current-system/sw/bin/true' 2>/dev/null; then
+              _msg_fail "$_dt requires NOPASSWD sudo for deploy"
+              _deploy_cleanup; return 1
+            fi
+
+            # Detect architecture — cross-arch targets build on target, not locally.
+            local _local_arch _remote_arch
+            _local_arch=$(uname -m)
+            _remote_arch=$(ssh -o ConnectTimeout=15 -o BatchMode=yes "$_dt_ssh" uname -m 2>/dev/null)
+
+            if [[ -n "$_remote_arch" && "$_local_arch" != "$_remote_arch" ]]; then
+              # ── Cross-architecture deploy (rsync + remote build) ──
+              _msg_step "Cross-arch deploy: $_local_arch → $_remote_arch (building on target)"
+
+              # Remote disk space check
+              local _remote_avail
+              _remote_avail=$(ssh "$_dt_ssh" "df -BM --output=avail /nix/store 2>/dev/null | tail -1 | tr -d ' M'" 2>/dev/null)
+              if [[ -n "$_remote_avail" ]] && (( _remote_avail < 2048 )); then
+                _msg_fail "Only ''${_remote_avail}MB free on $_dt /nix/store — need at least 2GB"
+                _deploy_cleanup; return 1
+              fi
+
+              _msg_step "Syncing flake to $_dt_ssh ..."
+              if ! rsync -az --delete --partial \
+                --exclude='.git' --exclude='.direnv' --exclude='repos/' \
+                --exclude='.claude/' --exclude='.gemini/' --exclude='.codex/' --exclude='.pi/' \
+                --exclude='.ai-context' --exclude='result' --exclude='result-*' \
+                --exclude='.pre-commit-config.yaml' --exclude='.nrb-update.lock' \
+                -e "ssh" "$flake_dir/" "$_dt_ssh:~/Documents/nix/"; then
+                _msg_fail "rsync failed"
+                _deploy_cleanup; return 1
+              fi
+              local _site_dir="$HOME/Documents/site"
+              local _site_synced=0
+              if [[ -d "$_site_dir" ]]; then
+                if rsync -az --delete --exclude='.git' \
+                  -e "ssh" "$_site_dir/" "$_dt_ssh:Documents/site/"; then
+                  _site_synced=1
+                else
+                  _msg_warn "Site rsync failed — building without site override"
+                fi
+              fi
+              _msg_ok "Flake synced"
+
+              # Build + activate via systemd-run so the command survives SSH drops.
+              # nixos-rebuild switch restarts sshd during activation, which would
+              # kill a bare SSH command. systemd-run creates a transient service
+              # that continues independently.
+              # Determine nixos-rebuild action from flags
+              local _action="switch"
+              if (( dry ));  then _action="dry-activate"; fi
+              if (( boot )); then _action="boot"; fi
+              if (( check )); then _action="dry-build"; fi
+
+              local _action_label="Building + activating"
+              [[ "$_action" == "dry-activate" ]] && _action_label="Dry run (build + diff)"
+              [[ "$_action" == "boot" ]]         && _action_label="Building for next boot"
+              [[ "$_action" == "dry-build" ]]    && _action_label="Evaluating (dry build)"
+
+              # Resolve remote $HOME — needed for absolute paths
+              local _remote_home
+              _remote_home=$(ssh "$_dt_ssh" 'echo $HOME' 2>/dev/null)
+              if [[ -z "$_remote_home" ]]; then
+                _msg_fail "Could not determine remote home directory"
+                _deploy_cleanup; return 1
+              fi
+
+              _msg_step "$_action_label on $_dt_ssh (via systemd-run) ..."
+
+              # Write a self-contained deploy script to the remote.
+              # Avoids all quoting/escaping/environment issues from passing
+              # commands through ssh → sudo → systemd-run → shell layers.
+              local _script="/tmp/nrb-deploy.sh"
+              local _script_body="#!/run/current-system/sw/bin/bash
+    set -eo pipefail
+    export HOME=$_remote_home
+    source /etc/set-environment
+    /run/current-system/sw/bin/nixos-rebuild $_action --flake path:$_remote_home/Documents/nix#$_dt"
+              if (( _site_synced )); then
+                _script_body+=" --override-input site path:$_remote_home/Documents/site"
+              fi
+              if [[ -n "$trace_flag" ]]; then
+                _script_body+=" $trace_flag"
+              fi
+              echo "$_script_body" | ssh "$_dt_ssh" "cat > $_script && chmod +x $_script" 2>/dev/null
+
+              # Clean up stale failed service + launch
+              ssh "$_dt_ssh" "sudo systemctl reset-failed nrb-deploy" 2>/dev/null
+              ssh "$_dt_ssh" "sudo systemd-run \
+                --unit=nrb-deploy \
+                --description='nrb cross-arch deploy' \
+                --property=Type=oneshot \
+                --property=RemainAfterExit=yes \
+                -- $_script" 2>/dev/null
+
+              # Poll for completion (reconnects if SSH drops during sshd restart)
+              _msg_dim "  Waiting for remote build (survives SSH drops)..."
+              local _polls=0 _state=""
+              while true; do
+                sleep 10
+                (( _polls++ ))
+                _state=$(ssh -o ConnectTimeout=15 -o BatchMode=yes "$_dt_ssh" \
+                  "systemctl show nrb-deploy --property=ActiveState --value" 2>/dev/null) || {
+                  # SSH failed (sshd restarting) — retry
+                  (( _polls % 6 == 0 )) && _msg_dim "  Still waiting... (''${_polls}0s, SSH reconnecting)"
+                  continue
+                }
+                case "$_state" in
+                  activating) (( _polls % 6 == 0 )) && _msg_dim "  Building... (''${_polls}0s)" ;;
+                  active)     break ;;  # RemainAfterExit=yes → active means finished successfully
+                  failed)
+                    _msg_fail "Remote build/activation failed on $_dt"
+                    ssh "$_dt_ssh" "journalctl -u nrb-deploy --no-pager -n 20" 2>/dev/null | \
+                      while IFS= read -r line; do _msg_dim "  $line"; done
+                    _msg_dim "  On $_dt, run: sudo nixos-rebuild switch --rollback"
+                    ssh "$_dt_ssh" "sudo systemctl reset-failed nrb-deploy" 2>/dev/null
+                    _deploy_cleanup; return 1 ;;
+                  inactive|"")
+                    # Service doesn't exist yet or already cleaned up
+                    if (( _polls > 60 )); then
+                      _msg_fail "Deploy timed out (600s) — check pixel manually"
+                      _deploy_cleanup; return 1
+                    fi ;;
+                esac
+              done
+
+              # Clean up the transient service
+              ssh "$_dt_ssh" "sudo systemctl reset-failed nrb-deploy" 2>/dev/null
+
+              _deploy_cleanup
+              if [[ "$_action" == "switch" ]]; then
+                _msg_ok "Deployed to $_dt (cross-arch, built on target)"
+              elif [[ "$_action" == "boot" ]]; then
+                _msg_ok "Built for $_dt — activates on next VM restart"
+              elif [[ "$_action" == "dry-activate" ]]; then
+                _msg_ok "Dry run complete for $_dt (no changes applied)"
+              elif [[ "$_action" == "dry-build" ]]; then
+                _msg_ok "Evaluation complete for $_dt"
+              fi
+              return 0
+            fi
+
+            # ── Same-architecture deploy (build locally, push closure) ──
+            # --dry, --boot, --check only supported for cross-arch (remote nixos-rebuild).
+            # Same-arch uses nrb-activate which is activate-only, no dry/boot mode.
+            if (( dry )); then
+              _msg_fail "--deploy --dry only supported for cross-arch targets"
+              _deploy_cleanup; return 1
+            fi
+            if (( boot )); then
+              _msg_fail "--deploy --boot only supported for cross-arch targets"
+              _deploy_cleanup; return 1
+            fi
+            if (( check )); then
+              _msg_fail "--deploy --check only supported for cross-arch targets (use nrb --check)"
+              _deploy_cleanup; return 1
+            fi
+            _msg_step "Deploy mode: building $_dt config locally, deploying via SSH"
+
+            # Build (uses $_dt for the nix config name, $_dt_ssh for SSH)
+            _msg_step "Building $flake_ref#nixosConfigurations.$_dt ..."
+            if ! nix build "''${flake_ref}#nixosConfigurations.''${_dt}.config.system.build.toplevel" \
+              -o "$_build_dir/result" "''${_input_overrides[@]}" $trace_flag; then
+              _msg_fail "Build failed for $_dt"
+              _deploy_cleanup; return 1
+            fi
+            local _store_path
+            _store_path=$(readlink -f "$_build_dir/result")
+            _msg_ok "Built: $_store_path"
+
+            # Copy closure to target
+            _msg_step "Copying closure to $_dt_ssh ..."
+            if ! _with_spinner "copying closure to $_dt_ssh" \
+              env NIX_SSHOPTS="-F $HOME/.ssh/config -o ConnectTimeout=30" nix copy --to "ssh://''${_dt_ssh}" "$_store_path"; then
+              _msg_fail "Failed to copy closure to $_dt_ssh"
+              _deploy_cleanup; return 1
+            fi
+            _msg_ok "Closure copied"
+            trap '_deploy_cleanup' INT TERM HUP
+
+            # Activate on target — split into two steps for safe rollback.
+            _msg_step "Linking profile on $_dt ..."
+            if ! ssh -t "$_dt_ssh" "sudo nrb-activate set-profile '$_store_path'"; then
+              _msg_fail "Profile link failed on $_dt — no changes made"
+              _deploy_cleanup; return 1
+            fi
+
+            _msg_step "Activating on $_dt ..."
+            if ! ssh -t "$_dt_ssh" "sudo nrb-activate switch '$_store_path'"; then
+              _msg_fail "Activation failed on $_dt — profile was linked but services not switched"
+              _msg_warn "  Remote is in a half-switched state. To fix on $_dt, run:"
+              _msg_dim "    sudo nix-env -p /nix/var/nix/profiles/system --rollback"
+              _msg_dim "    sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch"
+              _deploy_cleanup; return 1
+            fi
+
+            _deploy_cleanup
+            _msg_ok "Deployed to $_dt"
+            return 0
+          fi
+
+          # Pre-flight: hostname safety — prevent applying wrong config to wrong machine.
+          # nixos-rebuild switch with a foreign hostname destroys the running system
+          # (removes users, services, firewall rules for the real host).
+          local actual_host
+          actual_host=$(hostname)
+          if [[ "$hostname" != "$actual_host" ]]; then
+            _msg_fail "Refusing to switch: target '$hostname' ≠ this machine '$actual_host'"
+            _msg_dim "  To deploy to another machine: nrb --deploy $hostname"
+            return 1
+          fi
+
+          # Pre-flight: flake directory must exist
+          if [[ ! -d "$flake_dir" ]]; then
+            _msg_fail "Flake directory not found: $flake_dir"
+            _msg_dim "  Set FLAKE_DIR or configure myModules.home.zsh.flakeDir"
+            return 1
+          fi
+          if [[ ! -f "$flake_dir/flake.nix" ]]; then
+            _msg_fail "No flake.nix in $flake_dir"
+            return 1
+          fi
+
+          # Pre-flight: untracked .nix files are invisible to the flake (Nix
+          # only sees git-tracked content, staged is enough, no commit
+          # needed) — an untracked file that something imports fails deep in
+          # eval with a cryptic module-system trace ("Path '<f>' is not
+          # tracked by Git"). Warn early instead.
+          if command -v git &>/dev/null && git -C "$flake_dir" rev-parse HEAD &>/dev/null; then
+            local untracked_nix
+            untracked_nix=$(git -C "$flake_dir" ls-files --others --exclude-standard -- '*.nix')
+            if [[ -n "$untracked_nix" ]]; then
+              _msg_warn "Untracked .nix files -- invisible to the flake until staged"
+              echo "$untracked_nix" | while IFS= read -r f; do
+                [[ -n "$f" ]] && _msg_dim "  $f"
+              done
+              _msg_dim "  Fix: git add <file> (staging is enough, no commit needed)"
+              echo ""
+            fi
+          fi
+
+          # Pre-flight: nix daemon must be running
+          if ! nix store info --store daemon 2>/dev/null; then
+            _msg_fail "Nix daemon not responding"
+            _msg_dim "  Check: sudo systemctl status nix-daemon"
+            return 1
+          fi
+
+          # Pre-flight: disk space on /nix/store partition
+          local _store_avail_mb
+          _store_avail_mb=$(df -BM --output=avail /nix/store 2>/dev/null | tail -1 | tr -d ' M')
+          if [[ -n "$_store_avail_mb" ]]; then
+            if (( _store_avail_mb < 500 )); then
+              _msg_fail "Only ''${_store_avail_mb}MB free on /nix/store — need at least 500MB"
+              _msg_dim "  Run: sudo nix-collect-garbage -d && sudo nix-store --optimize"
+              return 1
+            elif (( _store_avail_mb < 2048 )); then
+              _msg_warn "Low disk: ''${_store_avail_mb}MB free on /nix/store"
+              _msg_dim "  Consider: sudo nix-collect-garbage -d"
+            fi
+          fi
+
+          # /tmp space check — sandbox builds use /tmp
+          local _tmp_avail_mb
+          _tmp_avail_mb=$(df -BM --output=avail /tmp 2>/dev/null | tail -1 | tr -d ' M')
+          if [[ -n "$_tmp_avail_mb" ]] && (( _tmp_avail_mb < 1024 )); then
+            _msg_warn "Low /tmp space: ''${_tmp_avail_mb}MB free (kernel builds need ~2GB)"
+          fi
+
+          # --check: evaluate all configs without building
+          if (( check )); then
+            nrb-check $trace_flag
+            return $?
+          fi
+
+          # Update flake inputs — mutually exclusive flags
+          if (( update && update_no_kernel )); then
+            _msg_fail "--update and --update-no-kernel are mutually exclusive"
+            return 1
+          fi
+
+          if (( update )); then
+            _msg_step "Updating flake inputs (all, including kernel)..."
+            if ! nix flake update --flake "$flake_dir"; then
+              _msg_fail "Flake update failed!"
+              return 1
+            fi
+            echo ""
+          elif (( update_no_kernel )); then
+            # Autonomous kernel-safe update. Works against whatever kernels
+            # the host actually resolves to at eval time — no hardcoded input
+            # names, no skip lists, no user maintenance. Crucially, this
+            # includes EVERY specialisation's kernel — when a host declares
+            # multiple boot entries that resolve to different kernel
+            # derivations, each is protected individually. Rebuilding a
+            # locally-compiled kernel (e.g. cachyos-lto-v2 on MBP) is a
+            # 45-90 min penalty, so the guard is worth the work.
+            #
+            # Algorithm:
+            #   1. Build JSON map { default: drv, <spec-name>: drv, ... } of
+            #      every kernel this host can boot.
+            #   2. Full speculative `nix flake update`.
+            #   3. Rebuild the map. If identical → keep update.
+            #   4. If any entry differs → for each root input whose rev moved,
+            #      restore the lock, update ONLY that input, rebuild the map,
+            #      compare. Matches baseline map → safe. Differs → skip.
+            #   5. Restore baseline lock, batch-apply only safe inputs.
+            #
+            # Cost: 1 baseline eval + 1 post-update eval + N per-input evals
+            # where N = inputs whose rev actually moved. Typical daily update
+            # = 1-5 moved inputs → ~1-3 min on MBP.
+
+            local _lock_backup _mk_kern_expr _lock_guard _eval_log _escaped_dir _escaped_host
+            local _lock_fd=""
+            _lock_backup=$(mktemp -t nrb-flake-lock-XXXXXX) || {
+              _msg_fail "mktemp failed"
+              return 1
+            }
+            # Persistent log for nix-eval stderr. Survives function exit
+            # so failing runs can be diagnosed. Append (not truncate) with
+            # date header — previous run diagnostics preserved.
+            _eval_log="''${XDG_CACHE_HOME:-$HOME/.cache}/nrb-update-kernel-safe.log"
+            mkdir -p "''${_eval_log:h}" 2>/dev/null
+            echo "--- $(date -Iseconds) ---" >> "$_eval_log"
+
+            # Concurrency guard using flock on a dedicated fd. The fd is
+            # opened in a subshell-safe way and ALWAYS closed on exit via
+            # the _nrb_cleanup function — preventing the stale-lock bug
+            # where exec 9> leaked fd 9 to the parent shell indefinitely.
+            _lock_guard="$flake_dir/.nrb-update.lock"
+            _lock_fd=""
+            if command -v ${pkgs.util-linux}/bin/flock >/dev/null 2>&1; then
+              exec {_lock_fd}>"$_lock_guard"
+              if ! ${pkgs.util-linux}/bin/flock -n "$_lock_fd"; then
+                _msg_fail "Another nrb --update-no-kernel is already running on this flake"
+                exec {_lock_fd}>&-
+                rm -f "$_lock_backup"
+                return 1
+              fi
+            fi
+
+            # Cleanup function — closes lock fd, removes temp files,
+            # clears traps set by this block.
+            _nrb_cleanup() {
+              [[ -n "$_lock_fd" ]] && exec {_lock_fd}>&- 2>/dev/null
+              rm -f "$_lock_guard" "$_lock_backup"
+              trap - INT TERM HUP
+            }
+            # Restore function — called on abort to revert flake.lock
+            _nrb_abort_restore() {
+              [[ -f "$_lock_backup" ]] && cp "$_lock_backup" "$flake_dir/flake.lock" 2>/dev/null
+              _nrb_cleanup
+            }
+
+            trap '_nrb_abort_restore' INT TERM HUP
+
+            cp "$flake_dir/flake.lock" "$_lock_backup"
+
+            # Kernel map: {default: drvPath, <spec>: drvPath, ...}
+            # Uses installable syntax (not builtins.getFlake) so --override-input
+            # is honored on hosts where $HOME differs from the flake author's.
+            _mk_kern_map() {
+              nix --extra-experimental-features 'nix-command flakes' \
+                eval --json --option eval-cache false \
+                "$flake_ref#nixosConfigurations.$hostname" \
+                "''${_input_overrides[@]}" \
+                --apply '
+                  host: let
+                    specs = host.config.specialisation or {};
+                  in
+                    { default = host.config.boot.kernelPackages.kernel.drvPath; }
+                    // builtins.mapAttrs
+                         (_: s: s.configuration.boot.kernelPackages.kernel.drvPath)
+                         specs
+                ' 2>>"$_eval_log"
+            }
+            _kern_map_eq() {
+              # Canonicalise via jq sort so attribute order doesn't matter.
+              [[ "$(echo "$1" | ${pkgs.jq}/bin/jq -cS .)" == "$(echo "$2" | ${pkgs.jq}/bin/jq -cS .)" ]]
+            }
+            # Check if a kernel derivation's output is cached on any
+            # configured substituter. If cached, the "rebuild" is just a
+            # download (~30s) not a source compile (~45-90 min).
+            # Returns 0 (cached) or 1 (needs source build).
+            _kern_is_cached() {
+              local _drv="$1" _out_hash _sub
+              # Resolve derivation → main output store path via nix-store
+              # (more reliable than nix derivation show JSON parsing)
+              local -a _outputs
+              _outputs=( $(nix-store --query --outputs "$_drv" 2>/dev/null) )
+              (( ''${#_outputs[@]} == 0 )) && return 1
+              # Check the main output (first = "out", without -dev/-modules suffix)
+              local _out_path="''${_outputs[1]}"
+              _out_hash=$(basename "$_out_path" | cut -d- -f1)
+              [[ -z "$_out_hash" ]] && return 1
+              # Check each substituter for narinfo (HTTP HEAD, ~100ms each)
+              for _sub in $(nix --extra-experimental-features 'nix-command flakes' \
+                show-config 2>/dev/null | ${pkgs.gnugrep}/bin/grep '^substituters' \
+                | sed 's/^substituters = //'); do
+                if ${pkgs.curl}/bin/curl -sfI --connect-timeout 5 --max-time 10 "''${_sub}/''${_out_hash}.narinfo" >/dev/null 2>&1; then
+                  return 0
+                fi
+              done
+              return 1
+            }
+            # Compare kernel maps accounting for cache availability.
+            # Returns: 0 = safe (unchanged or cached), 1 = needs rebuild.
+            # Sets _kern_cache_status with details for display.
+            _kern_map_eq_or_cached() {
+              local _base="$1" _new="$2"
+              _kern_cache_status=""
+              _kern_map_eq "$_base" "$_new" && return 0
+              # Maps differ — check if changed kernels are all cached
+              local -a _changed_keys _uncached
+              _changed_keys=( $(${pkgs.jq}/bin/jq -nr --argjson a "$_base" --argjson b "$_new" '
+                [($a + $b) | keys[] | select(($a[.] // "") != ($b[.] // ""))] | .[]') )
+              for _k in "''${_changed_keys[@]}"; do
+                local _new_drv=$(echo "$_new" | ${pkgs.jq}/bin/jq -r --arg k "$_k" '.[$k]')
+                if ! _kern_is_cached "$_new_drv"; then
+                  _uncached+=("$_k")
+                fi
+              done
+              if (( ''${#_uncached[@]} == 0 )); then
+                _kern_cache_status="all cached (download only)"
+                return 0
+              fi
+              _kern_cache_status="source rebuild: ''${_uncached[*]}"
+              return 1
+            }
+
+            _msg_step "Autonomous kernel-safe update"
+            _msg_dim "  1/4 reading baseline kernels (default + specialisations)..."
+            local _baseline
+            _baseline=$(_mk_kern_map)
+            if [[ -z "$_baseline" ]]; then
+              _msg_fail "Could not resolve baseline kernel drvPaths — aborting"
+              _nrb_cleanup
+              return 1
+            fi
+            echo "$_baseline" | ${pkgs.jq}/bin/jq -r \
+              'to_entries[] | "      [\(.key)] \(.value | sub(".*/"; ""))"'
+
+            _msg_dim "  2/4 running full flake update..."
+            # Separate update from display — nix flake update emits to
+            # stderr, so piping through grep with pipefail causes false
+            # failures when no inputs changed (grep exit 1 → pipeline fail).
+            local _update_out
+            _update_out=$(nix flake update --flake "$flake_dir" 2>&1) || {
+              _msg_fail "Full flake update failed"
+              echo "$_update_out" >> "$_eval_log"
+              _nrb_abort_restore
+              return 1
+            }
+            echo "$_update_out" >> "$_eval_log"
+            local _update_count
+            _update_count=$(echo "$_update_out" | ${pkgs.gnugrep}/bin/grep -cE '(Updated|Added|Removed)' 2>/dev/null || true)
+            _update_count=''${_update_count##*$'\n'}
+            echo "$_update_out" | ${pkgs.gnugrep}/bin/grep -E '(Updated|Added|Removed)' | head -20 || true
+            if [[ -n "$_update_count" ]] && (( _update_count > 20 )); then
+              _msg_dim "  ... and $(( _update_count - 20 )) more"
+            fi
+
+            _msg_dim "  3/4 re-evaluating all kernels..."
+            local _new
+            _new=$(_mk_kern_map)
+            if [[ -z "$_new" ]]; then
+              _msg_fail "Post-update kernel eval failed — restoring baseline lock"
+              _nrb_abort_restore
+              return 1
+            fi
+
+            if _kern_map_eq_or_cached "$_baseline" "$_new"; then
+              if [[ -n "$_kern_cache_status" ]]; then
+                _msg_ok "  kernel changed but $_kern_cache_status — full update kept"
+              else
+                _msg_ok "  all kernels unchanged — full update kept"
+              fi
+              _nrb_cleanup
+              echo ""
+            else
+              local _affected
+              _affected=$(${pkgs.jq}/bin/jq -nr --argjson a "$_baseline" --argjson b "$_new" '
+                [($a + $b) | keys[] | select(($a[.] // "") != ($b[.] // ""))] | join(",")')
+              _msg_warn "  kernel(s) would rebuild: $_affected — isolating culprit inputs..."
+
+              # Single-pass jq: load both locks as two documents, compute
+              # name → rev for each, emit names whose rev differs. Replaces
+              # the previous read-loop that spawned 2 × N jq processes.
+              local -a _changed
+              _changed=( "''${(@f)$(
+                ${pkgs.jq}/bin/jq -rn --slurpfile a "$_lock_backup" --slurpfile b "$flake_dir/flake.lock" '
+                  def revs(lock): (lock.nodes.root.inputs // {})
+                                  | to_entries
+                                  | map({(.key): (lock.nodes[.value].locked.rev // "")})
+                                  | add;
+                  (revs($a[0])) as $oldR |
+                  (revs($b[0])) as $newR |
+                  ($oldR | keys[]) as $k |
+                  select($oldR[$k] != ($newR[$k] // "")) | $k
+                '
+              )}" )
+
+              _changed=("''${(@)_changed:#}")
+              _msg_dim "    ''${#_changed[@]} inputs moved; testing each in isolation..."
+
+              local -a _safe _unsafe
+              local _input _test _input_affected
+              for _input in "''${_changed[@]}"; do
+                cp "$_lock_backup" "$flake_dir/flake.lock"
+                if ! nix flake update --flake "$flake_dir" "$_input" 2>>"$_eval_log"; then
+                  _unsafe+=("$_input(update-failed)")
+                  continue
+                fi
+                _test=$(_mk_kern_map)
+                if [[ -z "$_test" ]]; then
+                  _unsafe+=("$_input(eval-failed)")
+                  printf "      %-30s eval failed — skipping\n" "$_input"
+                  continue
+                fi
+                if _kern_map_eq_or_cached "$_baseline" "$_test"; then
+                  _safe+=("$_input")
+                  if [[ -n "$_kern_cache_status" ]]; then
+                    printf "      %-30s ok (kernel cached)\n" "$_input"
+                  else
+                    printf "      %-30s ok\n" "$_input"
+                  fi
+                else
+                  _input_affected=$(${pkgs.jq}/bin/jq -nr --argjson a "$_baseline" --argjson b "$_test" '
+                    [($a + $b) | keys[] | select(($a[.] // "") != ($b[.] // ""))] | join(",")')
+                  _unsafe+=("$_input")
+                  printf "      %-30s rebuilds: %s — skipping\n" "$_input" "$_input_affected"
+                fi
+              done
+
+              _msg_dim "  4/4 applying safe updates..."
+              cp "$_lock_backup" "$flake_dir/flake.lock"
+              if (( ''${#_safe[@]} > 0 )); then
+                local _batch_out
+                _batch_out=$(nix flake update --flake "$flake_dir" "''${_safe[@]}" 2>&1) || {
+                  _msg_fail "Final update failed (see $_eval_log); lock restored to baseline"
+                  echo "$_batch_out" >> "$_eval_log"
+                  _nrb_abort_restore
+                  return 1
+                }
+                echo "$_batch_out" >> "$_eval_log"
+                local _batch_count
+                _batch_count=$(echo "$_batch_out" | ${pkgs.gnugrep}/bin/grep -cE '(Updated|Added|Removed)' 2>/dev/null || true)
+                _batch_count=''${_batch_count##*$'\n'}
+                echo "$_batch_out" | ${pkgs.gnugrep}/bin/grep -E '(Updated|Added|Removed)' | head -20 || true
+                if [[ -n "$_batch_count" ]] && (( _batch_count > 20 )); then
+                  _msg_dim "  ... and $(( _batch_count - 20 )) more"
+                fi
+                _msg_ok "  updated ''${#_safe[@]} inputs"
+                # Post-batch combinatorial safety check
+                local _post_batch
+                _post_batch=$(_mk_kern_map)
+                if [[ -z "$_post_batch" ]]; then
+                  _msg_fail "Post-batch kernel eval failed — restoring baseline lock"
+                  _nrb_abort_restore
+                  return 1
+                fi
+                if ! _kern_map_eq_or_cached "$_baseline" "$_post_batch"; then
+                  _msg_warn "Batch combination triggers kernel rebuild — restoring baseline"
+                  _msg_dim "  Individual inputs were safe but combination is not"
+                  _msg_dim "  No inputs updated. Building with current lock."
+                  cp "$_lock_backup" "$flake_dir/flake.lock"
+                  _nrb_cleanup
+                  echo ""
+                fi
+              else
+                _msg_dim "  no kernel-safe updates available"
+              fi
+              if (( ''${#_unsafe[@]} > 0 )); then
+                _msg_warn "  skipped ''${#_unsafe[@]} kernel-triggering: ''${_unsafe[*]}"
+                _msg_dim "    (run 'nrb --update' when you want the kernel to rebuild)"
+              fi
+              _nrb_cleanup
+              echo ""
+            fi
+
+            # Report log only if it contains any content (tee'd stderr).
+            if [[ -s "$_eval_log" ]]; then
+              _msg_dim "  eval diagnostics: $_eval_log"
+            fi
+          fi
+
+          # Dirty tree warning (check after update since --update modifies flake.lock)
+          if command -v git &>/dev/null && git -C "$flake_dir" rev-parse HEAD &>/dev/null; then
+            local dirty_files
+            dirty_files=$(git -C "$flake_dir" diff --name-only -- flake.lock flake.nix 2>/dev/null)
+            if [[ -n "$dirty_files" ]]; then
+              _msg_warn "Flake inputs have uncommitted changes"
+              echo "$dirty_files" | while IFS= read -r f; do
+                [[ -n "$f" ]] && _msg_dim "  $f modified"
+              done
+              _msg_dim "  Nix may use cached evaluations. Commit first for reliable builds."
+              echo ""
+            fi
+          fi
+
+          # Pre-authenticate sudo (cache credentials before long build)
+          if (( ! dry )); then
+            if ! sudo -v 2>/dev/null; then
+              _msg_fail "sudo authentication failed"
+              return 1
+            fi
+          fi
+
+          # Sudo keepalive — refresh credentials every 60s during build.
+          # Cleanup via _nrb_kill_sudo, called explicitly on every exit
+          # path instead of an EXIT trap (avoids overwriting the
+          # update-section's trap chain).
+          local _sudo_keepalive_pid=""
+          _nrb_kill_sudo() {
+            if [[ -n "$_sudo_keepalive_pid" ]]; then
+              kill "$_sudo_keepalive_pid" 2>/dev/null
+              wait "$_sudo_keepalive_pid" 2>/dev/null
+            fi
+            _sudo_keepalive_pid=""
+          }
+          if (( ! dry )); then
+            ( trap 'exit 0' TERM INT HUP; while true; do sudo -v 2>/dev/null; sleep 60 & wait $!; done ) &
+            _sudo_keepalive_pid=$!
+            trap '_nrb_kill_sudo' INT TERM
+          fi
+
+          # Remote builder reachability check — TCP-on-22 probe.
+          #
+          # The earlier implementation used `nix store info --store <uri>`,
+          # which performs SSH auth as the CALLING USER. The actual builds
+          # offload via nix-daemon (root), which uses /root/.ssh/<key> per
+          # nix.buildMachines config. Those two identities don't match —
+          # the user-shell ssh probe always failed (couldn't read /root's
+          # key), so nrb would inject `--builders ""` and disable offload
+          # even when the builder was actually reachable. Real-world
+          # symptom: nrb always built locally despite working builders.
+          #
+          # TCP-on-22 matches the probe's actual intent ("can nix-daemon
+          # reach this host?") without requiring identity material the
+          # user-shell doesn't have. SSH auth is configured declaratively
+          # in NixOS (nix.buildMachines.<X>.sshKey) — trust the config to
+          # be correct; let nix-daemon error out loudly if it isn't.
+          local -a _jobs_override=()
+          if [[ -f /etc/nix/machines ]] && [[ -s /etc/nix/machines ]]; then
+            local -a _builder_uris=()
+            local _line _uri
+            while IFS= read -r _line; do
+              [[ -z "$_line" || "$_line" == \#* ]] && continue
+              _uri=''${_line%% *}
+              [[ "$_uri" != ssh://* && "$_uri" != ssh-ng://* ]] && _uri="ssh://$_uri"
+              [[ -n "$_uri" ]] && _builder_uris+=("$_uri")
+            done < /etc/nix/machines
+
+            local _any_reachable=0
+            if (( ''${#_builder_uris[@]} > 0 )); then
+              _msg_step "Checking remote builders..."
+              local _host _port
+              for _uri in "''${_builder_uris[@]}"; do
+                # Extract host:port from ssh[-ng]://user@host[:port]/...
+                _host=''${_uri#*://}
+                _host=''${_host#*@}
+                _host=''${_host%%/*}
+                _port=22
+                if [[ "$_host" == *:* ]]; then
+                  _port=''${_host##*:}
+                  _host=''${_host%:*}
+                fi
+                # /dev/tcp probe -- pure shell, no SSH, no key. Drain the peer's SSH
+                # banner before closing fd 3: closing with the banner still unread
+                # forces a TCP RST that its sshd logs as "kex_exchange_identification:
+                # Connection reset by peer [preauth]"; reading it first closes via FIN.
+                # The '&& { ... }' keeps the connect's exit status as the reachability
+                # verdict -- the group's exit 0 must not mask a failed connect.
+                if timeout 5 bash -c "exec 3<>/dev/tcp/$_host/$_port && { IFS= read -r -t1 -u3 _ || true; exec 3>&-; }" 2>/dev/null; then
+                  _msg_dim "  $_uri reachable"
+                  _any_reachable=1
+                else
+                  _msg_dim "  $_uri unreachable"
+                fi
+              done
+            fi
+
+            if (( ! _any_reachable )); then
+              _msg_warn "All remote builders unreachable — building locally"
+              _msg_dim "  Skipping remote to avoid SSH timeout delays."
+              echo ""
+              _jobs_override=(--builders "")
+            fi
+          fi
+
+          # Build
+          _msg_step "Building $flake_ref#nixosConfigurations.$hostname ..."
+          local start_time=$SECONDS
+
+          local build_path _build_rc=0
+          local _build_out
+          _build_out=$(mktemp -t nrb-build-XXXXXX) || {
+            _msg_fail "Cannot create temp file for build output"
+            _nrb_kill_sudo
+            return 1
+          }
+
+          if command -v nom &>/dev/null; then
+            nom build \
+              "$flake_ref#nixosConfigurations.$hostname.config.system.build.toplevel" \
+              --print-out-paths --no-link \
+              "''${_input_overrides[@]}" "''${_jobs_override[@]}" $trace_flag \
+              > "$_build_out" || _build_rc=$?
+          else
+            nix --extra-experimental-features 'nix-command flakes' \
+              build "$flake_ref#nixosConfigurations.$hostname.config.system.build.toplevel" \
+              --print-out-paths --no-link \
+              "''${_input_overrides[@]}" "''${_jobs_override[@]}" $trace_flag \
+              > "$_build_out" || _build_rc=$?
+          fi
+
+          local elapsed=$(( SECONDS - start_time ))
+
+          if (( _build_rc != 0 )); then
+            _msg_fail "Build failed! (''${elapsed}s)"
+            rm -f "$_build_out"
+            _nrb_kill_sudo
+            return 1
+          fi
+
+          build_path=$(grep '^/nix/store/' "$_build_out" | tail -n1)
+          rm -f "$_build_out"
+
+          if [[ -z "$build_path" || ! -d "$build_path" ]]; then
+            _msg_fail "Build produced no valid output path (''${elapsed}s)"
+            _nrb_kill_sudo
+            return 1
+          fi
+
+          _msg_ok "Build succeeded in ''${elapsed}s"
+          # Bell on completion — useful when build takes 10+ min
+          printf '\a'
+
+          # System diff
+          echo ""
+          _msg_step "Changes compared to current system:"
+          if command -v nvd &>/dev/null; then
+            nvd diff /run/current-system "$build_path" 2>/dev/null || true
+          else
+            _msg_dim "  (nvd not installed — enable myModules.home.nvd for generation diffs)"
+          fi
+
+          # Kernel change detection
+          local cur_kernel new_kernel needs_reboot=0
+          cur_kernel=$(readlink -f /run/current-system/kernel 2>/dev/null || echo "")
+          new_kernel=$(readlink -f "$build_path/kernel" 2>/dev/null || echo "")
+          if [[ -n "$cur_kernel" && -n "$new_kernel" && "$cur_kernel" != "$new_kernel" ]]; then
+            needs_reboot=1
+            echo ""
+            _msg_warn "Kernel changed!"
+            _msg_dim "  Current: $(basename "$cur_kernel")"
+            _msg_dim "  New:     $(basename "$new_kernel")"
+          fi
+
+          # Kernel module change detection — compare the resolved
+          # kernel-modules store path (derivation hash differs whenever
+          # the module set changes, including out-of-tree modules like
+          # b43, zfs, virtualbox, ryzen-smu). Avoids fragile globs.
+          local cur_mods_path new_mods_path
+          cur_mods_path=$(readlink -f /run/current-system/kernel-modules 2>/dev/null || echo "")
+          new_mods_path=$(readlink -f "$build_path/kernel-modules" 2>/dev/null || echo "")
+          if [[ -n "$cur_mods_path" && -n "$new_mods_path" && "$cur_mods_path" != "$new_mods_path" ]]; then
+            needs_reboot=1
+            echo ""
+            _msg_warn "Kernel modules changed:"
+
+            # Per-module diff — enumerate with `find` (glob-safe) over the
+            # modules tree. `-printf` is GNU-find specific; fall back to
+            # `-exec basename` if missing (NixOS ships GNU findutils).
+            local cur_list new_list
+            cur_list=$(find "$cur_mods_path/lib/modules" -type f \
+                         \( -name "*.ko" -o -name "*.ko.zst" -o -name "*.ko.xz" -o -name "*.ko.gz" \) \
+                         -printf '%f\n' 2>/dev/null | sort -u)
+            new_list=$(find "$new_mods_path/lib/modules" -type f \
+                         \( -name "*.ko" -o -name "*.ko.zst" -o -name "*.ko.xz" -o -name "*.ko.gz" \) \
+                         -printf '%f\n' 2>/dev/null | sort -u)
+
+            if [[ -n "$cur_list" || -n "$new_list" ]]; then
+              diff <(echo "$cur_list") <(echo "$new_list") 2>/dev/null \
+                | grep '^[<>]' | while read -r line; do
+                  local mod="''${line#[<>] }"
+                  mod="''${mod%%.ko*}"
+                  case "$line" in
+                    \<*) _msg_dim "  - $mod (removed)" ;;
+                    \>*) _msg_dim "  + $mod (added/updated)" ;;
+                  esac
+                done
+            else
+              _msg_dim "  (derivation hash changed — module tree rebuilt)"
+            fi
+          fi
+
+          # Show specialisation info if any exist in the build
+          if [[ -d "$build_path/specialisation" ]]; then
+            local spec_count=$(ls "$build_path/specialisation" 2>/dev/null | wc -l)
+            if (( spec_count > 0 )); then
+              echo ""
+              _msg_info "Boot variants ($spec_count specialisations):"
+              for spec_dir in "$build_path/specialisation"/*/; do
+                local spec_name=$(basename "$spec_dir")
+                local spec_kernel=$(readlink -f "$spec_dir/kernel" 2>/dev/null || echo "")
+                local spec_kname=""
+                [[ -n "$spec_kernel" ]] && spec_kname=" ($(basename "$spec_kernel"))"
+                _msg_dim "  + $spec_name$spec_kname"
+              done
+            fi
+          fi
+
+          # Resolve which variant to activate. Default: preserve the booted
+          # specialisation across the rebuild (rebuilding from vfio-dynamic should
+          # re-enter vfio-dynamic, not silently drop to base). --spec overrides it,
+          # --base forces the base. Only meaningful when activating THIS host.
+          local active_spec="" spec_explicit=0
+          if [[ "$hostname" == "$(hostname)" ]]; then
+            if (( base_only )); then
+              active_spec=""
+            elif [[ -n "$spec_target" ]]; then
+              active_spec="$spec_target"; spec_explicit=1
+            else
+              active_spec=$(_nrb_booted_spec)
+            fi
+          fi
+          # `--spec base` is the explicit way to say "the base config".
+          if [[ "$active_spec" == "base" ]]; then
+            active_spec=""
+          fi
+          # The chosen spec must exist in the NEW build. A typo'd --spec is a hard
+          # error; an auto-detected spec that vanished (renamed/removed since boot)
+          # falls back to base, loudly.
+          if [[ -n "$active_spec" && ! -d "$build_path/specialisation/$active_spec" ]]; then
+            local _avail
+            _avail=$(ls "$build_path/specialisation" 2>/dev/null | tr '\n' ' ')
+            if (( spec_explicit )); then
+              _msg_fail "Specialisation '$active_spec' does not exist in $hostname's config."
+              [[ -n "$_avail" ]] && _msg_dim "  Available: $_avail"
+              return 1
+            fi
+            _msg_warn "Booted specialisation '$active_spec' is not in the new build — activating base."
+            [[ -n "$_avail" ]] && _msg_dim "  Available: $_avail"
+            active_spec=""
+          fi
+          if [[ -n "$active_spec" ]]; then
+            _msg_info "Target variant: specialisation '$active_spec'"
+          fi
+
+          # Dry run stops here
+          if (( dry )); then
+            echo ""
+            _msg_info "Dry run — not activating."
+            _msg_dim "  Built path: $build_path"
+            [[ -n "$active_spec" ]] && _msg_dim "  Would activate specialisation: $active_spec"
+            return 0
+          fi
+
+          # Snapshot HM generation before switch
+          local hm_gcroot="$HOME/.local/state/home-manager/gcroots/current-home"
+          local hm_before
+          hm_before=$(readlink "$hm_gcroot" 2>/dev/null || echo "")
+
+          # Set system profile
+          echo ""
+          _msg_step "Setting system profile..."
+          if ! sudo nrb-activate set-profile "$build_path"; then
+            _msg_fail "Profile switch cancelled or failed!"
+            _msg_dim "  Built path: $build_path"
+            _msg_dim "  To activate manually:"
+            _msg_dim "  sudo nrb-activate set-profile $build_path"
+            _msg_dim "  sudo nrb-activate switch $build_path"
+            _nrb_kill_sudo
+            return 1
+          fi
+
+          # Activate
+          local action="switch"
+          if (( boot )); then
+            action="boot"
+            _msg_step "Activating for next boot..."
+          else
+            _msg_step "Activating new configuration..."
+          fi
+          local switch_rc=0
+          sudo nrb-activate "$action" "$build_path" "$active_spec" || switch_rc=$?
+          case $switch_rc in
+            0)  ;; # success
+            2)  _msg_warn "Activation scripts had errors (non-fatal)"
+                _msg_dim "  Some activation scripts failed. Check 'journalctl -b 0 | grep activate' for details." ;;
+            100) _msg_warn "System requires reboot (init version changed)"
+                 needs_reboot=1 ;;
+            *)  _msg_fail "Activation failed! (exit $switch_rc)"
+                _msg_dim "  The system profile was set but activation did not complete."
+                _msg_dim "  Rollback: sudo nixos-rebuild switch --rollback"
+                _nrb_kill_sudo
+                return 1 ;;
+          esac
+
+          # Post-switch verification — skipped when switch_rc=100 (reboot
+          # required): switch-to-configuration deferred activation, so
+          # /run/current-system legitimately still points at the old
+          # generation until reboot. Checking it here is a false failure.
+          local current_after expected_after
+          current_after=$(readlink -f /run/current-system 2>/dev/null)
+          # A specialisation switch points /run/current-system at the spec's own
+          # closure (build_path/specialisation/<name>), not the base build_path.
+          if [[ -n "$active_spec" ]]; then
+            expected_after=$(readlink -f "$build_path/specialisation/$active_spec" 2>/dev/null)
+          else
+            expected_after="$build_path"
+          fi
+          if [[ "$action" == "switch" && $switch_rc -ne 100 && "$current_after" != "$expected_after" ]]; then
+            _msg_fail "/run/current-system does not match the activated path!"
+            _msg_dim "  Expected: $expected_after"
+            _msg_dim "  Actual:   $current_after"
+            _msg_dim "  Another switch may have raced. Rollback: sudo nixos-rebuild switch --rollback"
+            _nrb_kill_sudo
+            return 1
+          fi
+
+          # Generation info
+          local gen
+          gen=$(readlink /nix/var/nix/profiles/system | sed 's/system-\(.*\)-link/\1/')
+          echo ""
+          _msg_ok "Active generation: $gen"
+
+          # Boot entry verification (--boot mode)
+          if (( boot )); then
+            local _boot_entry_found=0
+            # systemd-boot: check /boot/loader/entries/ for this generation
+            if [[ -d /boot/loader/entries ]]; then
+              if ls /boot/loader/entries/nixos-generation-"$gen"[-.]*.conf 1>/dev/null 2>&1; then
+                _boot_entry_found=1
+                local _entry_count
+                _entry_count=$(ls /boot/loader/entries/nixos-generation-"$gen"[-.]*.conf 2>/dev/null | wc -l)
+                _msg_ok "Boot entry written ($_entry_count entries for generation $gen)"
+              fi
+            fi
+            # grub: check /boot/grub/grub.cfg references this generation
+            if [[ -f /boot/grub/grub.cfg ]] && grep -q "generation-$gen" /boot/grub/grub.cfg 2>/dev/null; then
+              _boot_entry_found=1
+              _msg_ok "GRUB entry written for generation $gen"
+            fi
+            if (( ! _boot_entry_found )); then
+              _msg_warn "Could not verify boot entry for generation $gen"
+              _msg_dim "  Check: ls /boot/loader/entries/ or cat /boot/grub/grub.cfg"
+              _msg_dim "  System may boot into old generation until verified"
+            fi
+          fi
+
+          # HM diff (compare home-files trees between new build vs current)
+          if (( ! boot )); then
+            # Find HM generation inside the new system build
+            local hm_new
+            hm_new=$(find "$build_path/etc/profiles/per-user" -name home-manager -type l 2>/dev/null | head -1)
+            if [[ -n "$hm_new" ]]; then
+              hm_new=$(readlink -f "$hm_new" 2>/dev/null)
+            fi
+            # Fall back to gcroot if we can't find it in the build
+            if [[ -z "$hm_new" || ! -d "$hm_new" ]]; then
+              local hm_wait=0
+              while (( hm_wait < 8 )); do
+                hm_new=$(readlink "$hm_gcroot" 2>/dev/null || echo "")
+                [[ -n "$hm_new" && "$hm_new" != "$hm_before" ]] && break
+                sleep 0.5
+                (( hm_wait++ ))
+              done
+            fi
+            if [[ -n "$hm_before" && -n "$hm_new" && "$hm_before" != "$hm_new" ]]; then
+              if [[ -d "$hm_before/home-files" && -d "$hm_new/home-files" ]]; then
+                echo ""
+                _msg_info "Home Manager changes:"
+                diff -rq "$hm_before/home-files" "$hm_new/home-files" 2>/dev/null | \
+                  sed 's|.*/home-files/|  |' | head -30
+              fi
+            else
+              echo ""
+              _msg_info "Home Manager: no change"
+            fi
+          fi
+
+          # Reboot reminder (kernel or modules changed)
+          if (( needs_reboot )); then
+            echo ""
+            _msg_warn "Reboot required for kernel/module changes!"
+          fi
+
+          _nrb_kill_sudo
+
+          # Rollback hint
+          echo ""
+          _msg_dim "Rollback: sudo nixos-rebuild switch --rollback"
+        }
+  '';
+
+  nrbCheck = ''
+    nrb-check() {
+      ${prologue}
+      local _jq="${pkgs.jq}/bin/jq"
+      local trace_flag=""
+      local configs_json name eval_output specs_json spec spec_output
+      local -a config_names spec_names
+      local total=0 passed=0 failed=0
+
+      [[ "''${1:-}" == "--show-trace" ]] && trace_flag="--show-trace"
+
+      echo "Checking all NixOS configurations in $flake_dir"
+      echo ""
+
+      # Discover all nixosConfigurations dynamically
+      configs_json=$(nix --extra-experimental-features 'nix-command flakes' \
+        eval "$flake_ref#nixosConfigurations" "''${_input_overrides[@]}" --apply 'x: builtins.attrNames x' --json 2>/dev/null)
+      if [[ -z "$configs_json" || "$configs_json" == "[]" ]]; then
+        echo "ERROR: No nixosConfigurations found in $flake_dir"
+        return 1
+      fi
+
+      config_names=()
+      while IFS= read -r name; do
+        config_names+=("$name")
+      done < <(echo "$configs_json" | $_jq -r '.[]')
+
+      for name in "''${config_names[@]}"; do
+        (( total++ ))
+        printf "  %-30s " "$name"
+
+        if eval_output=$(nix --extra-experimental-features 'nix-command flakes' \
+          eval "$flake_ref#nixosConfigurations.$name.config.system.build.toplevel.drvPath" \
+          "''${_input_overrides[@]}" $trace_flag 2>&1); then
+          echo "OK"
+          (( passed++ ))
+
+          # Discover and individually evaluate each specialisation
+          specs_json=$(nix --extra-experimental-features 'nix-command flakes' \
+            eval "$flake_ref#nixosConfigurations.$name.config.specialisation" \
+            "''${_input_overrides[@]}" --apply 'x: builtins.attrNames x' --json 2>/dev/null || echo "[]")
+
+          if [[ "$specs_json" != "[]" ]]; then
+            spec_names=()
+            while IFS= read -r spec; do
+              spec_names+=("$spec")
+            done < <(echo "$specs_json" | $_jq -r '.[]')
+
+            for spec in "''${spec_names[@]}"; do
+              (( total++ ))
+              printf "    %-26s " "+ $spec"
+              if spec_output=$(nix --extra-experimental-features 'nix-command flakes' \
+                eval "$flake_ref#nixosConfigurations.$name.config.specialisation.$spec.configuration.system.build.toplevel.drvPath" \
+                "''${_input_overrides[@]}" $trace_flag 2>&1); then
+                echo "OK"
+                (( passed++ ))
+              else
+                echo "FAILED"
+                (( failed++ ))
+                echo "$spec_output" | tail -5 | sed 's/^/      /'
+              fi
+            done
+          fi
+        else
+          echo "FAILED"
+          (( failed++ ))
+          echo "$eval_output" | tail -5 | sed 's/^/      /'
+        fi
+      done
+
+      echo ""
+      echo "Results: $passed/$total passed, $failed failed"
+      (( failed == 0 ))
+    }
+  '';
+
+  nrbInfo = ''
+    nrb-info() {
+      ${bootedSpec}
+      ${listConfigs}
+      ${prologue}
+      local _jq="${pkgs.jq}/bin/jq"
+      local hostname booted_spec="" gen hm_gen store_size
+      local name marker specs spec smarker
+      hostname=$(hostname)
+
+      echo "NixOS System Info"
+      echo "================="
+      echo ""
+      echo "  Hostname:     $hostname"
+      echo "  Kernel:       $(uname -r)"
+      echo "  NixOS:        $(nixos-version 2>/dev/null || echo 'unknown')"
+
+      booted_spec=$(_nrb_booted_spec)
+      if [[ -n "$booted_spec" ]]; then
+        echo "  Active spec:  $booted_spec"
+      fi
+      echo ""
+
+      # Current generation
+      gen=$(readlink /nix/var/nix/profiles/system | sed 's/system-\(.*\)-link/\1/')
+      echo "  Generation:   $gen"
+
+      # HM generation
+      hm_gen=$(home-manager generations 2>/dev/null | head -1)
+      if [[ -n "$hm_gen" ]]; then
+        echo "  HM Gen:       $hm_gen"
+      fi
+
+      # Store size
+      store_size=$(du -sh /nix/store 2>/dev/null | cut -f1)
+      if [[ -n "$store_size" ]]; then
+        echo "  Store size:   $store_size"
+      fi
+      echo ""
+
+      # Available configs + specialisations
+      echo "Configurations:"
+      _nrb_list_configs info
+      echo ""
+
+      # Recent generations
+      echo "Recent generations:"
+      sudo nix-env -p /nix/var/nix/profiles/system --list-generations 2>/dev/null | tail -5 | sed 's/^/  /'
+    }
+  '';
+}

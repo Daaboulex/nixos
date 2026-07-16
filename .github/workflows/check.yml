@@ -1,0 +1,126 @@
+name: Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: cachix/install-nix-action@v31
+      - name: Evaluate all host configurations
+        run: |
+          failed=0
+
+          # Ryzen: evaluate etc (not toplevel) — VFIO specialisation
+          # triggers IFD that depends on overlay packages not in any
+          # public cache. Full toplevel validated locally by pre-commit
+          # nix-eval-check hook. TODO: self-hosted cache or runner.
+          printf "  %-25s " "ryzen-9950x3d"
+          if output=$(nix eval ".#nixosConfigurations.ryzen-9950x3d.config.system.build.etc.drvPath" \
+            --override-input site path:./ci/site-stub 2>&1); then
+            echo "OK (etc)"
+          else
+            echo "FAIL"
+            echo "$output" | tail -5 | sed 's/^/    /'
+            failed=1
+          fi
+
+          # Macbook + pixel: full toplevel eval
+          for host in macbook-pro-9-2 pixel-9-pro; do
+            printf "  %-25s " "$host"
+            if output=$(nix eval ".#nixosConfigurations.$host.config.system.build.toplevel.drvPath" \
+              --override-input site path:./ci/site-stub 2>&1); then
+              echo "OK"
+            else
+              echo "FAIL"
+              echo "$output" | tail -5 | sed 's/^/    /'
+              failed=1
+            fi
+          done
+
+          exit $failed
+
+  gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: cachix/install-nix-action@v31
+      - name: Standards gates (flake checks — format / placement / dendritic / dangling)
+        run: |
+          # Coding-standard gates enforced in CI. Excluded on purpose:
+          #   - VM tests (vm-*, smoke-*)      → need KVM / a real builder
+          #   - eval-* + host toplevels       → VFIO IFD on hosted runners (the
+          #                                     `eval` job above covers host eval)
+          #   - pre-commit                    → its check-behind-remote hook needs
+          #                                     a live git remote (offline build)
+          # Add new lint/standards checks to this list.
+          nix build --no-link --print-build-logs \
+            --override-input site path:./ci/site-stub \
+            .#checks.x86_64-linux.treefmt \
+            .#checks.x86_64-linux.check-placement \
+            .#checks.x86_64-linux.check-placement-test \
+            .#checks.x86_64-linux.check-dangling-refs \
+            .#checks.x86_64-linux.check-dangling-refs-test \
+            .#checks.x86_64-linux.check-no-foreign-config \
+            .#checks.x86_64-linux.check-no-foreign-config-test \
+            .#checks.x86_64-linux.check-dedup \
+            .#checks.x86_64-linux.check-dedup-test \
+            .#checks.x86_64-linux.check-specialisation-placement \
+            .#checks.x86_64-linux.check-specialisation-placement-test \
+            .#checks.x86_64-linux.check-helper-naming \
+            .#checks.x86_64-linux.check-helper-naming-test \
+            .#checks.x86_64-linux.check-no-narration-comments \
+            .#checks.x86_64-linux.check-no-narration-comments-test \
+            .#checks.x86_64-linux.nixos-exhaustiveness \
+            .#checks.x86_64-linux.nixos-exhaustiveness-test \
+            .#checks.x86_64-linux.eval-multiseat-collisions \
+            .#checks.x86_64-linux.nrb-activate-regex-test \
+            .#checks.x86_64-linux.nrb-activate-spec-regex-test \
+            .#checks.x86_64-linux.nrb-booted-spec-test \
+            .#checks.x86_64-linux.nrb-flag-compat-host-deploy \
+            .#checks.x86_64-linux.nrb-flag-spec-base-exclusive \
+            .#checks.x86_64-linux.nrb-flag-spec-deploy-exclusive \
+            .#checks.x86_64-linux.nrb-flag-spec-check-exclusive \
+            .#checks.x86_64-linux.check-no-with-lib \
+            .#checks.x86_64-linux.check-no-with-lib-test \
+            .#checks.x86_64-linux.check-no-dated-comments \
+            .#checks.x86_64-linux.check-no-dated-comments-test \
+            .#checks.x86_64-linux.check-mkforce-comment \
+            .#checks.x86_64-linux.check-mkforce-comment-test \
+            .#checks.x86_64-linux.check-assertion-format \
+            .#checks.x86_64-linux.check-assertion-format-test \
+            .#checks.x86_64-linux.check-module-docstring \
+            .#checks.x86_64-linux.check-module-docstring-test \
+            .#checks.x86_64-linux.check-module-class \
+            .#checks.x86_64-linux.check-module-class-test \
+            .#checks.x86_64-linux.check-secrets-leak \
+            .#checks.x86_64-linux.check-secrets-leak-test \
+            .#checks.x86_64-linux.check-no-cross-tree-import \
+            .#checks.x86_64-linux.check-no-cross-tree-import-test \
+            .#checks.x86_64-linux.eval-mylib-mkSimplePackage \
+            .#checks.x86_64-linux.eval-mylib-mergeSettings \
+            .#checks.x86_64-linux.eval-mylib-mkSettingsOption \
+            .#checks.x86_64-linux.eval-mylib-themeCtx \
+            .#checks.x86_64-linux.eval-mylib-withStdenvCC \
+            .#checks.x86_64-linux.eval-mylib-kernelModuleGuards \
+            .#checks.x86_64-linux.eval-mylib-specialisations \
+            .#checks.x86_64-linux.consumer-nixos-import \
+            .#checks.x86_64-linux.consumer-hm-module-count \
+            .#checks.x86_64-linux.eval-no-deprecations-test
+            # eval-mylib-* (lib contracts), consumer-* (module / homeModule shape),
+            # eval-multiseat-collisions, and eval-no-deprecations-test are PURE
+            # evals (over lib / seat decls / strings, no nixosConfiguration
+            # toplevel / IFD) → safe on a hosted runner. The real eval-no-
+            # deprecations check evals host configs (ryzen IFD), so it runs in
+            # the local/ryzen `nix flake check`, like the other eval-*.
+            # eval-site-stub-parity is local-only (needs the private site; in CI
+            # the --override-input makes it stub-vs-stub, trivially passing).
+      - name: Secret scan (gitleaks)
+        # Backstop for the pre-commit gitleaks hook (the gates above exclude
+        # pre-commit). Git mode → respects .gitignore, so repos/ is never scanned.
+        run: nix run nixpkgs#gitleaks -- detect --redact --no-banner --config .gitleaks.toml --source .
