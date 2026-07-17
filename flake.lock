@@ -2358,11 +2358,11 @@
         "std": "std_6"
       },
       "locked": {
-        "lastModified": 1784238625,
-        "narHash": "sha256-8JiEGkOcanUAsg3DScKJOfI/eknyRZkvCfAFh03wgcY=",
+        "lastModified": 1784246632,
+        "narHash": "sha256-YrssDuLVD7KgQAkTQ4thdlq9wHNh44FEhA5BwtMlYME=",
         "owner": "Daaboulex",
         "repo": "linux-corecycler",
-        "rev": "f6af5719643bfecdd59e719fefa11ef0f2bce00b",
+        "rev": "6ab6201a394fcbf8213c0144928212f6db5d74f2",
         "type": "github"
       },
       "original": {
@@ -2398,11 +2398,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1784231669,
-        "narHash": "sha256-qznjQm/Qvs0gAaLHbb9JmbHW9yArakJ4lfEQ11oxd0c=",
+        "lastModified": 1784240587,
+        "narHash": "sha256-U02S4TzJ0OUyAF60dtzWaCtfKsjj0Vjywqt1aj9Fegc=",
         "owner": "numtide",
         "repo": "llm-agents.nix",
-        "rev": "f84332c30eb4bac4d96a4648748ef9d0fe064028",
+        "rev": "b384352cb2f0bfd8ec2ce984f87ec2ad0a293e2c",
         "type": "github"
       },
       "original": {
@@ -4434,11 +4434,11 @@
         "std": "std_21"
       },
       "locked": {
-        "lastModified": 1783957738,
-        "narHash": "sha256-GoUX6xzGpVA3Zdu2qEXiFMdymIQtbx5gVQJlT4UTw/M=",
+        "lastModified": 1784245893,
+        "narHash": "sha256-NgnU7+tmhIPuj0hYudsOYwuuL9dkQQsTBW+Vo8vHbRE=",
         "owner": "Daaboulex",
         "repo": "vkBasalt_overlay_wayland",
-        "rev": "6d2975d6259097abe19fe2331b9cccd4e6537f37",
+        "rev": "781ca456d729584dcb6385bc1b132437451be8c2",
         "type": "github"
       },
       "original": {
