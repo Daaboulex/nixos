@@ -78,7 +78,6 @@ jobs:
             .#checks.x86_64-linux.check-no-narration-comments-test \
             .#checks.x86_64-linux.nixos-exhaustiveness \
             .#checks.x86_64-linux.nixos-exhaustiveness-test \
-            .#checks.x86_64-linux.eval-multiseat-collisions \
             .#checks.x86_64-linux.nrb-activate-regex-test \
             .#checks.x86_64-linux.nrb-activate-spec-regex-test \
             .#checks.x86_64-linux.nrb-booted-spec-test \
@@ -113,9 +112,9 @@ jobs:
             .#checks.x86_64-linux.consumer-hm-module-count \
             .#checks.x86_64-linux.eval-no-deprecations-test
             # eval-mylib-* (lib contracts), consumer-* (module / homeModule shape),
-            # eval-multiseat-collisions, and eval-no-deprecations-test are PURE
-            # evals (over lib / seat decls / strings, no nixosConfiguration
-            # toplevel / IFD) → safe on a hosted runner. The real eval-no-
+            # and eval-no-deprecations-test are PURE evals (over lib / strings,
+            # no nixosConfiguration toplevel / IFD) → safe on a hosted runner.
+            # The real eval-no-
             # deprecations check evals host configs (ryzen IFD), so it runs in
             # the local/ryzen `nix flake check`, like the other eval-*.
             # eval-site-stub-parity is local-only (needs the private site; in CI

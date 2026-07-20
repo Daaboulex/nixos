@@ -86,7 +86,6 @@
             inputs.self.modules.nixos.hardware-acpid
             inputs.self.modules.nixos.hardware-upower
             inputs.self.modules.nixos.hardware-usbmuxd
-            inputs.self.modules.nixos.hardware-multiseat
             inputs.self.modules.nixos.hardware-rift-cv1
 
             # Tuning

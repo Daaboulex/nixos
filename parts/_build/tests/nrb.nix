@@ -278,7 +278,7 @@
         # activate, so the arg can never escape the verified base path.
         nrb-activate-spec-regex-test = pkgs.runCommand "nrb-activate-spec-regex-test" { } ''
           set -euo pipefail
-          for ok in vfio-amd multiseat vfio_all v123; do
+          for ok in vfio-amd vfio-both vfio_all v123; do
             [[ "$ok" =~ ^[a-zA-Z0-9_-]+$ ]] \
               || { echo "FAIL: valid spec '$ok' rejected"; exit 1; }
           done

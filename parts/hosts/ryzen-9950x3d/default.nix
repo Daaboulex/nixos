@@ -439,7 +439,7 @@
         enable = true;
         powerOnBoot = true;
       };
-      riftCv1.enable = true; # Monado/OpenHMD on the host 9070 XT (VFIO/multiseat profiles force it off)
+      riftCv1.enable = true; # Monado/OpenHMD on the host 9070 XT (VFIO profiles force it off)
       graphics = {
         enable = true;
         enable32Bit = true; # (default)

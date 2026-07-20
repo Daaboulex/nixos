@@ -34,7 +34,7 @@ let
       function = lib.toInt (builtins.elemAt parts 3);
     };
 
-  # Well-formedness lives in lib/pci.nix (shared with displays + multiseat);
+  # Well-formedness lives in lib/pci.nix (shared with displays);
   # the domain-0000 pin matches parsePciAddr's hardcoded domain=0.
   inherit (myLib.pci) isValidPciAddr;
 
