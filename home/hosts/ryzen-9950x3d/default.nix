@@ -289,7 +289,6 @@
   # CoreCycler
   myModules.home = {
     corecycler.unfreeBackends = true;
-    corecycler.autoResume.enable = true;
   };
 
   # vscodium: FHS package + marketplace extensions (host-specific)
