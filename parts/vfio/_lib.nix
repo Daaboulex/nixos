@@ -19,7 +19,7 @@ let
   # ── PCI address parsing ──────────────────────────────────────────────────
   # Nix has no direct hex parser; TOML integers accept 0x literals, so
   # fromTOML is the stdlib route (parsePciAddr's regex guarantees hex input).
-  hexToInt = s: (builtins.fromTOML "n = 0x${s}").n;
+  hexToInt = s: (fromTOML "n = 0x${s}").n;
 
   parsePciAddr =
     addr:

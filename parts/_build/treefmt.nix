@@ -21,6 +21,25 @@
           no-underscore = true;
         };
         programs.statix.enable = true;
+        # libnixf semantic diagnostics (the nixd project's linter): parse
+        # errors, escaping `with`, redundant builtins. prefixes — checks statix
+        # and deadnix don't cover.
+        programs.nixf-diagnose = {
+          enable = true;
+          ignore = [
+            # Module/flake-parts destructure idiom — same concession as
+            # deadnix no-lambda-pattern-names above. The @-pattern variant
+            # covers factory-consumer wrappers ({ … }@args: (myLib.mk…) args),
+            # where the formals drive module-system arg injection.
+            "sema-unused-def-lambda-noarg-formal"
+            "sema-unused-def-lambda-witharg-formal"
+            # Attr-path merge (a.b = …; later a.c = …;) is idiomatic and
+            # load-bearing in host manifests (enable list + themed sections);
+            # true same-key duplicates are eval errors the host-eval gates
+            # catch.
+            "sema-duplicated-attrname"
+          ];
+        };
 
         # Shell
         programs.shfmt.enable = true;

@@ -272,14 +272,7 @@
       imports = [ ./parts/flake-module.nix ];
 
       perSystem =
-        {
-          config,
-          self',
-          inputs',
-          pkgs,
-          system,
-          ...
-        }:
+        { system, ... }:
         {
           _module.args.pkgs = import inputs.nixpkgs {
             localSystem.system = system;

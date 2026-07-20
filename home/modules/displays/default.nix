@@ -107,7 +107,7 @@ let
       );
       # Default positions (from monitor definitions) when toggling OFF
       repositionOff = lib.concatStringsSep " \\\n          " (
-        builtins.map (
+        map (
           om: "\"output.${om.connector}.position.${toString om.position.x},${toString om.position.y}\""
         ) (builtins.filter (om: builtins.hasAttr om.connector m.toggle.repositions) sortedMonitors)
       );
@@ -238,7 +238,7 @@ in
   config = lib.mkIf (cfg.enable && displaysCfg.enable && displaysCfg.monitors != { }) {
 
     # Packages: display-arrange + toggle scripts
-    home.packages = [ displayArrangeScript ] ++ builtins.map mkToggleScript toggleMonitors;
+    home.packages = [ displayArrangeScript ] ++ map mkToggleScript toggleMonitors;
 
     # Tiling activation (runs on Home Manager switch)
     home.activation.configureTiling = lib.hm.dag.entryAfter [ "writeBoundary" ] tilingActivation;

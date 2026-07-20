@@ -52,17 +52,4 @@
       in
       lib.filter builtins.pathExists (map hostFlake hostNames)
     );
-
-  perSystem =
-    {
-      config,
-      self',
-      inputs',
-      pkgs,
-      system,
-      ...
-    }:
-    {
-      # Per-system configuration if needed (e.g. devShells, packages)
-    };
 }

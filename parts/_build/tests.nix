@@ -1087,7 +1087,7 @@
           in
           pkgs.runCommand "consumer-nixos-import" { } ''
             echo "NixOS module import: hardware-pipewire evaluated successfully"
-            echo "pipewire.enable = ${builtins.toString testCfg.config.myModules.hardware.pipewire.enable}"
+            echo "pipewire.enable = ${toString testCfg.config.myModules.hardware.pipewire.enable}"
             touch $out
           '';
 
@@ -2251,7 +2251,7 @@
           pkgs.runCommand "eval-mbp-kernel-cachyos-lto"
             {
               inherit variant sched;
-              specCount = builtins.toString specCount;
+              specCount = toString specCount;
             }
             ''
               [[ "$variant" == "cachyos-lto" ]] || { echo "FAIL: MBP kernel variant is '$variant', expected 'cachyos-lto'"; exit 1; }
