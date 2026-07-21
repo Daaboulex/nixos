@@ -1,7 +1,7 @@
 # flake-module — nixosConfiguration + module imports + overlays for macbook-pro-9-2.
 #
 # exhaustiveness-exclude:
-#   gaming-gamemode gaming-gamescope gaming-rocksmith gaming-steam
+#   gaming-gamemode gaming-gamescope gaming-proton gaming-rocksmith gaming-steam
 #   hardware-coolercontrol hardware-cpu-amd hardware-goxlr hardware-gpu-amd hardware-gpu-nvidia
 #   hardware-rift-cv1
 #   input-ducky-one-x-mini input-ratbagd input-streamcontroller input-yeetmouse

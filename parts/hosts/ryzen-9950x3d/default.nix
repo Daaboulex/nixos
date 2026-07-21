@@ -1052,6 +1052,10 @@
       enable = true;
       gamescope = true; # (default)
     };
+    proton = {
+      enable = true;
+      cachyos = pkgs.proton-cachyos-v3;
+    };
     rocksmith.enable = true;
     gamemode = {
       enable = true;

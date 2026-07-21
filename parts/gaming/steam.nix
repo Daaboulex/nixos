@@ -1,4 +1,4 @@
-# steam — Steam with steam-devices udev rules; declarative GE-Proton floor + protontricks, extra Proton versions via ProtonPlus.
+# steam — Steam with steam-devices udev rules and protontricks; the Proton tool set lives in gaming/proton.
 { inputs, ... }:
 let
   mod =
@@ -14,16 +14,11 @@ let
     {
       _class = "nixos";
       options.myModules.gaming.steam = {
-        enable = lib.mkEnableOption "Steam with steam-devices (declarative GE-Proton floor; extra Protons via ProtonPlus)";
+        enable = lib.mkEnableOption "Steam with steam-devices and protontricks";
         gamescope = lib.mkOption {
           type = lib.types.bool;
           default = true;
           description = "Gamescope session for Steam";
-        };
-        protonGE = lib.mkOption {
-          type = lib.types.bool;
-          default = true;
-          description = "Declarative GE-Proton (nixpkgs proton-ge-bin) in Steam's compatibility tool list";
         };
         protontricks = lib.mkOption {
           type = lib.types.bool;
@@ -35,7 +30,6 @@ let
         programs.steam = {
           enable = true;
           gamescopeSession.enable = cfg.gamescope && (config.myModules.gaming.gamescope.enable or false);
-          extraCompatPackages = lib.optional cfg.protonGE pkgs.proton-ge-bin;
           protontricks.enable = cfg.protontricks;
         };
         hardware.steam-hardware.enable = true;

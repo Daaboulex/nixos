@@ -46,6 +46,8 @@ let
     # packages too); .default would instantiate their own nixpkgs.
     inputs.llm-agents.overlays.shared-nixpkgs
     inputs.lsfg-vk.overlays.default
+    inputs.proton-ge.overlays.default
+    inputs.proton-cachyos.overlays.default
     inputs.vkbasalt-overlay.overlays.default
     inputs.mesa-git-nix.overlays.default
     inputs.coolercontrol.overlays.default

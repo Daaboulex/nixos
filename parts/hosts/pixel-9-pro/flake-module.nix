@@ -4,7 +4,7 @@
 #   boot-loader boot-etc-overlay boot-hibernate boot-impermanence boot-kernel boot-module-guards
 #   desktop-displays desktop-flatpak desktop-plasma
 #   diagnostics-nftables diagnostics-turbostat
-#   gaming-gamemode gaming-gamescope gaming-rocksmith gaming-steam
+#   gaming-gamemode gaming-gamescope gaming-proton gaming-rocksmith gaming-steam
 #   hardware-acpid hardware-bluetooth hardware-coolercontrol hardware-core
 #   hardware-cpu-amd hardware-cpu-intel hardware-goxlr hardware-gpu-amd
 #   hardware-gpu-intel hardware-gpu-nvidia hardware-graphics

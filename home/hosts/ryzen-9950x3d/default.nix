@@ -128,7 +128,6 @@
     powertop.enable = true;
     prismlauncher.enable = true;
     procs.enable = true;
-    protonplus.enable = true;
     pulsemixer.enable = true;
     python.enable = true;
     qpwgraph.enable = true;
@@ -236,6 +235,7 @@
     cod-clients.cblauncher.enable = true;
     cod-clients.cblauncher.gameDirs = [ "/home/user/Games/CoD" ];
     cod-clients.steamNative.enable = true;
+    cod-clients.protonPath = "${pkgs.proton-ge.steamcompattool}";
   };
 
   # Gaming options (migrated from NixOS)

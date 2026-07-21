@@ -116,6 +116,18 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # GE-Proton - declarative Steam compatibility tool, tracked daily
+    proton-ge = {
+      url = "github:Daaboulex/proton-ge-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # Proton-CachyOS - declarative Steam compatibility tool, tracked daily
+    proton-cachyos = {
+      url = "github:Daaboulex/proton-cachyos-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # vkBasalt Overlay - Vulkan post-processing layer with in-game UI (Wayland + X11)
     vkbasalt-overlay = {
       url = "github:Daaboulex/vkBasalt_overlay_wayland";

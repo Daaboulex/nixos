@@ -123,6 +123,7 @@
 
             # Gaming
             inputs.self.modules.nixos.gaming-steam
+            inputs.self.modules.nixos.gaming-proton
             inputs.self.modules.nixos.gaming-gamescope
             inputs.self.modules.nixos.gaming-gamemode
             inputs.self.modules.nixos.gaming-rocksmith
