@@ -1745,11 +1745,11 @@
         "std": "std_6"
       },
       "locked": {
-        "lastModified": 1784645698,
-        "narHash": "sha256-nK0/nMk/cM2Bw60DRJI6p6E1v7wOx7Kvzs2eDgywors=",
+        "lastModified": 1784648366,
+        "narHash": "sha256-lx3H9d7uhZMuGKwAnO8wvyk4pQYmhwqjQIlzSp4mVJ4=",
         "owner": "Daaboulex",
         "repo": "free-claude-code-nix",
-        "rev": "dfead48ca4348d946f96b7d9cc0804d80b53ecb5",
+        "rev": "47190c51148671a7a9a9a8e6391f61eabb41a2b4",
         "type": "github"
       },
       "original": {
