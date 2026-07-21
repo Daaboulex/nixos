@@ -33,6 +33,7 @@
     cifs-utils.enable = true;
     claude-code.enable = true;
     cmake.enable = true;
+    cod-clients.enable = true;
     codex-cli.enable = false;
     comma.enable = true;
     coolercontrol.enable = true;
@@ -232,6 +233,9 @@
     plasma.power.enable = true;
     plasma.shortcuts.enable = true;
     rocksmith.goxlr.lineInRouting = true;
+    cod-clients.cblauncher.enable = true;
+    cod-clients.cblauncher.gameDirs = [ "/home/user/Games/CoD" ];
+    cod-clients.steamNative.enable = true;
   };
 
   # Gaming options (migrated from NixOS)
