@@ -1,0 +1,127 @@
+name: Maintenance
+
+on:
+  schedule:
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.c.outputs.run }}
+    steps:
+      - id: c
+        env:
+          CADENCE: ${{ vars.MAINTENANCE_CADENCE || 'weekly' }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          dow=$(date -u +%u)
+          run=no
+          case "$CADENCE" in
+          daily) run=yes ;;
+          biweekly) if [ "$dow" = 3 ] || [ "$dow" = 7 ]; then run=yes; fi ;;
+          *) if [ "$dow" = 7 ]; then run=yes; fi ;;
+          esac
+          if [ "$EVENT" = workflow_dispatch ]; then run=yes; fi
+          echo "cadence=$CADENCE dow=$dow event=$EVENT -> run=$run"
+          echo "run=$run" >> "$GITHUB_OUTPUT"
+
+  update-lock:
+    needs: gate
+    if: needs.gate.outputs.run == 'yes'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
+
+      - name: Update every public input, never site
+        run: |
+          site_before=$(jq -r '.nodes.site.locked.rev // "absent"' flake.lock)
+          names=$(jq -r '.nodes.root.inputs | keys[]' flake.lock | grep -vx site)
+          test -n "$names"
+          printf '%s\n' "$names" | xargs nix flake update
+          site_after=$(jq -r '.nodes.site.locked.rev // "absent"' flake.lock)
+          test "$site_before" = "$site_after"
+
+      - name: Verify with the shared check script
+        id: verify
+        run: |
+          set +e
+          verify() {
+            { bash scripts/ci-checks.sh eval && bash scripts/ci-checks.sh gates; } 2>&1 | tee /tmp/lock-verify.log
+            return "${PIPESTATUS[0]}"
+          }
+          verify
+          code=$?
+          if [ "$code" -ne 0 ] && grep -qiE 'error: cannot download|status code: (403|429)|curl: \(|couldn.t resolve host|connection reset by peer|temporary failure in name resolution|operation timed out' /tmp/lock-verify.log; then
+            echo "::warning::Transient fetch failure during maintenance verify; retrying once in 60s."
+            sleep 60
+            verify
+            code=$?
+          fi
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+
+      - name: Push if verification passes
+        if: steps.verify.outputs.exit_code == '0'
+        run: |
+          if git diff --quiet flake.lock; then
+            echo "No changes to flake.lock"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add flake.lock
+          git commit -m "chore: update flake.lock"
+          git push
+
+      - name: Issue if verification fails
+        if: steps.verify.outputs.exit_code != '0'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+        with:
+          script: |
+            const fs = require('fs');
+            const log = fs.readFileSync('/tmp/lock-verify.log', 'utf8');
+            const lastLines = log.split('\n').slice(-80).join('\n');
+            const title = 'Maintenance: flake.lock update failed verification';
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              labels: 'maintenance', state: 'open'
+            });
+            for (const issue of existing.data) {
+              if (issue.title !== title) continue;
+              await github.rest.issues.update({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: issue.number, state: 'closed',
+                state_reason: 'not_planned'
+              });
+            }
+            await github.rest.issues.create({
+              owner: context.repo.owner, repo: context.repo.repo,
+              title,
+              labels: ['maintenance'],
+              body: [
+                '## Scheduled flake.lock update failed verification',
+                '',
+                'The lock was NOT pushed. Host evals or standards gates failed on the',
+                'updated inputs (site is never updated by this workflow).',
+                '',
+                '<details><summary>Verification log (last 80 lines)</summary>',
+                '',
+                '```',
+                lastLines,
+                '```',
+                '</details>',
+                '',
+                '### Recovery',
+                '```bash',
+                'nix flake update',
+                'bash scripts/ci-checks.sh eval',
+                'bash scripts/ci-checks.sh gates',
+                '```'
+              ].join('\n')
+            });
