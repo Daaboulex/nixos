@@ -42,6 +42,7 @@ let
     android = "${dataHome}/android";
     pre-commit = "${dataHome}/pre-commit";
     huggingface = "${dataHome}/huggingface";
+    wine = "${dataHome}/wineprefixes";
   };
 
   # SINGLE SOURCE OF TRUTH -- tool -> { leak; vars }:
@@ -146,6 +147,10 @@ let
       leak = ".gem";
       vars.GEM_SPEC_CACHE = "${cacheHome}/gem/specs";
     }; # cache-only; GEM_HOME NOT set (changes gem resolution)
+    wine = {
+      leak = ".wine";
+      vars.WINEPREFIX = "${dirs.wine}/default";
+    }; # Proton/umu/Bottles set their own prefix per app; this governs only raw wine
   };
 
   sessionVars = lib.foldl' (acc: t: acc // t.vars) { } (lib.attrValues tools);
