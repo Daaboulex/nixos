@@ -158,6 +158,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    free-claude-code = {
+      url = "github:Daaboulex/free-claude-code-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Models CLI - TUI for browsing AI models, benchmarks, and coding agents
     models-nix = {
       url = "github:Daaboulex/models-nix";
@@ -228,6 +233,11 @@
     # Rocksmith 2014 — WineASIO, rs-autoconnect, patch-rocksmith
     rocksmith-nix = {
       url = "github:Daaboulex/rocksmith-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    cod-clients = {
+      url = "github:Daaboulex/cod-clients-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 

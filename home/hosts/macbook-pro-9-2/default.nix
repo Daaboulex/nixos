@@ -48,6 +48,7 @@
     fd.enable = true;
     ffmpeg.enable = true;
     flatpak.enable = true;
+    free-claude-code.enable = true;
     fzf.enable = true;
     gcc.enable = true;
     gdb.enable = true;

@@ -171,6 +171,8 @@
           inputs.coolercontrol.homeManagerModules.default
           inputs.lmstudio.homeManagerModules.default
           inputs.rocksmith-nix.homeManagerModules.default
+          inputs.cod-clients.homeManagerModules.default
+          inputs.free-claude-code.homeManagerModules.default
         ];
       }
 

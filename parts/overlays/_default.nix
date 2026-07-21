@@ -51,6 +51,7 @@ let
     inputs.coolercontrol.overlays.default
     inputs.openviking.overlays.default
     inputs.lmstudio.overlays.default
+    inputs.free-claude-code.overlays.default
     inputs.nix-vscode-extensions.overlays.default
     inputs.models-nix.overlays.default
     inputs.ripgrep-nix.overlays.default

@@ -73,6 +73,7 @@
         home-manager.sharedModules = [
           inputs.lmstudio.homeManagerModules.default
           inputs.rocksmith-nix.homeManagerModules.default
+          inputs.free-claude-code.homeManagerModules.default
         ];
       }
 
