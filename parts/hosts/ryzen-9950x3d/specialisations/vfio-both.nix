@@ -196,6 +196,7 @@
   myModules.hardware.pipewire.enable = lib.mkForce false; # no host audio (VMs own their own audio devices)
   # Gaming stack -- you game INSIDE the VMs, not on the host:
   myModules.gaming.steam.enable = lib.mkForce false;
+  myModules.gaming.proton.enable = lib.mkForce false;
   myModules.gaming.gamescope.enable = lib.mkForce false;
   myModules.gaming.gamemode.enable = lib.mkForce false;
   myModules.gaming.rocksmith.enable = lib.mkForce false;

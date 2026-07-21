@@ -26,6 +26,31 @@ eval)
       failed=1
     fi
   done
+
+  assert_expr='as: let bad = builtins.filter (a: !a.assertion) as; in if bad == [ ] then "ok" else throw (builtins.concatStringsSep " | " (map (a: a.message) bad))'
+  printf '  %-25s ' "ryzen assertions"
+  if output=$(nix eval --raw ".#nixosConfigurations.ryzen-9950x3d.config.assertions" --apply "$assert_expr" "${stub[@]}" 2>&1); then
+    echo "OK"
+  else
+    echo "FAIL"
+    echo "$output" | tail -5 | sed 's/^/    /'
+    failed=1
+  fi
+  if specs=$(nix eval --raw ".#nixosConfigurations.ryzen-9950x3d.config.specialisation" --apply 'ss: builtins.concatStringsSep " " (builtins.attrNames ss)' "${stub[@]}" 2>/dev/null); then
+    for spec in $specs; do
+      printf '  %-25s ' "ryzen spec:$spec"
+      if output=$(nix eval --raw ".#nixosConfigurations.ryzen-9950x3d.config.specialisation.$spec.configuration.assertions" --apply "$assert_expr" "${stub[@]}" 2>&1); then
+        echo "OK"
+      else
+        echo "FAIL"
+        echo "$output" | tail -5 | sed 's/^/    /'
+        failed=1
+      fi
+    done
+  else
+    echo "  ryzen specialisations     FAIL (enumeration)"
+    failed=1
+  fi
   exit "$failed"
   ;;
 gates)
