@@ -209,15 +209,11 @@
         # Mullvad's `lockdown_mode` IS the kill switch (one field, same thing).
         settings = {
           # ── daemon-level toggles ──
-          # Always-on policy: tunnel up at boot, kill switch engaged.
-          # Why: IP privacy is only real when tunnel is up. Prior config
-          # (autoConnect=false, lockdownMode=false) left a window between
-          # boot and manual connect where DNS + apps used the real IP.
-          # Kill switch + `lan = true` still lets local subnet devices
-          # (printer, phone USB tethering — NOT WiFi tether) work.
-          # Escape hatch: `systemctl stop mullvad-daemon` temporarily
-          # restores clearnet access if at a captive portal (hotel WiFi).
-          autoConnect = true;
+          # Manual-connect policy: the tunnel comes up only on request.
+          # Accepted trade-off: until connected, DNS + apps use the real
+          # IP. `lan = true` keeps local subnet devices (printer, phone
+          # USB tethering — NOT WiFi tether) reachable.
+          autoConnect = false;
           lockdownMode = false; # kill switch OFF (intentional) — clearnet survives a tunnel drop
           lan = true; # local subnet still reachable (printer, LAN peers)
           betaProgram = false;
@@ -330,7 +326,7 @@
         # secrets.user-password = { }; # uncomment with users.passwordFromSite (the ceremony creates the blob first)
       };
       portmaster = {
-        enable = true;
+        enable = false;
         notifier = true; # (default) — system tray icon
         autostart = true; # Start on boot
         # Mullvad + Portmaster stack. See ryzen-9950x3d/default.nix for
@@ -362,12 +358,12 @@
       # See parts/security/portmaster-mullvad-compat.nix for the full
       # rationale. Required on every host where Portmaster and Mullvad
       # both run, otherwise the tunnel can't bootstrap after a reconnect.
-      portmasterMullvadCompat.enable = true;
+      portmasterMullvadCompat.enable = false;
       # Keep Portmaster's per-connection resolver-compliance verdicts off
       # the split-tunnel DNS chain: office .local queries to the loopback
       # rewriter otherwise flap into ICMP blocks. See
       # parts/security/portmaster-split-tunnel-compat.nix.
-      portmasterSplitTunnelCompat.enable = true;
+      portmasterSplitTunnelCompat.enable = false;
     };
 
     # --------------------------------------------------------------------------

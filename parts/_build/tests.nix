@@ -2074,14 +2074,13 @@
               autoConn = builtins.toJSON (cfg.myModules.services.mullvad.settings.autoConnect or false);
             }
             ''
-              # Boot-time IP protection needs the tunnel up by default -- via the kill switch
-              # (lockdownMode) OR auto-connect (autoConnect). lockdownMode is deliberately OFF
-              # so the daemon can be stopped at runtime for clearnet / captive portals (a kill
-              # switch would block all traffic then); autoConnect=true is the standing guarantee.
-              # Fail only if BOTH are off -- then the VPN is not active by default at boot.
-              [[ "$lockdown" == "true" || "$autoConn" == "true" ]] \
-                || { echo "FAIL: neither lockdownMode nor autoConnect enabled -- VPN not active at boot, real IP exposed"; exit 1; }
-              echo "OK: Mullvad active by default at boot (autoConnect=$autoConn, lockdownMode=$lockdown)"
+              # Manual-connect policy: the tunnel comes up only on request, and no kill
+              # switch, so clearnet and captive portals work without stopping the daemon.
+              # Accepted trade-off: apps use the real IP until the owner connects.
+              # Pin BOTH toggles off so drift back to an always-on variant is deliberate.
+              [[ "$lockdown" == "false" && "$autoConn" == "false" ]] \
+                || { echo "FAIL: Mullvad boot policy drifted -- expected manual connect (autoConnect=false, lockdownMode=false), got autoConnect=$autoConn lockdownMode=$lockdown"; exit 1; }
+              echo "OK: Mullvad manual-connect policy pinned (autoConnect=$autoConn, lockdownMode=$lockdown)"
               touch $out
             '';
 
