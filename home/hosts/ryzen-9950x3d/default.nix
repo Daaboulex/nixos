@@ -234,7 +234,6 @@
     cod-clients.cblauncher.extraWinetricks = [
       "dotnet472"
       "msasn1"
-      "mdac28"
       "win10"
       "grabfullscreen=y"
     ];
