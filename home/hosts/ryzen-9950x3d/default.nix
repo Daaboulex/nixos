@@ -234,6 +234,13 @@
     rocksmith.goxlr.lineInRouting = true;
     cod-clients.cblauncher.enable = true;
     cod-clients.cblauncher.gameDirs = [ "/home/user/Games/CoD" ];
+    cod-clients.cblauncher.extraWinetricks = [
+      "dotnet472"
+      "msasn1"
+      "mdac28"
+      "win10"
+      "grabfullscreen=y"
+    ];
     cod-clients.steamNative.enable = true;
     cod-clients.protonPath = "${pkgs.proton-ge.steamcompattool}";
   };
