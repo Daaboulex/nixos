@@ -238,7 +238,7 @@
       "grabfullscreen=y"
     ];
     cod-clients.steamNative.enable = true;
-    cod-clients.protonPath = "${pkgs.proton-ge.steamcompattool}";
+    cod-clients.protonPath = "${pkgs.proton-ge.v10.steamcompattool}";
   };
 
   # Gaming options (migrated from NixOS)

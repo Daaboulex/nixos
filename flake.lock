@@ -4056,11 +4056,11 @@
         "std": "std_18"
       },
       "locked": {
-        "lastModified": 1784673257,
-        "narHash": "sha256-8G2NC7HhGsY5PfT5bDti35Xu2awQea9OVNWpPC9EHK0=",
+        "lastModified": 1784748429,
+        "narHash": "sha256-d8no2IHIFIfiQZIruJnCGQKxHXR27YmYBxEYxmumoB0=",
         "owner": "Daaboulex",
         "repo": "proton-ge-nix",
-        "rev": "38071dc4df8003eb4b8e2398009efe58b0421149",
+        "rev": "e18493f1964ab8ce471967d717776bca0c6d0034",
         "type": "github"
       },
       "original": {
