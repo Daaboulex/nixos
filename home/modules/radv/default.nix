@@ -1,4 +1,4 @@
-# radv — RADV Vulkan driver session variables (RADV_PERFTEST, device selection).
+# radv — RADV Vulkan driver session variables (RADV_EXPERIMENTAL, device selection).
 {
   config,
   lib,
@@ -13,8 +13,8 @@ in
     enable = lib.mkEnableOption "RADV Vulkan driver session variables";
     experimental = lib.mkOption {
       type = lib.types.str;
-      default = "nggc,transfer_queue";
-      description = "RADV_PERFTEST flags for AMD Vulkan driver (comma-separated). gpl removed (default since Mesa 23.1), transfer_queue added (Mesa 26.0 async DMA)";
+      default = "transfer_queue";
+      description = "RADV_EXPERIMENTAL flags for AMD Vulkan driver (comma-separated). transfer_queue = Mesa 26 async DMA transfer-only queue. nggc/gpl are default-on and need no flag; transfer_queue moved here from RADV_PERFTEST in Mesa 26.";
     };
     vulkanDeviceName = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
@@ -26,7 +26,7 @@ in
     myLib.mkSessionVars (
       {
         AMD_VULKAN_ICD = lib.mkDefault "RADV";
-        RADV_PERFTEST = cfg.experimental;
+        RADV_EXPERIMENTAL = cfg.experimental;
         MESA_SHADER_CACHE_MAX_SIZE = lib.mkDefault "4G"; # Prevent shader cache eviction with many games (default 1G)
       }
       // lib.optionalAttrs (cfg.vulkanDeviceName != null) {
