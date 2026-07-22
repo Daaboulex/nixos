@@ -34,9 +34,15 @@ let
         };
         cachyos = lib.mkOption {
           type = lib.types.nullOr (lib.types.either lib.types.package (lib.types.listOf lib.types.package));
-          default = pkgs.proton-cachyos;
-          defaultText = lib.literalExpression "pkgs.proton-cachyos";
-          description = "Proton-CachyOS for Steam's compatibility list (null = omit; a single package or a list of CPU variants).";
+          default = pkgs.proton-cachyos-v3;
+          defaultText = lib.literalExpression "pkgs.proton-cachyos-v3";
+          description = ''
+            Proton-CachyOS for Steam's compatibility list (null = omit). Defaults to
+            the x86-64-v3 (AVX2) build, best for modern gaming CPUs. Override per host
+            to the baseline `pkgs.proton-cachyos` on a pre-AVX2 CPU, or pass a list of
+            CPU variants. CachyOS ships one rolling Proton major (it sunsets old
+            lines), so there is no per-major menu here as there is for GE-Proton.
+          '';
         };
       };
       config = lib.mkIf cfg.enable {
