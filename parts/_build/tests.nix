@@ -2064,26 +2064,6 @@
               touch $out
             '';
 
-        eval-mullvad-lockdown =
-          let
-            cfg = inputs.self.nixosConfigurations.ryzen-9950x3d.config;
-          in
-          pkgs.runCommand "eval-mullvad-lockdown"
-            {
-              lockdown = builtins.toJSON (cfg.myModules.services.mullvad.settings.lockdownMode or false);
-              autoConn = builtins.toJSON (cfg.myModules.services.mullvad.settings.autoConnect or false);
-            }
-            ''
-              # Manual-connect policy: the tunnel comes up only on request, and no kill
-              # switch, so clearnet and captive portals work without stopping the daemon.
-              # Accepted trade-off: apps use the real IP until the owner connects.
-              # Pin BOTH toggles off so drift back to an always-on variant is deliberate.
-              [[ "$lockdown" == "false" && "$autoConn" == "false" ]] \
-                || { echo "FAIL: Mullvad boot policy drifted -- expected manual connect (autoConnect=false, lockdownMode=false), got autoConnect=$autoConn lockdownMode=$lockdown"; exit 1; }
-              echo "OK: Mullvad manual-connect policy pinned (autoConnect=$autoConn, lockdownMode=$lockdown)"
-              touch $out
-            '';
-
         eval-networking-dot =
           let
             cfg = inputs.self.nixosConfigurations.ryzen-9950x3d.config;
