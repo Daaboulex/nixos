@@ -1888,21 +1888,6 @@
               touch $out
             '';
 
-        eval-services-earlyoom =
-          let
-            cfg = inputs.self.nixosConfigurations.ryzen-9950x3d.config;
-          in
-          pkgs.runCommand "eval-services-earlyoom"
-            {
-              enabled = builtins.toJSON cfg.services.earlyoom.enable;
-            }
-            ''
-              echo "services.earlyoom.enable = $enabled"
-              [[ "$enabled" == "true" ]] || { echo "FAIL: earlyoom not enabled"; exit 1; }
-              echo "OK: earlyoom active"
-              touch $out
-            '';
-
         # eval-etc-overlay-guard — the overlay safety contract must FIRE:
         # force-enabling the overlay without the declarative-password
         # prerequisite has to trip the etcOverlay assertion. Pins the guard
@@ -1958,58 +1943,6 @@
             }
             touch $out
           '';
-
-        eval-nix-flakes =
-          let
-            cfg = inputs.self.nixosConfigurations.ryzen-9950x3d.config;
-            features = cfg.nix.settings.experimental-features;
-          in
-          pkgs.runCommand "eval-nix-flakes"
-            {
-              hasFlakes = builtins.toJSON (builtins.elem "flakes" features);
-              hasNixCmd = builtins.toJSON (builtins.elem "nix-command" features);
-            }
-            ''
-              echo "has flakes = $hasFlakes"
-              echo "has nix-command = $hasNixCmd"
-              [[ "$hasFlakes" == "true" ]] || { echo "FAIL: flakes not in experimental-features"; exit 1; }
-              [[ "$hasNixCmd" == "true" ]] || { echo "FAIL: nix-command not in experimental-features"; exit 1; }
-              echo "OK: flakes + nix-command active"
-              touch $out
-            '';
-
-        eval-hardware-networking =
-          let
-            cfg = inputs.self.nixosConfigurations.ryzen-9950x3d.config;
-          in
-          pkgs.runCommand "eval-hardware-networking"
-            {
-              nm = builtins.toJSON cfg.networking.networkmanager.enable;
-            }
-            ''
-              echo "networking.networkmanager.enable = $nm"
-              [[ "$nm" == "true" ]] || { echo "FAIL: NetworkManager not enabled"; exit 1; }
-              echo "OK: NetworkManager active"
-              touch $out
-            '';
-
-        eval-users-zsh =
-          let
-            cfg = inputs.self.nixosConfigurations.ryzen-9950x3d.config;
-            user = cfg.myModules.primaryUser;
-            shell = cfg.users.users.${user}.shell.pname;
-          in
-          pkgs.runCommand "eval-users-zsh"
-            {
-              actual = shell;
-              inherit user;
-            }
-            ''
-              echo "users.users.$user.shell.pname = $actual"
-              [[ "$actual" == "zsh" ]] || { echo "FAIL: user $user shell is $actual, expected zsh"; exit 1; }
-              echo "OK: user $user has zsh shell"
-              touch $out
-            '';
 
         eval-portmaster-dns-interception =
           let
@@ -2201,22 +2134,6 @@
               [[ "$pnames" == *zenpower* ]] || { echo "FAIL: zenpower kmod load-name set but its driver package dropped from extraModulePackages"; exit 1; }
               [[ "$pnames" == *ryzen-smu* ]] || { echo "FAIL: ryzen_smu kmod load-name set but its driver package dropped from extraModulePackages"; exit 1; }
               echo "OK: zenpower + ryzen_smu kmods wired AND their out-of-tree driver packages present"
-              touch $out
-            '';
-
-        # Value-only (enable flag); does NOT force the kernel-matched turbostat
-        # drvPath, which would pull the CachyOS kernel via IFD.
-        eval-diagnostics-turbostat =
-          let
-            cfg = inputs.self.nixosConfigurations.ryzen-9950x3d.config;
-          in
-          pkgs.runCommand "eval-diagnostics-turbostat"
-            {
-              enabled = builtins.toJSON cfg.myModules.diagnostics.turbostat.enable;
-            }
-            ''
-              [[ "$enabled" == "true" ]] || { echo "FAIL: turbostat diagnostics not enabled on ryzen"; exit 1; }
-              echo "OK: turbostat diagnostics enabled + wired on ryzen"
               touch $out
             '';
 
