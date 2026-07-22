@@ -17,14 +17,19 @@ let
         enable = lib.mkEnableOption "declarative Proton compatibility tools (GE-Proton + Proton-CachyOS)";
         ge = lib.mkOption {
           type = lib.types.nullOr (lib.types.either lib.types.package (lib.types.listOf lib.types.package));
-          default = pkgs.proton-ge;
-          defaultText = lib.literalExpression "pkgs.proton-ge";
+          default = with pkgs.proton-ge; [
+            latest
+            v11
+            v10
+            v9
+          ];
+          defaultText = lib.literalExpression "with pkgs.proton-ge; [ latest v11 v10 v9 ]";
           description = ''
-            GE-Proton for Steam's compatibility list (null = omit). A single package,
-            or a list to show several channels in the dropdown at once, e.g.
-            `with pkgs.proton-ge; [ latest v11 v10 v9 ]` for a Steam-style menu of
-            majors (each a stable "GE-Proton <major>" identity that rides its line's
-            newest point release).
+            GE-Proton for Steam's compatibility list (null = omit). Defaults to a
+            Steam-style menu of majors: latest (rolling newest, version-free
+            "GE-Proton" identity) plus a stable "GE-Proton <major>" per line, each
+            riding its line's newest point release. A single package or a list; set
+            to `pkgs.proton-ge` for latest only, or trim the list per host.
           '';
         };
         cachyos = lib.mkOption {

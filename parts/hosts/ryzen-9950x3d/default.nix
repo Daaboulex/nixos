@@ -1050,12 +1050,6 @@
     };
     proton = {
       enable = true;
-      ge = with pkgs.proton-ge; [
-        latest
-        v11
-        v10
-        v9
-      ];
       cachyos = pkgs.proton-cachyos-v3;
     };
     rocksmith.enable = true;
