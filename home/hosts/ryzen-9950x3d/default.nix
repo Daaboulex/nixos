@@ -23,7 +23,6 @@
     archive.enable = true;
     arkenfox.enable = true;
     atuin.enable = true;
-    azahar.enable = true;
     bat.enable = true;
     bluez-tools.enable = true;
     brightnessctl.enable = true;
@@ -51,7 +50,6 @@
     duf.enable = true;
     durdraw.enable = true;
     dust.enable = true;
-    eden.enable = true;
     ethtool.enable = true;
     eza.enable = true;
     fastfetch.enable = true;
@@ -135,7 +133,6 @@
     radv.enable = true;
     ripgrep.enable = true;
     rocksmith.enable = true;
-    ryubing.enable = true;
     saleae.enable = true;
     samba.enable = true;
     sd.enable = true;
