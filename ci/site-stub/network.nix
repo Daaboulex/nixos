@@ -1,8 +1,14 @@
 rec {
   subnet = "10.0.0.0/24";
   domain = "ci.local";
+  domainNetbios = "CISTUB";
   gateway = "10.0.0.1";
   dns = "10.0.0.1";
+
+  smb = {
+    server = dns;
+    shares = [ "ci-share" ];
+  };
 
   wifi.ssid = "ci-stub-ssid";
 
@@ -10,6 +16,7 @@ rec {
   vpn = {
     name = "CI Stub VPN";
     server = "vpn.ci.local";
+    pool = "10.0.1.0/24";
     username = "ci-stub-user";
     verifyX509Name = "subject:C=CI, CN=ci-stub";
     routedSubnets = [ subnet ];
