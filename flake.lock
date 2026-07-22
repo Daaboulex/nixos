@@ -207,11 +207,11 @@
         "std": "std_2"
       },
       "locked": {
-        "lastModified": 1784737459,
-        "narHash": "sha256-YWiEIWEb80/kRKlSuiyqHsTE9DsmRJ0EkoX2xUZSiXA=",
+        "lastModified": 1784755165,
+        "narHash": "sha256-jcL4LFf741PT05pGToyMv4O+W2zdDZRWCXQAn9znDYw=",
         "owner": "Daaboulex",
         "repo": "cod-clients-nix",
-        "rev": "8c41c40fa480848e734f1b9f3eb09d8baf186ed9",
+        "rev": "4693a84cceb95b2e76ce3f9cabe6302a14b6fa60",
         "type": "github"
       },
       "original": {
