@@ -234,14 +234,8 @@
     cod-clients.steamNative.enable = true;
     cod-clients.protonPath = "${pkgs.proton-ge.v11.steamcompattool}";
     cod-clients.cblauncher.subProton = {
-      "s1x.exe" = {
-        protonPath = "${pkgs.proton-cachyos.steamcompattool}";
-        gameDir = "/home/user/Games/CoD/aw_game_files";
-      };
-      "iw3mp.exe" = {
-        protonPath = "${pkgs.proton-ge.v10.steamcompattool}";
-        gameDir = "/home/user/Games/CoD/cod4_game_files";
-      };
+      "s1x.exe".protonPath = "${pkgs.proton-cachyos.steamcompattool}";
+      "iw3mp.exe".protonPath = "${pkgs.proton-ge.v10.steamcompattool}";
     };
   };
 
