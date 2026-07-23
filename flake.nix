@@ -122,6 +122,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # UMU-Proton - stock Valve Proton for umu-launcher, tracked daily
+    umu-proton = {
+      url = "github:Daaboulex/umu-proton-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Proton-CachyOS - declarative Steam compatibility tool, tracked daily
     proton-cachyos = {
       url = "github:Daaboulex/proton-cachyos-nix";

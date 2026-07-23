@@ -235,7 +235,7 @@
     cod-clients.protonPath = "${pkgs.proton-ge.v11.steamcompattool}";
     cod-clients.cblauncher.subProton = {
       "s1x.exe" = {
-        protonPath = "${pkgs.proton-ge.v10.steamcompattool}";
+        protonPath = "${pkgs.umu-proton.steamcompattool}";
         gameDir = "/home/user/Games/CoD/aw_game_files";
         env.PROTON_NO_NTSYNC = "1";
       };

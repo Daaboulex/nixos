@@ -48,6 +48,7 @@ let
     inputs.lsfg-vk.overlays.default
     inputs.proton-ge.overlays.default
     inputs.proton-cachyos.overlays.default
+    inputs.umu-proton.overlays.default
     inputs.vkbasalt-overlay.overlays.default
     inputs.mesa-git-nix.overlays.default
     inputs.coolercontrol.overlays.default
