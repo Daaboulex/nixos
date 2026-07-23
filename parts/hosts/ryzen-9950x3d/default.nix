@@ -576,9 +576,6 @@
               height = 1080;
               refreshRate = 239757;
             };
-            # DP-1 owns the layout origin (0,0): fullscreen / XWayland (Proton) games
-            # spawn at the top-left of the combined screen space, so the origin output
-            # must be this 9070 XT head -- otherwise games open on the portrait (1660S).
             position = {
               x = 0;
               y = 0;
@@ -589,18 +586,12 @@
             tiling.layout = ''{"layoutDirection":"horizontal","tiles":[{"width":0.5},{"width":0.5}]}'';
           };
           portrait = {
-            # Re-cabled from the 9070 XT's DP-2 onto the 1660S's DisplayPort (KMS DP-5) --
-            # the 1660S is in sessionGpuDevices so KWin drives it. EDID/uuid below come from
-            # the panel as the 1660S reports it over DP (differs from the 9070 XT DP-2 EDID).
             connector = "DP-5";
             mode = {
               width = 1920;
               height = 1080;
               refreshRate = 239761;
             };
-            # Logical RIGHT of DP-1 although physically on the LEFT: DP-1 must keep the
-            # (0,0) origin (above) and the layout permits no negative coordinates, so this
-            # head sits past DP-1's right edge -- cross the main monitor's right edge to reach it.
             position = {
               x = 1920;
               y = 0;
@@ -611,12 +602,6 @@
             inherit (site.hosts.ryzen-9950x3d.displays.monitors.portrait) edidHash edidIdentifier uuid;
             tiling.layout = ''{"layoutDirection":"vertical","tiles":[{"height":0.333},{"height":0.334},{"height":0.333}]}'';
           };
-          # Same portrait Dell as DP-2, but on the 1660S's HDMI-A-2 in the VFIO profiles
-          # (the 9070 XT that drives DP-1/DP-2 is captured by vfio-pci, so those heads go
-          # dark and the panel is re-cabled to the 1660S). edidHash/uuid differ from DP-2 —
-          # the panel reports a slightly different EDID over HDMI vs DP. Without this entry
-          # SDDM + the session default to landscape on this head. Inert in non-VFIO profiles
-          # (HDMI-A-2 isn't connected there).
           portrait-vfio = {
             connector = "HDMI-A-2";
             mode = {
