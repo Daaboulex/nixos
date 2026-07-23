@@ -44,12 +44,9 @@ let
           defaultSession = "plasma";
         };
 
-        services.xserver = {
-          enable = true;
-          xkb = {
-            layout = cfg.xkbLayout;
-            variant = cfg.xkbVariant;
-          };
+        services.xserver.xkb = {
+          layout = cfg.xkbLayout;
+          variant = cfg.xkbVariant;
         };
 
         environment.systemPackages = with pkgs; [

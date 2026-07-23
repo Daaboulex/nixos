@@ -77,7 +77,8 @@ in
       (myLib.mkSessionVars (
         {
           NIXOS_OZONE_WL = lib.mkDefault "1";
-          SDL_VIDEODRIVER = lib.mkDefault "wayland";
+          ELECTRON_OZONE_PLATFORM_HINT = lib.mkDefault "auto";
+          SDL_VIDEODRIVER = lib.mkDefault "wayland,x11";
         }
         // lib.optionalAttrs (cfg.gpuBackend != null) {
           QSG_RHI_BACKEND = cfg.gpuBackend;
