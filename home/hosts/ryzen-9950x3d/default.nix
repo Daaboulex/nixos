@@ -231,12 +231,6 @@
     rocksmith.goxlr.lineInRouting = true;
     cod-clients.cblauncher.enable = true;
     cod-clients.cblauncher.gameDirs = [ "/home/user/Games/CoD" ];
-    cod-clients.cblauncher.extraWinetricks = [
-      "dotnet472"
-      "msasn1"
-      "win10"
-      "grabfullscreen=y"
-    ];
     cod-clients.steamNative.enable = true;
     cod-clients.protonPath = "${pkgs.proton-ge.v11.steamcompattool}";
     cod-clients.cblauncher.subProton = {
@@ -244,72 +238,6 @@
         protonPath = "${pkgs.proton-ge.v10.steamcompattool}";
         gameDir = "/home/user/Games/CoD/aw_game_files";
         env.PROTON_NO_NTSYNC = "1";
-        gamescope = [
-          "-f"
-          "--force-grab-cursor"
-        ];
-      };
-      "iw6x.exe" = {
-        protonPath = "${pkgs.proton-ge.v11.steamcompattool}";
-        gameDir = "/home/user/Games/CoD/ghosts_game_files";
-        gamescope = [
-          "-f"
-          "--force-grab-cursor"
-        ];
-        winetricks = [
-          "corefonts"
-          "vcrun2005"
-          "vcrun2008"
-          "vcrun2010"
-          "vcrun2012"
-          "vcrun2013"
-          "vcrun2022"
-          "d3dcompiler_43"
-          "d3dcompiler_47"
-          "d3dx9"
-          "d3dx10"
-          "d3dx11_43"
-          "xact"
-          "xact_x64"
-          "xinput"
-          "physx"
-          "mwo=force"
-          "grabfullscreen=y"
-        ];
-      };
-      "plutonium.exe" = {
-        protonPath = "${pkgs.proton-ge.v11.steamcompattool}";
-        gameDir = "/home/user/Games/CoD/mw3_game_files";
-        gamescope = [
-          "-f"
-          "--force-grab-cursor"
-        ];
-        extraGameDirs = [
-          "/home/user/Games/CoD/waw_game_files"
-          "/home/user/Games/CoD/bo1_game_files"
-          "/home/user/Games/CoD/bo2_game_files"
-        ];
-        winetricks = [
-          "corefonts"
-          "msasn1"
-          "vcrun2005"
-          "vcrun2008"
-          "vcrun2012"
-          "vcrun2019"
-          "d3dcompiler_47"
-          "d3dcompiler_43"
-          "d3dx9"
-          "d3dx10"
-          "d3dx11_42"
-          "d3dx11_43"
-          "xact"
-          "xact_x64"
-          "xinput"
-          "physx"
-          "win10"
-          "mwo=force"
-          "grabfullscreen=y"
-        ];
       };
       "iw3mp.exe" = {
         protonPath = "${pkgs.proton-ge.v10.steamcompattool}";
