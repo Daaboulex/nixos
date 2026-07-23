@@ -249,11 +249,33 @@
         protonPath = "${pkgs.proton-ge.v11.steamcompattool}";
         gameDir = "/home/user/Games/CoD/ghosts_game_files";
         env.PROTON_ENABLE_WAYLAND = "1";
+        env.PROTON_USE_WAYLAND = "1";
+        winetricks = [
+          "corefonts"
+          "vcrun2005"
+          "vcrun2008"
+          "vcrun2010"
+          "vcrun2012"
+          "vcrun2013"
+          "vcrun2022"
+          "d3dcompiler_43"
+          "d3dcompiler_47"
+          "d3dx9"
+          "d3dx10"
+          "d3dx11_43"
+          "xact"
+          "xact_x64"
+          "xinput"
+          "physx"
+          "mwo=force"
+          "grabfullscreen=y"
+        ];
       };
       "plutonium.exe" = {
         protonPath = "${pkgs.proton-ge.v11.steamcompattool}";
         gameDir = "/home/user/Games/CoD/mw3_game_files";
         env.PROTON_ENABLE_WAYLAND = "1";
+        env.PROTON_USE_WAYLAND = "1";
         winetricks = [
           "corefonts"
           "msasn1"
@@ -272,6 +294,7 @@
           "xinput"
           "physx"
           "win10"
+          "mwo=force"
           "grabfullscreen=y"
         ];
       };
