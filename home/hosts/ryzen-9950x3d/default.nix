@@ -248,8 +248,7 @@
       "iw6x.exe" = {
         protonPath = "${pkgs.proton-ge.v11.steamcompattool}";
         gameDir = "/home/user/Games/CoD/ghosts_game_files";
-        env.PROTON_ENABLE_WAYLAND = "1";
-        env.PROTON_USE_WAYLAND = "1";
+        env.DISPLAY = "";
         winetricks = [
           "corefonts"
           "vcrun2005"
@@ -274,8 +273,11 @@
       "plutonium.exe" = {
         protonPath = "${pkgs.proton-ge.v11.steamcompattool}";
         gameDir = "/home/user/Games/CoD/mw3_game_files";
-        env.PROTON_ENABLE_WAYLAND = "1";
-        env.PROTON_USE_WAYLAND = "1";
+        extraGameDirs = [
+          "/home/user/Games/CoD/waw_game_files"
+          "/home/user/Games/CoD/bo1_game_files"
+          "/home/user/Games/CoD/bo2_game_files"
+        ];
         winetricks = [
           "corefonts"
           "msasn1"
