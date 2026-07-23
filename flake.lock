@@ -5204,11 +5204,11 @@
         "std": "std_24"
       },
       "locked": {
-        "lastModified": 1784778540,
-        "narHash": "sha256-/dIqlUwjNOh51jjP4Zaln7wQ3tpWO9A1arPrjm+vWKE=",
+        "lastModified": 1784798736,
+        "narHash": "sha256-VpHaKSxmbVslsnQ59fpYP20ZlbCIHw7sWSDXNhy2wAQ=",
         "owner": "Daaboulex",
         "repo": "umu-proton-nix",
-        "rev": "c0b342e51a26089bbea8df7e309ce15fb9824e74",
+        "rev": "b8e7d5cf9e263f7b41c26a8db8cbc5b13c5b036e",
         "type": "github"
       },
       "original": {
