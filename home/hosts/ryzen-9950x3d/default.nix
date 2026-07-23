@@ -235,9 +235,11 @@
     cod-clients.protonPath = "${pkgs.proton-ge.v11.steamcompattool}";
     cod-clients.cblauncher.subProton = {
       "s1x.exe" = {
-        protonPath = "${pkgs.umu-proton.steamcompattool}";
+        protonPath = "${pkgs.proton-cachyos.steamcompattool}";
         gameDir = "/home/user/Games/CoD/aw_game_files";
-        env.PROTON_NO_NTSYNC = "1";
+        env.PROTON_USE_WAYLAND = "1";
+        env.PROTON_USE_SDL = "1";
+        env.VKD3D_CONFIG = "descriptor_heap";
       };
       "iw3mp.exe" = {
         protonPath = "${pkgs.proton-ge.v10.steamcompattool}";
