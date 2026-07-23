@@ -239,17 +239,15 @@
     ];
     cod-clients.steamNative.enable = true;
     cod-clients.protonPath = "${pkgs.proton-ge.v11.steamcompattool}";
-    cod-clients.protonPaths = {
-      s1 = "${pkgs.proton-ge.v10.steamcompattool}";
-      iw6 = "${pkgs.proton-ge.v10.steamcompattool}";
-    };
-    cod-clients.alterware.s1 = {
-      enable = true;
-      gameDir = "/home/user/Games/CoD/aw_game_files";
-    };
-    cod-clients.alterware.iw6 = {
-      enable = true;
-      gameDir = "/home/user/Games/CoD/ghosts_game_files";
+    cod-clients.cblauncher.subProton = {
+      "s1x.exe" = {
+        protonPath = "${pkgs.proton-ge.v10.steamcompattool}";
+        gameDir = "/home/user/Games/CoD/aw_game_files";
+      };
+      "iw3mp.exe" = {
+        protonPath = "${pkgs.proton-ge.v10.steamcompattool}";
+        gameDir = "/home/user/Games/CoD/cod4_game_files";
+      };
     };
   };
 
