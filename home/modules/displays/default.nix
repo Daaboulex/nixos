@@ -143,7 +143,7 @@ let
         exit 0
       fi
 
-      if echo "$outputs" | grep -A1 "$output" | grep -q "enabled"; then
+      if echo "$outputs" | grep -A1 "$output" | grep -qw "enabled"; then
         # ── DISABLING: migrate windows off this screen first ──
         # Get all window IDs on the screen being disabled via KWin scripting
         migrate_js="

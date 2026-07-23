@@ -4137,11 +4137,11 @@
         "std": "std_17"
       },
       "locked": {
-        "lastModified": 1784672829,
-        "narHash": "sha256-rkMcyym21qFhr+26b0F+Wos2sjgyB3xwVmDUYyk7y9w=",
+        "lastModified": 1784800965,
+        "narHash": "sha256-aIdSJhH6Et/uE0vH13Mg3Jc/1iNdbcCNrk8UFhQQsWg=",
         "owner": "Daaboulex",
         "repo": "proton-cachyos-nix",
-        "rev": "c35e170566c06923145fc3930bca57858f961328",
+        "rev": "4aae76bd9c06dd4314db3302182d36c106408126",
         "type": "github"
       },
       "original": {
@@ -4160,11 +4160,11 @@
         "std": "std_18"
       },
       "locked": {
-        "lastModified": 1784748429,
-        "narHash": "sha256-d8no2IHIFIfiQZIruJnCGQKxHXR27YmYBxEYxmumoB0=",
+        "lastModified": 1784800960,
+        "narHash": "sha256-P80xVm93/u/EHMDjdjxJqt/UyuL+LWVtfAm5XJPMt7U=",
         "owner": "Daaboulex",
         "repo": "proton-ge-nix",
-        "rev": "e18493f1964ab8ce471967d717776bca0c6d0034",
+        "rev": "f56c7a25297f495c030e3fde85ae4e034469f9b9",
         "type": "github"
       },
       "original": {
@@ -5204,11 +5204,11 @@
         "std": "std_24"
       },
       "locked": {
-        "lastModified": 1784798736,
-        "narHash": "sha256-VpHaKSxmbVslsnQ59fpYP20ZlbCIHw7sWSDXNhy2wAQ=",
+        "lastModified": 1784800963,
+        "narHash": "sha256-tOhpm/u7iY4HQgUo+p5zoAkrWZxGqDDKfNvaDb5V5QM=",
         "owner": "Daaboulex",
         "repo": "umu-proton-nix",
-        "rev": "b8e7d5cf9e263f7b41c26a8db8cbc5b13c5b036e",
+        "rev": "1a439647f3f60258da9aa46a8454fcbcbe0b8efa",
         "type": "github"
       },
       "original": {
