@@ -248,7 +248,6 @@
       "iw6x.exe" = {
         protonPath = "${pkgs.proton-ge.v11.steamcompattool}";
         gameDir = "/home/user/Games/CoD/ghosts_game_files";
-        env.DISPLAY = "";
         winetricks = [
           "corefonts"
           "vcrun2005"
