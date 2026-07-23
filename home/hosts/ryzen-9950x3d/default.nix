@@ -244,10 +244,18 @@
         protonPath = "${pkgs.proton-ge.v10.steamcompattool}";
         gameDir = "/home/user/Games/CoD/aw_game_files";
         env.PROTON_NO_NTSYNC = "1";
+        gamescope = [
+          "-f"
+          "--force-grab-cursor"
+        ];
       };
       "iw6x.exe" = {
         protonPath = "${pkgs.proton-ge.v11.steamcompattool}";
         gameDir = "/home/user/Games/CoD/ghosts_game_files";
+        gamescope = [
+          "-f"
+          "--force-grab-cursor"
+        ];
         winetricks = [
           "corefonts"
           "vcrun2005"
@@ -272,6 +280,10 @@
       "plutonium.exe" = {
         protonPath = "${pkgs.proton-ge.v11.steamcompattool}";
         gameDir = "/home/user/Games/CoD/mw3_game_files";
+        gamescope = [
+          "-f"
+          "--force-grab-cursor"
+        ];
         extraGameDirs = [
           "/home/user/Games/CoD/waw_game_files"
           "/home/user/Games/CoD/bo1_game_files"
