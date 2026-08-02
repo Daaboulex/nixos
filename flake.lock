@@ -4198,11 +4198,11 @@
         "std": "std_19"
       },
       "locked": {
-        "lastModified": 1785652707,
-        "narHash": "sha256-JhSjqfk3lhUDKu3zs/dV6mV0ex1CRWgrRvP1P2pg3cA=",
+        "lastModified": 1785698565,
+        "narHash": "sha256-Wd+o5kYM4DWoc6+mfKaRLEbWGqHg5qVqvebIaepAjWw=",
         "owner": "Daaboulex",
         "repo": "refind-nix",
-        "rev": "360519ec567d0dcc9f00387ff13a900ac4d9b6af",
+        "rev": "c3d411f1fa9e52c94d8c8b68bb2bcfe19a300cab",
         "type": "github"
       },
       "original": {
