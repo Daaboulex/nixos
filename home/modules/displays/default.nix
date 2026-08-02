@@ -166,7 +166,6 @@ let
       export DBUS_SESSION_BUS_ADDRESS="''${DBUS_SESSION_BUS_ADDRESS:-unix:path=$XDG_RUNTIME_DIR/bus}"
       export PATH="${
         lib.makeBinPath [
-          pkgs.kdePackages.qttools
           pkgs.kdePackages.libkscreen
           pkgs.gnugrep
           pkgs.gnused
@@ -182,8 +181,6 @@ let
         exit 2
         ;;
       esac
-
-      KWIN="org.kde.KWin"
 
       # kscreen-doctor colorizes even without a tty; the escape's trailing 'm'
       # touches "enabled" and defeats word matching, so strip ANSI first.
@@ -213,40 +210,16 @@ let
         exit 0
       fi
 
+      # kscreen-doctor returns after KWin acknowledged the config; KWin itself
+      # relocates a disabled output's windows, so no migration choreography.
       if [ "$want" = off ]; then
-        # ── DISABLING: migrate windows off this screen first ──
-        # Get all window IDs on the screen being disabled via KWin scripting
-        migrate_js="
-          const out = '$output';
-          const wins = workspace.stackingOrder.filter(w =>
-            !w.minimized && !w.skipTaskbar && w.output?.name === out
-          );
-          // Move each window to the primary screen (priority 1)
-          for (const w of wins) {
-            w.output = workspace.screens.find(s => s.name !== out) ?? workspace.screens[0];
-            w.tile = null; // Untile so Fluid Tile can re-place it
-          }
-          wins.length;
-        "
-        moved=$(qdbus $KWIN /Scripting org.kde.kwin.Scripting.loadScript /dev/stdin "" <<< "$migrate_js" 2>/dev/null || echo "")
-        if [ -n "$moved" ]; then
-          script_id="$moved"
-          qdbus $KWIN "/Scripting/Script$script_id" org.kde.kwin.Script.run 2>/dev/null || true
-          qdbus $KWIN "/Scripting/Script$script_id" org.kde.kwin.Script.stop 2>/dev/null || true
-          sleep 0.5 # Let Fluid Tile settle before screen removal
-        fi
-
         kscreen-doctor "output.$output.disable" ${repositionOff} 2>/dev/null
-        echo "$output disabled (windows migrated)"
+        echo "$output disabled"
       else
         # ── ENABLING ──
         kscreen-doctor "output.$output.enable" "output.$output.mode.${modeStr}" ${rotationArg}"output.$output.position.${toString m.position.x},${toString m.position.y}" "output.$output.priority.${toString m.priority}" ${repositionOn} 2>/dev/null
         echo "$output enabled"
       fi
-      # Wait for KWin to process screen topology change, then re-read tiling config
-      # 1s covers: kscreen-doctor → KWin output rebuild → Fluid Tile screen detection
-      sleep 1
-      qdbus $KWIN /KWin reconfigure 2>/dev/null || true
     '';
 
   # MCCS VCP D6: x01 on, x02-x04 DPMS sleep (panel still powered), x05 off at the power switch
