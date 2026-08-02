@@ -94,7 +94,7 @@
     lshw.enable = true;
     lsof.enable = true;
     mangohud.enable = true;
-    mangojuice.enable = true;
+    mangojuice.enable = false; # unused — MangoHud settings are declarative in the mangohud module
     man-pages.enable = true;
     memtest-vulkan.enable = true;
     minicom.enable = true;
