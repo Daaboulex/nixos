@@ -231,8 +231,8 @@ let
         moved=$(qdbus $KWIN /Scripting org.kde.kwin.Scripting.loadScript /dev/stdin "" <<< "$migrate_js" 2>/dev/null || echo "")
         if [ -n "$moved" ]; then
           script_id="$moved"
-          qdbus $KWIN "/$script_id" org.kde.kwin.Script.run 2>/dev/null || true
-          qdbus $KWIN "/$script_id" org.kde.kwin.Script.stop 2>/dev/null || true
+          qdbus $KWIN "/Scripting/Script$script_id" org.kde.kwin.Script.run 2>/dev/null || true
+          qdbus $KWIN "/Scripting/Script$script_id" org.kde.kwin.Script.stop 2>/dev/null || true
           sleep 0.5 # Let Fluid Tile settle before screen removal
         fi
 
@@ -250,6 +250,7 @@ let
     '';
 
   # MCCS VCP D6: x01 on, x02-x04 DPMS sleep (panel still powered), x05 off at the power switch
+  # MINIMIZE-DEBT: the watch state machine has no automated harness, only live verification; upgrade path = a check driving it with a PATH-shim ddcutil fake through off/on/flap transitions
   powerWatchScript = pkgs.writeShellScriptBin "display-power-watch" (
     ''
       export XDG_RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
@@ -330,7 +331,7 @@ let
       m: "  watch_${lib.replaceStrings [ "-" ] [ "_" ] m.toggle.scriptName}\n"
     ) watchMonitors
     + ''
-        sleep 5
+        sleep 2
       done
     ''
   );
