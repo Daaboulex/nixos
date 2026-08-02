@@ -169,6 +169,7 @@ let
           pkgs.kdePackages.qttools
           pkgs.kdePackages.libkscreen
           pkgs.gnugrep
+          pkgs.gnused
           pkgs.coreutils
         ]
       }''${PATH:+:$PATH}"
@@ -184,8 +185,9 @@ let
 
       KWIN="org.kde.KWin"
 
-      # Detect which connector the monitor is on
-      outputs="$(kscreen-doctor --outputs 2>/dev/null)"
+      # kscreen-doctor colorizes even without a tty; the escape's trailing 'm'
+      # touches "enabled" and defeats word matching, so strip ANSI first.
+      outputs="$(kscreen-doctor --outputs 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g')"
       output=""
       for conn in ${connectorList}; do
         if echo "$outputs" | grep -q "$conn"; then
@@ -266,7 +268,7 @@ let
       mkdir -p "$markdir"
 
       resolve_bus() {
-        ddcutil detect --brief 2>/dev/null | awk -v conns="$1" '
+        ddcutil --syslog NEVER detect --brief 2>/dev/null | awk -v conns="$1" '
           /^Display / { bus = "" }
           /I2C bus:/ { bus = $NF; sub(".*i2c-", "", bus) }
           /DRM connector:/ {
@@ -295,7 +297,7 @@ let
             [ -n "$bus" ] || return 0
             printf '%s' "$bus" >"$busfile"
           fi
-          if ! power=$(timeout 15 ddcutil getvcp d6 --bus "$bus" --brief 2>/dev/null); then
+          if ! power=$(timeout 15 ddcutil --syslog NEVER getvcp d6 --bus "$bus" --brief 2>/dev/null); then
             rm -f "$busfile" "$countfile"
             return 0
           fi
@@ -303,7 +305,7 @@ let
           *x05)
             count=$(($(cat "$countfile" 2>/dev/null || echo 0) + 1))
             printf '%s' "$count" >"$countfile"
-            if [ "$count" -ge 2 ] && [ ! -e "$marker" ]; then
+            if [ "$count" -eq 2 ] && [ ! -e "$marker" ]; then
               result=$(timeout 30 ${toggleBin} off 2>&1 || true)
               echo "power-watch ${sn}: panel powered off; $result"
               case "$result" in *disabled*) touch "$marker" ;; esac
