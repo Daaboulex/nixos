@@ -66,6 +66,12 @@ let
         # is removed for passthrough, KWin loses those outputs but keeps
         # rendering on the iGPU. Without this, KWin crashes on GPU removal.
         environment.variables.KWIN_DRM_DEVICES = lib.concatStringsSep ":" cfg.sessionGpuDevices;
+
+        # environment.variables reaches PAM login sessions only; the SDDM
+        # greeter compositor is spawned from the display-manager unit env.
+        systemd.services.display-manager = lib.mkIf config.services.displayManager.enable {
+          environment.KWIN_DRM_DEVICES = lib.concatStringsSep ":" cfg.sessionGpuDevices;
+        };
       };
     };
 in

@@ -540,7 +540,24 @@
       flatpak.enable = true;
       displays = {
         enable = true;
-        phantomUuids = [ "a460df66-ee57-4a8f-ba9b-4a877908e962" ];
+        phantomUuids = [
+          "6b146127-4137-452c-a823-3f9b7ef75b14"
+          "c808e708-83c0-4558-b83c-62dc0cae958f"
+          "e00f35e1-483e-42d1-b1ba-62f5de85dba6"
+          "f60fde86-34b4-46ff-9f8f-5bba0d42485c"
+          "f6de6f09-8b65-4ede-be2b-3d743b42b87c"
+        ];
+        sddmSetups = [
+          [
+            "main"
+            "portrait"
+          ]
+          [ "main" ]
+          [
+            "main"
+            "portrait-vfio"
+          ]
+        ];
         # Stable per-GPU DRM aliases (/dev/dri/by-gpu/{igpu,amd,nvidia}) for cardN-free
         # KWIN_DRM_DEVICES selection. RE-VERIFY these PCI BDFs after any hardware change.
         gpuAliases = {
@@ -548,63 +565,77 @@
           amd = "0000:03:00.0"; # RX 9070 XT
           nvidia = "0000:05:00.0"; # GTX 1660 SUPER
         };
-        monitors = {
-          main = {
-            connector = "DP-1";
-            mode = {
-              width = 1920;
-              height = 1080;
-              refreshRate = 239757;
+        monitors =
+          let
+            threeColumnTiles = ''{"layoutDirection":"horizontal","tiles":[{"width":0.25},{"width":0.5},{"width":0.25}]}'';
+          in
+          {
+            main = {
+              connector = "DP-1";
+              mode = {
+                width = 1920;
+                height = 1080;
+                refreshRate = 239757;
+              };
+              position = {
+                x = 0;
+                y = 840;
+              };
+              priority = 1;
+              vrr = "automatic";
+              inherit (site.hosts.ryzen-9950x3d.displays.monitors.main) edidHash edidIdentifier uuid;
+              alternateUuids = [ "9d7fc2be-9d15-43ff-9243-3dcb6f4f26ab" ];
+              tiling.layout = threeColumnTiles;
+              tiling.padding = 4;
             };
-            position = {
-              x = 0;
-              y = 0;
+            portrait = {
+              connector = "DP-7";
+              alternateConnectors = [
+                "DP-5"
+                "DP-6"
+                "HDMI-A-4"
+              ];
+              mode = {
+                width = 1920;
+                height = 1080;
+                refreshRate = 239761;
+              };
+              position = {
+                x = 1920;
+                y = 0;
+              };
+              priority = 2;
+              rotation = "right";
+              vrr = "automatic";
+              inherit (site.hosts.ryzen-9950x3d.displays.monitors.portrait) edidHash edidIdentifier uuid;
+              alternateUuids = [ "0a38b1b7-d496-4ee4-9ccb-45f3aadddbe6" ];
+              tiling.layout = threeColumnTiles;
+              tiling.padding = 4;
+              toggle = {
+                enable = true;
+                scriptName = "display-toggle";
+                powerWatch = true;
+              };
             };
-            priority = 1;
-            vrr = "automatic";
-            inherit (site.hosts.ryzen-9950x3d.displays.monitors.main) edidHash edidIdentifier uuid;
-            tiling.layout = ''{"layoutDirection":"horizontal","tiles":[{"width":0.5},{"width":0.5}]}'';
+            portrait-vfio = {
+              connector = "HDMI-A-2";
+              mode = {
+                width = 1920;
+                height = 1080;
+                refreshRate = 239761;
+              };
+              position = {
+                x = 1920;
+                y = 0;
+              };
+              priority = 2;
+              rotation = "right";
+              vrr = "automatic";
+              inherit (site.hosts.ryzen-9950x3d.displays.monitors.portrait-vfio) edidHash edidIdentifier uuid;
+              tiling.layout = threeColumnTiles;
+              tiling.padding = 4;
+            };
           };
-          portrait = {
-            connector = "DP-7";
-            alternateConnectors = [
-              "DP-5"
-              "DP-6"
-              "HDMI-A-4"
-            ];
-            mode = {
-              width = 1920;
-              height = 1080;
-              refreshRate = 239761;
-            };
-            position = {
-              x = 1920;
-              y = 0;
-            };
-            priority = 2;
-            rotation = "left";
-            vrr = "automatic";
-            inherit (site.hosts.ryzen-9950x3d.displays.monitors.portrait) edidHash edidIdentifier uuid;
-            tiling.layout = ''{"layoutDirection":"vertical","tiles":[{"height":0.333},{"height":0.334},{"height":0.333}]}'';
-          };
-          portrait-vfio = {
-            connector = "HDMI-A-2";
-            mode = {
-              width = 1920;
-              height = 1080;
-              refreshRate = 239761;
-            };
-            position = {
-              x = 0;
-              y = 0;
-            };
-            priority = 1;
-            rotation = "left";
-            vrr = "automatic";
-            inherit (site.hosts.ryzen-9950x3d.displays.monitors.portrait-vfio) edidHash edidIdentifier uuid;
-            tiling.layout = ''{"layoutDirection":"vertical","tiles":[{"height":0.333},{"height":0.334},{"height":0.333}]}'';
-          };
-        };
       };
     };
 

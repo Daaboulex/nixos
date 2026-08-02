@@ -45,6 +45,34 @@
           else
             throw "site-stub drift — ci/site-stub no longer mirrors repos/site shape:${drift}\n  Fix: update ci/site-stub/** to match the site shape (dummy values).";
 
+        # eval-displays-sddm-config — fails if the generated SDDM greeter
+        # display config is malformed: no arrangements, an outputIndex outside
+        # the outputs array, or two outputs sharing a priority inside one
+        # arrangement (KWin needs unique priorities per connected set). Reads
+        # one etc text (pure data, no IFD), so it is CI-safe.
+        eval-displays-sddm-config =
+          let
+            l = pkgs.lib;
+            parsed =
+              builtins.fromJSON
+                inputs.self.nixosConfigurations.ryzen-9950x3d.config.environment.etc."sddm-kwinoutputconfig.json".text;
+            outputs = (l.findFirst (s: s.name == "outputs") { data = [ ]; } parsed).data;
+            setups = (l.findFirst (s: s.name == "setups") { data = [ ]; } parsed).data;
+            prioritiesUnique =
+              s:
+              let
+                ps = map (o: o.priority) s.outputs;
+              in
+              l.length ps == l.length (l.unique ps);
+            indicesValid = s: l.all (o: o.outputIndex >= 0 && o.outputIndex < l.length outputs) s.outputs;
+            bad = l.filter (s: !(prioritiesUnique s && indicesValid s)) setups;
+          in
+          if outputs != [ ] && setups != [ ] && bad == [ ] then
+            pkgs.runCommand "eval-displays-sddm-config" { }
+              "echo 'OK: sddm output config well-formed'; touch $out"
+          else
+            throw "eval-displays-sddm-config: ryzen sddm-kwinoutputconfig.json is malformed (empty, duplicate priorities, or bad outputIndex in an arrangement)";
+
         # eval-no-deprecations — fails if any host config sets a deprecated /
         # renamed nixpkgs option that originates in OUR flake source. Warnings
         # are filtered by source path: those attributed to nixpkgs (or any other

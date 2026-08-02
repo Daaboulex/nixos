@@ -51,6 +51,9 @@ let
   # Monitors with toggle scripts
   toggleMonitors = builtins.filter (m: m.toggle.enable) sortedMonitors;
 
+  # Monitors whose panel power state is watched over DDC/CI
+  watchMonitors = builtins.filter (m: m.toggle.powerWatch) sortedMonitors;
+
   # All connectors for a monitor (primary + alternates)
   allConnectors = m: [ m.connector ] ++ m.alternateConnectors;
 
@@ -68,20 +71,16 @@ let
       refreshStr = mhzToRefresh m.mode.refreshRate;
       modeStr = "${toString m.mode.width}x${toString m.mode.height}@${refreshStr}";
       hashArg = lib.optionalString (m.edidHash != null) m.edidHash;
+      rotationArg = lib.optionalString (
+        m.rotation != "normal"
+      ) ''"output.$conn.rotation.${rotationToKscreen m.rotation}" '';
     in
     ''
       conn=$(resolve_connector ${lib.escapeShellArg hashArg} ${lib.escapeShellArg m.connector})
       if [ -z "$conn" ]; then
         echo "display-arrange: ${m.connector} not present, skipped" >&2
       else
-        kscreen-doctor \
-          "output.$conn.enable" \
-          "output.$conn.mode.${modeStr}" \
-          ${lib.optionalString (
-            m.rotation != "normal"
-          ) "\"output.$conn.rotation.${rotationToKscreen m.rotation}\" \\"}
-          "output.$conn.position.${toString m.position.x},${toString m.position.y}" \
-          "output.$conn.priority.${toString m.priority}" \
+        kscreen-doctor "output.$conn.enable" "output.$conn.mode.${modeStr}" ${rotationArg}"output.$conn.position.${toString m.position.x},${toString m.position.y}" "output.$conn.priority.${toString m.priority}" \
           || echo "display-arrange: ${m.connector} present as $conn but kscreen-doctor rejected the layout" >&2
       fi
     '';
@@ -145,17 +144,20 @@ let
       connectorList = lib.concatStringsSep " " connectors;
 
       # Reposition commands when toggling ON
-      repositionOn = lib.concatStringsSep " \\\n          " (
+      repositionOn = lib.concatStringsSep " " (
         lib.mapAttrsToList (
           conn: pos: "\"output.${conn}.position.${toString pos.x},${toString pos.y}\""
         ) m.toggle.repositions
       );
       # Default positions (from monitor definitions) when toggling OFF
-      repositionOff = lib.concatStringsSep " \\\n          " (
+      repositionOff = lib.concatStringsSep " " (
         map (
           om: "\"output.${om.connector}.position.${toString om.position.x},${toString om.position.y}\""
         ) (builtins.filter (om: builtins.hasAttr om.connector m.toggle.repositions) sortedMonitors)
       );
+      rotationArg = lib.optionalString (
+        m.rotation != "normal"
+      ) ''"output.$output.rotation.${rotationToKscreen m.rotation}" '';
     in
     pkgs.writeShellScriptBin m.toggle.scriptName ''
       # Ensure Wayland session env is set (needed when invoked from StreamController/StreamDeck)
@@ -170,6 +172,15 @@ let
           pkgs.coreutils
         ]
       }''${PATH:+:$PATH}"
+
+      want="''${1:-toggle}"
+      case "$want" in
+      on | off | toggle) ;;
+      *)
+        echo "usage: ${m.toggle.scriptName} [on|off|toggle]" >&2
+        exit 2
+        ;;
+      esac
 
       KWIN="org.kde.KWin"
 
@@ -188,7 +199,19 @@ let
         exit 0
       fi
 
+      state=off
       if echo "$outputs" | grep -A1 "$output" | grep -qw "enabled"; then
+        state=on
+      fi
+      if [ "$want" = toggle ]; then
+        if [ "$state" = on ]; then want=off; else want=on; fi
+      fi
+      if [ "$want" = "$state" ]; then
+        echo "$output already $state"
+        exit 0
+      fi
+
+      if [ "$want" = off ]; then
         # ── DISABLING: migrate windows off this screen first ──
         # Get all window IDs on the screen being disabled via KWin scripting
         migrate_js="
@@ -211,20 +234,11 @@ let
           sleep 0.5 # Let Fluid Tile settle before screen removal
         fi
 
-        kscreen-doctor \
-          "output.$output.disable" \
-          ${repositionOff} \
-          2>/dev/null
+        kscreen-doctor "output.$output.disable" ${repositionOff} 2>/dev/null
         echo "$output disabled (windows migrated)"
       else
         # ── ENABLING ──
-        kscreen-doctor \
-          "output.$output.enable" \
-          "output.$output.mode.${modeStr}" \
-          "output.$output.position.${toString m.position.x},${toString m.position.y}" \
-          "output.$output.priority.${toString m.priority}" \
-          ${repositionOn} \
-          2>/dev/null
+        kscreen-doctor "output.$output.enable" "output.$output.mode.${modeStr}" ${rotationArg}"output.$output.position.${toString m.position.x},${toString m.position.y}" "output.$output.priority.${toString m.priority}" ${repositionOn} 2>/dev/null
         echo "$output enabled"
       fi
       # Wait for KWin to process screen topology change, then re-read tiling config
@@ -232,6 +246,92 @@ let
       sleep 1
       qdbus $KWIN /KWin reconfigure 2>/dev/null || true
     '';
+
+  # MCCS VCP D6: x01 on, x02-x04 DPMS sleep (panel still powered), x05 off at the power switch
+  powerWatchScript = pkgs.writeShellScriptBin "display-power-watch" (
+    ''
+      export XDG_RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+      export WAYLAND_DISPLAY="''${WAYLAND_DISPLAY:-wayland-0}"
+      export DBUS_SESSION_BUS_ADDRESS="''${DBUS_SESSION_BUS_ADDRESS:-unix:path=$XDG_RUNTIME_DIR/bus}"
+      export PATH="${
+        lib.makeBinPath [
+          pkgs.ddcutil
+          pkgs.coreutils
+          pkgs.gnugrep
+          pkgs.gawk
+        ]
+      }''${PATH:+:$PATH}"
+
+      markdir="$XDG_RUNTIME_DIR/display-power-watch"
+      mkdir -p "$markdir"
+
+      resolve_bus() {
+        ddcutil detect --brief 2>/dev/null | awk -v conns="$1" '
+          /^Display / { bus = "" }
+          /I2C bus:/ { bus = $NF; sub(".*i2c-", "", bus) }
+          /DRM connector:/ {
+            n = split(conns, a, " ")
+            for (i = 1; i <= n; i++) if ($NF ~ ("-" a[i] "$")) { print bus; exit }
+          }'
+      }
+
+    ''
+    + lib.concatMapStrings (
+      m:
+      let
+        sn = m.toggle.scriptName;
+        fn = lib.replaceStrings [ "-" ] [ "_" ] sn;
+        conns = lib.concatStringsSep " " (allConnectors m);
+        toggleBin = "${mkToggleScript m}/bin/${sn}";
+      in
+      ''
+        watch_${fn}() {
+          busfile="$markdir/${sn}.bus"
+          countfile="$markdir/${sn}.offcount"
+          marker="$markdir/${sn}.off"
+          bus=$(cat "$busfile" 2>/dev/null || true)
+          if [ -z "$bus" ]; then
+            bus=$(resolve_bus "${conns}")
+            [ -n "$bus" ] || return 0
+            printf '%s' "$bus" >"$busfile"
+          fi
+          if ! power=$(timeout 15 ddcutil getvcp d6 --bus "$bus" --brief 2>/dev/null); then
+            rm -f "$busfile" "$countfile"
+            return 0
+          fi
+          case "$power" in
+          *x05)
+            count=$(($(cat "$countfile" 2>/dev/null || echo 0) + 1))
+            printf '%s' "$count" >"$countfile"
+            if [ "$count" -ge 2 ] && [ ! -e "$marker" ]; then
+              result=$(timeout 30 ${toggleBin} off 2>&1 || true)
+              echo "power-watch ${sn}: panel powered off; $result"
+              case "$result" in *disabled*) touch "$marker" ;; esac
+            fi
+            ;;
+          *)
+            rm -f "$countfile"
+            if [ -e "$marker" ]; then
+              result=$(timeout 30 ${toggleBin} on 2>&1 || true)
+              echo "power-watch ${sn}: panel powered on; $result"
+              rm -f "$marker"
+            fi
+            ;;
+          esac
+        }
+      ''
+    ) watchMonitors
+    + ''
+      while :; do
+    ''
+    + lib.concatMapStrings (
+      m: "  watch_${lib.replaceStrings [ "-" ] [ "_" ] m.toggle.scriptName}\n"
+    ) watchMonitors
+    + ''
+        sleep 5
+      done
+    ''
+  );
 
   # Tiling activation script — writes layouts for ALL UUIDs (primary + alternates)
   tilingActivation =
@@ -282,6 +382,13 @@ in
 
   config = lib.mkIf (cfg.enable && displaysCfg.enable && displaysCfg.monitors != { }) {
 
+    assertions = [
+      {
+        assertion = lib.all (m: m.toggle.enable) watchMonitors;
+        message = "myModules.home.displays: toggle.powerWatch requires toggle.enable on the same monitor (the watch drives its toggle script)";
+      }
+    ];
+
     # Packages: display-arrange + toggle scripts
     home.packages = [ displayArrangeScript ] ++ map mkToggleScript toggleMonitors;
 
@@ -291,21 +398,38 @@ in
     # No login service — KDE handles display layout at session start.
     # display-arrange is available as a manual command if needed.
 
-    # Run display-arrange on wake from sleep/suspend (screens may need re-arrangement)
-    systemd.user.services.display-arrange-wake = {
-      Unit = {
-        Description = "Enforce display arrangement after wake";
-        After = [ "sleep.target" ];
+    systemd.user.services = {
+      # Run display-arrange on wake from sleep/suspend (screens may need re-arrangement)
+      display-arrange-wake = {
+        Unit = {
+          Description = "Enforce display arrangement after wake";
+          After = [ "sleep.target" ];
+        };
+        Service = {
+          Type = "oneshot";
+          ExecStartPre = "/run/current-system/sw/bin/sleep 3";
+          # Pin the immutable store path, not %h/.nix-profile (the mutable user
+          # profile symlink): a user service must not depend on the profile being
+          # maintained + on PATH, and use-xdg-base-directories stops updating it.
+          ExecStart = "${displayArrangeScript}/bin/display-arrange";
+        };
+        Install.WantedBy = [ "sleep.target" ];
       };
-      Service = {
-        Type = "oneshot";
-        ExecStartPre = "/run/current-system/sw/bin/sleep 3";
-        # Pin the immutable store path, not %h/.nix-profile (the mutable user
-        # profile symlink): a user service must not depend on the profile being
-        # maintained + on PATH, and use-xdg-base-directories stops updating it.
-        ExecStart = "${displayArrangeScript}/bin/display-arrange";
+    }
+    // lib.optionalAttrs (watchMonitors != [ ]) {
+      display-power-watch = {
+        Unit = {
+          Description = "Disable and restore outputs from the panel's DDC/CI power state";
+          After = [ "graphical-session.target" ];
+          PartOf = [ "graphical-session.target" ];
+        };
+        Service = {
+          ExecStart = "${powerWatchScript}/bin/display-power-watch";
+          Restart = "on-failure";
+          RestartSec = 10;
+        };
+        Install.WantedBy = [ "graphical-session.target" ];
       };
-      Install.WantedBy = [ "sleep.target" ];
     };
   };
 }

@@ -44,7 +44,7 @@
             actions = [
               {
                 id = "com_core447_OSPlugin::RunCommand";
-                settings.command = "crt-toggle";
+                settings.command = "display-toggle";
               }
             ];
             media = {

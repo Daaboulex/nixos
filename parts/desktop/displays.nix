@@ -145,6 +145,11 @@ let
                 default = "";
                 description = "Name of the toggle script";
               };
+              powerWatch = lib.mkOption {
+                type = lib.types.bool;
+                default = false;
+                description = "Poll the panel's DDC/CI power state (VCP D6) and run the toggle script off/on when the panel is powered off/on; needs toggle.enable";
+              };
               repositions = lib.mkOption {
                 type = lib.types.lazyAttrsOf (
                   lib.types.submodule {
@@ -205,31 +210,49 @@ let
         .${v};
 
       # Build the kwinoutputconfig.json from monitor definitions
-      sddmMonitorList = lib.attrValues sddmMonitors;
-      sortedSddmMonitors = lib.sort (a: b: a.priority < b.priority) sddmMonitorList;
+      sddmPairs = lib.sort (a: b: a.value.priority < b.value.priority) (
+        lib.mapAttrsToList lib.nameValuePair sddmMonitors
+      );
 
-      outputsData = lib.imap0 (_i: m: {
-        connectorName = m.connector;
-        inherit (m) edidHash;
-        inherit (m) edidIdentifier;
+      outputsData = map (p: {
+        connectorName = p.value.connector;
+        inherit (p.value) edidHash;
+        inherit (p.value) edidIdentifier;
         mode = {
-          inherit (m.mode) width;
-          inherit (m.mode) height;
-          inherit (m.mode) refreshRate;
+          inherit (p.value.mode) width;
+          inherit (p.value.mode) height;
+          inherit (p.value.mode) refreshRate;
         };
-        inherit (m) scale;
-        transform = rotationToTransform m.rotation;
-        inherit (m) uuid;
-        vrrPolicy = vrrToPolicy m.vrr;
-      }) sortedSddmMonitors;
+        inherit (p.value) scale;
+        transform = rotationToTransform p.value.rotation;
+        inherit (p.value) uuid;
+        vrrPolicy = vrrToPolicy p.value.vrr;
+      }) sddmPairs;
 
-      setupsData = lib.imap0 (i: m: {
-        inherit (m) enabled;
-        outputIndex = i;
-        position = { inherit (m.position) x y; };
-        inherit (m) priority;
-        replicationSource = "";
-      }) sortedSddmMonitors;
+      outputIndexByName = lib.listToAttrs (lib.imap0 (i: p: lib.nameValuePair p.name i) sddmPairs);
+
+      setupNameLists = if cfg.sddmSetups == [ ] then [ (map (p: p.name) sddmPairs) ] else cfg.sddmSetups;
+
+      unknownSetupNames = lib.unique (
+        lib.concatMap (names: lib.filter (n: !(sddmMonitors ? ${n})) names) cfg.sddmSetups
+      );
+
+      mkSetup = names: {
+        lidClosed = false;
+        outputs = map (
+          n:
+          let
+            m = sddmMonitors.${n};
+          in
+          {
+            inherit (m) enabled;
+            outputIndex = outputIndexByName.${n};
+            position = { inherit (m.position) x y; };
+            inherit (m) priority;
+            replicationSource = "";
+          }
+        ) (lib.sort (a: b: outputIndexByName.${a} < outputIndexByName.${b}) names);
+      };
 
       kwinOutputConfig = builtins.toJSON [
         {
@@ -238,12 +261,7 @@ let
         }
         {
           name = "setups";
-          data = [
-            {
-              lidClosed = false;
-              outputs = setupsData;
-            }
-          ];
+          data = map mkSetup setupNameLists;
         }
       ];
 
@@ -259,6 +277,18 @@ let
           type = lib.types.listOf lib.types.str;
           default = [ ];
           description = "Stale monitor UUIDs to purge from tiling config";
+        };
+
+        sddmSetups = lib.mkOption {
+          type = lib.types.listOf (lib.types.listOf lib.types.str);
+          default = [ ];
+          description = ''
+            Monitor-name combinations written to the SDDM greeter config, one
+            arrangement per inner list. KWin applies an arrangement only when it
+            exactly matches the set of connected outputs, so list every
+            combination a boot profile can present. Empty = one arrangement
+            containing every SDDM monitor.
+          '';
         };
 
         monitors = lib.mkOption {
@@ -314,10 +344,27 @@ let
         # A malformed gpuAliases PCI value makes the udev KERNELS=="${pci}" rule
         # above silently never match -- the by-gpu symlink is dropped and KWin
         # falls back to renumbering cardN. Validate at the boundary.
-        assertions = lib.mapAttrsToList (name: pci: {
-          assertion = myLib.pci.isValidPciAddr pci;
-          message = "myModules.desktop.displays.gpuAliases.${name}: \"${pci}\" is not a well-formed PCI address (0000:BB:DD.F); the udev rule would never match, dropping the by-gpu symlink.";
-        }) cfg.gpuAliases;
+        assertions =
+          lib.mapAttrsToList (name: pci: {
+            assertion = myLib.pci.isValidPciAddr pci;
+            message = "myModules.desktop.displays.gpuAliases.${name}: \"${pci}\" is not a well-formed PCI address (0000:BB:DD.F); the udev rule would never match, dropping the by-gpu symlink.";
+          }) cfg.gpuAliases
+          ++ [
+            {
+              assertion = unknownSetupNames == [ ];
+              message = "myModules.desktop.displays.sddmSetups: names without SDDM identity (each must be a monitor with edidHash + uuid set): ${lib.concatStringsSep ", " unknownSetupNames}";
+            }
+            {
+              assertion = lib.all (
+                names:
+                let
+                  ps = map (n: sddmMonitors.${n}.priority) (lib.filter (n: sddmMonitors ? ${n}) names);
+                in
+                lib.length ps == lib.length (lib.unique ps)
+              ) setupNameLists;
+              message = "myModules.desktop.displays.sddmSetups: monitor priorities inside one arrangement must be unique";
+            }
+          ];
 
         # SDDM display layout — written via tmpfiles.d (avoids activation read-only FS issues)
         systemd.tmpfiles.rules = lib.mkIf (sddmMonitors != { }) [

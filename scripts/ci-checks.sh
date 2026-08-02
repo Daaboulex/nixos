@@ -111,6 +111,7 @@ gates)
     .#checks.x86_64-linux.eval-mylib-withStdenvCC \
     .#checks.x86_64-linux.eval-mylib-kernelModuleGuards \
     .#checks.x86_64-linux.eval-mylib-specialisations \
+    .#checks.x86_64-linux.eval-displays-sddm-config \
     .#checks.x86_64-linux.consumer-nixos-import \
     .#checks.x86_64-linux.consumer-hm-module-count \
     .#checks.x86_64-linux.eval-no-deprecations-test
