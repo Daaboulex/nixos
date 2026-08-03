@@ -2868,11 +2868,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1785699322,
-        "narHash": "sha256-qYzFIzUIKYXlDuqVrGMMje3PYfzKWZOGebIdEbz7DZY=",
+        "lastModified": 1785742131,
+        "narHash": "sha256-0h6Ny574X3mxJihoAqHE4DuDjgCjgzk39Fpo1T/Kg/s=",
         "owner": "numtide",
         "repo": "llm-agents.nix",
-        "rev": "7d39888e8473b85513bae81fdbf537503a1e0827",
+        "rev": "a4bc8069bb133aa2746937473b841391831c6e72",
         "type": "github"
       },
       "original": {
@@ -3065,11 +3065,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1785641633,
-        "narHash": "sha256-QegMp3UpeBMiCh4UnccP12z8buiqTd1DtFogYDVrA3g=",
+        "lastModified": 1785728078,
+        "narHash": "sha256-gkBNQjZUlaZ7a0y0FD9iuEHKBaG547/iLLznEEBIuHs=",
         "owner": "nix-community",
         "repo": "nix-vscode-extensions",
-        "rev": "9f3cd51df7c935073038bc99d8f66bf4b4455c07",
+        "rev": "5e4228d22f43e590ab1f58fc4da3e337c3111fe7",
         "type": "github"
       },
       "original": {
@@ -5294,11 +5294,11 @@
         "std": "std_26"
       },
       "locked": {
-        "lastModified": 1785699701,
-        "narHash": "sha256-mRhGC+8gYFs83M+eYbV8qrp//DdoDWjAJqv4sDXT+BY=",
+        "lastModified": 1785706236,
+        "narHash": "sha256-HnM8qrSOQQEm6h8NoPQPGIjjvVS1PxgDA1kkvaAVF/Q=",
         "owner": "Daaboulex",
         "repo": "vkBasalt_overlay_wayland",
-        "rev": "0a46889de48ae35c21d97934f92355b5424f5a97",
+        "rev": "8261879956a93318c2bef4fee52fe0098f288b77",
         "type": "github"
       },
       "original": {
