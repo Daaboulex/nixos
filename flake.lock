@@ -5294,11 +5294,11 @@
         "std": "std_26"
       },
       "locked": {
-        "lastModified": 1785699701,
-        "narHash": "sha256-mRhGC+8gYFs83M+eYbV8qrp//DdoDWjAJqv4sDXT+BY=",
+        "lastModified": 1785706236,
+        "narHash": "sha256-HnM8qrSOQQEm6h8NoPQPGIjjvVS1PxgDA1kkvaAVF/Q=",
         "owner": "Daaboulex",
         "repo": "vkBasalt_overlay_wayland",
-        "rev": "0a46889de48ae35c21d97934f92355b5424f5a97",
+        "rev": "8261879956a93318c2bef4fee52fe0098f288b77",
         "type": "github"
       },
       "original": {
