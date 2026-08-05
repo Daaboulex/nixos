@@ -58,6 +58,7 @@ in
       defaultText = lib.literalExpression "[ <15 shader collections> ]";
       description = "Shader packages providing share/reshade/{Shaders,Textures} — combined into vkBasalt shader/texture paths";
     };
+    launchers.heroic = lib.mkEnableOption "the Wine Wayland input shim for Heroic-launched games: wraps heroic so LD_AUDIT reaches them without vkbasalt-run; turn the overlay on per game with ENABLE_VKBASALT=1 in Heroic's game settings";
   };
 
   config = lib.mkIf cfg.enable (
@@ -125,6 +126,22 @@ in
       }
       (myLib.mkSessionVars {
         ENABLE_VKBASALT = lib.mkDefault "0";
+      })
+      (lib.mkIf cfg.launchers.heroic {
+        assertions = [
+          {
+            assertion = config.myModules.home.heroic.enable;
+            message = "myModules.home.vkbasalt.launchers.heroic requires myModules.home.heroic.enable (the wrapper shadows that package's heroic binary)";
+          }
+        ];
+        home.packages = [
+          (lib.hiPrio (
+            pkgs.writeShellScriptBin "heroic" ''
+              export LD_AUDIT="''${LD_AUDIT:+$LD_AUDIT:}${pkgs.vkbasalt-overlay}/lib/libvkbasalt-audit.so"
+              exec ${pkgs.heroic}/bin/heroic "$@"
+            ''
+          ))
+        ];
       })
     ]
   );

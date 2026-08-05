@@ -238,6 +238,7 @@
       toggleKey = "Pause";
       effects = "cas:Vibrance:LiftGammaGain";
       casSharpness = "0.5";
+      launchers.heroic = true;
       extraConfig = ''
         # Vibrance
         Vibrance = 0.35
