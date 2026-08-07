@@ -19,9 +19,10 @@ let
   # ARB_shader_storage_buffer_object) as extensions but caps its reported
   # version at 4.2, e.g. Intel HD 4000 / Ivy Bridge on current Mesa. "software"
   # forces llvmpipe (CPU) for GPUs that genuinely lack the features. The
-  # upstream .desktop, D-Bus, and systemd units hardcode the absolute store
-  # binary, so PATH-level wrapping is bypassed on GUI/D-Bus launch — repoint all
-  # three at the wrapped binary so every entry point inherits the env.
+  # upstream D-Bus and systemd units hardcode the absolute store binary while
+  # the .desktop entry uses a bare command, so PATH-level wrapping alone is
+  # bypassed on GUI/D-Bus launch — repoint all three at the wrapped binary so
+  # every entry point inherits the env.
   mkWrapped =
     suffix: env:
     let
@@ -38,7 +39,6 @@ let
         wrapProgram $out/bin/ghostty ${flags}
 
         for unit in \
-          share/applications/com.mitchellh.ghostty.desktop \
           share/dbus-1/services/com.mitchellh.ghostty.service \
           share/systemd/user/app-com.mitchellh.ghostty.service; do
           real=$(readlink -f "$out/$unit")
@@ -46,6 +46,12 @@ let
           substitute "$real" "$out/$unit" \
             --replace-fail "${base}/bin/ghostty" "$out/bin/ghostty"
         done
+
+        desktop=share/applications/com.mitchellh.ghostty.desktop
+        realDesktop=$(readlink -f "$out/$desktop")
+        rm "$out/$desktop"
+        substitute "$realDesktop" "$out/$desktop" \
+          --replace-fail "Exec=ghostty" "Exec=$out/bin/ghostty"
       '';
       meta = base.meta // {
         mainProgram = "ghostty";
@@ -81,7 +87,11 @@ in
         - gl-override: claim GL 4.3 via MESA_GL_VERSION_OVERRIDE. Rendering stays
           on the GPU; works where the driver exposes the 4.3 feature set as
           extensions but caps its reported version (Intel HD 4000 / Ivy Bridge
-          on current Mesa).
+          on current Mesa). Return this host to "native" once
+          `env -u MESA_GL_VERSION_OVERRIDE glxinfo -B` reports a core profile
+          version of 4.3 or higher; strip the variable explicitly, because the
+          wrapper leaks it into every process the terminal spawns and an
+          unstripped run reports the override's own value back.
         - software: force llvmpipe CPU rendering. Always works; CPU-bound.
       '';
     };
