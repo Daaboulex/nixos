@@ -3917,11 +3917,11 @@
         "std": "std_14"
       },
       "locked": {
-        "lastModified": 1785652100,
-        "narHash": "sha256-eOcgjKYEO/VVM+jO1OF0ssCPl/dgsXwEmxsc8rDfHB0=",
+        "lastModified": 1786109243,
+        "narHash": "sha256-rQhlglcRtEicW51dxzwJxIv9JC2sWX3x3wVjor2aviY=",
         "owner": "Daaboulex",
         "repo": "OCCT-nix",
-        "rev": "454fc84d07af0dde9e44e17b8641c470189d72b5",
+        "rev": "f0f7efc395830dbc21dc232713e21c468a7f099c",
         "type": "github"
       },
       "original": {
@@ -3957,11 +3957,11 @@
         "std": "std_15"
       },
       "locked": {
-        "lastModified": 1785653196,
-        "narHash": "sha256-ZnfS8BDXhKRYYO8U4/PYUqTtZxj9y1pIEWUApN3AM44=",
+        "lastModified": 1786113317,
+        "narHash": "sha256-bExVypf7rlpO2SvHEsTMItzCUfBcXfSWgWV8w1/ivQc=",
         "owner": "Daaboulex",
         "repo": "openviking-nix",
-        "rev": "1d7cfbe55efb7974990e4c66caa3e403a1e7d278",
+        "rev": "f0fc681c1910f128ece81968a22e1035f70bcaa9",
         "type": "github"
       },
       "original": {
