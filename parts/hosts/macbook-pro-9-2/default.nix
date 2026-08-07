@@ -219,11 +219,8 @@
           betaProgram = false;
           updateDefaultLocation = false;
           # ── DNS blockers — ACTIVE (Mullvad's in-tunnel filter tier) ──
-          # Portmaster forwards all DNS to 100.64.0.23 via wg0-mullvad
-          # (see security.portmaster.settings."dns/nameservers"), so
-          # these block* flags decide which categories Mullvad returns
-          # NXDOMAIN for. Two filter layers stack: Portmaster's own
-          # filter lists block first, these flags block second.
+          # These block* flags decide which categories Mullvad returns
+          # NXDOMAIN for.
           dns = {
             mode = "default";
             blockAds = true;
@@ -291,45 +288,6 @@
         secrets.wifi = { }; # WIFI_PSK=… — consumed by hardware.networking.homeWifi
         # secrets.user-password = { }; # uncomment with users.passwordFromSite (the ceremony creates the blob first)
       };
-      portmaster = {
-        enable = false;
-        notifier = true; # (default) — system tray icon
-        autostart = true; # Start on boot
-        # Mullvad + Portmaster stack. See ryzen-9950x3d/default.nix for
-        # the full rationale: `dnsQueryInterception=false` is required
-        # to avoid the Mullvad-bootstrap deadlock at boot.
-        # See ryzen-9950x3d/default.nix for the rationale on why each of
-        # these keys MUST live in forceSettings. UI changes to them will
-        # be reverted on next boot.
-        forceSettings = {
-          # Unlocks the Experimental-level interception toggle below --
-          # Portmaster silently ignores a set value for an option above
-          # the global release level (see ryzen for the full mechanics).
-          "core/releaseLevel" = "experimental";
-          "filter/dnsQueryInterception" = false;
-          "dns/nameservers" = [
-            "dot://dns.mullvad.net?ip=194.242.2.3&name=MullvadAdblockDoT&blockedif=empty"
-            "dot://dns.quad9.net?ip=9.9.9.9&name=Quad9&blockedif=empty"
-            "dot://dns.quad9.net?ip=149.112.112.112&name=Quad9&blockedif=empty"
-            "dot://dns.mullvad.net?ip=194.242.2.2&name=MullvadUnfilteredDoT&blockedif=empty"
-          ];
-          "dns/noAssignedNameservers" = true;
-          # Reject plaintext DNS in Portmaster's internal resolver.
-          "dns/noInsecureProtocols" = true;
-          # SPN and Mullvad both reroute all traffic (mutually exclusive); lock
-          # SPN off so a UI toggle cannot enable it. See ryzen for full rationale.
-          "spn/enable" = false;
-        };
-      };
-      # See parts/security/portmaster-mullvad-compat.nix for the full
-      # rationale. Required on every host where Portmaster and Mullvad
-      # both run, otherwise the tunnel can't bootstrap after a reconnect.
-      portmasterMullvadCompat.enable = false;
-      # Keep Portmaster's per-connection resolver-compliance verdicts off
-      # the split-tunnel DNS chain: office .local queries to the loopback
-      # rewriter otherwise flap into ICMP blocks. See
-      # parts/security/portmaster-split-tunnel-compat.nix.
-      portmasterSplitTunnelCompat.enable = false;
     };
 
     # --------------------------------------------------------------------------
@@ -468,11 +426,11 @@
     hardware.usbPower.enable = true; # Realtek WiFi adapter power management fix
 
     # DoT opportunistic on this host only. Nix builds (especially Go modules
-    # that fetch from storage.googleapis.com) overlap with Portmaster's
-    # resolver chain + Mullvad DoT under the 2-core CPU's load; strict
-    # "true" causes intermittent SERVFAIL that kills build fetches. "op"
-    # still prefers DoT on :853 and only falls back to plaintext if the
-    # DoT session can't complete — the common case remains encrypted.
+    # that fetch from storage.googleapis.com) overlap with Mullvad DoT under
+    # the 2-core CPU's load; strict "true" causes intermittent SERVFAIL that
+    # kills build fetches. "op" still prefers DoT on :853 and only falls back
+    # to plaintext if the DoT session can't complete — the common case
+    # remains encrypted.
     hardware.networking.dnsOverTls = "opportunistic";
 
     # --------------------------------------------------------------------------

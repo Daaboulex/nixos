@@ -327,65 +327,6 @@
               touch "$out"
             '';
 
-        # check-portmaster-chain-ownership — live gate: Portmaster chain
-        # surgery happens through lib/mkPortmasterChainKeeper.nix only, so
-        # every such rule survives Portmaster's pause/resume lifecycle.
-        check-portmaster-chain-ownership =
-          pkgs.runCommand "check-portmaster-chain-ownership"
-            {
-              nativeBuildInputs = [ checkBins."check-portmaster-chain-ownership" ];
-              partsSrc = ../../parts;
-              homeSrc = ../../home/modules;
-              libSrc = ../../lib;
-            }
-            ''
-              set -euo pipefail
-              mkdir -p root/home
-              cp -r "$partsSrc" root/parts
-              cp -r "$homeSrc" root/home/modules
-              cp -r "$libSrc" root/lib
-              cd root
-              if ! check-portmaster-chain-ownership --all; then
-                echo "check-portmaster-chain-ownership: direct ip(6)tables surgery on a PORTMASTER- chain outside lib/mkPortmasterChainKeeper.nix."
-                exit 1
-              fi
-              echo "OK: Portmaster chain surgery only via mkPortmasterChainKeeper"
-              touch "$out"
-            '';
-
-        # check-portmaster-chain-ownership hook — asserts it FIRES on inline
-        # chain surgery AND PASSES chain names as keeper rules data. Keeps
-        # the gate non-vacuous.
-        check-portmaster-chain-ownership-test =
-          pkgs.runCommand "check-portmaster-chain-ownership-test"
-            {
-              nativeBuildInputs = [ checkBins."check-portmaster-chain-ownership" ];
-              violation = ./tests/fixtures/portmaster-chain-violation.nix;
-              ok = ./tests/fixtures/portmaster-chain-ok.nix;
-            }
-            ''
-              set -euo pipefail
-              work=$(mktemp -d)
-              cd "$work"
-              mkdir -p parts/security
-
-              install -m 0644 "$violation" parts/security/compat.nix
-              if diag=$(check-portmaster-chain-ownership parts/security/compat.nix 2>&1); then
-                echo "FAIL: violation fixture passed; expected exit 1."
-                echo "$diag"
-                exit 1
-              fi
-              grep -q 'mkPortmasterChainKeeper' <<< "$diag" \
-                || { echo "FAIL: diagnostic missing the sanctioned helper."; echo "$diag"; exit 1; }
-
-              install -m 0644 "$ok" parts/security/compat.nix
-              if ! check-portmaster-chain-ownership parts/security/compat.nix; then
-                echo "FAIL: rules-as-data fixture rejected; expected pass."
-                exit 1
-              fi
-              touch "$out"
-            '';
-
         # check-placement — live gate: scan ALL of parts/ + home/modules for
         # file-path ⟺ option-scope mismatches. The pre-commit hook sees only
         # staged files (and --no-verify skips it entirely); this is the
@@ -2027,22 +1968,6 @@
             }
             touch $out
           '';
-
-        eval-portmaster-dns-interception =
-          let
-            cfg = inputs.self.nixosConfigurations.ryzen-9950x3d.config;
-            forced = cfg.myModules.security.portmaster.forceSettings;
-          in
-          pkgs.runCommand "eval-portmaster-dns-interception"
-            {
-              intercept = builtins.toJSON (forced."filter/dnsQueryInterception" or true);
-            }
-            ''
-              [[ "$intercept" == "false" ]] \
-                || { echo "FAIL: dnsQueryInterception not forced off — Mullvad deadlock risk"; exit 1; }
-              echo "OK: Portmaster DNS interception forced off"
-              touch $out
-            '';
 
         eval-vfio-iommu-params =
           let

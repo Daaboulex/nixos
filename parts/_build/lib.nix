@@ -22,7 +22,6 @@ in
     themeCtx = import ../../lib/themeCtx.nix;
     withStdenvCC = import ../../lib/withStdenvCC.nix;
     mkSessionVars = import ../../lib/mkSessionVars.nix;
-    mkPortmasterChainKeeper = import ../../lib/mkPortmasterChainKeeper.nix;
 
     # Lib-applied — consumers call directly without re-passing lib.
     mkDotfileModule = (import ../../lib/mkDotfileModule.nix) { inherit lib; };

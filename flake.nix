@@ -75,12 +75,6 @@
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
 
-    # Portmaster - Privacy Application (Local Flake)
-    portmaster-nix = {
-      url = "github:Daaboulex/portmaster-nix";
-      inputs.nixpkgs.follows = "nixpkgs-unstable";
-    };
-
     # Mullvad VPN - declarative daemon + GUI prefs + 2026.1 pin
     mullvad-vpn-nix = {
       url = "github:Daaboulex/mullvad-vpn-nix";

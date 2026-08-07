@@ -72,9 +72,6 @@
             inputs.self.modules.nixos.security-hardening
             inputs.self.modules.nixos.security-ssh
             inputs.self.modules.nixos.security-agenix
-            inputs.self.modules.nixos.security-portmaster
-            inputs.self.modules.nixos.security-portmaster-mullvad-compat
-            inputs.self.modules.nixos.security-portmaster-split-tunnel-compat
 
             # Hardware (Intel — no AMD modules)
             inputs.self.modules.nixos.hardware-core
@@ -115,7 +112,6 @@
             inputs.self.modules.nixos.hardware-broadcom-wifi
 
             # External modules
-            inputs.portmaster-nix.nixosModules.default
             inputs.cachyos-settings-nix.nixosModules.default
             inputs.NixVirt.nixosModules.default
             inputs.impermanence.nixosModules.impermanence

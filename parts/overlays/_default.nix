@@ -39,7 +39,6 @@ let
     inputs.vfio-stealth-nix.overlays.default
     inputs.linux-corecycler.overlays.default
     inputs.nix-cachyos-kernel.overlays.pinned
-    inputs.portmaster-nix.overlays.default
     inputs.occt-nix.overlays.default
     # shared-nixpkgs, not .default: builds their package tree against OUR
     # `final` (one nixpkgs, deps shared, the _fixes below apply to their

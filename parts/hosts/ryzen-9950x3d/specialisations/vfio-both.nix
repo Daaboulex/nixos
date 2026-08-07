@@ -205,7 +205,4 @@
   # their traffic bypasses host netfilter regardless, and a headless host has
   # nothing of its own to tunnel/filter.
   myModules.services.mullvad.enable = lib.mkForce false;
-  myModules.security.portmaster.enable = lib.mkForce false;
-  myModules.security.portmasterMullvadCompat.enable = lib.mkForce false; # glue is moot with both off
-  myModules.security.portmasterSplitTunnelCompat.enable = lib.mkForce false; # same: no Portmaster to exempt from
 }

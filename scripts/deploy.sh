@@ -14,7 +14,6 @@
 #   --boot          Activate on next reboot instead of immediately
 #   --dry           Build only, don't copy or activate
 #   --trace         Build with --show-trace
-#   --no-portmaster Skip Portmaster stop/start on remote
 #   -h, --help      Show this help
 #
 # If no hostname is given, lists available hosts and prompts interactively.
@@ -52,7 +51,6 @@ SYNC_ONLY=false
 BOOT_MODE=false
 DRY_RUN=false
 SHOW_TRACE=false
-HANDLE_PORTMASTER=true
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -77,10 +75,6 @@ while [[ $# -gt 0 ]]; do
     SHOW_TRACE=true
     shift
     ;;
-  --no-portmaster)
-    HANDLE_PORTMASTER=false
-    shift
-    ;;
   -h | --help)
     echo "Usage: bash $0 [options] [hostname]"
     echo ""
@@ -92,7 +86,6 @@ while [[ $# -gt 0 ]]; do
     echo "  --boot          Activate on next reboot (not immediately)"
     echo "  --dry           Build only, don't copy or activate"
     echo "  --trace         Build with --show-trace"
-    echo "  --no-portmaster Skip Portmaster stop/start on remote"
     echo "  -h, --help      Show this help"
     echo ""
     echo "If no hostname is given, lists available hosts and prompts."
@@ -204,8 +197,7 @@ if ! ssh -o ConnectTimeout=10 -o BatchMode=yes "$SSH_TARGET" "echo ok" &>/dev/nu
   echo ""
   echo "  Possible fixes:"
   echo "  1. Is the host powered on and on the network?"
-  echo "  2. Is Portmaster blocking SSH? Run on remote: sudo systemctl stop portmaster"
-  echo "  3. Is your SSH key authorized? Add your pubkey to remote ~/.ssh/authorized_keys"
+  echo "  2. Is your SSH key authorized? Add your pubkey to remote ~/.ssh/authorized_keys"
   echo ""
   read -rp "Enter a different SSH target (or Ctrl+C to abort): " alt_target
   if [ -n "$alt_target" ]; then
@@ -220,25 +212,6 @@ if ! ssh -o ConnectTimeout=10 -o BatchMode=yes "$SSH_TARGET" "echo ok" &>/dev/nu
   fi
 fi
 ok "SSH connection verified"
-
-# ── Handle Portmaster on remote ──
-PORTMASTER_WAS_RUNNING=false
-if $HANDLE_PORTMASTER; then
-  if ssh "$SSH_TARGET" "systemctl is-active portmaster &>/dev/null" 2>/dev/null; then
-    PORTMASTER_WAS_RUNNING=true
-    info "Stopping Portmaster on remote (will restart after deploy)..."
-    ssh "$SSH_TARGET" "systemctl stop portmaster" 2>/dev/null || true
-  fi
-fi
-
-# ── Restore Portmaster on exit ──
-cleanup() {
-  if $PORTMASTER_WAS_RUNNING && $HANDLE_PORTMASTER; then
-    info "Restarting Portmaster on remote..."
-    ssh -o ConnectTimeout=5 "$SSH_TARGET" "systemctl start portmaster" 2>/dev/null || true
-  fi
-}
-trap cleanup EXIT
 
 # ── Sync repo to remote ──
 if $DO_SYNC; then

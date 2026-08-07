@@ -115,7 +115,6 @@ let
             "/var/lib/flatpak"
             "/var/lib/colord"
             "/var/lib/NetworkManager"
-            "/var/lib/portmaster"
             "/var/lib/upower"
             {
               directory = "/var/lib/sbctl";

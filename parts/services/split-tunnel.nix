@@ -299,37 +299,6 @@ let
           '';
         };
 
-        resolver = lib.mkOption {
-          readOnly = true;
-          type = lib.types.submodule {
-            options = {
-              enable = lib.mkOption {
-                type = lib.types.bool;
-                description = "Whether the split-DNS chain (loopback rewriter + scoped routing) is configured.";
-              };
-              listen = lib.mkOption {
-                type = lib.types.str;
-                description = "Loopback address the alias-space DNS rewriter listens on.";
-              };
-              aliasDns = lib.mkOption {
-                type = lib.types.nullOr lib.types.str;
-                description = "The office DNS server in alias space; null while split-DNS is off.";
-              };
-            };
-          };
-          default = {
-            enable = dnsEnabled;
-            listen = dnsListen;
-            aliasDns = if dnsEnabled then aliasDns else null;
-          };
-          defaultText = lib.literalMD "derived from `site.network.vpn`";
-          description = ''
-            Read-only contract of the DNS chain this module runs, for modules
-            that must cooperate with it (portmaster-split-tunnel-compat keeps
-            Portmaster's verdicts off exactly these endpoints).
-          '';
-        };
-
         dataPlane = lib.mkOption {
           readOnly = true;
           type = lib.types.submodule {
